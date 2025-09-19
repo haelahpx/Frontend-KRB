@@ -10,6 +10,6 @@ class CreateTicket extends Component
 {
     public function render()
     {
-        return view('livewire.pages.createticket');
+        return view('livewire.pages.user.createticket');
     }
 }
