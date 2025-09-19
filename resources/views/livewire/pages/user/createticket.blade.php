@@ -12,7 +12,7 @@
     <div class="max-w-6xl mx-auto p-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
                     <h2 class="text-2xl font-semibold text-gray-900 mb-2">Create Support Ticket</h2>
                     <p class="text-gray-600 mb-6">Fill out the form below to submit a new support ticket</p>
 
@@ -114,7 +114,7 @@
             </div>
 
             <div class="space-y-6">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Ticket Statistics</h3>
 
                     <div class="space-y-3">
@@ -160,7 +160,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Tickets</h3>
 
                     <div class="space-y-4">
@@ -210,7 +210,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
 
                     <div class="space-y-2">
