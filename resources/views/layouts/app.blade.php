@@ -6,6 +6,7 @@
     <title>@yield('title', 'App')</title>
     @vite('resources/css/app.css')
     @livewireStyles
+    @fluxappearance 
 </head>
 <body class="bg-white">
     @include('livewire.components.partials.navbar')
@@ -18,5 +19,6 @@
 
     @livewireScripts
     @vite('resources/js/app.js')
+    @fluxScripts
 </body>
 </html>
