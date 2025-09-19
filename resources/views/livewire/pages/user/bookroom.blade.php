@@ -91,6 +91,7 @@
                             Cancel
                         </button>
                         <button type="submit"
+                            onclick="window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', title: 'Success!', message: 'Ticket created successfully.', duration: 4000 } }))"
                             class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors">
                             Submit Request
                         </button>

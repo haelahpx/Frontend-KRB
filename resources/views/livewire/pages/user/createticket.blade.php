@@ -64,10 +64,10 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Assigned User</label>
                                 <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                     <option>Select user</option>
-                                    <option value="1">John Smith - IT Admin</option>
-                                    <option value="2">Sarah Johnson - HR Manager</option>
-                                    <option value="3">Mike Davis - Finance Lead</option>
-                                    <option value="4">Lisa Chen - Support Specialist</option>
+                                    <option value="1">Haikal - IT Admin</option>
+                                    <option value="2">Clan - HR Manager</option>
+                                    <option value="3">Sam - Finance Lead</option>
+                                    <option value="4">Yusuf - Support Specialist</option>
                                 </select>
                             </div>
                             <div>
@@ -105,6 +105,7 @@
                                 Cancel
                             </button>
                             <button type="submit"
+                                onclick="window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', title: 'Success!', message: 'Ticket created successfully.', duration: 4000 } }))"
                                 class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors">
                                 Submit Ticket
                             </button>
