@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"  data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'App')</title>
+    
     @vite('resources/css/app.css')
     @livewireStyles
-    @fluxappearance 
 </head>
 <body class="bg-white">
     @include('livewire.components.partials.navbar')
