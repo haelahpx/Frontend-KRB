@@ -32,6 +32,10 @@
                     <a href="{{ route('book-room') }}" class="text-white hover:text-gray-400 px-3 py-2 text-sm font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-white">
                         Book Room
                     </a>
+                    <a href="{{ route('login') }}"
+                        class="ml-4 bg-white text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors duration-200">
+                        Login / Register
+                    </a>
                 </nav>
 
                 <div class="md:hidden">
@@ -62,6 +66,10 @@
                 </a>
                 <a href="{{ route('book-room') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors duration-200">
                     Book Room
+                </a>
+                <a href="{{ route('login') }}"
+                    class="block w-full text-center mt-2 px-3 py-2 text-base font-medium text-white bg-black rounded-md hover:bg-gray-800 transition-colors duration-200">
+                    Login / Register
                 </a>
             </div>
         </div>
