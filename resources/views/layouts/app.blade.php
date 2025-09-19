@@ -27,7 +27,6 @@
     @livewireScripts
     @vite('resources/js/app.js')
     @fluxScripts
-    =======
     @fluxAppearance
 </body>
 
