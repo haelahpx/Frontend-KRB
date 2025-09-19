@@ -1,10 +1,7 @@
 <!DOCTYPE html>
-<<<<<<< Updated upstream
-<html lang="en"  data-theme="light">
-=======
-<html lang="en">
 
->>>>>>> Stashed changes
+<html lang="en"  data-theme="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,12 +24,9 @@
 
     @livewireScripts
     @vite('resources/js/app.js')
-<<<<<<< Updated upstream
     @fluxScripts
 =======
     @fluxAppearance
-
->>>>>>> Stashed changes
 </body>
 
 </html>
