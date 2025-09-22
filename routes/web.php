@@ -7,9 +7,11 @@ use App\Livewire\Pages\User\CreateTicket;
 use App\Livewire\Pages\User\Bookroom;
 use App\Livewire\Pages\Auth\Login;
 use App\Livewire\Pages\Auth\Register;
+use App\Livewire\Pages\Errors\error404;
 
 Route::get('/', Home::class)->name('home');
 Route::get('/create-ticket', CreateTicket::class)->name('create-ticket');
 Route::get('/book-room', Bookroom::class)->name('book-room');
 Route::get('/login', Login::class)->name('login');
 Route::get('/register', Register::class)->name('register');
+Route::fallback(error404::class);
