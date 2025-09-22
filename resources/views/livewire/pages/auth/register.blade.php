@@ -114,7 +114,7 @@
                 <button
                     type="submit"
                     onclick="window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', title: 'Success!', message: 'Account created successfully.', duration: 4000 } }))"
-                    class="w-full mt-6 rounded-2xl bg-black text-white py-3 px-6 font-medium tracking-wide hover:bg-gray-800 focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-opacity-50 transition-all duration-300">
+                    class="w-full mt-6 rounded-2xl bg-black text-white py-3 px-6 font-medium tracking-wide hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-opacity-50 transition-all duration-300">
                     CREATE ACCOUNT
                 </button>
 

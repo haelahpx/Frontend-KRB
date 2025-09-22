@@ -28,14 +28,30 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl p-6 shadow-lg border border-black flex flex-wrap gap-3">
+            <div
+                class="grid grid-cols-1 md:grid-cols-2bg-white rounded-xl p-6 shadow-lg border border-black flex flex-wrap gap-3">
                 <h3 class="text-[#b10303] text-xl font-semibold text-black mb-4">Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-[auto_1fr] md:gap-x-4 items-start">
+                    <div>
+                        <p class="text-gray-600 bg-white">Event berkebun</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">2025-09-1 until 2025-10-2</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-[auto_1fr] md:gap-x-4 items-start">
+                    <div>
+                        <h4 class="text-gray-600 bg-white">Rapat bulanan</h4>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">2025-09-27</p>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <div
-                class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
+            <div class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Tickets</div>
                     <h2 class="text-xl font-semibold text-black">Open Tickets</h2>
@@ -50,8 +66,7 @@
                 </div>
             </div>
 
-            <div
-                class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
+            <div class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Booking</div>
                     <h2 class="text-xl font-semibold text-black">Upcoming Bookings</h2>
@@ -65,8 +80,7 @@
                 </div>
             </div>
 
-            <div
-                class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
+            <div class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Packages</div>
                     <h2 class="text-xl font-semibold text-black">Packages</h2>
@@ -95,6 +109,58 @@
                     class="bg-white border border-black text-black px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50">+
                     Package</a>
             </div>
-        </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-6">
+                <div class="rounded-xl p-4 sm:p-6 border border-black bg-green-600 text-white h-full flex flex-col">
+                    <h2 class="text-base sm:text-lg font-bold tracking-wide">WIFI ACCESS</h2>
+                    <div class="mt-3 sm:mt-4 space-y-3 sm:space-y-4 text-sm">
+                        <div class="flex gap-3">
+                            <div class="mt-1">📍</div>
+                            <div>
+                                <p class="font-semibold uppercase">Gedung Konservasi</p>
+                                <p>Network : <span class="font-semibold">EVENT_5G</span></p>
+                                <p>User / Password : <span class="font-semibold">magang-it / kebunraya</span></p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="mt-1">📍</div>
+                            <div>
+                                <p class="font-semibold uppercase">Kebun Raya</p>
+                                <p>Network : <span class="font-semibold">blablabla</span></p>
+                                <p>User / Password : <span class="font-semibold">blablalba / blablabla</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="#" class="mt-4 sm:mt-6 self-end text-[11px] sm:text-xs hover:underline">More info »</a>
+                </div>
+                <div class="rounded-xl p-4 sm:p-6 border border-black bg-amber-500 text-white h-full flex flex-col">
+                    <h2 class="text-base sm:text-lg font-bold tracking-wide">NEED HELP?</h2>
+                    <div class="mt-3 sm:mt-4 space-y-2.5 sm:space-y-3 text-sm">
+                        <div>
+                            <p class="font-semibold">Technical Matters</p>
+                            <a class="underline break-words" href="mailto:meowmeow@gmail.co">meowmeow@gmail.com</a>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Other Problems</p>
+                            <a class="underline break-words" href="mailto:meowmeow@gmail.co">meowmeow@gmail.co</a>
+                        </div>
+                    </div>
+                    <a href="#" class="mt-4 sm:mt-6 self-end text-[11px] sm:text-xs hover:underline">More info »</a>
+                </div>
+                <div class="rounded-xl p-4 sm:p-6 border border-black bg-red-600 text-white h-full flex flex-col">
+                    <h2 class="text-base sm:text-lg font-bold tracking-wide">BUG REPORTING</h2>
+                    <div class="mt-3 sm:mt-4 space-y-2.5 sm:space-y-3 text-sm">
+                        <div>
+                            <p class="font-semibold">KRBS</p>
+                            <a class="underline break-words" href="mailto:puis-meowmeow@gmail.co">meowmeow@gmail.co</a>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Lost and Found</p>
+                            <a class="underline break-words" href="mailto:meowmeow@gmail.co">meowmeow@gmail.co</a>
+                        </div>
+                    </div>
+                    <a href="#" class="mt-4 sm:mt-6 self-end text-[11px] sm:text-xs hover:underline">More info »</a>
+                </div>
+            </div>
     </section>
 </div>
