@@ -71,7 +71,7 @@
 
                 <button
                     type="submit"
-                    class="w-full rounded-3xl mt-10 bg-black text-white py-4 px-6 font-medium tracking-wide hover:bg-gray-800 focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-opacity-50 transform hover:scale-[1.02] transition-all duration-300">
+                    class="w-full rounded-3xl mt-10 bg-black text-white py-4 px-6 font-medium tracking-wide hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-opacity-50 transform hover:scale-[1.02] transition-all duration-300">
                     SIGN IN
                 </button>
 

@@ -7,9 +7,35 @@
             </div>
         </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl p-6 shadow-lg border border-black flex flex-wrap gap-3">
+                <h3 class="text-[#b10303] text-xl font-semibold text-black mb-4">Announcement!</h3>
+                <div class="grid grid-cols-1 md:grid-cols-[auto_1fr] md:gap-x-4 items-start">
+                    <div>
+                        <h4 class="text-[#b10303] bg-white">2025-09-12</h4>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Akan ada maintain website pada tanggal 12 September 2025.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-[auto_1fr] md:gap-x-4 items-start">
+                    <div>
+                        <h4 class="text-[#b10303] bg-white">2025-09-25</h4>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Akan ada acara bonding karyawan tanggal 25 September 2025.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-lg border border-black flex flex-wrap gap-3">
+                <h3 class="text-[#b10303] text-xl font-semibold text-black mb-4">Information</h3>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             <div
-                class="bg-white rounded-xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl border border-black">
+                class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Tickets</div>
                     <h2 class="text-xl font-semibold text-black">Open Tickets</h2>
@@ -19,13 +45,13 @@
                     <div class="text-sm text-gray-500">Total: <span
                             class="font-semibold text-black">{{ $openTicketsCount ?? 0 }}</span></div>
                     <a href="{{ route('create-ticket') }}"
-                        class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-800 hover:shadow-lg">New
+                        class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">New
                         Ticket</a>
                 </div>
             </div>
 
             <div
-                class="bg-white rounded-xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl border border-black">
+                class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Booking</div>
                     <h2 class="text-xl font-semibold text-black">Upcoming Bookings</h2>
@@ -35,12 +61,12 @@
                     <div class="text-sm text-gray-500">Minggu ini: <span
                             class="font-semibold text-black">{{ $upcomingBookings ?? 0 }}</span></div>
                     <a href=""
-                        class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-800 hover:shadow-lg">Manage</a>
+                        class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">Manage</a>
                 </div>
             </div>
 
             <div
-                class="bg-white rounded-xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl border border-black">
+                class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Packages</div>
                     <h2 class="text-xl font-semibold text-black">Packages</h2>
@@ -50,7 +76,7 @@
                     <div class="text-sm text-gray-500">In Transit: <span
                             class="font-semibold text-black">{{ $packagesInTransit ?? 0 }}</span></div>
                     <a href=""
-                        class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-800 hover:shadow-lg">View
+                        class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">View
                         All</a>
                 </div>
             </div>
@@ -60,7 +86,7 @@
             <h3 class="text-xl font-semibold text-black mb-4">Shortcuts</h3>
             <div class="flex flex-wrap gap-3">
                 <a href="{{ route('create-ticket') }}"
-                    class="bg-black text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-gray-800 hover:shadow-lg">+
+                    class="bg-black text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">+
                     Ticket</a>
                 <a href=""
                     class="bg-white border border-black text-black px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50">+
