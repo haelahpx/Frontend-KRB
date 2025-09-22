@@ -5,8 +5,10 @@ namespace App\Livewire\Pages\User;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Carbon\Carbon;
+use Livewire\Attributes\Title;
 
 #[Layout('layouts.app')]
+#[Title('BookRoom')]
 class Bookroom extends Component
 {
     public $rooms = [];

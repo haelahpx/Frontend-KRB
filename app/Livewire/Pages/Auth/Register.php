@@ -4,8 +4,10 @@ namespace App\Livewire\Pages\Auth;
 
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\Attributes\Title;
 
 #[Layout('layouts.auth')]
+#[Title('Register')]
 class Register extends Component
 {
     public function render()
