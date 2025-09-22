@@ -9,6 +9,7 @@ use App\Livewire\Pages\Auth\Login;
 use App\Livewire\Pages\Auth\Register;
 use App\Livewire\Pages\Errors\error404;
 use App\Livewire\Pages\User\Profile;
+use App\Livewire\Pages\User\Package;
 
 
 Route::get('/', Home::class)->name('home');
@@ -18,4 +19,4 @@ Route::get('/login', Login::class)->name('login');
 Route::get('/register', Register::class)->name('register');
 Route::fallback(error404::class);
 Route::get('/profile', Profile::class)->name('profile');
-
+Route::get('/package', Package::class)->name('package');

@@ -8,13 +8,13 @@
                 <form class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Meeting Title</label>
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Meeting Title</label>
                             <input type="text" placeholder="Enter meeting title"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                   class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Room Type</label>
-                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Room Type</label>
+                            <select class="w-full px-3 py-2 border text-gray-900 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 <option>Select room type</option>
                                 <option>Conference Room</option>
                                 <option>Board Room</option>
@@ -26,13 +26,13 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Date</label>
                             <input type="date"
-                                class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                   class="w-full px-3 text-gray-900 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Duration</label>
-                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Duration</label>
+                            <select class="w-full px-3 text-gray-900 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 <option>Select duration</option>
                                 <option>30 minutes</option>
                                 <option>1 hour</option>
@@ -46,53 +46,53 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Start Time</label>
                             <input type="time"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                   class="w-full px-3 py-2 border text-gray-900 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Number of Attendees</label>
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Number of Attendees</label>
                             <input type="number" placeholder="0" min="1"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                   class="w-full px-3 text-gray-900 placeholder:text-gray-400 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-3">Additional Requirements</label>
+                        <label class="block text-sm font-medium text-gray-900 mb-3">Additional Requirements</label>
                         <div class="grid grid-cols-2 gap-4">
                             <label class="flex items-center space-x-2">
                                 <input type="checkbox" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                <span class="text-sm text-gray-700">Projector</span>
+                                <span class="text-sm text-gray-900">Projector</span>
                             </label>
                             <label class="flex items-center space-x-2">
                                 <input type="checkbox" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                <span class="text-sm text-gray-700">Whiteboard</span>
+                                <span class="text-sm text-gray-900">Whiteboard</span>
                             </label>
                             <label class="flex items-center space-x-2">
                                 <input type="checkbox" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                <span class="text-sm text-gray-700">Video Conference</span>
+                                <span class="text-sm text-gray-900">Video Conference</span>
                             </label>
                             <label class="flex items-center space-x-2">
                                 <input type="checkbox" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                <span class="text-sm text-gray-700">Catering</span>
+                                <span class="text-sm text-gray-900">Catering</span>
                             </label>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Special Notes</label>
+                        <label class="block text-sm font-medium text-gray-900 mb-2">Special Notes</label>
                         <textarea placeholder="Any additional information or special requirements..." rows="4"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"></textarea>
+                                  class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"></textarea>
                     </div>
 
                     <div class="flex space-x-4 pt-4">
                         <button type="button"
-                            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+                                class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
                             Cancel
                         </button>
                         <button type="submit"
-                            onclick="window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', title: 'Success!', message: 'Ticket created successfully.', duration: 4000 } }))"
-                            class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-red-800 transition-colors">
+                                onclick="window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', title: 'Success!', message: 'Ticket created successfully.', duration: 4000 } }))"
+                                class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors">
                             Submit Request
                         </button>
                     </div>

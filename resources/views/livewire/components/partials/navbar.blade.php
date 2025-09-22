@@ -110,9 +110,9 @@
                         Book Room
                     </a>
 
-                    <a href="{{ route('book-room') }}"
+                    <a href="{{ route('package') }}"
                         class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
-             {{ request()->routeIs('packages') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
+             {{ request()->routeIs('package') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Package
                     </a>
 
@@ -153,10 +153,10 @@
            {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
                     Book Room
                 </a>
-                <a href="{{ route('book-room') }}" class="block px-4 py-3 text-base font-medium rounded-lg
-           {{ request()->routeIs('packages') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
+                <a href="{{ route('package') }}" class="block px-4 py-3 text-base font-medium rounded-lg
+           {{ request()->routeIs('package') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
                     Package
-                </a>
+                </a>    
                 <div class="pt-2">
                     <a href="{{ route('login') }}" class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
                         Login / Register

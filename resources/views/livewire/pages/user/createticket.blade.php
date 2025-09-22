@@ -19,13 +19,13 @@
                     <form class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Subject</label>
                                 <input type="text" placeholder="Enter ticket subject"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                    class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Priority</label>
+                                <select class="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                     <option>Select priority</option>
                                     <option value="LOW">Low</option>
                                     <option value="MEDIUM">Medium</option>
@@ -37,19 +37,20 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Company</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                                    <option>Select company</option>
-                                    <option value="1">Tech Solutions Ltd</option>
-                                    <option value="2">Digital Marketing Co</option>
-                                    <option value="3">Healthcare Systems</option>
-                                    <option value="4">Finance Corp</option>
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Department</label>
+                                <select class="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                    <option>Select department</option>
+                                    <option value="1">IT Support</option>
+                                    <option value="2">Human Resources</option>
+                                    <option value="3">Finance</option>
+                                    <option value="4">Operations</option>
+                                    <option value="5">Marketing</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                                    <option>Select department</option>
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Assigned to what department</label>
+                                <select class="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                    <option>Select user</option>
                                     <option value="1">IT Support</option>
                                     <option value="2">Human Resources</option>
                                     <option value="3">Finance</option>
@@ -59,35 +60,14 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Assigned User</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                                    <option>Select user</option>
-                                    <option value="1">Haikal - IT Admin</option>
-                                    <option value="2">Clan - HR Manager</option>
-                                    <option value="3">Sam - Finance Lead</option>
-                                    <option value="4">Yusuf - Support Specialist</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                                    <option value="PENDING" selected>Pending</option>
-                                    <option value="PROCESS">In Process</option>
-                                    <option value="COMPLETE">Complete</option>
-                                </select>
-                            </div>
-                        </div>
-
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Description</label>
                             <textarea placeholder="Describe your issue in detail..." rows="6"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"></textarea>
+                                class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"></textarea>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Attachments</label>
                             <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
                                 <input type="file" multiple accept=".jpg,.png,.pdf,.doc,.docx" class="hidden" id="file-upload">
                                 <label for="file-upload" class="cursor-pointer">
@@ -106,7 +86,7 @@
                             </button>
                             <button type="submit"
                                 onclick="window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', title: 'Success!', message: 'Ticket created successfully.', duration: 4000 } }))"
-                                class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-red-800 transition-colors">
+                                class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors">
                                 Submit Ticket
                             </button>
                         </div>
@@ -117,7 +97,6 @@
             <div class="space-y-6">
                 <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Ticket Statistics</h3>
-
                     <div class="space-y-3">
                         <div class="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                             <div>
@@ -128,7 +107,6 @@
                             </div>
                             <span class="text-sm font-medium text-yellow-700">12</span>
                         </div>
-
                         <div class="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
                             <div>
                                 <div class="flex items-center space-x-2">
@@ -138,7 +116,6 @@
                             </div>
                             <span class="text-sm font-medium text-blue-700">8</span>
                         </div>
-
                         <div class="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-md">
                             <div>
                                 <div class="flex items-center space-x-2">
@@ -148,7 +125,6 @@
                             </div>
                             <span class="text-sm font-medium text-green-700">45</span>
                         </div>
-
                         <div class="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-md">
                             <div>
                                 <div class="flex items-center space-x-2">
@@ -160,10 +136,8 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Tickets</h3>
-
                     <div class="space-y-4">
                         <div class="flex items-start space-x-3">
                             <div class="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center flex-shrink-0">
@@ -175,7 +149,6 @@
                                 <p class="text-xs text-gray-500 mt-1">#TCK-2024-001</p>
                             </div>
                         </div>
-
                         <div class="flex items-start space-x-3">
                             <div class="w-8 h-8 bg-yellow-100 rounded-md flex items-center justify-center flex-shrink-0">
                                 <div class="w-2 h-2 bg-yellow-600 rounded-full"></div>
@@ -186,7 +159,6 @@
                                 <p class="text-xs text-gray-500 mt-1">#TCK-2024-002</p>
                             </div>
                         </div>
-
                         <div class="flex items-start space-x-3">
                             <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center flex-shrink-0">
                                 <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
@@ -197,7 +169,6 @@
                                 <p class="text-xs text-gray-500 mt-1">#TCK-2024-003</p>
                             </div>
                         </div>
-
                         <div class="flex items-start space-x-3">
                             <div class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center flex-shrink-0">
                                 <div class="w-2 h-2 bg-green-600 rounded-full"></div>
@@ -210,10 +181,8 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-
                     <div class="space-y-2">
                         <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
                             View All Tickets
