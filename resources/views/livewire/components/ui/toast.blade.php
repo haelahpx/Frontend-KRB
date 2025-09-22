@@ -17,7 +17,7 @@
         // Minimalist black/white card + gentle shadow
         getToastClasses(type) {
             const base =
-              'relative overflow-hidden rounded-xl p-4 border border-black/15 bg-white/95 text-black shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-all duration-500 ease-out';
+            'relative overflow-hidden rounded-xl p-4 border border-black/15 bg-white/95 text-black shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-all duration-500 ease-out';
             // Small variations per type (all grayscale)
             const variants = {
                 success: 'border-black/20',
