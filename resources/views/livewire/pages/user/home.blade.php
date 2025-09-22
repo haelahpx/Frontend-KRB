@@ -109,9 +109,9 @@
                     class="bg-white border border-black text-black px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50">+
                     Package</a>
             </div>
-            
+
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-6">
-                <div class="rounded-xl p-4 sm:p-6 border border-black bg-green-600 text-white h-full flex flex-col">
+                <div class="rounded-xl p-4 sm:p-6 border border-green-500 bg-emerald-900 text-white h-full flex flex-col">
                     <h2 class="text-base sm:text-lg font-bold tracking-wide">WIFI ACCESS</h2>
                     <div class="mt-3 sm:mt-4 space-y-3 sm:space-y-4 text-sm">
                         <div class="flex gap-3">
@@ -133,7 +133,7 @@
                     </div>
                     <a href="#" class="mt-4 sm:mt-6 self-end text-[11px] sm:text-xs hover:underline">More info »</a>
                 </div>
-                <div class="rounded-xl p-4 sm:p-6 border border-black bg-amber-500 text-white h-full flex flex-col">
+                <div class="rounded-xl p-4 sm:p-6 border border-yellow-500 bg-yellow-700 text-white h-full flex flex-col">
                     <h2 class="text-base sm:text-lg font-bold tracking-wide">NEED HELP?</h2>
                     <div class="mt-3 sm:mt-4 space-y-2.5 sm:space-y-3 text-sm">
                         <div>
@@ -147,7 +147,7 @@
                     </div>
                     <a href="#" class="mt-4 sm:mt-6 self-end text-[11px] sm:text-xs hover:underline">More info »</a>
                 </div>
-                <div class="rounded-xl p-4 sm:p-6 border border-black bg-red-600 text-white h-full flex flex-col">
+                <div class="rounded-xl p-4 sm:p-6 border border-red-500 bg-red-900 text-white h-full flex flex-col">
                     <h2 class="text-base sm:text-lg font-bold tracking-wide">BUG REPORTING</h2>
                     <div class="mt-3 sm:mt-4 space-y-2.5 sm:space-y-3 text-sm">
                         <div>
