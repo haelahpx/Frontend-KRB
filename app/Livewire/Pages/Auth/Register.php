@@ -34,7 +34,7 @@ class Register extends Component
 
     public function mount(): void
     {
-        if (auth()->check()) {
+        if (Auth::check()) {
             redirect()->route('home')->send();
         }
 

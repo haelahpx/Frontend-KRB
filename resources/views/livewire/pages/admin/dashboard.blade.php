@@ -171,4 +171,11 @@
             </div>
         </div>
     </div>
+    <form method="POST" action="{{ route('logout') }}" class="pt-2">
+        @csrf
+        <button type="submit"
+            class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
+            Logout
+        </button>
+    </form>
 </div>

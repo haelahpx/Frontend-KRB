@@ -21,7 +21,7 @@ class Login extends Component
     public function mount()
     {
         // Kalau sudah login, langsung arahkan ke home
-        if (auth()->check()) {
+        if (Auth::check()) {
             return redirect()->route('home');
         }
     }
