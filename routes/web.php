@@ -10,6 +10,7 @@ use App\Livewire\Pages\Errors\error404;
 use App\Livewire\Pages\User\Profile;
 use App\Livewire\Pages\User\Package;
 use App\Livewire\Pages\User\Ticketstatus;
+use App\Livewire\Pages\Admin\Dashboard;
 
 
 Route::get('/', Home::class)->name('home');
@@ -21,3 +22,4 @@ Route::fallback(error404::class);
 Route::get('/profile', Profile::class)->name('profile');
 Route::get('/package', Package::class)->name('package');
 Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
+Route::get('/admin/dashboard', Dashboard::class)->name('admin.dashboard');

@@ -8,47 +8,35 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-xl p-6 shadow-lg border border-black flex flex-wrap gap-3">
+            <div class="bg-white rounded-xl p-6 shadow-lg border border-black space-y-4">
                 <h3 class="text-[#b10303] text-xl font-semibold mb-4">Announcement!</h3>
-                <div class="grid grid-cols-1 md:grid-cols-[auto_1fr] md:gap-x-4 items-start">
-                    <div>   
-                        <h4 class="text-[#b10303] bg-white">2025-09-12</h4>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">Akan ada maintain website pada tanggal 12 September 2025.</p>
-                    </div>
+                <hr>
+                <div class="flex gap-4 items-start">
+                    <h4 class="text-[#b10303] font-medium min-w-[120px]">2025-09-12</h4>
+                    <p class="text-gray-600">Akan ada maintain website pada tanggal 12 September 2025.</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-[auto_1fr] md:gap-x-4 items-start">
-                    <div>
-                        <h4 class="text-[#b10303] bg-white">2025-09-25</h4>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">Akan ada acara bonding karyawan tanggal 25 September 2025.</p>
-                    </div>
+
+                <div class="flex gap-4 items-start">
+                    <h4 class="text-[#b10303] font-medium min-w-[120px]">2025-09-25</h4>
+                    <p class="text-gray-600">Akan ada acara bonding karyawan tanggal 25 September 2025.</p>
                 </div>
             </div>
 
-            <div
-                class="grid grid-cols-1 md:grid-cols-2bg-white rounded-xl p-6 shadow-lg border border-black flex flex-wrap gap-3">
+            <div class="bg-white rounded-xl p-6 shadow-lg border border-black space-y-4">
                 <h3 class="text-[#b10303] text-xl font-semibold mb-4">Information</h3>
-                <div class="grid grid-cols-1 md:grid-cols-[auto_1fr] md:gap-x-4 items-start">
-                    <div>
-                        <p class="text-gray-600 bg-white">Event berkebun</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">2025-09-1 until 2025-10-2</p>
-                    </div>
+                <hr>
+                <div class="flex gap-4 items-start">
+                    <p class="text-gray-600 font-medium min-w-[120px]">Event berkebun</p>
+                    <p class="text-gray-600">2025-09-1 until 2025-10-2</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-[auto_1fr] md:gap-x-4 items-start">
-                    <div>
-                        <h4 class="text-gray-600 bg-white">Rapat bulanan</h4>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">2025-09-27</p>
-                    </div>
+
+                <div class="flex gap-4 items-start">
+                    <p class="text-gray-600 font-medium min-w-[120px]">Rapat bulanan</p>
+                    <p class="text-gray-600">2025-09-27</p>
                 </div>
             </div>
         </div>
+
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             <div class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
@@ -214,18 +202,6 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium mb-2">Company</label>
-                            <select name="company_id" class="w-full px-3 py-2 border border-black rounded-md
-                        focus:outline-none focus:ring-2 focus:ring-black focus:border-black">
-                                <option value="" class="text-gray-500">Select company</option>
-                                <option value="1">Tech Solutions Ltd</option>
-                                <option value="2">Digital Marketing Co</option>
-                                <option value="3">Healthcare Systems</option>
-                                <option value="4">Finance Corp</option>
-                            </select>
-                        </div>
-
-                        <div>
                             <label class="block text-sm font-medium mb-2">Department</label>
                             <select name="department_id" class="w-full px-3 py-2 border border-black rounded-md
                         focus:outline-none focus:ring-2 focus:ring-black focus:border-black">
@@ -237,32 +213,19 @@
                                 <option value="5">Marketing</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium mb-2">Assigned User</label>
+                            <label class="block text-sm font-medium mb-2">Assigned Department</label>
                             <select name="assigned_user_id" class="w-full px-3 py-2 border border-black rounded-md
                         focus:outline-none focus:ring-2 focus:ring-black focus:border-black">
                                 <option value="" class="text-gray-500">Select user</option>
-                                <option value="1">Haikal - IT Admin</option>
-                                <option value="2">Clan - HR Manager</option>
-                                <option value="3">Sam - Finance Lead</option>
-                                <option value="4">Yusuf - Support Specialist</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Status</label>
-                            <select name="status" class="w-full px-3 py-2 border border-black rounded-md
-                        focus:outline-none focus:ring-2 focus:ring-black focus:border-black">
-                                <option value="PENDING">Pending</option>
-                                <option value="PROCESS">In Process</option>
-                                <option value="COMPLETE">Complete</option>
+                                <option value="1">IT Support</option>
+                                <option value="2">Human Resources</option>
+                                <option value="3">Finance</option>
+                                <option value="4">Operations</option>
+                                <option value="5">Marketing</option>
                             </select>
                         </div>
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium mb-2">Description</label>
                         <textarea name="description" rows="5" placeholder="Describe your issue in detail..." class="w-full px-3 py-2 border border-black rounded-md

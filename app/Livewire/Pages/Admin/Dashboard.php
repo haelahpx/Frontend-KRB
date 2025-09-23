@@ -3,9 +3,11 @@
 namespace App\Livewire\Pages\Admin;
 
 use Livewire\Component;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 
-#[Title('Dashboard')]
+#[Layout('layouts.admin')]
+#[Title('Admin-Dashboard')]
 class Dashboard extends Component
 {
     public function render()
