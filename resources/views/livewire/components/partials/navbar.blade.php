@@ -106,13 +106,13 @@
 
                     <a href="{{ route('book-room') }}"
                         class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
-             {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
+            {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Book Room
                     </a>
 
                     <a href="{{ route('package') }}"
                         class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
-             {{ request()->routeIs('package') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
+            {{ request()->routeIs('package') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Package
                     </a>
 

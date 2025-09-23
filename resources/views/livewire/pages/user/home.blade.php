@@ -54,13 +54,13 @@
             <div class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Tickets</div>
-                    <h2 class="text-xl font-semibold text-black">Open Tickets</h2>
+                    <h2 class="text-xl font-semibold text-black">Tickets Status</h2>
                 </div>
                 <p class="text-gray-600 mb-4">Ringkasan tiket yang belum selesai.</p>
                 <div class="flex justify-between items-center">
                     <div class="text-sm text-gray-500">Total: <span
                             class="font-semibold text-black">{{ $openTicketsCount ?? 0 }}</span></div>
-                    <a href="{{ route('create-ticket') }}"
+                    <a href="{{ route('ticketstatus') }}"
                         class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">Manage</a>
                 </div>
             </div>
@@ -68,7 +68,7 @@
             <div class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Booking</div>
-                    <h2 class="text-xl font-semibold text-black">Upcoming Bookings</h2>
+                    <h2 class="text-xl font-semibold text-black">Booking Status</h2>
                 </div>
                 <p class="text-gray-600 mb-4">Lihat booking ruangan.</p>
                 <div class="flex justify-between items-center">
@@ -95,11 +95,8 @@
             </div>
         </div>
 
-        <!-- Shortcuts card (REPLACE your existing one with this) -->
         <div class="bg-white rounded-xl p-6 shadow-lg border border-black">
             <h3 class="text-xl font-semibold text-black mb-4">Shortcuts</h3>
-
-            <!-- Quick action buttons -->
             <div class="flex flex-wrap gap-3">
                 <flux:modal.trigger name="new-ticket">
                     <button type="button"
@@ -123,10 +120,7 @@
                 </flux:modal.trigger>
             </div>
 
-            <!-- subtle divider -->
             <div class="my-6 h-px bg-black/20"></div>
-
-            <!-- Your 3-card grid lives INSIDE the same border now -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div
                     class="rounded-xl p-4 sm:p-6 border border-green-500 bg-emerald-900 text-white h-full flex flex-col">
@@ -261,7 +255,7 @@
                         <div>
                             <label class="block text-sm font-medium mb-2">Status</label>
                             <select name="status" class="w-full px-3 py-2 border border-black rounded-md
-                         focus:outline-none focus:ring-2 focus:ring-black focus:border-black">
+                        focus:outline-none focus:ring-2 focus:ring-black focus:border-black">
                                 <option value="PENDING">Pending</option>
                                 <option value="PROCESS">In Process</option>
                                 <option value="COMPLETE">Complete</option>
