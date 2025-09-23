@@ -14,7 +14,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 
-<body class="bg-white"  data-theme="light">
+<body class="bg-white" data-theme="light">
     @include('livewire.components.partials.navbar')
 
     <main class="container mx-auto py-8">
