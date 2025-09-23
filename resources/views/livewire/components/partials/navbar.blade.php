@@ -87,45 +87,58 @@
             <div class="flex justify-between items-center h-16">
                 <div class="flex-shrink-0">
                     <a href="{{ route('home') }}" class="transition-transform duration-300 hover:scale-105">
-                        <img src="{{ asset('images/logo/kebun-raya-bogor.png') }}" alt="KRBS Logo" class="h-10 w-auto filter brightness-0 invert">
+                        <img src="{{ asset('images/logo/kebun-raya-bogor.png') }}" alt="KRBS Logo"
+                            class="h-10 w-auto filter brightness-0 invert">
                     </a>
                 </div>
 
+                {{-- DESKTOP NAV --}}
                 <nav class="hidden md:flex items-center gap-2">
-                    <a href="{{ route('home') }}"
-                        class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
-             {{ request()->routeIs('home') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
+                    <a href="{{ route('home') }}" class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
+               {{ request()->routeIs('home') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Home
                     </a>
-
                     <a href="{{ route('create-ticket') }}"
                         class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
-             {{ request()->routeIs('create-ticket') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
+               {{ request()->routeIs('create-ticket') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Create Ticket
                     </a>
-
-                    <a href="{{ route('book-room') }}"
-                        class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
-            {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
+                    <a href="{{ route('book-room') }}" class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
+               {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Book Room
                     </a>
-
-                    <a href="{{ route('package') }}"
-                        class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
-            {{ request()->routeIs('package') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
+                    <a href="{{ route('package') }}" class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
+               {{ request()->routeIs('package') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Package
                     </a>
 
-                    <a href="{{ route('login') }}"
-                        class="ml-2 btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
-                        Login / Register
-                    </a>
+                    {{-- Tampilkan Login/Register hanya untuk guest --}}
+                    @guest
+                        <a href="{{ route('login') }}"
+                            class="ml-2 btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                            Login / Register
+                        </a>
+                    @endguest
+
+                    {{-- Tampilkan Logout (dan optional Profile) untuk user yang sudah login --}}
+                    @auth
+                        <a href="{{ route('profile') }}"
+                            class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            Profile
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}" class="ml-2">
+                            @csrf
+                            <button type="submit"
+                                class="btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                                Logout
+                            </button>
+                        </form>
+                    @endauth
                 </nav>
 
+                {{-- HAMBURGER --}}
                 <div class="md:hidden">
-                    <button id="hamburger"
-                        aria-label="Toggle navigation"
-                        aria-expanded="false"
+                    <button id="hamburger" aria-label="Toggle navigation" aria-expanded="false"
                         aria-controls="mobile-menu"
                         class="hamburger inline-flex items-center justify-center p-2 rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50 transition-all">
                         <span class="sr-only">Open main menu</span>
@@ -139,29 +152,54 @@
             </div>
         </div>
 
+        {{-- MOBILE MENU --}}
         <div id="mobile-menu" class="md:hidden hidden border-t border-gray-800">
             <div class="px-4 py-3 bg-black mobile-menu-slide">
-                <a href="{{ route('home') }}" class="block px-4 py-3 text-base font-medium rounded-lg
+                <a href="{{ route('home') }}"
+                    class="block px-4 py-3 text-base font-medium rounded-lg
            {{ request()->routeIs('home') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
                     Home
                 </a>
-                <a href="{{ route('create-ticket') }}" class="block px-4 py-3 text-base font-medium rounded-lg
+                <a href="{{ route('create-ticket') }}"
+                    class="block px-4 py-3 text-base font-medium rounded-lg
            {{ request()->routeIs('create-ticket') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
                     Create Ticket
                 </a>
-                <a href="{{ route('book-room') }}" class="block px-4 py-3 text-base font-medium rounded-lg
+                <a href="{{ route('book-room') }}"
+                    class="block px-4 py-3 text-base font-medium rounded-lg
            {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
                     Book Room
                 </a>
-                <a href="{{ route('package') }}" class="block px-4 py-3 text-base font-medium rounded-lg
+                <a href="{{ route('package') }}"
+                    class="block px-4 py-3 text-base font-medium rounded-lg
            {{ request()->routeIs('package') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
                     Package
-                </a>    
-                <div class="pt-2">
-                    <a href="{{ route('login') }}" class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
-                        Login / Register
+                </a>
+
+                {{-- Guest: tombol Login/Register --}}
+                @guest
+                    <div class="pt-2">
+                        <a href="{{ route('login') }}"
+                            class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
+                            Login / Register
+                        </a>
+                    </div>
+                @endguest
+
+                {{-- Auth: Profile + Logout --}}
+                @auth
+                    <a href="{{ route('profile') }}"
+                        class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                        Profile
                     </a>
-                </div>
+                    <form method="POST" action="{{ route('logout') }}" class="pt-2">
+                        @csrf
+                        <button type="submit"
+                            class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
+                            Logout
+                        </button>
+                    </form>
+                @endauth
             </div>
         </div>
     </div>
@@ -171,42 +209,13 @@
         const sheet = menu.querySelector('.mobile-menu-slide');
         const burger = document.getElementById('hamburger');
 
-        function openMenu() {
-            menu.classList.remove('hidden');
-            requestAnimationFrame(() => sheet.classList.add('show'));
-            burger.classList.add('hamburger-active');
-            burger.setAttribute('aria-expanded', 'true');
-        }
+        function openMenu() { menu.classList.remove('hidden'); requestAnimationFrame(() => sheet.classList.add('show')); burger.classList.add('hamburger-active'); burger.setAttribute('aria-expanded', 'true'); }
+        function closeMenu() { sheet.classList.remove('show'); burger.classList.remove('hamburger-active'); burger.setAttribute('aria-expanded', 'false'); setTimeout(() => menu.classList.add('hidden'), 180); }
 
-        function closeMenu() {
-            sheet.classList.remove('show');
-            burger.classList.remove('hamburger-active');
-            burger.setAttribute('aria-expanded', 'false');
-            setTimeout(() => menu.classList.add('hidden'), 180);
-        }
-
-        burger.addEventListener('click', () => {
-            if (burger.classList.contains('hamburger-active')) closeMenu();
-            else openMenu();
-        });
-
-        document.addEventListener('click', (e) => {
-            const navbar = document.querySelector('.bg-black');
-            if (!navbar.contains(e.target) && burger.classList.contains('hamburger-active')) closeMenu();
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && burger.classList.contains('hamburger-active')) closeMenu();
-        });
-
-        window.addEventListener('resize', () => {
-            if (window.innerWidth >= 768) {
-                sheet.classList.remove('show');
-                menu.classList.add('hidden');
-                burger.classList.remove('hamburger-active');
-                burger.setAttribute('aria-expanded', 'false');
-            }
-        });
+        burger.addEventListener('click', () => burger.classList.contains('hamburger-active') ? closeMenu() : openMenu());
+        document.addEventListener('click', (e) => { const navbar = document.querySelector('.bg-black'); if (!navbar.contains(e.target) && burger.classList.contains('hamburger-active')) closeMenu(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && burger.classList.contains('hamburger-active')) closeMenu(); });
+        window.addEventListener('resize', () => { if (window.innerWidth >= 768) { sheet.classList.remove('show'); menu.classList.add('hidden'); burger.classList.remove('hamburger-active'); burger.setAttribute('aria-expanded', 'false'); } });
     </script>
 </body>
 
