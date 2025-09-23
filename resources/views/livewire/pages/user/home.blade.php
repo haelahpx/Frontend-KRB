@@ -11,7 +11,7 @@
             <div class="bg-white rounded-xl p-6 shadow-lg border border-black flex flex-wrap gap-3">
                 <h3 class="text-[#b10303] text-xl font-semibold mb-4">Announcement!</h3>
                 <div class="grid grid-cols-1 md:grid-cols-[auto_1fr] md:gap-x-4 items-start">
-                    <div>
+                    <div>   
                         <h4 class="text-[#b10303] bg-white">2025-09-12</h4>
                     </div>
                     <div>

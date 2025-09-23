@@ -8,8 +8,11 @@ use Livewire\Attributes\Title;
 
 #[Layout('layouts.app')]
 #[Title('CreateTicket')]
-class CreateTicket extends Component
+
+class Createticket extends Component
 {
+    public string $tab = 'create'; // 'create' | 'calendar'
+
     public function render()
     {
         return view('livewire.pages.user.createticket');
