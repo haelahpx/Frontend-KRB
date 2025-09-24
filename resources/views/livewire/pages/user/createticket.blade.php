@@ -1,4 +1,4 @@
-<div class="max-w-6xl mx-auto p-6">
+<div class="max-w-6xl mx-auto">
     <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6 mb-8">
         <div class="flex items-center justify-between">
             <h1 class="text-3xl font-bold text-gray-900">Support Ticket System</h1>
@@ -14,9 +14,10 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2">
-            <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
+    <div class="bg-white rounded-xl border-2 border-black/80 shadow-md p-4">
+        <div class="flex flex-col lg:flex-row gap-6">
+            <div class="flex-1">
+                <div class="bg-white rounded-xl border-2 border-black/80 shadow-md p-6">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-2">Create Support Ticket</h2>
                 <p class="text-gray-600 mb-6">Fill out the form below to submit a new support ticket</p>
 
@@ -103,8 +104,8 @@
             </div>
         </div>
 
-        <div class="space-y-6">
-            <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
+            <div class="w-72 space-y-6">
+                <div class="bg-white rounded-xl border-2 border-black/80 shadow-md p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Ticket Statistics</h3>
                 <div class="space-y-3">
                     <div class="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-md">
