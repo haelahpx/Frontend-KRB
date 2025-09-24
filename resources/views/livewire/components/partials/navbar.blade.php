@@ -114,25 +114,25 @@
 
                     {{-- Tampilkan Login/Register hanya untuk guest --}}
                     @guest
-                        <a href="{{ route('login') }}"
-                            class="ml-2 btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
-                            Login / Register
-                        </a>
+                    <a href="{{ route('login') }}"
+                        class="ml-2 btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                        Login / Register
+                    </a>
                     @endguest
 
                     {{-- Tampilkan Logout (dan optional Profile) untuk user yang sudah login --}}
                     @auth
-                        <a href="{{ route('profile') }}"
-                            class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                            Profile
-                        </a>
-                        <form method="POST" action="{{ route('logout') }}" class="ml-2">
-                            @csrf
-                            <button type="submit"
-                                class="btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
-                                Logout
-                            </button>
-                        </form>
+                    <a href="{{ route('profile') }}"
+                        class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                        Profile
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}" class="ml-2">
+                        @csrf
+                        <button type="submit"
+                            class="btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                            Logout
+                        </button>
+                    </form>
                     @endauth
                 </nav>
 
@@ -178,27 +178,27 @@
 
                 {{-- Guest: tombol Login/Register --}}
                 @guest
-                    <div class="pt-2">
-                        <a href="{{ route('login') }}"
-                            class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
-                            Login / Register
-                        </a>
-                    </div>
+                <div class="pt-2">
+                    <a href="{{ route('login') }}"
+                        class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
+                        Login / Register
+                    </a>
+                </div>
                 @endguest
 
                 {{-- Auth: Profile + Logout --}}
                 @auth
-                    <a href="{{ route('profile') }}"
-                        class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                        Profile
-                    </a>
-                    <form method="POST" action="{{ route('logout') }}" class="pt-2">
-                        @csrf
-                        <button type="submit"
-                            class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
-                            Logout
-                        </button>
-                    </form>
+                <a href="{{ route('profile') }}"
+                    class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                    Profile
+                </a>
+                <form method="POST" action="{{ route('logout') }}" class="pt-2">
+                    @csrf
+                    <button type="submit"
+                        class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
+                        Logout
+                    </button>
+                </form>
                 @endauth
             </div>
         </div>
@@ -209,13 +209,36 @@
         const sheet = menu.querySelector('.mobile-menu-slide');
         const burger = document.getElementById('hamburger');
 
-        function openMenu() { menu.classList.remove('hidden'); requestAnimationFrame(() => sheet.classList.add('show')); burger.classList.add('hamburger-active'); burger.setAttribute('aria-expanded', 'true'); }
-        function closeMenu() { sheet.classList.remove('show'); burger.classList.remove('hamburger-active'); burger.setAttribute('aria-expanded', 'false'); setTimeout(() => menu.classList.add('hidden'), 180); }
+        function openMenu() {
+            menu.classList.remove('hidden');
+            requestAnimationFrame(() => sheet.classList.add('show'));
+            burger.classList.add('hamburger-active');
+            burger.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeMenu() {
+            sheet.classList.remove('show');
+            burger.classList.remove('hamburger-active');
+            burger.setAttribute('aria-expanded', 'false');
+            setTimeout(() => menu.classList.add('hidden'), 180);
+        }
 
         burger.addEventListener('click', () => burger.classList.contains('hamburger-active') ? closeMenu() : openMenu());
-        document.addEventListener('click', (e) => { const navbar = document.querySelector('.bg-black'); if (!navbar.contains(e.target) && burger.classList.contains('hamburger-active')) closeMenu(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && burger.classList.contains('hamburger-active')) closeMenu(); });
-        window.addEventListener('resize', () => { if (window.innerWidth >= 768) { sheet.classList.remove('show'); menu.classList.add('hidden'); burger.classList.remove('hamburger-active'); burger.setAttribute('aria-expanded', 'false'); } });
+        document.addEventListener('click', (e) => {
+            const navbar = document.querySelector('.bg-black');
+            if (!navbar.contains(e.target) && burger.classList.contains('hamburger-active')) closeMenu();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && burger.classList.contains('hamburger-active')) closeMenu();
+        });
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                sheet.classList.remove('show');
+                menu.classList.add('hidden');
+                burger.classList.remove('hamburger-active');
+                burger.setAttribute('aria-expanded', 'false');
+            }
+        });
     </script>
 </body>
 
