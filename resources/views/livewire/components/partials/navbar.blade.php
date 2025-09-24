@@ -95,23 +95,19 @@
                 {{-- DESKTOP NAV --}}
                 <nav class="hidden md:flex items-center gap-2">
                     <a href="{{ route('home') }}" class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
-               {{ request()->routeIs('home') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
+            {{ request()->routeIs('home') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Home
                     </a>
                     <a href="{{ route('create-ticket') }}"
                         class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
-               {{ request()->routeIs('create-ticket') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
+            {{ request()->routeIs('create-ticket') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Create Ticket
                     </a>
                     <a href="{{ route('book-room') }}" class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
-               {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
+            {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Book Room
                     </a>
-                    <a href="{{ route('package') }}" class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
-               {{ request()->routeIs('package') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
-                        Package
-                    </a>
-
+                    
                     {{-- Tampilkan Login/Register hanya untuk guest --}}
                     @guest
                     <a href="{{ route('login') }}"
@@ -157,22 +153,22 @@
             <div class="px-4 py-3 bg-black mobile-menu-slide">
                 <a href="{{ route('home') }}"
                     class="block px-4 py-3 text-base font-medium rounded-lg
-           {{ request()->routeIs('home') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
+        {{ request()->routeIs('home') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
                     Home
                 </a>
                 <a href="{{ route('create-ticket') }}"
                     class="block px-4 py-3 text-base font-medium rounded-lg
-           {{ request()->routeIs('create-ticket') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
+        {{ request()->routeIs('create-ticket') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
                     Create Ticket
                 </a>
                 <a href="{{ route('book-room') }}"
                     class="block px-4 py-3 text-base font-medium rounded-lg
-           {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
+        {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
                     Book Room
                 </a>
                 <a href="{{ route('package') }}"
                     class="block px-4 py-3 text-base font-medium rounded-lg
-           {{ request()->routeIs('package') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
+        {{ request()->routeIs('package') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
                     Package
                 </a>
 
