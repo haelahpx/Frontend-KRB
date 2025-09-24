@@ -11,6 +11,7 @@ use App\Livewire\Pages\User\Bookroom;
 use App\Livewire\Pages\User\Profile;
 use App\Livewire\Pages\User\Package;
 use App\Livewire\Pages\User\Ticketstatus;
+use App\Livewire\Pages\User\bookingstatus;
 
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Pages\Superadmin\Dashboard as SuperadminDashboard;
@@ -55,6 +56,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile',      Profile::class)->name('profile');
     Route::get('/package',      Package::class)->name('package');
     Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
+    Route::get('/bookingstatus', bookingstatus::class)->name('bookingstatus');
+    
 
 
     // ----- Admin routes -----
@@ -87,3 +90,5 @@ Route::middleware('auth')->group(function () {
 // Fallback 404
 // -----------------------------
 Route::fallback(Error404::class);
+
+
