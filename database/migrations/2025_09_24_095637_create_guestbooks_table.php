@@ -22,7 +22,6 @@ return new class extends Migration {
             $table->string('keperluan')->nullable();
             $table->string('petugas_penjaga')->nullable();
             $table->timestamps();
-            $table->index(['date', 'company_id']);
         });
 
     }

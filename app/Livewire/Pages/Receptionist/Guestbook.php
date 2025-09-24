@@ -7,7 +7,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Carbon;
-use App\Models\Guestbook as GuestbookModel; // ⬅️ alias the model
+use App\Models\Guestbook as GuestbookModel;
 
 #[Layout('layouts.receptionist')]
 #[Title('Buku Tamu')]
@@ -15,35 +15,39 @@ class Guestbook extends Component
 {
     use WithPagination;
 
-    public ?string $tanggal = null;
-    public ?string $nama = null;
-    public ?string $no_hp = null;
+    // form fields
+    public ?string $date = null;
+    public ?string $name = null;
+    public ?string $phone_number = null;
     public ?string $jam_in = null;
     public ?string $jam_out = null;
     public ?string $instansi = null;
     public ?string $keperluan = null;
     public ?string $petugas_penjaga = null;
+    
+
+    // filters
     public ?string $filter_date = null;
     public ?string $q = null;
 
     protected function rules(): array
     {
         return [
-            'tanggal' => ['required', 'date'],
-            'nama' => ['required', 'string', 'max:120'],
-            'no_hp' => ['nullable', 'string', 'max:30'],
-            'jam_in' => ['required', 'date_format:H:i'],
-            'jam_out' => ['nullable', 'date_format:H:i', 'after_or_equal:jam_in'],
-            'instansi' => ['nullable', 'string', 'max:120'],
-            'keperluan' => ['nullable', 'string', 'max:200'],
-            'petugas_penjaga' => ['required', 'string', 'max:120'],
+            'date'             => ['required', 'date'],
+            'name'             => ['required', 'string', 'max:120'],
+            'phone_number'            => ['nullable', 'string', 'max:30'],
+            'jam_in'           => ['required', 'date_format:H:i'],
+            'jam_out'          => ['nullable', 'date_format:H:i', 'after_or_equal:jam_in'],
+            'instansi'         => ['nullable', 'string', 'max:120'],
+            'keperluan'        => ['nullable', 'string', 'max:200'],
+            'petugas_penjaga'  => ['required', 'string', 'max:120'],
         ];
     }
 
     public function mount(): void
     {
         $today = Carbon::today()->toDateString();
-        $this->tanggal = $today;
+        $this->date = $today;
         $this->jam_in = now()->format('H:i');
         $this->filter_date = $today;
     }
@@ -58,10 +62,10 @@ class Guestbook extends Component
     public function save(): void
     {
         $data = $this->validate();
-        GuestbookModel::create($data); // ⬅️ use the alias
+        GuestbookModel::create($data);
 
-        // reset some fields
-        $this->nama = $this->no_hp = $this->instansi = $this->keperluan = $this->petugas_penjaga = null;
+        // reset some fields (biar enak input beruntun)
+        $this->name = $this->phone_number = $this->instansi = $this->keperluan = $this->petugas_penjaga = null;
         $this->jam_in = now()->format('H:i');
         $this->jam_out = null;
 
@@ -70,12 +74,12 @@ class Guestbook extends Component
 
     public function render()
     {
-        $entries = GuestbookModel::query() // ⬅️ use the alias
-            ->when($this->filter_date, fn($q) => $q->whereDate('tanggal', $this->filter_date))
+        $entries = GuestbookModel::query()
+            ->when($this->filter_date, fn($q) => $q->whereDate('date', $this->filter_date))
             ->when($this->q, function ($q) {
                 $term = '%' . trim($this->q) . '%';
                 $q->where(function ($qq) use ($term) {
-                    $qq->where('nama', 'like', $term)
+                    $qq->where('name', 'like', $term)
                         ->orWhere('no_hp', 'like', $term)
                         ->orWhere('instansi', 'like', $term)
                         ->orWhere('keperluan', 'like', $term)
@@ -85,8 +89,7 @@ class Guestbook extends Component
             ->orderByDesc('created_at')
             ->paginate(10);
 
-        // you referenced $todayLatest in the view — provide it here
-        $todayLatest = GuestbookModel::whereDate('tanggal', Carbon::today())->latest()->take(5)->get();
+        $todayLatest = GuestbookModel::whereDate('date', Carbon::today())->latest()->take(5)->get();
 
         return view('livewire.pages.receptionist.guestbook', compact('entries', 'todayLatest'));
     }

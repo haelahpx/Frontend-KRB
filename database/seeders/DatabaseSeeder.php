@@ -3,7 +3,11 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Company;
+use App\Models\Department;
+use App\Models\Role;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,11 +17,83 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // 1) Company
+        $company = Company::updateOrCreate(
+            ['company_name' => 'Tech Corp'], // dicari berdasarkan nama
+            [
+                'company_address' => 'Jl. Mawar No. 123',
+                'company_email'   => 'info@techcorp.com',
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // ambil primary key sesuai model (id atau company_id)
+        $companyId = $company->getKey();
+
+        // 2) Department
+        $dept = Department::firstOrCreate(
+            [
+                'company_id'      => $companyId,
+                'department_name' => 'IT Department',
+            ]
+        );
+
+        // 3) Roles
+        $superAdminRole   = Role::firstOrCreate(['name' => 'Superadmin']);
+        $adminRole        = Role::firstOrCreate(['name' => 'Admin']);
+        $userRole         = Role::firstOrCreate(['name' => 'User']);
+        $receptionistRole = Role::firstOrCreate(['name' => 'Receptionist']);
+
+        // 4) Users
+        User::firstOrCreate(
+            ['email' => 'superadmin@gmail.com'],
+            [
+                'company_id'     => $companyId,
+                'department_id'  => $dept->getKey(),
+                'role_id'        => $superAdminRole->getKey(),
+                'full_name'      => 'Superadmin User',
+                'phone_number'   => '08000000000',
+                'password'       => Hash::make('superpassword'),
+                'remember_token' => Str::random(10),
+            ]
+        );
+
+        User::firstOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'company_id'     => $companyId,
+                'department_id'  => $dept->getKey(),
+                'role_id'        => $adminRole->getKey(),
+                'full_name'      => 'Admin User',
+                'phone_number'   => '08123456789',
+                'password'       => Hash::make('password'),
+                'remember_token' => Str::random(10),
+            ]
+        );
+
+        User::firstOrCreate(
+            ['email' => 'user@gmail.com'],
+            [
+                'company_id'     => $companyId,
+                'department_id'  => $dept->getKey(),
+                'role_id'        => $userRole->getKey(),
+                'full_name'      => 'Regular User',
+                'phone_number'   => '08987654321',
+                'password'       => Hash::make('password'),
+                'remember_token' => Str::random(10),
+            ]
+        );
+
+        User::firstOrCreate(
+            ['email' => 'receptionist@gmail.com'],
+            [
+                'company_id'     => $companyId,
+                'department_id'  => $dept->getKey(),
+                'role_id'        => $receptionistRole->getKey(),
+                'full_name'      => 'Receptionist User',
+                'phone_number'   => '087812345678',
+                'password'       => Hash::make('receppassword'),
+                'remember_token' => Str::random(10),
+            ]
+        );
     }
 }

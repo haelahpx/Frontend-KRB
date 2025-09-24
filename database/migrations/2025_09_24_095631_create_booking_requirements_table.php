@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->foreignId('bookingroom_id')->constrained('booking_rooms', 'bookingroom_id')->cascadeOnDelete();
             $table->foreignId('requirement_id')->constrained('requirements', 'requirement_id')->cascadeOnDelete();
             $table->primary(['bookingroom_id', 'requirement_id']);
+            $table->timestamps();
         });
 
     }

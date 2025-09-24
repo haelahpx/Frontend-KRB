@@ -24,6 +24,7 @@ return new class extends Migration {
             $table->text('special_notes')->nullable();
             $table->timestamps();
             $table->index(['date', 'room_id']);
+            
         });
 
     }

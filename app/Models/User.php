@@ -14,6 +14,11 @@ class User extends Authenticatable
 
     protected $table = 'users';
 
+    // ✅ Tell Eloquent our PK is user_id (not id)
+    protected $primaryKey = 'user_id';
+    public $incrementing = true;
+    protected $keyType = 'int';
+
     protected $fillable = [
         'company_id',
         'department_id',
@@ -30,12 +35,12 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
-            // 'email_verified_at' => 'datetime', // aktifkan jika kolom ini ada
+            // 'email_verified_at' => 'datetime', // enable if you have this column
         ];
     }
 
     /**
-     * Pastikan email selalu tersimpan lowercase.
+     * Store email in lowercase.
      */
     protected function email(): Attribute
     {
@@ -45,8 +50,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Virtual attribute "name" ⇄ "full_name"
-     * Biar kompatibel kalau ada kode yang pakai $user->name.
+     * Virtual "name" attribute mapping to full_name for compatibility.
      */
     protected function name(): Attribute
     {
@@ -56,18 +60,24 @@ class User extends Authenticatable
         );
     }
 
+    // (Optional safety) make sure Auth uses the right identifier name
+    public function getAuthIdentifierName()
+    {
+        return $this->primaryKey; // 'user_id'
+    }
+
     public function company(): BelongsTo
     {
-        return $this->belongsTo(Company::class, 'company_id');
+        return $this->belongsTo(Company::class, 'company_id', 'company_id');
     }
 
     public function department(): BelongsTo
     {
-        return $this->belongsTo(Department::class, 'department_id');
+        return $this->belongsTo(Department::class, 'department_id', 'department_id');
     }
 
     public function role(): BelongsTo
     {
-        return $this->belongsTo(Role::class, 'role_id');
+        return $this->belongsTo(Role::class, 'role_id', 'role_id');
     }
 }

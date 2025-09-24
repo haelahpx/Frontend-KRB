@@ -12,11 +12,16 @@ class Department extends Model
     use HasFactory;
 
     protected $table = 'departments';
-    protected $fillable = ['company_id','department_name'];
+    protected $primaryKey = 'department_id';   // <-- penting
+    public $incrementing = true;
+    protected $keyType = 'int';
+    public $timestamps = false; // set true kalau tabel punya created_at/updated_at
+
+    protected $fillable = ['company_id', 'department_name'];
 
     public function company(): BelongsTo
     {
-        return $this->belongsTo(Company::class, 'company_id');
+        return $this->belongsTo(Company::class, 'company_id', 'company_id');
     }
 
     public function users(): HasMany

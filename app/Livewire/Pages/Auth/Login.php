@@ -20,7 +20,6 @@ class Login extends Component
 
     public function mount()
     {
-        // Kalau sudah login, langsung arahkan ke home
         if (Auth::check()) {
             return redirect()->route('home');
         }
@@ -54,7 +53,7 @@ class Login extends Component
         );
 
         if (! $ok) {
-            RateLimiter::hit($key, 60); // cooldown 60 detik per gagal
+            RateLimiter::hit($key, 60); 
             throw ValidationException::withMessages([
                 'email' => 'Invalid credentials.',
             ]);

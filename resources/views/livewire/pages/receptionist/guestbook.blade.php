@@ -1,5 +1,4 @@
 <div class="max-w-6xl mx-auto px-4 py-6 space-y-6 text-black">
-
     {{-- Header --}}
     <div class="flex items-center justify-between">
         <div>
@@ -19,9 +18,9 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-xs font-medium text-black mb-1">Hari / Tanggal</label>
-                    <input type="date" wire:model.live="tanggal"
+                    <input type="date" wire:model.live="date"
                            class="w-full rounded-lg border-gray-300 text-black placeholder:text-black/60 focus:border-black focus:ring-black">
-                    @error('tanggal') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    @error('date') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-black mb-1">Jam Masuk</label>
@@ -40,15 +39,15 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-medium text-black mb-1">Nama</label>
-                    <input type="text" wire:model.live="nama" placeholder="Nama lengkap"
+                    <input type="text" wire:model.live="name" placeholder="Nama lengkap"
                            class="w-full rounded-lg border-gray-300 text-black placeholder:text-black/60 focus:border-black focus:ring-black">
-                    @error('nama') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    @error('name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-black mb-1">No HP</label>
-                    <input type="text" wire:model.live="no_hp" placeholder="08xxxxxxxxxx"
+                    <input type="text" wire:model.live="phone_number" placeholder="08xxxxxxxxxx"
                            class="w-full rounded-lg border-gray-300 text-black placeholder:text-black/60 focus:border-black focus:ring-black">
-                    @error('no_hp') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    @error('phone_number') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>
 
@@ -96,7 +95,7 @@
                         <span class="text-black/70">• {{ $r->instansi ?? '—' }}</span>
                         <span class="text-black/70">• In {{ \Carbon\Carbon::parse($r->jam_in)->format('H:i') }}</span>
                     </div>
-                    <span class="text-xs text-black/70">#{{ $r->id }}</span>
+                    <span class="text-xs text-black/70">#{{ $r->guestbook_id }}</span>
                 </div>
             @empty
                 <div class="text-black/70 text-sm">Belum ada entri hari ini.</div>
@@ -125,11 +124,11 @@
 
         <div class="divide-y divide-gray-200">
             @forelse ($entries as $e)
-                <div class="px-5 py-4 flex flex-col md:flex-row md:items-start md:justify-between gap-3" wire:key="row-{{ $e->id }}">
+                <div class="px-5 py-4 flex flex-col md:flex-row md:items-start md:justify-between gap-3" wire:key="row-{{ $e->guestbook_id }}">
                     <div class="min-w-0">
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-semibold text-black truncate">{{ $e->nama }}</span>
-                            <span class="text-xs text-black/70">({{ $e->no_hp ?? '—' }})</span>
+                            <span class="text-xs text-black/70">({{ $e->phone_number ?? '—' }})</span>
                         </div>
                         <div class="mt-1 text-sm text-black/80">
                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-gray-200 bg-gray-50">
@@ -142,14 +141,14 @@
                             </span>
                         </div>
                         <div class="mt-1 text-xs text-black/70">
-                            {{ $e->tanggal->format('d M Y') }} •
+                            {{ $e->date?->format('d M Y') ?? \Carbon\Carbon::parse($e->date)->format('d M Y') }} •
                             In: {{ \Carbon\Carbon::parse($e->jam_in)->format('H:i') }}
                             @if($e->jam_out) • Out: {{ \Carbon\Carbon::parse($e->jam_out)->format('H:i') }} @endif
                             • Petugas: <span class="font-medium text-black">{{ $e->petugas_penjaga }}</span>
                         </div>
                     </div>
                     <div class="text-right shrink-0">
-                        <div class="text-xs text-black/70">#{{ $e->id }}</div>
+                        <div class="text-xs text-black/70">#{{ $e->guestbook_id }}</div>
                         <div class="mt-1 text-xs text-black/70">{{ $e->created_at->format('d M Y H:i') }}</div>
                     </div>
                 </div>

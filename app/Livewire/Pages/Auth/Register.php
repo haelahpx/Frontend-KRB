@@ -7,6 +7,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 
 use App\Models\User;
+use App\Models\Role;
 use App\Models\Company;
 use App\Models\Department;
 
@@ -24,11 +25,11 @@ class Register extends Component
     public string $password = '';
     public string $password_confirmation = '';
 
-    // Selects
+    // Select values (FK)
     public ?int $company_id = null;
     public ?int $department_id = null;
 
-    // Options to render in <select>
+    // Options for <select>
     public array $companies = [];
     public array $departments = [];
 
@@ -38,22 +39,22 @@ class Register extends Component
             redirect()->route('home')->send();
         }
 
-        // Pakai company_name sebagai label, alias ke 'name' agar view tetap sama
+        // Ambil companies (alias ke id/name agar mudah dipakai di view)
         $this->companies = Company::query()
             ->orderBy('company_name')
-            ->get(['id', 'company_name as name'])
+            ->get(['company_id as id', 'company_name as name'])
             ->map(fn ($c) => ['id' => (int) $c->id, 'name' => (string) $c->name])
             ->toArray();
 
         $this->departments = [];
     }
 
-    // Saat company berubah -> load departments milik company tsb
+    // Ketika company berubah, load departments milik company tsb
     public function updatedCompanyId($value): void
     {
         $this->department_id = null;
 
-        if (! $value) {
+        if (!$value) {
             $this->departments = [];
             return;
         }
@@ -61,7 +62,7 @@ class Register extends Component
         $this->departments = Department::query()
             ->where('company_id', $value)
             ->orderBy('department_name')
-            ->get(['id', 'department_name as name'])
+            ->get(['department_id as id', 'department_name as name'])
             ->map(fn ($d) => ['id' => (int) $d->id, 'name' => (string) $d->name])
             ->toArray();
     }
@@ -71,10 +72,12 @@ class Register extends Component
         return [
             'full_name'        => ['required','string','min:3'],
             'email'            => ['required','email','max:255','unique:users,email'],
-            'phone_number'     => ['nullable','string','max:30'], // ubah ke 'required' kalau wajib
+            'phone_number'     => ['nullable','string','max:30'],
             'password'         => ['required','confirmed','min:6'],
-            'company_id'       => ['nullable','exists:companies,id'],   // ubah ke 'required' kalau wajib
-            'department_id'    => ['nullable','exists:departments,id'], // ubah ke 'required' kalau wajib
+
+            // exists diarahkan ke kolom PK sebenarnya
+            'company_id'       => ['nullable','exists:companies,company_id'],
+            'department_id'    => ['nullable','exists:departments,department_id'],
         ];
     }
 
@@ -82,13 +85,17 @@ class Register extends Component
     {
         $data = $this->validate();
 
+        // Ambil role_id untuk 'User' dari tabel roles; fallback ke 3 kalau tidak ada
+        $defaultRoleId = Role::where('name', 'User')->value('role_id') ?? 3;
+
         $user = User::create([
             'full_name'     => $data['full_name'],
             'email'         => Str::lower($data['email']),
             'phone_number'  => $data['phone_number'] ?: null,
-            'password'      => $data['password'], // auto-hash via casts di model User
+            'password'      => $data['password'], // pastikan di User::$casts => ['password' => 'hashed']
             'company_id'    => $this->company_id,
             'department_id' => $this->department_id,
+            'role_id'       => $defaultRoleId,
         ]);
 
         Auth::login($user, remember: true);

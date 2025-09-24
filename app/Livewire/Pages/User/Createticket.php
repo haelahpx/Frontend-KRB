@@ -31,7 +31,7 @@ class CreateTicket extends Component
     /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile[] */
     public array $attachments = [];
 
-    // Dropdown data
+    // Dropdown data: [{ id: int, department_name: string }]
     public array $departments = [];
 
     public function mount(): void
@@ -44,11 +44,11 @@ class CreateTicket extends Component
         // Default assign-to = dept user sendiri (boleh diganti)
         $this->assigned_department_id = $user->department_id;
 
-        // Ambil semua department (opsional: filter by company)
+        // Ambil semua department (filter by company jika ada)
         $this->departments = Department::query()
             ->when($user->company_id, fn ($q) => $q->where('company_id', $user->company_id))
-            ->orderBy('department_name')
-            ->get(['id', 'department_name'])
+            ->orderBy('department_name', 'asc')
+            ->get(['department_id as id', 'department_name']) // alias ke 'id' untuk dropdown
             ->toArray();
     }
 
@@ -57,8 +57,8 @@ class CreateTicket extends Component
         return [
             'subject'                => ['required', 'string', 'max:255'],
             'priority'               => ['required', 'in:LOW,MEDIUM,HIGH,CRITICAL'],
-            'assigned_department_id' => ['nullable', 'exists:departments,id'],
-            'description'            => ['nullable', 'string', 'max:5000'],
+            'assigned_department_id' => ['required', 'exists:departments,department_id'],
+            'description'            => ['nullable', 'string', 'max:10000'],
             'attachments.*'          => ['file', 'max:10240', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
         ];
     }
@@ -68,26 +68,31 @@ class CreateTicket extends Component
         $this->validate();
 
         $user = Auth::user();
+        $userKey = $user->getKey();
 
         // Simpan ticket
         $ticket = Ticket::create([
-            'company_id'    => $user->company_id,
-            'department_id' => $this->assigned_department_id, // departemen tujuan (assigned to)
-            'user_id'       => $user->id,
-            'subject'       => $this->subject,
-            'description'   => $this->description,
-            'priority'      => $this->priority,
-            'status'        => 'OPEN',
+            'company_id'     => $user->company_id,
+            'requestdept_id' => $user->department_id,           // departemen si pembuat tiket
+            'department_id'  => $this->assigned_department_id,  // departemen tujuan (assigned)
+            'user_id'        => $userKey,
+            'subject'        => $this->subject,
+            'description'    => $this->description,
+            'priority'       => $this->priority,
+            'status'         => 'OPEN',
         ]);
+
+        $ticketKey = $ticket->getKey();
 
         // Simpan attachments (jika ada)
         foreach ($this->attachments as $file) {
-            $path = $file->store('tickets/'.$ticket->id, 'public');
+            $path = $file->store('tickets/' . $ticketKey, 'public');
+
             TicketAttachment::create([
-                'ticket_id'   => $ticket->id,
+                'ticket_id'   => $ticketKey,
                 'file_url'    => Storage::disk('public')->url($path),
                 'file_type'   => $file->getClientOriginalExtension(),
-                'uploaded_by' => $user->id,
+                'uploaded_by' => $userKey,
             ]);
         }
 
@@ -101,7 +106,6 @@ class CreateTicket extends Component
 
     public function render()
     {
-        // Karena Blade akses $this->..., kita tidak perlu pass data di sini
         return view('livewire.pages.user.createticket');
     }
 }

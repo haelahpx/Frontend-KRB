@@ -1,5 +1,6 @@
 <?php
 
+// app/Models/Role.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -11,10 +12,14 @@ class Role extends Model
     use HasFactory;
 
     protected $table = 'roles';
+    protected $primaryKey = 'role_id';   // <-- WAJIB
+    public $incrementing = true;
+    protected $keyType = 'int';
+
     protected $fillable = ['code','name'];
 
     public function users(): HasMany
     {
-        return $this->hasMany(User::class, 'role_id');
+        return $this->hasMany(User::class, 'role_id', 'role_id');
     }
 }

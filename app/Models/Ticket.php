@@ -11,8 +11,9 @@ class Ticket extends Model
 
     protected $fillable = [
         'company_id',
+        'requestdept_id',   // ← pastikan ada
         'department_id',
-        'user_id',         
+        'user_id',
         'subject',
         'description',
         'priority',
@@ -20,19 +21,23 @@ class Ticket extends Model
     ];
 
     // Relasi
-    public function user() {
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function company() {
+    public function company()
+    {
         return $this->belongsTo(Company::class);
     }
 
-    public function department() {
+    public function department()
+    {
         return $this->belongsTo(Department::class);
     }
 
-    public function attachments() {
+    public function attachments()
+    {
         return $this->hasMany(TicketAttachment::class);
     }
 }
