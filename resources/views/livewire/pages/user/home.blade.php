@@ -94,13 +94,6 @@
                         + Booking
                     </button>
                 </flux:modal.trigger>
-
-                <flux:modal.trigger name="new-package">
-                    <button type="button"
-                        class="bg-black text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">
-                        + Package
-                    </button>
-                </flux:modal.trigger>
             </div>
 
             <div class="my-6 h-px bg-black/20"></div>
