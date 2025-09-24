@@ -33,19 +33,16 @@ Route::middleware('auth')->group(function () {
 
         return redirect()->route('user.home'); 
     })->name('home');
-
+    
     Route::get('/dashboard', UserHome::class)->name('user.home');
-
     Route::get('/create-ticket', CreateTicket::class)->name('create-ticket');
     Route::get('/book-room',     Bookroom::class)->name('book-room');
     Route::get('/profile',       Profile::class)->name('profile');
     Route::get('/package',       Package::class)->name('package');
     Route::get('/ticketstatus',  Ticketstatus::class)->name('ticketstatus');
-
     Route::middleware('is.admin')->group(function () {
-        Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
+    Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
     });
-
     Route::post('/logout', function (Request $request) {
         Auth::logout();
         $request->session()->invalidate();
@@ -53,5 +50,4 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('login');
     })->name('logout');
 });
-
-Route::fallback(Error404::class);
+    Route::fallback(Error404::class);

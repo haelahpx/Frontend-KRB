@@ -22,9 +22,12 @@ class ticketstatus extends Component
             'status'      => 'pending',  // pending | process | complete
             'created_at'  => '2025-09-22 09:15:00',
             'updated_at'  => '2025-09-22 09:15:00',
+            'requester_id' => 'Finance',
+            'departement_id'  => 'IT',
+            
             'user'        => [
                 'name'  => 'Clania Elmymora',
-                'email' => 'user@example.com',
+                'email' => 'Clan@example.com',
             ],
         ],
         [
@@ -36,9 +39,11 @@ class ticketstatus extends Component
             'status'      => 'process',
             'created_at'  => '2025-09-22 10:20:00',
             'updated_at'  => '2025-09-22 11:05:00',
+            'requester_id' => 'Finance',
+            'departement_id'  => 'IT',
             'user'        => [
-                'name'  => 'Bintang Putra',
-                'email' => 'bintang@example.com',
+                'name'  => 'Muhamad Haikal Islami',
+                'email' => 'Haikal@example.com',
             ],
         ],
         [
@@ -50,9 +55,11 @@ class ticketstatus extends Component
             'status'      => 'complete',
             'created_at'  => '2025-09-21 14:00:00',
             'updated_at'  => '2025-09-21 16:35:00',
+            'requester_id' => 'HR',
+            'departement_id'  => 'IT',
             'user'        => [
-                'name'  => 'Nadia Prameswari',
-                'email' => 'nadia@example.com',
+                'name'  => 'Samuel Jagar',
+                'email' => 'Sammy@example.com',
             ],
         ],
         [
@@ -64,9 +71,11 @@ class ticketstatus extends Component
             'status'      => 'pending',
             'created_at'  => '2025-09-23 08:05:00',
             'updated_at'  => '2025-09-23 08:05:00',
+            'requester_id' => 'Humas',
+            'departement_id'  => 'IT',
             'user'        => [
-                'name'  => 'Raka Mahendra',
-                'email' => 'raka@example.com',
+                'name'  => 'Muhammad Yusuf',
+                'email' => 'Yusuf@example.com',
             ],
         ],
     ];
