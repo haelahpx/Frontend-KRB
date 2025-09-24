@@ -25,6 +25,8 @@ use App\Livewire\Pages\Auth\Register as RegisterPage;
 
 // Error
 use App\Livewire\Pages\Errors\error404 as Error404;
+use App\Livewire\Pages\Receptionist\Guestbook as Guestbook;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +37,8 @@ Route::get('/', function () {
     if (!Auth::check()) {
         return redirect()->route('login');
     }
+
+//receptionist
 
     $user = Auth::user();
     $roleName = $user->role->name ?? $user->role ?? null;
@@ -85,6 +89,7 @@ Route::middleware('auth')->group(function () {
     // Receptionist routes
     Route::middleware('is.receptionist')->group(function () {
         Route::get('/receptionist-dashboard', ReceptionistDashboard::class)->name('receptionist.dashboard');
+        Route::get('/receptionist-guestbook', Guestbook::class)->name('receptionist.guestbook');
     });
 
     // Logout

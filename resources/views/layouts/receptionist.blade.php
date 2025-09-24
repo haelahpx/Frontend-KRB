@@ -50,7 +50,7 @@
     {{-- Sidebar (always full height) --}}
     @include('livewire.components.partials.receptionist.sidebar')
 
-    <main class="flex-1 overflow-y-auto pt-14 lg:pt-0 lg:ml-[var(--sbw)] px-4 sm:px-6 lg:px-8
+    <main class="dark:bg-white flex-1 overflow-y-auto pt-14 lg:pt-0 lg:ml-[var(--sbw)] px-4 sm:px-6 lg:px-8
                 [&_.container]:max-w-none [&_.container]:mx-0 [&_.container]:px-0">
         {{ $slot }}
     </main>
