@@ -37,51 +37,46 @@
             </div>
         </div>
 
-
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <div class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            <div
+                class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black flex flex-col h-full">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Tickets</div>
                     <h2 class="text-xl font-semibold text-black">Tickets Status</h2>
                 </div>
                 <p class="text-gray-600 mb-4">Ringkasan tiket yang belum selesai.</p>
-                <div class="flex justify-between items-center">
-                    <div class="text-sm text-gray-500">Total: <span
-                            class="font-semibold text-black">{{ $openTicketsCount ?? 0 }}</span></div>
+                <div class="mt-auto"></div> {{-- spacer biar footer turun ke bawah --}}
+                <div class="flex justify-between items-center pt-4">
+                    <div class="text-sm text-gray-500">
+                        Total: <span class="font-semibold text-black">{{ $openTicketsCount ?? 0 }}</span>
+                    </div>
                     <a href="{{ route('ticketstatus') }}"
-                        class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">Manage</a>
+                        class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">
+                        Manage
+                    </a>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
+            <div
+                class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black flex flex-col h-full">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Booking</div>
                     <h2 class="text-xl font-semibold text-black">Booking Status</h2>
                 </div>
                 <p class="text-gray-600 mb-4">Lihat booking ruangan.</p>
-                <div class="flex justify-between items-center">
-                    <div class="text-sm text-gray-500">Minggu ini: <span
-                            class="font-semibold text-black">{{ $upcomingBookings ?? 0 }}</span></div>
+                <div class="mt-auto"></div> {{-- spacer --}}
+                <div class="flex justify-between items-center pt-4">
+                    <div class="text-sm text-gray-500">
+                        Minggu ini: <span class="font-semibold text-black">{{ $upcomingBookings ?? 0 }}</span>
+                    </div>
                     <a href="{{ route('bookingstatus') }}"
-                        class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">Manage</a>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Packages</div>
-                    <h2 class="text-xl font-semibold text-black">Packages</h2>
-                </div>
-                <p class="text-gray-600 mb-4">Pantau paket.</p>
-                <div class="flex justify-between items-center">
-                    <div class="text-sm text-gray-500">In Transit: <span
-                            class="font-semibold text-black">{{ $packagesInTransit ?? 0 }}</span></div>
-                    <a href=""
-                        class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">View
-                        All</a>
+                        class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">
+                        Manage
+                    </a>
                 </div>
             </div>
         </div>
+
 
         <div class="bg-white rounded-xl p-6 shadow-lg border border-black">
             <h3 class="text-xl font-semibold text-black mb-4">Shortcuts</h3>
@@ -296,39 +291,5 @@
                 </form>
             </div>
         </flux:modal>
-
-        <flux:modal name="new-package" variant="flyout">
-            <div class="space-y-6">
-                <div>
-                    <flux:heading size="lg">Create Package</flux:heading>
-                    <flux:text class="mt-2">Add a new package to the system.</flux:text>
-                </div>
-                <form method="POST"
-                    class="space-y-4 text-black [&_input::placeholder]:text-black [&_textarea::placeholder]:text-black">
-                    @csrf
-                    <flux:input label="Package Name" name="name" placeholder="e.g., Maintenance Gold" />
-                    <flux:input label="Code" name="code" placeholder="PKG-001" />
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <flux:input label="Price" name="price" type="number" step="0.01" placeholder="e.g., 499000" />
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Status</label>
-                            <select name="status"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900">
-                                <option value="ACTIVE">Active</option>
-                                <option value="INACTIVE">Inactive</option>
-                            </select>
-                        </div>
-                    </div>
-                    <label class="block text-sm font-medium mb-2">Description</label>
-                    <textarea name="description" rows="4" placeholder="Brief description..."
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 resize-y"></textarea>
-                    <div class="flex">
-                        <flux:spacer />
-                        <flux:button type="submit" variant="primary">Save Package</flux:button>
-                    </div>
-                </form>
-            </div>
-        </flux:modal>
-
     </section>
 </div>
