@@ -4,79 +4,90 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
-// Livewire Pages
+// Livewire Pages (User)
 use App\Livewire\Pages\User\Home as UserHome;
 use App\Livewire\Pages\User\CreateTicket;
 use App\Livewire\Pages\User\Bookroom;
 use App\Livewire\Pages\User\Profile;
 use App\Livewire\Pages\User\Package;
 use App\Livewire\Pages\User\Ticketstatus;
-use App\Livewire\Pages\User\bookingstatus;
+// Pakai PascalCase yang konsisten untuk class
+use App\Livewire\Pages\User\BookingStatus;
 
+// Livewire Pages (Roles)
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Pages\Superadmin\Dashboard as SuperadminDashboard;
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
 
+// Auth Pages
 use App\Livewire\Pages\Auth\Login as LoginPage;
 use App\Livewire\Pages\Auth\Register as RegisterPage;
+
+// Error
 use App\Livewire\Pages\Errors\error404 as Error404;
 
+/*
+|--------------------------------------------------------------------------
+| Root: arahkan sesuai status login
+|--------------------------------------------------------------------------
+*/
+Route::get('/', function () {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
 
-// -----------------------------
-// GUEST ONLY (belum login)
-// -----------------------------
+    $user = Auth::user();
+    $roleName = $user->role->name ?? $user->role ?? null;
+
+    return match ($roleName) {
+        'Superadmin'   => redirect()->route('superadmin.dashboard'),
+        'Admin'        => redirect()->route('admin.dashboard'),
+        'Receptionist' => redirect()->route('receptionist.dashboard'),
+        default        => redirect()->route('user.home'),
+    };
+})->name('home');
+
+/*
+|--------------------------------------------------------------------------
+| Guest only
+|--------------------------------------------------------------------------
+*/
 Route::middleware('guest')->group(function () {
     Route::get('/login', LoginPage::class)->name('login');
     Route::get('/register', RegisterPage::class)->name('register');
 });
 
-
-// -----------------------------
-// AUTH ONLY (sudah login)
-// -----------------------------
+/*
+|--------------------------------------------------------------------------
+| Auth only
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth')->group(function () {
-    // Landing setelah login
-    Route::get('/', function () {
-        $user = Auth::user();
-        $roleName = $user->role->name ?? $user->role ?? null;
+    // User routes
+    Route::get('/dashboard',       UserHome::class)->name('user.home');
+    Route::get('/create-ticket',   CreateTicket::class)->name('create-ticket');
+    Route::get('/book-room',       Bookroom::class)->name('book-room');
+    Route::get('/profile',         Profile::class)->name('profile');
+    Route::get('/package',         Package::class)->name('package');
+    Route::get('/ticketstatus',    Ticketstatus::class)->name('ticketstatus');
+    Route::get('/bookingstatus',   BookingStatus::class)->name('bookingstatus');
 
-        return match ($roleName) {
-            'Superadmin'   => redirect()->route('superadmin.dashboard'),
-            'Admin'        => redirect()->route('admin.dashboard'),
-            'Receptionist' => redirect()->route('receptionist.dashboard'),
-            default        => redirect()->route('user.home'),
-        };
-    })->name('home');
-
-
-    // ----- User routes -----
-    Route::get('/dashboard',    UserHome::class)->name('user.home');
-    Route::get('/create-ticket',CreateTicket::class)->name('create-ticket');
-    Route::get('/book-room',    Bookroom::class)->name('book-room');
-    Route::get('/profile',      Profile::class)->name('profile');
-    Route::get('/package',      Package::class)->name('package');
-    Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
-    Route::get('/bookingstatus', bookingstatus::class)->name('bookingstatus');
-    
-
-
-    // ----- Admin routes -----
+    // Admin routes
     Route::middleware('is.admin')->group(function () {
         Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
     });
 
-    // ----- Superadmin routes -----
+    // Superadmin routes
     Route::middleware('is.superadmin')->group(function () {
         Route::get('/superadmin-dashboard', SuperadminDashboard::class)->name('superadmin.dashboard');
     });
 
-    // ----- Receptionist routes -----
+    // Receptionist routes
     Route::middleware('is.receptionist')->group(function () {
         Route::get('/receptionist-dashboard', ReceptionistDashboard::class)->name('receptionist.dashboard');
     });
 
-
-    // ----- Logout -----
+    // Logout
     Route::post('/logout', function (Request $request) {
         Auth::logout();
         $request->session()->invalidate();
@@ -85,10 +96,9 @@ Route::middleware('auth')->group(function () {
     })->name('logout');
 });
 
-
-// -----------------------------
-// Fallback 404
-// -----------------------------
+/*
+|--------------------------------------------------------------------------
+| Fallback 404
+|--------------------------------------------------------------------------
+*/
 Route::fallback(Error404::class);
-
-
