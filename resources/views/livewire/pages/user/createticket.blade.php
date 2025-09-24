@@ -192,28 +192,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                <div class="space-y-2">
-                    <button
-                        class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
-                        View All Tickets
-                    </button>
-                    <button
-                        class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
-                        My Assigned Tickets
-                    </button>
-                    <button
-                        class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
-                        Critical Priority Queue
-                    </button>
-                    <button
-                        class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
-                        Generate Report
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 </div>
