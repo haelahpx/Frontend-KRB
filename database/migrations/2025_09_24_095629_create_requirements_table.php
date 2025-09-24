@@ -5,14 +5,24 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
         Schema::create('requirements', function (Blueprint $table) {
-            $table->id(); // requirement_id
+            $table->id('requirement_id');
             $table->string('name');
             $table->timestamps();
         });
+
     }
-    public function down(): void {
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
         Schema::dropIfExists('requirements');
     }
 };

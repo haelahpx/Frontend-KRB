@@ -5,15 +5,25 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
         Schema::create('departments', function (Blueprint $table) {
-            $table->id(); // department_id
-            $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
+            $table->id('department_id');
+            $table->foreignId('company_id')->constrained('companies', 'company_id')->cascadeOnDelete();
             $table->string('department_name');
             $table->timestamps();
         });
+
     }
-    public function down(): void {
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
         Schema::dropIfExists('departments');
     }
 };

@@ -5,17 +5,26 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
         Schema::create('companies', function (Blueprint $table) {
-            $table->id(); // company_id
+            $table->id('company_id');
             $table->string('company_name');
             $table->string('company_address')->nullable();
             $table->string('company_email')->nullable();
-            $table->string('password');
             $table->timestamps();
         });
+
     }
-    public function down(): void {
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
         Schema::dropIfExists('companies');
     }
 };
