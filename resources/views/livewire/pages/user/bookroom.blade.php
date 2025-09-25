@@ -15,18 +15,27 @@
         </div>
     </div>
 
-    @if (session()->has('message'))
-        <div class="bg-green-50 border-2 border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6">
-            {{ session('message') }}
-        </div>
-    @endif
-
     @if ($view === 'form')
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {{-- FORM --}}
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
                     <h2 class="text-2xl font-semibold text-gray-900 mb-2">Book a Meeting Room</h2>
                     <p class="text-gray-600 mb-6">Fill out the form below to request a room booking</p>
+
+                    {{-- Booking Rules --}}
+                    <div class="bg-blue-50 mb-2 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                        <h4 class="font-semibold mb-2">⏰ Booking Rules</h4>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Waktu dibagi dalam <strong>slot 30 menit</strong> (misalnya 09:00–09:30, 09:30–10:00).</li>
+                            <li>Booking harus dimulai minimal <strong>15 menit dari sekarang</strong> (lead time).</li>
+                            <li>Jika waktu yang kamu pilih terlewat saat mengisi form, sistem akan otomatis
+                                <strong>menggeser ke slot berikutnya</strong> dan menampilkan pesan pemberitahuan.
+                            </li>
+                            <li>Kamu tidak bisa booking ke jam yang sudah lewat.</li>
+                            <li>Untuk tanggal di masa depan, kamu bebas memilih jam berapapun.</li>
+                        </ul>
+                    </div>
 
                     <form wire:submit="submitBooking" class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -42,9 +51,8 @@
                                     class="w-full px-3 py-2 border text-gray-900 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                     <option value="">Select room</option>
                                     @foreach($rooms as $room)
-                                        <option value="{{ $room['id'] }}" {{ !$room['available'] ? 'disabled' : '' }}>
-                                            {{ $room['name'] }} ({{ $room['capacity'] }} people)
-                                            {{ !$room['available'] ? '- Occupied' : '' }}
+                                        <option value="{{ $room['id'] }}" {{ !$room['available_req'] ? 'disabled' : '' }}>
+                                            {{ $room['name'] }} {{ !$room['available_req'] ? '(Occupied)' : '' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -55,7 +63,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Date</label>
-                                <input type="date" wire:model="date"
+                                <input type="date" wire:model="date" wire:change="selectDate($event.target.value)"
                                     class="w-full px-3 text-gray-900 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 @error('date') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
@@ -71,13 +79,13 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Start Time</label>
-                                <input type="time" wire:model="start_time"
+                                <input type="time" wire:model="start_time" min="{{ $minStart }}"
                                     class="w-full px-3 py-2 border text-gray-900 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 @error('start_time') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">End Time</label>
-                                <input type="time" wire:model="end_time"
+                                <input type="time" wire:model="end_time" min="{{ $start_time ?: $minStart }}"
                                     class="w-full px-3 py-2 border text-gray-900 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 @error('end_time') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
@@ -85,41 +93,17 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-900 mb-3">Additional Requirements</label>
-
                             <div class="grid grid-cols-2 gap-4">
-                                <label class="flex items-center space-x-2">
-                                    <input type="checkbox" wire:model.live="requirements" value="projector"
-                                        class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span class="text-sm text-gray-900">Projector</span>
-                                </label>
-
-                                <label class="flex items-center space-x-2">
-                                    <input type="checkbox" wire:model.live="requirements" value="whiteboard"
-                                        class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span class="text-sm text-gray-900">Whiteboard</span>
-                                </label>
-
-                                <label class="flex items-center space-x-2">
-                                    <input type="checkbox" wire:model.live="requirements" value="video_conference"
-                                        class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span class="text-sm text-gray-900">Video Conference</span>
-                                </label>
-
-                                <label class="flex items-center space-x-2">
-                                    <input type="checkbox" wire:model.live="requirements" value="catering"
-                                        class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span class="text-sm text-gray-900">Catering</span>
-                                </label>
-
-                                <label class="flex items-center space-x-2">
-                                    <input type="checkbox" wire:model.live="requirements" value="other"
-                                        class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span class="text-sm text-gray-900">Other</span>
-                                </label>
+                                @foreach (['projector', 'whiteboard', 'video_conference', 'catering', 'other'] as $req)
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" wire:model.live="requirements" value="{{ $req }}"
+                                            class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                        <span class="text-sm text-gray-900">{{ ucwords(str_replace('_', ' ', $req)) }}</span>
+                                    </label>
+                                @endforeach
                             </div>
                         </div>
 
-                        {{-- nanti ini bakalan muncul pas other di click ya --}}
                         @if (in_array('other', $requirements ?? [], true))
                             <div class="mt-4">
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Special Notes</label>
@@ -131,7 +115,6 @@
                                 @enderror
                             </div>
                         @endif
-
 
                         <div class="flex space-x-4 pt-4">
                             <button type="button" wire:click="$refresh"
@@ -147,24 +130,29 @@
                 </div>
             </div>
 
+            {{-- SIDEBAR --}}
             <div class="space-y-6">
                 <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Room Availability</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1">Room Availability</h3>
+                    <p class="text-sm text-gray-600 mb-4">
+                        For {{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}
+                        @if($start_time && $end_time)
+                            — {{ $start_time }}–{{ $end_time }}
+                        @endif
+                    </p>
                     <div class="space-y-3">
                         @foreach($rooms as $room)
                             <div
-                                class="flex items-center justify-between p-3 {{ $room['available'] ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200' }} border rounded-md">
-                                <div>
-                                    <div class="flex items-center space-x-2">
-                                        <div
-                                            class="w-2 h-2 {{ $room['available'] ? 'bg-green-500' : 'bg-red-500' }} rounded-full">
-                                        </div>
-                                        <span class="font-medium text-gray-900">{{ $room['name'] }}</span>
+                                class="flex items-center justify-between p-3 {{ $room['available_req'] ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200' }} border rounded-md">
+                                <div class="flex items-center space-x-2">
+                                    <div
+                                        class="w-2 h-2 {{ $room['available_req'] ? 'bg-green-500' : 'bg-red-500' }} rounded-full">
                                     </div>
-                                    <p class="text-sm text-gray-600">Capacity: {{ $room['capacity'] }} people</p>
+                                    <span class="font-medium text-gray-900">{{ $room['name'] }}</span>
                                 </div>
-                                <span class="text-sm font-medium {{ $room['available'] ? 'text-green-700' : 'text-red-700' }}">
-                                    {{ $room['available'] ? 'Available' : 'Occupied' }}
+                                <span
+                                    class="text-sm font-medium {{ $room['available_req'] ? 'text-green-700' : 'text-red-700' }}">
+                                    {{ $room['available_req'] ? 'Available' : 'Occupied' }}
                                 </span>
                             </div>
                         @endforeach
@@ -195,29 +183,30 @@
         </div>
 
     @else
+        {{-- CALENDAR --}}
         <div class="bg-white rounded-lg shadow-sm border-2 border-black overflow-hidden">
             <div class="bg-gray-50 border-b-2 border-black p-6">
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-2xl font-semibold text-gray-900">Room Schedule</h2>
-                        <p class="text-gray-600 mt-1">Week of {{ $currentWeek->format('M j') }} -
-                            {{ $currentWeek->copy()->addDays(6)->format('M j, Y') }}</p>
+                        <p class="text-gray-600 mt-1">
+                            Week of {{ $currentWeek->format('M j') }} -
+                            {{ $currentWeek->copy()->addDays(6)->format('M j, Y') }}
+                        </p>
                     </div>
-                    <div class="flex items-center space-x-4">
+                    <div class="flex items-center gap-2">
+                        <button wire:click="previousMonth"
+                            class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">«
+                            Month</button>
                         <button wire:click="previousWeek"
-                            class="p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
-                                </path>
-                            </svg>
-                        </button>
+                            class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">‹
+                            Week</button>
                         <button wire:click="nextWeek"
-                            class="p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
-                                </path>
-                            </svg>
-                        </button>
+                            class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">Week
+                            ›</button>
+                        <button wire:click="nextMonth"
+                            class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">Month
+                            »</button>
                     </div>
                 </div>
             </div>
@@ -242,10 +231,9 @@
                                 <div class="col-span-8 p-3 border-r border-gray-200">
                                     <div class="flex items-center space-x-2">
                                         <div
-                                            class="w-3 h-3 {{ $room['available'] ? 'bg-green-500' : 'bg-red-500' }} rounded-full">
+                                            class="w-3 h-3 {{ $room['available_req'] ? 'bg-green-500' : 'bg-red-500' }} rounded-full">
                                         </div>
                                         <span class="font-medium text-gray-900">{{ $room['name'] }}</span>
-                                        <span class="text-sm text-gray-600">({{ $room['capacity'] }} people)</span>
                                     </div>
                                 </div>
                             </div>
@@ -314,7 +302,7 @@
         @if($selectedDate)
             <div class="mt-8 bg-white rounded-lg shadow-sm border-2 border-black p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                    Quick Book for {{ $selectedDate->format('l, F j, Y') }}
+                    Quick Book for {{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}
                 </h3>
                 <button wire:click="switchView('form')"
                     class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors">
