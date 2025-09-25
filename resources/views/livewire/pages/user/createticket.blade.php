@@ -31,20 +31,23 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Subject</label>
-                                <input type="text" wire:model.defer="subject" placeholder="Enter ticket subject"
-                                       class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border @error('subject') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                <input
+                                    type="text"
+                                    wire:model.defer="subject"
+                                    placeholder="Enter ticket subject"
+                                    class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border @error('subject') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 @error('subject') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Priority</label>
-                                <select wire:model="priority"
-                                        class="w-full px-3 py-2 text-gray-900 border @error('priority') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                <select
+                                    wire:model="priority"
+                                    class="w-full px-3 py-2 text-gray-900 border @error('priority') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                     <option value="">Select priority</option>
-                                    <option value="LOW">Low</option>
-                                    <option value="MEDIUM">Medium</option>
-                                    <option value="HIGH">High</option>
-                                    <option value="CRITICAL">Critical</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
                                 </select>
                                 @error('priority') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
@@ -53,19 +56,21 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Department (your dept)</label>
-                                <input type="text"
-                                       value="{{ $this->requester_department }}"
-                                       readonly
-                                       class="w-full px-3 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md">
+                                <input
+                                    type="text"
+                                    value="{{ $this->requester_department }}"
+                                    readonly
+                                    class="w-full px-3 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md">
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Assigned to what department</label>
-                                <select wire:model="assigned_department_id"
-                                        class="w-full px-3 py-2 text-gray-900 border @error('assigned_department_id') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                <select
+                                    wire:model="assigned_department_id"
+                                    class="w-full px-3 py-2 text-gray-900 border @error('assigned_department_id') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                     <option value="">Select department</option>
                                     @foreach($this->departments as $dept)
-                                        <option value="{{ $dept['id'] }}">{{ $dept['department_name'] }}</option>
+                                        <option value="{{ $dept['department_id'] }}">{{ $dept['department_name'] }}</option>
                                     @endforeach
                                 </select>
                                 @error('assigned_department_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
@@ -74,8 +79,11 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-900 mb-2">Description</label>
-                            <textarea wire:model.defer="description" rows="6" placeholder="Describe your issue in detail..."
-                                      class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border @error('description') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"></textarea>
+                            <textarea
+                                wire:model.defer="description"
+                                rows="6"
+                                placeholder="Describe your issue in detail..."
+                                class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border @error('description') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"></textarea>
                             @error('description') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                         </div>
 
@@ -121,9 +129,10 @@
                                class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
                                 Cancel
                             </a>
-                            <button type="submit"
-                                    class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
-                                    wire:loading.attr="disabled">
+                            <button
+                                type="submit"
+                                class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
+                                wire:loading.attr="disabled">
                                 <span wire:loading.remove>Submit Ticket</span>
                                 <span wire:loading>Submitting...</span>
                             </button>

@@ -2,89 +2,93 @@
 
 namespace App\Livewire\Pages\User;
 
+use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Livewire\Component;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Ticket;
+use App\Models\Department;
 
 #[Layout('layouts.app')]
-#[Title('Profile')]
-class ticketstatus extends Component
+#[Title('Ticket Status')]
+class Ticketstatus extends Component
 {
-    public string $dummyStatus = 'process';
-    public array $requirements = [];   // starts empty
-    public ?string $special_notes = null;
+    // Nilai harus match DB!
+    public string $statusFilter    = '';          // '', OPEN, PROCESS, COMPLETE
+    public string $priorityFilter  = '';          // '', LOW, MEDIUM, HIGH, CRITICAL
+    public string $departmentFilter = '';         // '' atau department_id
+    public string $sortFilter      = 'recent';    // recent | oldest | due
 
+    public $departments;
 
-    public array $tickets = [
-        [
-            'ticket_id' => 12345,
-            'user_id' => 1,
-            'subject' => 'Wifi ruang rapat tidak bisa',
-            'description' => 'Wifi di Gedung Konservasi lantai 2 tidak connect sejak pagi.',
-            'priority' => 'HIGH',     // LOW | MEDIUM | HIGH | URGENT
-            'status' => 'pending',  // pending | process | complete
-            'created_at' => '2025-09-22 09:15:00',
-            'updated_at' => '2025-09-22 09:15:00',
-            'requester_id' => 'Finance',
-            'departement_id' => 'IT',
-
-            'user' => [
-                'name' => 'Clania Elmymora',
-                'email' => 'Clan@example.com',
-            ],
-        ],
-        [
-            'ticket_id' => 12346,
-            'user_id' => 2,
-            'subject' => 'Projector Meeting Room flicker',
-            'description' => 'Layar berkedip-kedip saat HDMI disambungkan.',
-            'priority' => 'MEDIUM',
-            'status' => 'process',
-            'created_at' => '2025-09-22 10:20:00',
-            'updated_at' => '2025-09-22 11:05:00',
-            'requester_id' => 'Finance',
-            'departement_id' => 'IT',
-            'user' => [
-                'name' => 'Muhamad Haikal Islami',
-                'email' => 'Haikal@example.com',
-            ],
-        ],
-        [
-            'ticket_id' => 12347,
-            'user_id' => 3,
-            'subject' => 'Request akun email baru',
-            'description' => 'Butuh akun email untuk staf magang departemen IT.',
-            'priority' => 'LOW',
-            'status' => 'complete',
-            'created_at' => '2025-09-21 14:00:00',
-            'updated_at' => '2025-09-21 16:35:00',
-            'requester_id' => 'HR',
-            'departement_id' => 'IT',
-            'user' => [
-                'name' => 'Samuel Jagar',
-                'email' => 'Sammy@example.com',
-            ],
-        ],
-        [
-            'ticket_id' => 12348,
-            'user_id' => 4,
-            'subject' => 'Akses aplikasi internal error 500',
-            'description' => 'Setelah login, aplikasi menampilkan error 500.',
-            'priority' => 'URGENT',
-            'status' => 'pending',
-            'created_at' => '2025-09-23 08:05:00',
-            'updated_at' => '2025-09-23 08:05:00',
-            'requester_id' => 'Humas',
-            'departement_id' => 'IT',
-            'user' => [
-                'name' => 'Muhammad Yusuf',
-                'email' => 'Yusuf@example.com',
-            ],
-        ],
+    protected $queryString = [
+        'statusFilter'     => ['except' => ''],
+        'priorityFilter'   => ['except' => ''],
+        'departmentFilter' => ['except' => ''],
+        'sortFilter'       => ['except' => 'recent'],
     ];
+
+    public function mount(): void
+    {
+        $user = Auth::user();
+
+        $this->departments = Department::query()
+            ->when($user->company_id, fn ($q) => $q->where('company_id', $user->company_id))
+            ->orderBy('department_name')
+            ->get(['department_id', 'department_name']);
+    }
+
+    private function baseQuery()
+    {
+        $user = Auth::user();
+
+        return Ticket::query()
+            ->with([
+                'department:department_id,department_name',
+                'user:user_id,full_name',
+            ])
+            ->where('user_id', $user->getKey());
+    }
 
     public function render()
     {
-        return view('livewire.pages.user.ticketstatus');
+        $q = $this->baseQuery();
+
+        if ($this->statusFilter !== '') {
+            // DB simpan UPPERCASE -> kita pakai persis dari select
+            $q->where('status', $this->statusFilter);
+        }
+
+        if ($this->priorityFilter !== '') {
+            $q->where('priority', $this->priorityFilter);
+        }
+
+        if ($this->departmentFilter !== '') {
+            $q->where('department_id', (int) $this->departmentFilter);
+        }
+
+        match ($this->sortFilter) {
+            'oldest' => $q->orderBy('created_at', 'asc'),
+            'due'    => $q->orderBy('due_at', 'asc')->orderBy('updated_at', 'asc'),
+            default  => $q->orderBy('created_at', 'desc'),
+        };
+
+        $tickets = $q->get();
+
+        return view('livewire.pages.user.ticketstatus', [
+            'tickets'     => $tickets,
+            'departments' => $this->departments,
+        ]);
+    }
+
+    public function markComplete(int $ticketId): void
+    {
+        $ticket = Ticket::whereKey($ticketId)
+            ->where('user_id', Auth::user()->getKey())
+            ->first();
+
+        if ($ticket && $ticket->status !== 'COMPLETE') {
+            $ticket->update(['status' => 'COMPLETE']);
+        }
     }
 }

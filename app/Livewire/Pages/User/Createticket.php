@@ -20,18 +20,17 @@ class CreateTicket extends Component
 
     // Form fields
     public string $subject = '';
-    public string $priority = 'LOW';
-    public ?int $assigned_department_id = null; // departemen tujuan (assigned to)
+    public string $priority = 'low';                 // <- lowercase sesuai enum baru
+    public ?int $assigned_department_id = null;      // departemen tujuan (assigned to)
     public string $description = '';
 
     // Display-only (dept user login)
     public string $requester_department = '-';
 
-    // Uploads
     /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile[] */
     public array $attachments = [];
 
-    // Dropdown data: [{ id: int, department_name: string }]
+    // Dropdown data: [{ department_id, department_name }]
     public array $departments = [];
 
     public function mount(): void
@@ -48,7 +47,7 @@ class CreateTicket extends Component
         $this->departments = Department::query()
             ->when($user->company_id, fn ($q) => $q->where('company_id', $user->company_id))
             ->orderBy('department_name', 'asc')
-            ->get(['department_id as id', 'department_name']) // alias ke 'id' untuk dropdown
+            ->get(['department_id', 'department_name'])
             ->toArray();
     }
 
@@ -56,7 +55,7 @@ class CreateTicket extends Component
     {
         return [
             'subject'                => ['required', 'string', 'max:255'],
-            'priority'               => ['required', 'in:LOW,MEDIUM,HIGH,CRITICAL'],
+            'priority'               => ['required', 'in:low,medium,high'],            // <- lowercase only
             'assigned_department_id' => ['required', 'exists:departments,department_id'],
             'description'            => ['nullable', 'string', 'max:10000'],
             'attachments.*'          => ['file', 'max:10240', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
@@ -67,32 +66,29 @@ class CreateTicket extends Component
     {
         $this->validate();
 
-        $user = Auth::user();
-        $userKey = $user->getKey();
+        $user = Auth::user()->loadMissing(['department', 'company']);
 
-        // Simpan ticket
+        // Simpan ticket (per skema baru)
         $ticket = Ticket::create([
             'company_id'     => $user->company_id,
-            'requestdept_id' => $user->department_id,           // departemen si pembuat tiket
-            'department_id'  => $this->assigned_department_id,  // departemen tujuan (assigned)
-            'user_id'        => $userKey,
+            'requestdept_id' => $user->department_id,          // departemen si pembuat tiket
+            'department_id'  => $this->assigned_department_id, // departemen tujuan (assigned)
+            'user_id'        => $user->getKey(),
             'subject'        => $this->subject,
             'description'    => $this->description,
-            'priority'       => $this->priority,
+            'priority'       => $this->priority,               // low/medium/high
             'status'         => 'OPEN',
         ]);
 
-        $ticketKey = $ticket->getKey();
-
-        // Simpan attachments (jika ada)
+        // Simpan attachments (tanpa uploaded_by)
         foreach ($this->attachments as $file) {
-            $path = $file->store('tickets/' . $ticketKey, 'public');
+            $path = $file->store('tickets/' . $ticket->getKey(), 'public');
 
             TicketAttachment::create([
-                'ticket_id'   => $ticketKey,
-                'file_url'    => Storage::disk('public')->url($path),
-                'file_type'   => $file->getClientOriginalExtension(),
-                'uploaded_by' => $userKey,
+                'ticket_id' => $ticket->getKey(),
+                'file_url'  => Storage::disk('public')->url($path),
+                'file_type' => $file->getClientOriginalExtension(),
+                // 'created_at' dibiarkan: DB pakai CURRENT_TIMESTAMP
             ]);
         }
 
@@ -106,6 +102,7 @@ class CreateTicket extends Component
 
     public function render()
     {
+        // NOTE: view name harus sesuai file: resources/views/livewire/pages/user/createticket.blade.php
         return view('livewire.pages.user.createticket');
     }
 }

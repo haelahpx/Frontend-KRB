@@ -14,7 +14,7 @@ class User extends Authenticatable
 
     protected $table = 'users';
 
-    // ✅ Tell Eloquent our PK is user_id (not id)
+    // ✅ Primary key bukan 'id' tapi 'user_id'
     protected $primaryKey = 'user_id';
     public $incrementing = true;
     protected $keyType = 'int';
@@ -35,7 +35,8 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
-            // 'email_verified_at' => 'datetime', // enable if you have this column
+            // kalau ada kolom email_verified_at di DB, aktifkan:
+            // 'email_verified_at' => 'datetime',
         ];
     }
 
@@ -45,26 +46,30 @@ class User extends Authenticatable
     protected function email(): Attribute
     {
         return Attribute::make(
-            set: fn ($value) => is_null($value) ? null : strtolower($value),
+            set: fn($value) => is_null($value) ? null : strtolower($value),
         );
     }
 
     /**
-     * Virtual "name" attribute mapping to full_name for compatibility.
+     * Virtual "name" attribute mapping ke full_name.
      */
     protected function name(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->full_name,
-            set: fn ($value) => ['full_name' => $value],
+            get: fn() => $this->full_name,
+            set: fn($value) => ['full_name' => $value],
         );
     }
 
-    // (Optional safety) make sure Auth uses the right identifier name
+    /**
+     * Override Auth identifier agar pakai user_id.
+     */
     public function getAuthIdentifierName()
     {
-        return $this->primaryKey; // 'user_id'
+        return 'user_id'; // bukan $this->primaryKey
     }
+
+    // ===== RELATIONSHIPS =====
 
     public function company(): BelongsTo
     {
