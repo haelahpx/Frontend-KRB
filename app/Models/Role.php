@@ -1,5 +1,4 @@
 <?php
-
 // app/Models/Role.php
 namespace App\Models;
 
@@ -12,11 +11,13 @@ class Role extends Model
     use HasFactory;
 
     protected $table = 'roles';
-    protected $primaryKey = 'role_id';   // <-- WAJIB
+    protected $primaryKey = 'role_id';
     public $incrementing = true;
     protected $keyType = 'int';
+    // your table HAS timestamps -> keep default (true)
 
-    protected $fillable = ['code','name'];
+    // remove 'code' since the column doesn't exist
+    protected $fillable = ['name'];
 
     public function users(): HasMany
     {

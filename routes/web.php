@@ -11,6 +11,12 @@ use App\Livewire\Pages\User\Bookroom;
 use App\Livewire\Pages\User\Profile;
 use App\Livewire\Pages\User\Package;
 use App\Livewire\Pages\User\Ticketstatus;
+
+// Livewire Pages (Superadmin)
+use App\Livewire\Pages\Superadmin\Announcement;
+use App\Livewire\Pages\Superadmin\Information;
+use App\Livewire\Pages\Superadmin\Account as UserManagement;
+
 // Pakai PascalCase yang konsisten untuk class
 use App\Livewire\Pages\User\BookingStatus;
 
@@ -84,6 +90,9 @@ Route::middleware('auth')->group(function () {
     // Superadmin routes
     Route::middleware('is.superadmin')->group(function () {
         Route::get('/superadmin-dashboard', SuperadminDashboard::class)->name('superadmin.dashboard');
+        Route::get('/superadmin-announcement', Announcement::class)->name('superadmin.announcement');
+        Route::get('/superadmin-information', Information::class)->name('superadmin.information');
+        Route::get('/superadmin-user', UserManagement::class)->name('superadmin.user');
     });
 
     // Receptionist routes

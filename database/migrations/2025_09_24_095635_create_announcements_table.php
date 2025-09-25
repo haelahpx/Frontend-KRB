@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('announcements', function (Blueprint $table) {
-            $table->id('information_id'); // follows your ERD label
+            $table->id('announcements_id'); // follows your ERD label
             $table->foreignId('company_id')->constrained('companies', 'company_id')->cascadeOnDelete();
             $table->string('description');
             $table->dateTime('event_at')->nullable();

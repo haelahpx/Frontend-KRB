@@ -6,34 +6,49 @@
                 <p class="mt-2 text-gray-600">Selamat datang! Kebun Raya Bogor System.</p>
             </div>
         </div>
-
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {{-- ANNOUNCEMENT --}}
             <div class="bg-white rounded-xl p-6 shadow-lg border border-black space-y-4">
                 <h3 class="text-[#b10303] text-xl font-semibold mb-4">Announcement!</h3>
                 <hr>
-                <div class="flex gap-4 items-start">
-                    <h4 class="text-[#b10303] font-medium min-w-[120px]">2025-09-12</h4>
-                    <p class="text-gray-600">Akan ada maintain website pada tanggal 12 September 2025.</p>
-                </div>
 
+                @forelse ($announcements as $a)
                 <div class="flex gap-4 items-start">
-                    <h4 class="text-[#b10303] font-medium min-w-[120px]">2025-09-25</h4>
-                    <p class="text-gray-600">Akan ada acara bonding karyawan tanggal 25 September 2025.</p>
+                    <h4 class="text-[#b10303] font-medium min-w-[120px]">
+                        {{ optional($a->event_at)->format('Y-m-d') ?? '-' }}
+                    </h4>
+                    <p class="text-gray-600">{{ $a->description }}</p>
                 </div>
+                @empty
+                <p class="text-gray-500">Belum ada pengumuman.</p>
+                @endforelse
             </div>
 
+            {{-- INFORMATION --}}
             <div class="bg-white rounded-xl p-6 shadow-lg border border-black space-y-4">
                 <h3 class="text-[#b10303] text-xl font-semibold mb-4">Information</h3>
                 <hr>
-                <div class="flex gap-4 items-start">
-                    <p class="text-gray-600 font-medium min-w-[120px]">Event berkebun</p>
-                    <p class="text-gray-600">2025-09-1 until 2025-10-2</p>
-                </div>
 
+                @forelse ($informations as $info)
                 <div class="flex gap-4 items-start">
-                    <p class="text-gray-600 font-medium min-w-[120px]">Rapat bulanan</p>
-                    <p class="text-gray-600">2025-09-27</p>
+                    {{-- kiri: judul/desc, kanan: tanggal --}}
+                    <p class="text-gray-600 font-medium min-w-[120px]">
+                        {{ $info->description }}
+                    </p>
+
+                    @php
+                    // Jika nanti kamu menambah kolom event_end_at, tampilkan rentang.
+                    $dateText = optional($info->event_at)->format('Y-m-d');
+                    // $dateText = $info->event_end_at
+                    // ? optional($info->event_at)->format('Y-m-d') . ' until ' . optional($info->event_end_at)->format('Y-m-d')
+                    // : optional($info->event_at)->format('Y-m-d');
+                    @endphp
+
+                    <p class="text-gray-600">{{ $dateText ?? '-' }}</p>
                 </div>
+                @empty
+                <p class="text-gray-500">Belum ada informasi.</p>
+                @endforelse
             </div>
         </div>
 

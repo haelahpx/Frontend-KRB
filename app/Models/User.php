@@ -14,7 +14,6 @@ class User extends Authenticatable
 
     protected $table = 'users';
 
-    // ✅ Primary key bukan 'id' tapi 'user_id'
     protected $primaryKey = 'user_id';
     public $incrementing = true;
     protected $keyType = 'int';
@@ -35,8 +34,6 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
-            // kalau ada kolom email_verified_at di DB, aktifkan:
-            // 'email_verified_at' => 'datetime',
         ];
     }
 

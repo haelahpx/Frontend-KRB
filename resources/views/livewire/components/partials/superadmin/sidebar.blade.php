@@ -20,9 +20,9 @@
 
     <flux:sidebar.nav>
         <flux:sidebar.item icon="home" href="{{ route('superadmin.dashboard') }}" :current="request()->routeIs('superadmin.dashboard')">Home</flux:sidebar.item>
-        <flux:sidebar.item icon="inbox" href="#">Inbox</flux:sidebar.item>
-        <flux:sidebar.item icon="document-text" href="#">Documents</flux:sidebar.item>
-        <flux:sidebar.item icon="calendar" href="#">Calendar</flux:sidebar.item>
+        <flux:sidebar.item icon="inbox" href="{{ route('superadmin.announcement') }}" :current="request()->routeIs('superadmin.announcement')">Announcement</flux:sidebar.item>
+        <flux:sidebar.item icon="document-text" href="{{ route('superadmin.information') }}" :current="request()->routeIs('superadmin.information')">Information</flux:sidebar.item>
+        <flux:sidebar.item icon="users" href="{{ route('superadmin.user') }}" :current="request()->routeIs('superadmin.user')">User Management</flux:sidebar.item>
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />
