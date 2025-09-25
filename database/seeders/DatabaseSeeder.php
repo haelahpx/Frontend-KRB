@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Models\Company;
 use App\Models\Department;
 use App\Models\Role;
+use App\Models\Room;
+use App\Models\Requirement;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
@@ -26,7 +28,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // ambil primary key sesuai model (id atau company_id)
         $companyId = $company->getKey();
 
         // 2) Department
@@ -95,5 +96,24 @@ class DatabaseSeeder extends Seeder
                 'remember_token' => Str::random(10),
             ]
         );
+
+        // 5) Rooms (contoh 3 ruangan)
+        Room::firstOrCreate(
+            ['room_number' => 'Room 101'],
+            ['company_id'  => $companyId]
+        );
+        Room::firstOrCreate(
+            ['room_number' => 'Room 202'],
+            ['company_id'  => $companyId]
+        );
+        Room::firstOrCreate(
+            ['room_number' => 'Room 303'],
+            ['company_id'  => $companyId]
+        );
+
+        // 6) Requirements (buat checklist form)
+        foreach (['projector','whiteboard','video_conference','catering','other'] as $req) {
+            Requirement::firstOrCreate(['name' => $req]);
+        }
     }
 }

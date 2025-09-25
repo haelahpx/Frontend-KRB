@@ -4,32 +4,29 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
-// Livewire Pages (User)
+// ========== Livewire Pages (User) ==========
 use App\Livewire\Pages\User\Home as UserHome;
 use App\Livewire\Pages\User\CreateTicket;
-use App\Livewire\Pages\User\Bookroom;
+use App\Livewire\Pages\User\Bookroom;          // <- komponen Bookroom (User)
 use App\Livewire\Pages\User\Profile;
 use App\Livewire\Pages\User\Package;
 use App\Livewire\Pages\User\Ticketstatus;
+use App\Livewire\Pages\User\BookingStatus;     // <- konsisten PascalCase
 
-// Livewire Pages (Superadmin)
+// ========== Livewire Pages (Admin / Superadmin / Receptionist) ==========
+use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
+use App\Livewire\Pages\Superadmin\Dashboard as SuperadminDashboard;
 use App\Livewire\Pages\Superadmin\Announcement;
 use App\Livewire\Pages\Superadmin\Information;
 use App\Livewire\Pages\Superadmin\Account as UserManagement;
-
-// Pakai PascalCase yang konsisten untuk class
-use App\Livewire\Pages\User\BookingStatus;
-
-// Livewire Pages (Roles)
-use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
-use App\Livewire\Pages\Superadmin\Dashboard as SuperadminDashboard;
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
+use App\Livewire\Pages\Receptionist\Guestbook as ReceptionistGuestbook;
 
-// Auth Pages
+// ========== Auth Pages ==========
 use App\Livewire\Pages\Auth\Login as LoginPage;
 use App\Livewire\Pages\Auth\Register as RegisterPage;
 
-// Error
+// ========== Error ==========
 use App\Livewire\Pages\Errors\error404 as Error404;
 
 //receptionist
@@ -47,9 +44,10 @@ Route::get('/', function () {
         return redirect()->route('login');
     }
 
-//receptionist
-
     $user = Auth::user();
+
+    // Jika relasi role ada: $user->role->name
+    // Jika tidak ada relasi, fallback ke kolom string $user->role (kalau ada)
     $roleName = $user->role->name ?? $user->role ?? null;
 
     return match ($roleName) {
@@ -66,7 +64,7 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
-    Route::get('/login', LoginPage::class)->name('login');
+    Route::get('/login',    LoginPage::class)->name('login');
     Route::get('/register', RegisterPage::class)->name('register');
 });
 
@@ -76,29 +74,34 @@ Route::middleware('guest')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-    // User routes
-    Route::get('/dashboard',       UserHome::class)->name('user.home');
-    Route::get('/create-ticket',   CreateTicket::class)->name('create-ticket');
-    Route::get('/book-room',       Bookroom::class)->name('book-room');
-    Route::get('/profile',         Profile::class)->name('profile');
-    Route::get('/package',         Package::class)->name('package');
-    Route::get('/ticketstatus',    Ticketstatus::class)->name('ticketstatus');
-    Route::get('/bookingstatus',   BookingStatus::class)->name('bookingstatus');
 
-    // Admin routes
+    // ---------- User routes ----------
+    Route::get('/dashboard',     UserHome::class)->name('user.home');
+    Route::get('/create-ticket', CreateTicket::class)->name('create-ticket');
+
+    // Booking room (User)
+    Route::get('/book-room',     Bookroom::class)->name('book-room');      // form + calendar (komponen User\Bookroom)
+    Route::get('/bookingstatus', BookingStatus::class)->name('bookingstatus');
+
+    // Profile & others
+    Route::get('/profile',       Profile::class)->name('profile');
+    Route::get('/package',       Package::class)->name('package');
+    Route::get('/ticketstatus',  Ticketstatus::class)->name('ticketstatus');
+
+    // ---------- Admin routes ----------
     Route::middleware('is.admin')->group(function () {
         Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
     });
 
-    // Superadmin routes
+    // ---------- Superadmin routes ----------
     Route::middleware('is.superadmin')->group(function () {
-        Route::get('/superadmin-dashboard', SuperadminDashboard::class)->name('superadmin.dashboard');
+        Route::get('/superadmin-dashboard',   SuperadminDashboard::class)->name('superadmin.dashboard');
         Route::get('/superadmin-announcement', Announcement::class)->name('superadmin.announcement');
-        Route::get('/superadmin-information', Information::class)->name('superadmin.information');
-        Route::get('/superadmin-user', UserManagement::class)->name('superadmin.user');
+        Route::get('/superadmin-information',  Information::class)->name('superadmin.information');
+        Route::get('/superadmin-user',         UserManagement::class)->name('superadmin.user');
     });
 
-    // Receptionist routes
+    // ---------- Receptionist routes ----------
     Route::middleware('is.receptionist')->group(function () {
         Route::get('/receptionist-dashboard', ReceptionistDashboard::class)->name('receptionist.dashboard');
         Route::get('/receptionist-guestbook', Guestbook::class)->name('receptionist.guestbook');
