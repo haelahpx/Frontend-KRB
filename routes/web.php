@@ -31,7 +31,10 @@ use App\Livewire\Pages\Auth\Register as RegisterPage;
 
 // Error
 use App\Livewire\Pages\Errors\error404 as Error404;
+
+//receptionist
 use App\Livewire\Pages\Receptionist\Guestbook as Guestbook;
+use App\Livewire\Pages\Receptionist\MeetingSchedule as MeetingSchedule;
 
 
 /*
@@ -99,8 +102,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware('is.receptionist')->group(function () {
         Route::get('/receptionist-dashboard', ReceptionistDashboard::class)->name('receptionist.dashboard');
         Route::get('/receptionist-guestbook', Guestbook::class)->name('receptionist.guestbook');
+        Route::get('/receptionist-meetingschedule', MeetingSchedule::class)->name('meeting.schedule');
     });
-
+        
     // Logout
     Route::post('/logout', function (Request $request) {
         Auth::logout();
