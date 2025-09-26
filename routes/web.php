@@ -7,11 +7,11 @@ use Illuminate\Http\Request;
 // ========== Livewire Pages (User) ==========
 use App\Livewire\Pages\User\Home as UserHome;
 use App\Livewire\Pages\User\CreateTicket;
-use App\Livewire\Pages\User\Bookroom;          // <- komponen Bookroom (User)
+use App\Livewire\Pages\User\Bookroom;          
 use App\Livewire\Pages\User\Profile;
 use App\Livewire\Pages\User\Package;
 use App\Livewire\Pages\User\Ticketstatus;
-use App\Livewire\Pages\User\BookingStatus;     // <- konsisten PascalCase
+use App\Livewire\Pages\User\BookingStatus;     
 
 // ========== Livewire Pages (Admin / Superadmin / Receptionist) ==========
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
@@ -21,6 +21,7 @@ use App\Livewire\Pages\Superadmin\Information;
 use App\Livewire\Pages\Superadmin\Account as UserManagement;
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
 use App\Livewire\Pages\Receptionist\Guestbook as ReceptionistGuestbook;
+use App\Livewire\Pages\Admin\Ticket as AdminTicket;
 
 // ========== Auth Pages ==========
 use App\Livewire\Pages\Auth\Login as LoginPage;
@@ -80,7 +81,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/create-ticket', CreateTicket::class)->name('create-ticket');
 
     // Booking room (User)
-    Route::get('/book-room',     Bookroom::class)->name('book-room');      // form + calendar (komponen User\Bookroom)
+    Route::get('/book-room',     Bookroom::class)->name('book-room');      
     Route::get('/bookingstatus', BookingStatus::class)->name('bookingstatus');
 
     // Profile & others
@@ -91,6 +92,7 @@ Route::middleware('auth')->group(function () {
     // ---------- Admin routes ----------
     Route::middleware('is.admin')->group(function () {
         Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
+        Route::get('/admin-ticket',    AdminTicket::class)->name('admin.ticket');
     });
 
     // ---------- Superadmin routes ----------

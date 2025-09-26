@@ -20,7 +20,7 @@
 
     <flux:sidebar.nav>
         <flux:sidebar.item icon="home" href="{{ route('admin.dashboard') }}" :current="request()->routeIs('admin.dashboard')">Home</flux:sidebar.item>
-        <flux:sidebar.item icon="inbox" href="#">Inbox</flux:sidebar.item>
+        <flux:sidebar.item icon="inbox" href="{{ route('admin.ticket') }}" :current="request()->routeIs('admin.ticket')">Ticket</flux:sidebar.item>
         <flux:sidebar.item icon="document-text" href="#">Documents</flux:sidebar.item>
         <flux:sidebar.item icon="calendar" href="#">Calendar</flux:sidebar.item>
     </flux:sidebar.nav>
