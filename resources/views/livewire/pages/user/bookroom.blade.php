@@ -30,8 +30,7 @@
                             <li>Waktu dibagi dalam <strong>slot 30 menit</strong> (misalnya 09:00–09:30, 09:30–10:00).</li>
                             <li>Booking harus dimulai minimal <strong>15 menit dari sekarang</strong> (lead time).</li>
                             <li>Jika waktu yang kamu pilih terlewat saat mengisi form, sistem akan otomatis
-                                <strong>menggeser ke slot berikutnya</strong> dan menampilkan pesan pemberitahuan.
-                            </li>
+                                <strong>menggeser ke slot berikutnya</strong> dan menampilkan pesan pemberitahuan.</li>
                             <li>Kamu tidak bisa booking ke jam yang sudah lewat.</li>
                             <li>Untuk tanggal di masa depan, kamu bebas memilih jam berapapun.</li>
                         </ul>
@@ -63,7 +62,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Date</label>
-                                <input type="date" wire:model="date" wire:change="selectDate($event.target.value)"
+                                <input type="date" wire:model.live="date" wire:change="selectDate($event.target.value)"
                                     class="w-full px-3 text-gray-900 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 @error('date') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
@@ -71,21 +70,20 @@
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Number of Attendees</label>
                                 <input type="number" wire:model="number_of_attendees" placeholder="0" min="1"
                                     class="w-full px-3 text-gray-900 placeholder:text-gray-400 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                                @error('number_of_attendees') <span class="text-red-500 text-sm">{{ $message }}</span>
-                                @enderror
+                                @error('number_of_attendees') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Start Time</label>
-                                <input type="time" wire:model="start_time" min="{{ $minStart }}"
+                                <input type="time" wire:model.live="start_time" min="{{ $minStart }}"
                                     class="w-full px-3 py-2 border text-gray-900 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 @error('start_time') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">End Time</label>
-                                <input type="time" wire:model="end_time" min="{{ $start_time ?: $minStart }}"
+                                <input type="time" wire:model.live="end_time" min="{{ $start_time ?: $minStart }}"
                                     class="w-full px-3 py-2 border text-gray-900 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 @error('end_time') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
@@ -107,12 +105,9 @@
                         @if (in_array('other', $requirements ?? [], true))
                             <div class="mt-4">
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Special Notes</label>
-                                <textarea wire:model.defer="special_notes" placeholder="Please specify your other requirement…"
-                                    rows="4"
+                                <textarea wire:model.defer="special_notes" rows="4" placeholder="Please specify your other requirement…"
                                     class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"></textarea>
-                                @error('special_notes')
-                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                                @enderror
+                                @error('special_notes') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
                         @endif
 
@@ -132,26 +127,20 @@
 
             {{-- SIDEBAR --}}
             <div class="space-y-6">
-                <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
+                <div wire:poll.60s class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-1">Room Availability</h3>
                     <p class="text-sm text-gray-600 mb-4">
                         For {{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}
-                        @if($start_time && $end_time)
-                            — {{ $start_time }}–{{ $end_time }}
-                        @endif
+                        @if($start_time && $end_time) — {{ $start_time }}–{{ $end_time }} @endif
                     </p>
                     <div class="space-y-3">
                         @foreach($rooms as $room)
-                            <div
-                                class="flex items-center justify-between p-3 {{ $room['available_req'] ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200' }} border rounded-md">
+                            <div class="flex items-center justify-between p-3 {{ $room['available_req'] ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200' }} border rounded-md">
                                 <div class="flex items-center space-x-2">
-                                    <div
-                                        class="w-2 h-2 {{ $room['available_req'] ? 'bg-green-500' : 'bg-red-500' }} rounded-full">
-                                    </div>
+                                    <div class="w-2 h-2 {{ $room['available_req'] ? 'bg-green-500' : 'bg-red-500' }} rounded-full"></div>
                                     <span class="font-medium text-gray-900">{{ $room['name'] }}</span>
                                 </div>
-                                <span
-                                    class="text-sm font-medium {{ $room['available_req'] ? 'text-green-700' : 'text-red-700' }}">
+                                <span class="text-sm font-medium {{ $room['available_req'] ? 'text-green-700' : 'text-red-700' }}">
                                     {{ $room['available_req'] ? 'Available' : 'Occupied' }}
                                 </span>
                             </div>
@@ -183,132 +172,123 @@
         </div>
 
     @else
-        {{-- CALENDAR --}}
-        <div class="bg-white rounded-lg shadow-sm border-2 border-black overflow-hidden">
-            <div class="bg-gray-50 border-b-2 border-black p-6">
+        {{-- CALENDAR (Compact Day View) --}}
+        <div wire:poll.60s class="bg-white rounded-lg shadow-sm border-2 border-black overflow-hidden">
+            <div class="bg-gray-50 border-b-2 border-black p-4 md:p-6">
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-2xl font-semibold text-gray-900">Room Schedule</h2>
-                        <p class="text-gray-600 mt-1">
-                            Week of {{ $currentWeek->format('M j') }} -
-                            {{ $currentWeek->copy()->addDays(6)->format('M j, Y') }}
-                        </p>
+                        <p class="text-gray-600 mt-1">{{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}</p>
                     </div>
                     <div class="flex items-center gap-2">
+                        {{-- Week / Month nav --}}
                         <button wire:click="previousMonth"
-                            class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">«
-                            Month</button>
+                            class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">« Month</button>
                         <button wire:click="previousWeek"
-                            class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">‹
-                            Week</button>
+                            class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">‹ Week</button>
+
+                        {{-- Day picker --}}
+                        <input type="date" wire:model.live="date" wire:change="selectDate($event.target.value)"
+                            class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+
                         <button wire:click="nextWeek"
-                            class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">Week
-                            ›</button>
+                            class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">Week ›</button>
                         <button wire:click="nextMonth"
-                            class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">Month
-                            »</button>
+                            class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">Month »</button>
+                    </div>
+                </div>
+
+                {{-- Pagination Rooms (show N rooms per page) --}}
+                <div class="mt-4 flex items-center justify-between">
+                    <div class="text-sm text-gray-600">
+                        Showing rooms {{ ($roomsPage - 1) * $roomsPerPage + 1 }} –
+                        {{ min($roomsPage * $roomsPerPage, count($rooms)) }}
+                        of {{ count($rooms) }}
+                    </div>
+                    <div class="flex gap-2">
+                        <button wire:click="prevRoomPage"
+                            class="px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50"
+                            {{ $roomsPage <= 1 ? 'disabled' : '' }}>‹ Rooms</button>
+                        <button wire:click="nextRoomPage"
+                            class="px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50"
+                            {{ $roomsPage >= $roomsTotalPages ? 'disabled' : '' }}>Rooms ›</button>
                     </div>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <div class="min-w-full">
-                    <div class="grid grid-cols-8 border-b border-gray-200">
-                        <div class="p-4 border-r border-gray-200 bg-gray-50">
-                            <span class="text-sm font-medium text-gray-600">Time / Room</span>
-                        </div>
-                        @foreach($weekDays as $day)
-                            <div class="p-4 text-center border-r border-gray-200 bg-gray-50">
-                                <div class="font-medium text-gray-900">{{ $day->format('D') }}</div>
-                                <div class="text-sm text-gray-600">{{ $day->format('M j') }}</div>
+            {{-- Grid: Time (left fixed) × Visible Rooms (scroll-x) --}}
+            <div class="relative">
+                <div class="flex">
+                    {{-- Left time rail --}}
+                    <div class="w-20 shrink-0 border-r border-gray-200 bg-gray-50 sticky left-0 z-10">
+                        <div class="h-10 border-b border-gray-200"></div>
+                        @foreach($timeSlots as $t)
+                            <div class="h-7 md:h-8 text-[10px] md:text-xs text-gray-600 flex items-center justify-center border-b border-gray-100">
+                                {{ $t }}
                             </div>
                         @endforeach
                     </div>
 
-                    @foreach($rooms as $room)
-                        <div class="border-b border-gray-200">
-                            <div class="grid grid-cols-8 bg-gray-50 border-b border-gray-100">
-                                <div class="col-span-8 p-3 border-r border-gray-200">
-                                    <div class="flex items-center space-x-2">
-                                        <div
-                                            class="w-3 h-3 {{ $room['available_req'] ? 'bg-green-500' : 'bg-red-500' }} rounded-full">
-                                        </div>
-                                        <span class="font-medium text-gray-900">{{ $room['name'] }}</span>
+                    {{-- Rooms scroller --}}
+                    <div class="overflow-x-auto">
+                        <div class="min-w-[640px]">
+                            {{-- Header: room names --}}
+                            <div class="grid" style="grid-template-columns: repeat({{ count($visibleRooms) }}, minmax(160px,1fr));">
+                                @foreach($visibleRooms as $room)
+                                    <div class="h-10 bg-gray-50 border-b border-r border-gray-200 px-3 flex items-center">
+                                        <div class="w-2 h-2 rounded-full {{ $room['available_req'] ? 'bg-green-500' : 'bg-red-500' }} mr-2"></div>
+                                        <span class="text-sm font-medium text-gray-900 truncate">{{ $room['name'] }}</span>
                                     </div>
-                                </div>
+                                @endforeach
                             </div>
 
-                            @foreach(array_chunk($timeSlots, 2) as $hourSlots)
-                                <div class="grid grid-cols-8 border-b border-gray-100">
-                                    <div class="p-2 text-xs text-gray-600 text-center border-r border-gray-200 bg-gray-50">
-                                        {{ $hourSlots[0] }}
-                                    </div>
-                                    @foreach($weekDays as $day)
-                                        <div class="border-r border-gray-200 relative h-16">
-                                            @php
-                                                $booking = null;
-                                                foreach ($hourSlots as $timeSlot) {
-                                                    $slotBooking = $this->getBookingForSlot($room['id'], $day->format('Y-m-d'), $timeSlot);
-                                                    if ($slotBooking) {
-                                                        $booking = $slotBooking;
-                                                        break;
-                                                    }
-                                                }
-                                            @endphp
-                                            @if($booking)
-                                                <div class="absolute inset-1 bg-red-100 border border-red-200 rounded p-1 text-xs">
-                                                    <div class="font-medium text-red-800 truncate">{{ $booking['meeting_title'] }}</div>
-                                                    <div class="text-red-600 text-xs">
-                                                        {{ \Carbon\Carbon::parse($booking['start_time'])->format('H:i') }} -
-                                                        {{ \Carbon\Carbon::parse($booking['end_time'])->format('H:i') }}
-                                                    </div>
+                            {{-- Body: time rows × room columns --}}
+                            @foreach($timeSlots as $t)
+                                <div class="grid border-b border-gray-100"
+                                     style="grid-template-columns: repeat({{ count($visibleRooms) }}, minmax(160px,1fr));">
+                                    @foreach($visibleRooms as $room)
+                                        @php $slotBooking = $this->getBookingForSlot($room['id'], $date, $t); @endphp
+
+                                        @if($slotBooking)
+                                            <div class="h-7 md:h-8 relative border-r border-gray-100">
+                                                <div class="absolute inset-1 bg-red-100 border border-red-200 rounded px-2 flex items-center">
+                                                    <span class="text-[10px] md:text-xs text-red-800 truncate">
+                                                        {{ $slotBooking['meeting_title'] }}
+                                                        ({{ \Carbon\Carbon::parse($slotBooking['start_time'])->format('H:i') }}–{{ \Carbon\Carbon::parse($slotBooking['end_time'])->format('H:i') }})
+                                                    </span>
                                                 </div>
-                                            @else
-                                                <button wire:click="selectDate('{{ $day->format('Y-m-d') }}')"
-                                                    class="w-full h-full hover:bg-green-50 transition-colors cursor-pointer group"
-                                                    title="Book this time slot">
-                                                    <div class="hidden group-hover:block text-xs text-green-600 text-center">
-                                                        Click to book
-                                                    </div>
-                                                </button>
-                                            @endif
-                                        </div>
+                                            </div>
+                                        @else
+                                            <button
+                                                wire:click="selectCalendarSlot({{ $room['id'] }}, '{{ $date }}', '{{ $t }}')"
+                                                class="h-7 md:h-8 w-full border-r border-gray-100 hover:bg-green-50 transition-colors">
+                                            </button>
+                                        @endif
                                     @endforeach
                                 </div>
                             @endforeach
                         </div>
-                    @endforeach
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-gray-50 border-t border-gray-200 p-4">
-                <div class="flex items-center space-x-6 text-sm">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
-                        <span class="text-gray-600">Booked</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-3 h-3 bg-white border border-gray-200 rounded"></div>
-                        <span class="text-gray-600">Available</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-3 h-3 bg-green-50 border border-green-200 rounded"></div>
-                        <span class="text-gray-600">Hover to book</span>
-                    </div>
+            {{-- Legend --}}
+            <div class="bg-gray-50 border-t border-gray-200 p-3 md:p-4">
+                <div class="flex items-center gap-4 text-xs md:text-sm">
+                    <span class="inline-flex items-center gap-2">
+                        <span class="w-3 h-3 bg-red-100 border border-red-200 rounded inline-block"></span> Booked
+                    </span>
+                    <span class="inline-flex items-center gap-2">
+                        <span class="w-3 h-3 bg-white border border-gray-200 rounded inline-block"></span> Available
+                    </span>
+                    <span class="inline-flex items-center gap-2">
+                        <span class="w-3 h-3 bg-green-50 border border-green-200 rounded inline-block"></span> Hover to book
+                    </span>
                 </div>
             </div>
         </div>
-
-        @if($selectedDate)
-            <div class="mt-8 bg-white rounded-lg shadow-sm border-2 border-black p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                    Quick Book for {{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}
-                </h3>
-                <button wire:click="switchView('form')"
-                    class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors">
-                    Go to Booking Form
-                </button>
-            </div>
-        @endif
     @endif
+
+    {{-- Child modal (quick book) --}}
+    <livewire:booking.quick-book-modal />
 </div>

@@ -4,6 +4,7 @@ namespace App\Livewire\Pages\User;
 
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +40,10 @@ class Bookroom extends Component
     protected string $tz = 'Asia/Jakarta';
     public string $minStart = '00:00';
 
+    // Kalender compact (pagination rooms)
+    public int $roomsPerPage = 6;
+    public int $roomPage = 1;
+
     public function mount(): void
     {
         $now = Carbon::now($this->tz);
@@ -46,7 +51,7 @@ class Bookroom extends Component
         $this->currentWeek  = $now->copy()->startOfWeek();
         $this->date         = $now->toDateString();
 
-        // default start time = now + leadTime, dibulatkan ke slot berikut
+        // default start = now + lead time, dibulatkan ke slot berikut
         $start = $now->copy()->addMinutes($this->leadMinutes);
         $this->start_time = $this->roundUpToSlot($start)->format('H:i');
         $this->end_time   = Carbon::createFromFormat('H:i', $this->start_time)
@@ -75,22 +80,20 @@ class Bookroom extends Component
 
         if ($this->date === $now->toDateString()) {
             $this->minStart = $now->format('H:i');
+
             // auto-bump kalau start_time sudah terlewat
             if ($this->start_time < $this->minStart) {
                 $bumped = $this->roundUpToSlot($now->copy()->addMinutes($this->leadMinutes));
                 $this->start_time = $bumped->format('H:i');
                 $this->end_time   = $bumped->copy()->addMinutes($this->slotMinutes)->format('H:i');
-                $this->dispatch('toast', [
-                    'type' => 'info',
-                    'message' => "Start time diupdate ke {$this->start_time} karena waktu sebelumnya sudah terlewat."
-                ]);
+                $this->dispatch('toast', type: 'info', message: "Start time diupdate ke {$this->start_time} karena waktu sebelumnya sudah terlewat.");
             }
         } else {
             $this->minStart = '00:00';
         }
     }
 
-    // --- Navigation ---
+    // --- Navigation (DAY view aware) ---
     public function switchView(string $view): void
     {
         $this->view = in_array($view, ['form','calendar'], true) ? $view : 'form';
@@ -98,26 +101,38 @@ class Bookroom extends Component
 
     public function previousWeek(): void
     {
-        $this->currentWeek = $this->currentWeek->copy()->subWeek();
+        $this->selectedDate = Carbon::parse($this->date, $this->tz)->subWeek();
+        $this->date = $this->selectedDate->toDateString();
+        $this->currentWeek = $this->selectedDate->copy()->startOfWeek();
         $this->buildWeekDays();
+        $this->updateMinStart();
     }
 
     public function nextWeek(): void
     {
-        $this->currentWeek = $this->currentWeek->copy()->addWeek();
+        $this->selectedDate = Carbon::parse($this->date, $this->tz)->addWeek();
+        $this->date = $this->selectedDate->toDateString();
+        $this->currentWeek = $this->selectedDate->copy()->startOfWeek();
         $this->buildWeekDays();
+        $this->updateMinStart();
     }
 
     public function previousMonth(): void
     {
-        $this->currentWeek = $this->currentWeek->copy()->subMonth()->startOfMonth()->startOfWeek();
+        $this->selectedDate = Carbon::parse($this->date, $this->tz)->subMonth();
+        $this->date = $this->selectedDate->toDateString();
+        $this->currentWeek = $this->selectedDate->copy()->startOfWeek();
         $this->buildWeekDays();
+        $this->updateMinStart();
     }
 
     public function nextMonth(): void
     {
-        $this->currentWeek = $this->currentWeek->copy()->addMonth()->startOfMonth()->startOfWeek();
+        $this->selectedDate = Carbon::parse($this->date, $this->tz)->addMonth();
+        $this->date = $this->selectedDate->toDateString();
+        $this->currentWeek = $this->selectedDate->copy()->startOfWeek();
         $this->buildWeekDays();
+        $this->updateMinStart();
     }
 
     public function selectDate(string $date): void
@@ -128,7 +143,60 @@ class Bookroom extends Component
         $this->recalculateAvailability();
     }
 
-    // --- Submit ---
+    // Live update bindings (sinkronisasi Room Availability dengan input user)
+    public function updatedStartTime($val): void
+    {
+        if ($val) {
+            $this->end_time = Carbon::createFromFormat('H:i', $val)->addMinutes($this->slotMinutes)->format('H:i');
+        }
+        $this->recalculateAvailability();
+    }
+
+    public function updatedEndTime(): void
+    {
+        $this->recalculateAvailability();
+    }
+
+    public function updatedDate(): void
+    {
+        // pastikan minStart ikut update & availability recalculated
+        $this->selectDate($this->date);
+    }
+
+    // ==== Pagination Rooms (kalender compact) ====
+    public function nextRoomPage(): void
+    {
+        if ($this->roomPage < $this->totalRoomPages()) $this->roomPage++;
+    }
+    public function prevRoomPage(): void
+    {
+        if ($this->roomPage > 1) $this->roomPage--;
+    }
+    protected function visibleRooms(): array
+    {
+        $offset = ($this->roomPage - 1) * $this->roomsPerPage;
+        return array_slice($this->rooms, $offset, $this->roomsPerPage);
+    }
+    protected function totalRoomPages(): int
+    {
+        return max(1, (int) ceil(count($this->rooms) / $this->roomsPerPage));
+    }
+
+    // ==== Quick book dari kalender (buka modal child via event) ====
+    public function selectCalendarSlot(int $roomId, string $ymd, string $time): void
+    {
+        $this->dispatch('open-quick-book', roomId: $roomId, ymd: $ymd, time: $time);
+    }
+
+    // Refresh data setelah modal sukses membuat booking
+    #[On('booking-created')]
+    public function refreshAfterBooking(): void
+    {
+        $this->loadRecentBookings();
+        $this->recalculateAvailability();
+    }
+
+    // --- Submit (form utama) ---
     public function submitBooking(): void
     {
         $this->validate([
@@ -144,17 +212,11 @@ class Bookroom extends Component
 
         $now = Carbon::now($this->tz);
         if ($this->date < $now->toDateString()) {
-            $this->dispatch('toast', [
-                'type'=>'error',
-                'message'=>'Tidak bisa booking ke tanggal yang sudah lewat.'
-            ]);
+            $this->dispatch('toast', type: 'error', message: 'Tidak bisa booking ke tanggal yang sudah lewat.');
             return;
         }
         if ($this->date === $now->toDateString() && $this->start_time < $now->format('H:i')) {
-            $this->dispatch('toast', [
-                'type'=>'error',
-                'message'=>'Start time tidak boleh di masa lalu.'
-            ]);
+            $this->dispatch('toast', type: 'error', message: 'Start time tidak boleh di masa lalu.');
             return;
         }
 
@@ -169,10 +231,7 @@ class Bookroom extends Component
             ->exists();
 
         if ($overlap) {
-            $this->dispatch('toast', [
-                'type'=>'error',
-                'message'=>'Slot waktu sudah terpakai.'
-            ]);
+            $this->dispatch('toast', type: 'error', message: 'Slot waktu sudah terpakai.');
             return;
         }
 
@@ -200,10 +259,7 @@ class Bookroom extends Component
         $this->resetForm(true);
         $this->recalculateAvailability();
 
-        $this->dispatch('toast', [
-            'type'=>'success',
-            'message'=>'Booking berhasil dikonfirmasi.'
-        ]);
+        $this->dispatch('toast', type: 'success', message: 'Booking berhasil dikonfirmasi.');
     }
 
     // --- Loaders ---
@@ -304,10 +360,14 @@ class Bookroom extends Component
         $this->recalculateAvailability();
 
         return view('livewire.pages.user.bookroom', [
-            'rooms'     => $this->rooms,
-            'bookings'  => $this->bookings,
-            'timeSlots' => $this->timeSlots,
-            'weekDays'  => $this->weekDays,
+            'rooms'           => $this->rooms,
+            'bookings'        => $this->bookings,
+            'timeSlots'       => $this->timeSlots,
+            'weekDays'        => $this->weekDays,
+            'visibleRooms'    => $this->visibleRooms(),
+            'roomsPage'       => $this->roomPage,
+            'roomsPerPage'    => $this->roomsPerPage,
+            'roomsTotalPages' => $this->totalRoomPages(),
         ]);
     }
 
