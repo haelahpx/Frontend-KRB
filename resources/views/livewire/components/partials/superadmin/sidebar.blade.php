@@ -3,7 +3,7 @@
     collapsible="mobile"
     class="
         fixed top-0 left-0 h-screen
-        bg-zinc-50 dark:bg-zinc-900
+        bg-zinc-900 
         border-r border-zinc-200 dark:border-zinc-700
         lg:w-64 w-[85vw] max-w-sm
         z-40

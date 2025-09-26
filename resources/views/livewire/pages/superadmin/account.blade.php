@@ -46,31 +46,31 @@
             <form wire:submit.prevent="{{ $isEdit ? 'update' : 'store' }}" class="p-8 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="{{ $label }}">👤 Full Name</label>
+                        <label class="{{ $label }}">Full Name</label>
                         <input type="text" wire:model.defer="full_name" class="{{ $input }}" placeholder="e.g. John Doe">
                         @error('full_name') <p class="mt-1 text-sm text-red-500 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="{{ $label }}">✉️ Email Address</label>
+                        <label class="{{ $label }}">Email Address</label>
                         <input type="email" wire:model.defer="email" class="{{ $input }}" placeholder="e.g. john.doe@example.com">
                         @error('email') <p class="mt-1 text-sm text-red-500 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="{{ $label }}">📞 Phone Number</label>
+                        <label class="{{ $label }}">Phone Number</label>
                         <input type="text" wire:model.defer="phone_number" class="{{ $input }}" placeholder="e.g. 08123456789">
                     </div>
                     <div>
-                        <label class="{{ $label }}">🔑 Password {{ $isEdit ? '(Leave blank to keep unchanged)' : '' }}</label>
+                        <label class="{{ $label }}">Password {{ $isEdit ? '(Leave blank to keep unchanged)' : '' }}</label>
                         <input type="password" wire:model.defer="password" class="{{ $input }}">
                         @error('password') <p class="mt-1 text-sm text-red-500 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="{{ $label }}">🏢 Company</label>
+                        <label class="{{ $label }}">Company</label>
                         <input type="text" class="{{ $input }}" value="{{ $company_name }}" readonly>
                         @error('company_id') <p class="mt-1 text-sm text-red-500 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="{{ $label }}">👥 Role</label>
+                        <label class="{{ $label }}">Role</label>
                         <select wire:model.defer="role_id" class="{{ $input }}">
                             <option value="">Select role</option>
                             @foreach ($roles as $r)
@@ -80,7 +80,7 @@
                         @error('role_id') <p class="mt-1 text-sm text-red-500 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div class="md:col-span-2">
-                        <label class="{{ $label }}">📂 Department</label>
+                        <label class="{{ $label }}">Department</label>
                         <select wire:model.defer="department_id" class="{{ $input }}" required>
                             <option value="">Select department</option>
                             @foreach ($departments as $d)

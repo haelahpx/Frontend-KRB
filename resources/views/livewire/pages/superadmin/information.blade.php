@@ -52,7 +52,7 @@
             <form wire:submit.prevent="save" class="p-8 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="md:col-span-1">
-                        <label class="{{ $label }}">🏢 Company</label>
+                        <label class="{{ $label }}">Company</label>
                         @php
                         $companyName = optional(auth()->user()?->company)->company_name ?? '-';
                         @endphp
@@ -60,12 +60,12 @@
                         @error('company_id') <p class="mt-1 text-sm text-red-500 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div class="md:col-span-2">
-                        <label class="{{ $label }}">📝 Description</label>
+                        <label class="{{ $label }}">Description</label>
                         <input type="text" wire:model.defer="description" class="{{ $input }}" placeholder="Enter a short information or event detail...">
                         @error('description') <p class="mt-1 text-sm text-red-500 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div class="md:col-span-1">
-                        <label class="{{ $label }}">🗓️ Event Date (Optional)</label>
+                        <label class="{{ $label }}">Event Date (Optional)</label>
                         <input type="datetime-local" wire:model.defer="event_at" class="{{ $input }}">
                         @error('event_at') <p class="mt-1 text-sm text-red-500 font-medium">{{ $message }}</p> @enderror
                     </div>
@@ -185,16 +185,16 @@
             <form wire:submit.prevent="save">
                 <div class="p-6 space-y-5 overflow-y-auto">
                     <div>
-                        <label class="{{ $label }}">🏢 Company</label>
+                        <label class="{{ $label }}">Company</label>
                         <input type="text" class="{{ $input }}" value="{{ optional(Auth::user()->company)->company_name ?? '-' }}" readonly>
                     </div>
                     <div>
-                        <label class="{{ $label }}">📝 Description</label>
+                        <label class="{{ $label }}">Description</label>
                         <input type="text" wire:model.defer="description" class="{{ $input }}" placeholder="Short information...">
                         @error('description') <p class="mt-1 text-sm text-red-500 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="{{ $label }}">🗓️ Event Date (Optional)</label>
+                        <label class="{{ $label }}">Event Date (Optional)</label>
                         <input type="datetime-local" wire:model.defer="event_at" class="{{ $input }}">
                         @error('event_at') <p class="mt-1 text-sm text-red-500 font-medium">{{ $message }}</p> @enderror
                     </div>
