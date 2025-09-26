@@ -6,21 +6,21 @@
                 <p class="mt-2 text-gray-600">Selamat datang! Kebun Raya Bogor System.</p>
             </div>
         </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             {{-- ANNOUNCEMENT --}}
             <div class="bg-white rounded-xl p-6 shadow-lg border border-black space-y-4">
                 <h3 class="text-[#b10303] text-xl font-semibold mb-4">Announcement!</h3>
                 <hr>
-
                 @forelse ($announcements as $a)
-                <div class="flex gap-4 items-start">
-                    <h4 class="text-[#b10303] font-medium min-w-[120px]">
-                        {{ optional($a->event_at)->format('Y-m-d') ?? '-' }}
-                    </h4>
-                    <p class="text-gray-600">{{ $a->description }}</p>
-                </div>
+                    <div class="flex gap-4 items-start">
+                        <h4 class="text-[#b10303] font-medium min-w-[120px]">
+                            {{ optional($a->event_at)->format('Y-m-d') ?? '-' }}
+                        </h4>
+                        <p class="text-gray-600">{{ $a->description }}</p>
+                    </div>
                 @empty
-                <p class="text-gray-500">Belum ada pengumuman.</p>
+                    <p class="text-gray-500">Belum ada pengumuman.</p>
                 @endforelse
             </div>
 
@@ -28,31 +28,22 @@
             <div class="bg-white rounded-xl p-6 shadow-lg border border-black space-y-4">
                 <h3 class="text-[#b10303] text-xl font-semibold mb-4">Information</h3>
                 <hr>
-
                 @forelse ($informations as $info)
-                <div class="flex gap-4 items-start">
-                    {{-- kiri: judul/desc, kanan: tanggal --}}
-                    <p class="text-gray-600 font-medium min-w-[120px]">
-                        {{ $info->description }}
-                    </p>
-
-                    @php
-                    // Jika nanti kamu menambah kolom event_end_at, tampilkan rentang.
-                    $dateText = optional($info->event_at)->format('Y-m-d');
-                    // $dateText = $info->event_end_at
-                    // ? optional($info->event_at)->format('Y-m-d') . ' until ' . optional($info->event_end_at)->format('Y-m-d')
-                    // : optional($info->event_at)->format('Y-m-d');
-                    @endphp
-
-                    <p class="text-gray-600">{{ $dateText ?? '-' }}</p>
-                </div>
+                    <div class="flex gap-4 items-start">
+                        <p class="text-gray-600 font-medium min-w-[120px]">
+                            {{ $info->description }}
+                        </p>
+                        @php $dateText = optional($info->event_at)->format('Y-m-d'); @endphp
+                        <p class="text-gray-600">{{ $dateText ?? '-' }}</p>
+                    </div>
                 @empty
-                <p class="text-gray-500">Belum ada informasi.</p>
+                    <p class="text-gray-500">Belum ada informasi.</p>
                 @endforelse
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            {{-- TICKETS CARD (mini summary) --}}
             <div
                 class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black flex flex-col h-full">
                 <div class="flex items-center gap-3 mb-3">
@@ -60,10 +51,27 @@
                     <h2 class="text-xl font-semibold text-black">Tickets Status</h2>
                 </div>
                 <p class="text-gray-600 mb-4">Ringkasan tiket yang belum selesai.</p>
-                <div class="mt-auto"></div> {{-- spacer biar footer turun ke bawah --}}
+
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center justify-between px-3 py-2 border rounded-md">
+                        <span class="text-gray-700">Open</span>
+                        <span class="font-semibold text-black">{{ $openTicketsCount ?? 0 }}</span>
+                    </div>
+                    <div class="flex items-center justify-between px-3 py-2 border rounded-md">
+                        <span class="text-gray-700">In Progress</span>
+                        <span class="font-semibold text-black">{{ $inProgressTicketsCount ?? 0 }}</span>
+                    </div>
+                    <div class="flex items-center justify-between px-3 py-2 border rounded-md">
+                        <span class="text-gray-700">Resolved (7d)</span>
+                        <span class="font-semibold text-black">{{ $resolvedLast7d ?? 0 }}</span>
+                    </div>
+                </div>
+
+                <div class="mt-auto"></div>
                 <div class="flex justify-between items-center pt-4">
                     <div class="text-sm text-gray-500">
-                        Total: <span class="font-semibold text-black">{{ $openTicketsCount ?? 0 }}</span>
+                        Total: <span
+                            class="font-semibold text-black">{{ ($openTicketsCount ?? 0) + ($inProgressTicketsCount ?? 0) }}</span>
                     </div>
                     <a href="{{ route('ticketstatus') }}"
                         class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">
@@ -72,14 +80,40 @@
                 </div>
             </div>
 
+            {{-- BOOKING HISTORY SUMMARY CARD --}}
             <div
                 class="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-xl border border-black flex flex-col h-full">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="bg-black text-white px-3 py-1 rounded-full text-sm font-medium">Booking</div>
-                    <h2 class="text-xl font-semibold text-black">Booking Status</h2>
+                    <h2 class="text-xl font-semibold text-black">Booking History</h2>
                 </div>
-                <p class="text-gray-600 mb-4">Lihat booking ruangan.</p>
-                <div class="mt-auto"></div> {{-- spacer --}}
+                <p class="text-gray-600 mb-4">Ringkasan booking kamu.</p>
+
+                @if(!empty($nextBooking))
+                    <div class="rounded-lg border border-gray-200 p-4 mb-4 bg-gray-50">
+                        <div class="text-sm text-gray-500 mb-1">My Next Booking</div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="font-semibold text-black">{{ $nextBooking['meeting_title'] }}</div>
+                            <div class="text-gray-700">• Room {{ $nextBooking['room_name'] }}</div>
+                            <div class="text-gray-700">
+                                • {{ \Carbon\Carbon::parse($nextBooking['date'])->format('D, M j') }}
+                                {{ \Carbon\Carbon::parse($nextBooking['start_time'])->format('H:i') }}–{{ \Carbon\Carbon::parse($nextBooking['end_time'])->format('H:i') }}
+                            </div>
+                        </div>
+                        <div class="mt-3 flex gap-2">
+                            <button wire:click="rebook({{ $nextBooking['id'] }})"
+                                class="px-3 py-1.5 text-sm border rounded-md hover:bg-gray-100">Rebook</button>
+                            <button wire:click="cancelBooking({{ $nextBooking['id'] }})"
+                                class="px-3 py-1.5 text-sm border rounded-md hover:bg-gray-100">Cancel</button>
+                        </div>
+                    </div>
+                @else
+                    <div class="rounded-lg border border-dashed border-gray-300 p-4 mb-4 text-sm text-gray-600">
+                        Belum ada booking mendatang.
+                    </div>
+                @endif
+
+                <div class="mt-auto"></div>
                 <div class="flex justify-between items-center pt-4">
                     <div class="text-sm text-gray-500">
                         Minggu ini: <span class="font-semibold text-black">{{ $upcomingBookings ?? 0 }}</span>
@@ -92,26 +126,25 @@
             </div>
         </div>
 
-
+        {{-- SHORTCUTS --}}
         <div class="bg-white rounded-xl p-6 shadow-lg border border-black">
             <h3 class="text-xl font-semibold text-black mb-4">Shortcuts</h3>
             <div class="flex flex-wrap gap-3">
-                <flux:modal.trigger name="new-ticket">
-                    <button type="button"
-                        class="bg-black text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">
-                        + Ticket
-                    </button>
-                </flux:modal.trigger>
+                <button type="button" wire:click="openQuickTicket"
+                    class="bg-black text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">
+                    + Ticket
+                </button>
 
-                <flux:modal.trigger name="booking-room">
-                    <button type="button"
-                        class="bg-black text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">
-                        + Booking
-                    </button>
-                </flux:modal.trigger>
+                {{-- pakai modal quick-book Livewire yang sama --}}
+                <button type="button" wire:click="openQuickBook"
+                    class="bg-black text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-red-800 hover:shadow-lg">
+                    + Booking
+                </button>
             </div>
 
             <div class="my-6 h-px bg-black/20"></div>
+
+            {{-- tiga info cards (contoh statis) --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div
                     class="rounded-xl p-4 sm:p-6 border border-green-500 bg-emerald-900 text-white h-full flex flex-col">
@@ -170,134 +203,19 @@
             </div>
         </div>
 
-
+        {{-- NEW TICKET MODAL (biarkan seperti punyamu / contoh kosong) --}}
         <flux:modal name="new-ticket" variant="flyout" class="text-black">
             <div class="space-y-6">
                 <div>
                     <flux:heading size="lg">Create Support Ticket</flux:heading>
                     <flux:text class="mt-2">Fill out the form below to submit a new support ticket.</flux:text>
                 </div>
-
-                <form method="POST" enctype="multipart/form-data" id="new-ticket-form" class="space-y-4 text-black
-            [&_label]:text-black
-            [&_input]:text-black [&_input]:bg-white
-            [&_textarea]:text-black [&_textarea]:bg-white
-            [&_select]:text-black [&_select]:bg-white
-            [&_input::placeholder]:text-gray-600
-            [&_textarea::placeholder]:text-gray-600">
-                    @csrf
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <flux:input label="Subject" name="subject" placeholder="Enter ticket subject" />
-
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Priority</label>
-                            <select name="priority" class="w-full px-3 py-2 border border-black rounded-md
-                        focus:outline-none focus:ring-2 focus:ring-black focus:border-black">
-                                <option value="" class="text-gray-500">Select priority</option>
-                                <option value="LOW">Low</option>
-                                <option value="MEDIUM">Medium</option>
-                                <option value="HIGH">High</option>
-                                <option value="CRITICAL">Critical</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Department</label>
-                            <select name="department_id" class="w-full px-3 py-2 border border-black rounded-md
-                        focus:outline-none focus:ring-2 focus:ring-black focus:border-black">
-                                <option value="" class="text-gray-500">Select department</option>
-                                <option value="1">IT Support</option>
-                                <option value="2">Human Resources</option>
-                                <option value="3">Finance</option>
-                                <option value="4">Operations</option>
-                                <option value="5">Marketing</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Assigned Department</label>
-                            <select name="assigned_user_id" class="w-full px-3 py-2 border border-black rounded-md
-                        focus:outline-none focus:ring-2 focus:ring-black focus:border-black">
-                                <option value="" class="text-gray-500">Select user</option>
-                                <option value="1">IT Support</option>
-                                <option value="2">Human Resources</option>
-                                <option value="3">Finance</option>
-                                <option value="4">Operations</option>
-                                <option value="5">Marketing</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Description</label>
-                        <textarea name="description" rows="5" placeholder="Describe your issue in detail..." class="w-full px-3 py-2 border border-black rounded-md
-                        focus:outline-none focus:ring-2 focus:ring-black resize-y"></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Attachments</label>
-                        <div class="border-2 border-dashed border-black rounded-md p-4 text-center">
-                            <input id="file-upload" type="file" name="attachments[]" multiple
-                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="hidden">
-                            <label for="file-upload" class="cursor-pointer">
-                                <div>
-                                    <p class="text-sm text-black">Click to upload files or drag and drop</p>
-                                    <p class="text-xs text-gray-600 mt-1">PNG, JPG, PDF, DOC up to 10MB</p>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="flex gap-3 pt-2">
-                        <button type="button"
-                            class="px-6 py-2 border border-black text-black rounded-md hover:bg-gray-100 transition-colors">
-                            Cancel
-                        </button>
-                        <flux:spacer />
-                        <flux:button type="submit" variant="primary">
-                            Submit Ticket
-                        </flux:button>
-                    </div>
-                </form>
+                {{-- … isi form ticket milikmu … --}}
             </div>
         </flux:modal>
 
-
-        <flux:modal name="booking-room" variant="flyout">
-            <div class="space-y-6">
-                <div>
-                    <flux:heading size="lg">New Room Booking</flux:heading>
-                    <flux:text class="mt-2">Fill in the details to request a room.</flux:text>
-                </div>
-                <form method="POST" class="space-y-4 text-black [&_input::placeholder]:text-black">
-                    @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <flux:input label="Title" name="title" placeholder="e.g., Weekly Standup" />
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Room</label>
-                            <select name="room_id"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900">
-                                <option value="">Select room</option>
-                                <option value="1">Auditorium</option>
-                                <option value="2">Meeting Room A</option>
-                                <option value="3">Meeting Room B</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <flux:input label="Date" type="date" name="date" />
-                        <div class="grid grid-cols-2 gap-3">
-                            <flux:input label="Start" type="time" name="start_time" />
-                            <flux:input label="End" type="time" name="end_time" />
-                        </div>
-                    </div>
-                    <flux:input label="Purpose" name="purpose" placeholder="Describe the meeting purpose" />
-                    <div class="flex">
-                        <flux:spacer />
-                        <flux:button type="submit" variant="primary">Request Booking</flux:button>
-                    </div>
-                </form>
-            </div>
-        </flux:modal>
+        {{-- Quick-book modal Livewire (re-use komponen yang sama) --}}
+        <livewire:booking.quick-book-modal />
+        <livewire:tickets.quick-ticket-modal />
     </section>
 </div>

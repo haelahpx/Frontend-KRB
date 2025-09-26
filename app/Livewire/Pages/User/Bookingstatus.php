@@ -1,58 +1,160 @@
 <?php
 
 namespace App\Livewire\Pages\User;
+
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
-use Illuminate\Support\Carbon;
+use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+use App\Models\BookingRoom;
+use App\Models\Room;
 
 #[Layout('layouts.app')]
-#[Title('Booked Rooms')]
-class bookingstatus extends Component
+#[Title('Booking History')]
+class Bookingstatus extends Component
 {
-    public ?string $q = null;         
-    public ?string $date_from = null;  
-    public ?string $date_to = null;    
-    public array $bookings = [
-        ['id' => 1, 'title' => 'Team Standup', 'room_name' => 'Conference Room A', 'start_time' => '2025-09-24 09:00:00', 'end_time' => '2025-09-24 10:00:00', 'status' => 'booked'],
-        ['id' => 2, 'title' => 'Client Presentation', 'room_name' => 'Board Room', 'start_time' => '2025-09-25 13:00:00', 'end_time' => '2025-09-25 14:30:00', 'status' => 'booked'],
-        ['id' => 3, 'title' => 'Weekly Review', 'room_name' => 'Conference Room A', 'start_time' => '2025-09-26 08:30:00', 'end_time' => '2025-09-26 09:30:00', 'status' => 'cancelled'],
-        ['id' => 4, 'title' => 'Design Sync', 'room_name' => 'Meeting Room B', 'start_time' => '2025-09-27 14:00:00', 'end_time' => '2025-09-27 15:00:00', 'status' => 'booked'],
-        ['id' => 5, 'title' => 'Training Session', 'room_name' => 'Training Room', 'start_time' => '2025-09-28 10:00:00', 'end_time' => '2025-09-28 12:00:00', 'status' => 'pending'],
-    ];
+    use WithPagination;
 
-    public function mount(): void
-    {
-        $this->date_from ??= Carbon::today()->toDateString();
-        $this->date_to ??= Carbon::today()->addDays(14)->toDateString();
-    }
-    public function clearFilters(): void
-    {
-        $this->q = null;
-        $this->date_from = Carbon::today()->toDateString();
-        $this->date_to = Carbon::today()->addDays(14)->toDateString();
-    }
-    public function getBookedProperty(): array
-    {
-        $from = Carbon::parse($this->date_from)->startOfDay();
-        $to = Carbon::parse($this->date_to)->endOfDay();
+    // Tabs & filters
+    public string $tab = 'upcoming'; // upcoming|ongoing|past|all
+    public string $q = '';           // search by title/room
+    public ?string $dateFrom = null; // Y-m-d
+    public ?string $dateTo   = null; // Y-m-d
+    public ?int $roomFilter  = null;
 
-        return collect($this->bookings)
-            ->where('status', 'booked')
-            ->filter(fn($b) => Carbon::parse($b['end_time'])->gte($from)
-                && Carbon::parse($b['start_time'])->lte($to))
-            ->when($this->q, function ($c) {
-                $t = mb_strtolower(trim($this->q));
-                return $c->filter(fn($b) => str_contains(mb_strtolower($b['title']), $t)
-                    || str_contains(mb_strtolower($b['room_name']), $t));
-            })
-            ->sortBy('start_time')
-            ->values()
-            ->all();
+    // UI
+    public int $perPage = 10;
+
+    protected string $tz = 'Asia/Jakarta';
+
+    // Actions
+    public function setTab(string $tab): void
+    {
+        $this->tab = in_array($tab, ['upcoming','ongoing','past','all'], true) ? $tab : 'upcoming';
+        $this->resetPage();
+    }
+
+    public function updatingQ(): void         { $this->resetPage(); }
+    public function updatingDateFrom(): void  { $this->resetPage(); }
+    public function updatingDateTo(): void    { $this->resetPage(); }
+    public function updatingRoomFilter(): void{ $this->resetPage(); }
+
+    public function openQuickBook(): void
+    {
+        $now = Carbon::now($this->tz)->addMinutes(15);
+        $rounded = $this->roundUpToSlot($now, 30)->format('H:i');
+        $this->dispatch('open-quick-book', roomId: 0, ymd: $now->toDateString(), time: $rounded);
+    }
+
+    public function rebook(int $bookingId): void
+    {
+        $b = BookingRoom::where('bookingroom_id', $bookingId)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$b) {
+            $this->dispatch('toast', type: 'error', message: 'Booking tidak ditemukan.');
+            return;
+        }
+
+        $this->dispatch('open-quick-book',
+            roomId: (int)$b->room_id,
+            ymd:    (string)$b->date,
+            time:   Carbon::parse($b->start_time)->format('H:i')
+        );
+    }
+
+    public function cancelBooking(int $bookingId): void
+    {
+        $b = BookingRoom::where('bookingroom_id', $bookingId)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$b) {
+            $this->dispatch('toast', type: 'error', message: 'Booking tidak ditemukan.');
+            return;
+        }
+
+        $now   = Carbon::now($this->tz);
+        $start = Carbon::parse("{$b->date} {$b->start_time}", $this->tz);
+
+        if ($start->lte($now)) {
+            $this->dispatch('toast', type: 'error', message: 'Booking yang sudah berjalan / lewat tidak bisa dibatalkan.');
+            return;
+        }
+
+        $b->delete();
+        $this->dispatch('toast', type: 'success', message: 'Booking dibatalkan.');
+        $this->resetPage();
+    }
+
+    protected function roundUpToSlot(Carbon $time, int $slotMinutes = 30): Carbon
+    {
+        $extra = $slotMinutes - ($time->minute % $slotMinutes);
+        if ($extra === $slotMinutes) $extra = 0;
+        return $time->copy()->addMinutes($extra)->setSecond(0);
     }
 
     public function render()
     {
-        return view('livewire.pages.user.bookingstatus');
+        $userId = Auth::id();
+        $now    = Carbon::now($this->tz);
+        $today  = $now->toDateString();
+        $nowH   = $now->format('H:i');
+
+        $query = BookingRoom::query()->where('user_id', $userId);
+
+        // Tab filter
+        if ($this->tab === 'upcoming') {
+            $query->where(function ($q) use ($today, $nowH) {
+                $q->where('date', '>', $today)
+                  ->orWhere(function ($qq) use ($today, $nowH) {
+                      $qq->where('date', $today)->where('start_time', '>=', $nowH);
+                  });
+            })->orderBy('date')->orderBy('start_time');
+        } elseif ($this->tab === 'ongoing') {
+            $query->where('date', $today)
+                  ->where('start_time', '<=', $nowH)
+                  ->where('end_time',   '>',  $nowH)
+                  ->orderBy('start_time');
+        } elseif ($this->tab === 'past') {
+            $query->where(function ($q) use ($today, $nowH) {
+                $q->where('date', '<', $today)
+                  ->orWhere(function ($qq) use ($today, $nowH) {
+                      $qq->where('date', $today)->where('end_time', '<', $nowH);
+                  });
+            })->orderByDesc('date')->orderByDesc('end_time');
+        } else { // all
+            $query->orderByDesc('date')->orderByDesc('start_time');
+        }
+
+        // Search q (title/room)
+        if (strlen(trim($this->q)) > 0) {
+            $q = trim($this->q);
+            $roomIds = Room::where('room_number', 'like', "%{$q}%")->pluck('room_id')->all();
+            $query->where(function ($qq) use ($q, $roomIds) {
+                $qq->where('meeting_title', 'like', "%{$q}%")
+                   ->orWhereIn('room_id', $roomIds);
+            });
+        }
+
+        // Date range
+        if ($this->dateFrom) $query->where('date', '>=', $this->dateFrom);
+        if ($this->dateTo)   $query->where('date', '<=', $this->dateTo);
+
+        // Room filter
+        if ($this->roomFilter) $query->where('room_id', $this->roomFilter);
+
+        $bookings = $query->paginate($this->perPage);
+
+        $roomMap = Room::pluck('room_number', 'room_id')->toArray();
+
+        return view('livewire.pages.user.bookingstatus', [
+            'bookings' => $bookings,
+            'roomMap'  => $roomMap,
+            'rooms'    => Room::orderBy('room_number')->get(['room_id','room_number']),
+        ]);
     }
 }

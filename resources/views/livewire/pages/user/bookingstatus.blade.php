@@ -1,57 +1,84 @@
-<<div class="bg-white rounded-xl border-2 border-black/80 shadow-md p-4">
-        <div class="flex flex-col md:flex-row md:items-center gap-6 pb-4 mb-4 border-b border-gray-200">
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 w-full md:w-auto">
-                <input type="text" placeholder="Requester (e.g. Finance, HR)"
-                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-900">
-                <select class="px-3 py-2 border border-gray-300 rounded-md text-gray-900">
-                    <option value="">All Room</option>
-                    <option value="room_A">Room A</option>
-                    <option value="room_B">Room B</option>
-                    <option value="room_C">Room C</option>
-                </select>
-                <select class="px-3 py-2 border border-gray-300 rounded-md text-gray-900">
-                    <option value="">All Date</option>
-                    <option value="recent">Recent first</option>
-                    <option value="oldest">Oldest first</option>
-                    <option value="due">Nearest due</option>
+<div class="max-w-7xl mx-auto p-6">
+    <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6 mb-6">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Booking History</h1>
+                <p class="text-gray-600">Riwayat & pengelolaan booking ruanganmu.</p>
+            </div>
+            <div class="flex gap-2">
+                <button type="button" wire:click="openQuickBook"
+                    class="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">+ Booking</button>
+                <a href="{{ route('book-room') }}"
+                    class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">Open Calendar</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        {{-- Tabs --}}
+        <div class="flex flex-wrap items-center justify-between gap-3 p-4 border-b">
+            <div class="flex gap-2">
+                <button wire:click="setTab('upcoming')"
+                    class="px-3 py-1.5 rounded-md border text-sm {{ $tab==='upcoming' ? 'bg-black text-white border-black' : 'border-gray-300 hover:bg-gray-50' }}">Upcoming</button>
+                <button wire:click="setTab('ongoing')"
+                    class="px-3 py-1.5 rounded-md border text-sm {{ $tab==='ongoing' ? 'bg-black text-white border-black' : 'border-gray-300 hover:bg-gray-50' }}">Ongoing</button>
+                <button wire:click="setTab('past')"
+                    class="px-3 py-1.5 rounded-md border text-sm {{ $tab==='past' ? 'bg-black text-white border-black' : 'border-gray-300 hover:bg-gray-50' }}">Past</button>
+                <button wire:click="setTab('all')"
+                    class="px-3 py-1.5 rounded-md border text-sm {{ $tab==='all' ? 'bg-black text-white border-black' : 'border-gray-300 hover:bg-gray-50' }}">All</button>
+            </div>
+
+            {{-- Filters --}}
+            <div class="flex flex-wrap gap-2">
+                <input type="text" wire:model.debounce.400ms="q" placeholder="Search title/room…"
+                       class="px-3 py-2 border border-gray-300 rounded-md text-sm w-56">
+                <input type="date" wire:model="dateFrom" class="px-3 py-2 border border-gray-300 rounded-md text-sm">
+                <input type="date" wire:model="dateTo"   class="px-3 py-2 border border-gray-300 rounded-md text-sm">
+                <select wire:model="roomFilter" class="px-3 py-2 border border-gray-300 rounded-md text-sm">
+                    <option value="">All rooms</option>
+                    @foreach($rooms as $r)
+                        <option value="{{ $r->room_id }}">{{ $r->room_number }}</option>
+                    @endforeach
                 </select>
             </div>
         </div>
 
-    <div class="bg-white rounded-xl border-2 border-black/80 shadow-md divide-y">
-        @forelse ($this->booked as $b)
-            <div class="p-4 flex items-start justify-between gap-4">
-                <div class="min-w-0">
-                    <div class="flex items-center gap-2 text-xs text-gray-500">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md border-2 border-emerald-500/70 bg-emerald-50 text-emerald-700 font-medium">
-                            Booked
-                        </span>
-                        <span>•</span>
-                        <span class="font-mono text-gray-700">
-                            {{ \Carbon\Carbon::parse($b['start_time'])->format('D, d M Y') }}
-                        </span>
-                    </div>
-
-                    <h3 class="mt-1 text-base md:text-lg font-semibold text-gray-900 truncate">
-                        {{ $b['title'] }}
-                    </h3>
-
-                    <div class="mt-1 text-sm text-gray-700 flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <span>🕒 {{ \Carbon\Carbon::parse($b['start_time'])->format('H:i') }}–{{ \Carbon\Carbon::parse($b['end_time'])->format('H:i') }}</span>
-                        <span class="text-gray-300">•</span>
-                        <span>🏠 {{ $b['room_name'] }}</span>
-                    </div>
-                </div>
-
-                <div class="text-right text-xs text-gray-500">
-                    <div>{{ \Carbon\Carbon::parse($b['start_time'])->format('d M Y H:i') }}</div>
-                    <div>→ {{ \Carbon\Carbon::parse($b['end_time'])->format('d M Y H:i') }}</div>
-                </div>
+        {{-- List --}}
+        @if($bookings->isEmpty())
+            <div class="p-8 text-center text-gray-500">
+                Belum ada data pada filter ini.
             </div>
-        @empty
-            <div class="p-6 text-center text-gray-500">
-                No booked rooms found in this range.
+        @else
+            <div class="divide-y">
+                @foreach($bookings as $b)
+                    @php
+                        $roomName = $roomMap[$b->room_id] ?? 'Unknown';
+                    @endphp
+                    <div class="p-4 flex items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="font-medium text-gray-900 truncate">{{ $b->meeting_title }}</div>
+                            <div class="text-sm text-gray-600">
+                                Room {{ $roomName }} •
+                                {{ \Carbon\Carbon::parse($b->date)->format('D, M j, Y') }} •
+                                {{ \Carbon\Carbon::parse($b->start_time)->format('H:i') }}–{{ \Carbon\Carbon::parse($b->end_time)->format('H:i') }}
+                            </div>
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            <button wire:click="rebook({{ $b->bookingroom_id }})"
+                                class="px-3 py-1.5 text-sm border rounded-md hover:bg-gray-100">Rebook</button>
+                            <button wire:click="cancelBooking({{ $b->bookingroom_id }})"
+                                class="px-3 py-1.5 text-sm border rounded-md hover:bg-gray-100">Cancel</button>
+                        </div>
+                    </div>
+                @endforeach
             </div>
-        @endforelse
+
+            <div class="p-4 border-t">
+                {{ $bookings->links() }}
+            </div>
+        @endif
     </div>
+
+    {{-- Reuse modal quick-book --}}
+    <livewire:booking.quick-book-modal />
 </div>
