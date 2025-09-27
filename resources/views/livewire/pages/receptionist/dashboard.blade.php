@@ -82,7 +82,7 @@
                             @endforeach
                         </ul>
                         <div class="px-5 py-3 border-t border-gray-200 text-right">
-                            <a href="{{ route('meeting.schedule') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900">Lihat semua →</a>
+                            <a href="{{ route('receptionist.schedule') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900">Lihat semua →</a>
                         </div>
                     </div>
 
@@ -107,7 +107,7 @@
                         </div>
                     </div>
                 </section>
-}
+
                 @php
                     $documents = $documents ?? [
                         ['name'=>'Surat Undangan CSR.pdf','cat'=>'Surat','date'=>now()->subDays(2)->toDateString()],
@@ -118,7 +118,6 @@
                     $today       = (int) now()->format('j');
                 @endphp
                 <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {{-- Dokumen Terbaru --}}
                     <div class="lg:col-span-2 rounded-2xl border border-gray-200 bg-white shadow-sm">
                         <div class="px-5 py-4 border-b border-gray-200">
                             <h3 class="text-base font-semibold text-gray-900">Dokumen Terbaru</h3>
@@ -185,7 +184,6 @@
                         </div>
                     </div>
                 </section>
-
             </div>
         </main>
     </div>

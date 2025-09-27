@@ -18,7 +18,7 @@
             Home
         </flux:sidebar.item>
 
-        <flux:sidebar.item icon="calendar-days" href="{{ route('meeting.schedule') }}"
+        <flux:sidebar.item icon="calendar-days" href="{{ route('receptionist.schedule') }}"
             :current="request()->routeIs('meeting.schedule')">
             Meeting Schedule
         </flux:sidebar.item>
@@ -28,7 +28,7 @@
             GuestBook
         </flux:sidebar.item>
 
-        <flux:sidebar.item icon="document-text" href="#">
+        <flux:sidebar.item icon="document-text" href="{{ route('receptionist.documents') }}">
             Documents
         </flux:sidebar.item>
 

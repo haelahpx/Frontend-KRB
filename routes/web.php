@@ -7,11 +7,11 @@ use Illuminate\Http\Request;
 // ========== Livewire Pages (User) ==========
 use App\Livewire\Pages\User\Home as UserHome;
 use App\Livewire\Pages\User\CreateTicket;
-use App\Livewire\Pages\User\Bookroom;          
+use App\Livewire\Pages\User\Bookroom;          // <- komponen Bookroom (User)
 use App\Livewire\Pages\User\Profile;
 use App\Livewire\Pages\User\Package;
 use App\Livewire\Pages\User\Ticketstatus;
-use App\Livewire\Pages\User\BookingStatus;     
+use App\Livewire\Pages\User\BookingStatus;     // <- konsisten PascalCase
 
 // ========== Livewire Pages (Admin / Superadmin / Receptionist) ==========
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
@@ -21,7 +21,7 @@ use App\Livewire\Pages\Superadmin\Information;
 use App\Livewire\Pages\Superadmin\Account as UserManagement;
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
 use App\Livewire\Pages\Receptionist\Guestbook as ReceptionistGuestbook;
-use App\Livewire\Pages\Admin\Ticket as AdminTicket;
+use App\Livewire\Pages\Receptionist\Documents as Documents;
 
 // ========== Auth Pages ==========
 use App\Livewire\Pages\Auth\Login as LoginPage;
@@ -81,7 +81,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/create-ticket', CreateTicket::class)->name('create-ticket');
 
     // Booking room (User)
-    Route::get('/book-room',     Bookroom::class)->name('book-room');      
+    Route::get('/book-room',     Bookroom::class)->name('book-room');      // form + calendar (komponen User\Bookroom)
     Route::get('/bookingstatus', BookingStatus::class)->name('bookingstatus');
 
     // Profile & others
@@ -92,7 +92,6 @@ Route::middleware('auth')->group(function () {
     // ---------- Admin routes ----------
     Route::middleware('is.admin')->group(function () {
         Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
-        Route::get('/admin-ticket',    AdminTicket::class)->name('admin.ticket');
     });
 
     // ---------- Superadmin routes ----------
@@ -107,8 +106,13 @@ Route::middleware('auth')->group(function () {
     Route::middleware('is.receptionist')->group(function () {
         Route::get('/receptionist-dashboard', ReceptionistDashboard::class)->name('receptionist.dashboard');
         Route::get('/receptionist-guestbook', Guestbook::class)->name('receptionist.guestbook');
-        Route::get('/receptionist-meetingschedule', MeetingSchedule::class)->name('meeting.schedule');
+        Route::get('/receptionist-meetingschedule', MeetingSchedule::class)->name('receptionist.schedule');
+        Route::get('/receptionist-document', Documents::class)->name('receptionist.documents');
     });
+    Route::middleware(['auth'])->group(function () {
+    Route::get('/receptionist/documents', Documents::class)
+        ->name('receptionist.documents');
+});
         
     // Logout
     Route::post('/logout', function (Request $request) {

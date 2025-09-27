@@ -1,289 +1,373 @@
-<div class="min-h-screen bg-gray-50" wire:poll.1000ms>
-    <div>
-        <main class="px-4 sm:px-6 lg:pl-0 lg:pr-6 py-6">
-            <div class="max-w-7xl space-y-8">
-                <div
-                    class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
-                    <div class="pointer-events-none absolute inset-0 opacity-10">
-                        <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
-                        <div class="absolute bottom-0 -left-4 w-16 h-16 bg-white rounded-full blur-lg"></div>
-                    </div>
+<div class="min-h-screen bg-gray-50" wire:poll.800ms="tick">
+    @php
+        $card   = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
+        $label  = 'block text-sm font-medium text-gray-700 mb-2';
+        $input  = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
+        $btnBlk = 'px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition';
+        $btnBlu = 'px-3 py-2 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/20 disabled:opacity-60 transition';
+        $btnGrn = 'px-3 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 disabled:opacity-60 transition';
+        $btnOrn = 'px-3 py-2 text-xs font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-600/20 disabled:opacity-60 transition';
+        $btnRed = 'px-3 py-2 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600/20 disabled:opacity-60 transition';
+        $chip   = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
+        $mono   = 'text-[10px] font-mono text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md';
+        $ico    = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0';
+    @endphp
 
-                    <div class="relative z-10 p-6 sm:p-8">
-                        <div class="flex items-center gap-4">
-                            <div
-                                class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3M5 11h14M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zm7-6v3l2 2" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 class="text-lg sm:text-xl font-semibold">Meeting Schedule</h2>
-                                <p class="text-sm text-white/80">Kelola jadwal rapat harian/mingguan</p>
-                            </div>
+    <main class="px-4 sm:px-6 lg:pl-0 lg:pr-6 py-6">
+        <div class="max-w-7xl space-y-8">
+
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
+                <div class="pointer-events-none absolute inset-0 opacity-10">
+                    <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
+                    <div class="absolute bottom-0 -left-4 w-16 h-16 bg-white rounded-full blur-lg"></div>
+                </div>
+                <div class="relative z-10 p-6 sm:p-8">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3M5 11h14M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zm7-6v3l2 2"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-semibold">Meeting Schedule</h2>
+                            <p class="text-sm text-white/80">Kelola jadwal rapat harian/mingguan</p>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <section class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div class="px-5 py-4 border-b border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="text-base font-semibold text-gray-900">
-                                    {{ $editingId ? 'Edit Meeting' : 'Tambah Meeting' }}
-                                </h3>
-                                <p class="text-sm text-gray-500">Isi detail rapat berikut.</p>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                @if($editingId)
-                                    <button wire:click="cancelEdit"
-                                        class="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition font-medium">
-                                        Batal
-                                    </button>
-                                @endif
-                                <button wire:click="{{ $editingId ? 'update' : 'save' }}"
-                                    class="inline-flex items-center gap-2 bg-gray-900 text-white px-5 py-2 rounded-xl font-medium hover:bg-gray-800 transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 4v16m8-8H4" />
-                                    </svg>
-                                    {{ $editingId ? 'Update' : 'Tambah' }}
+            <section class="{{ $card }}">
+                <div class="px-5 py-4 border-b border-gray-200">
+                    <h3 class="text-base font-semibold text-gray-900">
+                        {{ $editingId ? 'Edit Meeting' : 'Tambah Meeting' }}
+                    </h3>
+                    <p class="text-sm text-gray-500">Isi detail rapat berikut.</p>
+                </div>
+
+                <form class="p-5" wire:submit.prevent="{{ $editingId ? 'update' : 'save' }}">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div>
+                            <label class="{{ $label }}">Tanggal</label>
+                            <input type="date" wire:model.defer="date" class="{{ $input }}">
+                            @error('date') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="{{ $label }}">Waktu Mulai</label>
+                            <input type="time" wire:model.defer="time" class="{{ $input }}">
+                            @error('time') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="{{ $label }}">Waktu Selesai</label>
+                            <input type="time" wire:model.defer="time_end" class="{{ $input }}">
+                            @error('time_end') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="{{ $label }}">Departemen</label>
+                            <select wire:model.defer="department" class="{{ $input }}">
+                                <option value="" hidden>Pilih departemen</option>
+                                <option value="IT">IT</option>
+                                <option value="HR">HR</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Operasional">Operasional</option>
+                                <option value="Riset">Riset</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                            @error('department') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="{{ $label }}">Jumlah Peserta</label>
+                            <input type="number" min="1" wire:model.defer="participant" class="{{ $input }}" placeholder="Berapa orang yang ikut">
+                            @error('participant') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="{{ $label }}">Dengan</label>
+                            <input type="text" wire:model.defer="with" class="{{ $input }}" placeholder="Nama tim/klien">
+                            @error('with') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="{{ $label }}">Lokasi</label>
+                            <select wire:model.defer="location" class="{{ $input }}">
+                                <option value="" hidden>Pilih ruangan</option>
+                                <option value="Ruangan 1">Ruangan 1</option>
+                                <option value="Ruangan 2">Ruangan 2</option>
+                                <option value="Ruangan 3">Ruangan 3</option>
+                            </select>
+                            @error('location') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="{{ $label }}">Status</label>
+                            <select wire:model.defer="status" class="{{ $input }}">
+                                <option value="planned">Planned</option>
+                                <option value="ongoing">Ongoing</option>
+                                <option value="done">Done</option>
+                            </select>
+                            @error('status') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="md:col-span-3">
+                            <label class="{{ $label }}">Catatan</label>
+                            <textarea rows="4" wire:model.defer="notes" class="{{ $input }} !h-auto resize-none" placeholder="Agenda singkat / yang perlu dibawa"></textarea>
+                            @error('notes') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="pt-5">
+                        <div class="flex items-center gap-3">
+                            @if($editingId)
+                                <button type="button"
+                                        wire:click="cancelEdit"
+                                        class="px-4 h-10 rounded-xl border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 hover:border-gray-400 transition">
+                                    Batal
                                 </button>
-                            </div>
-                        </div>
-                    </div>
+                            @endif
 
-                    <div class="p-5">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="space-y-2">
-                                <label for="date" class="block text-sm font-medium text-gray-900">Tanggal</label>
-                                <input id="date" type="date" wire:model.defer="date"
-                                    class="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:border-gray-900 focus:outline-none transition">
-                                @error('date')
-                                    <p class="text-xs text-red-500 font-medium flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd"
-                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                        {{ $message }}
-                                    </p>
-                                @enderror
-                            </div>
+                            <button type="submit"
+                                    wire:loading.attr="disabled"
+                                    wire:target="{{ $editingId ? 'update' : 'save' }}"
+                                    class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium
+                                        shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20
+                                        transition active:scale-95 hover:bg-black disabled:opacity-60 relative overflow-hidden"
+                                    wire:loading.class="opacity-80 cursor-wait">
 
-                            <div class="space-y-2">
-                                <label for="time" class="block text-sm font-medium text-gray-900">Waktu Mulai</label>
-                                <input id="time" type="time" wire:model.defer="time"
-                                    class="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:border-gray-900 focus:outline-none transition">
-                                @error('time') <p class="text-xs text-red-500 font-medium">{{ $message }}</p> @enderror
-                            </div>
-
-                            <div class="space-y-2">
-                                <label for="time_end" class="block text-sm font-medium text-gray-900">Waktu
-                                    Selesai</label>
-                                <input id="time_end" type="time" wire:model.defer="time_end"
-                                    class="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:border-gray-900 focus:outline-none transition">
-                                @error('time_end') <p class="text-xs text-red-500 font-medium">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="space-y-2">
-                                <label for="department"
-                                    class="block text-sm font-medium text-gray-900">Departemen</label>
-                                <select id="department" wire:model.defer="department"
-                                    class="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:border-gray-900 focus:outline-none transition">
-                                    <option value="" hidden>Pilih departemen</option>
-                                    <option value="IT">IT</option>
-                                    <option value="HR">HR</option>
-                                    <option value="Finance">Finance</option>
-                                    <option value="Marketing">Marketing</option>
-                                    <option value="Operasional">Operasional</option>
-                                    <option value="Riset">Riset</option>
-                                    <option value="Lainnya">Lainnya</option>
-                                </select>
-                                @error('department') <p class="text-xs text-red-500 font-medium">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="space-y-2">
-                                <label for="participant" class="block text-sm font-medium text-gray-900">Jumlah
-                                    Peserta</label>
-                                <input id="participant" type="number" min="1" wire:model.defer="participant"
-                                    placeholder="Berapa orang yang ikut"
-                                    class="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:outline-none transition">
-                                @error('participant') <p class="text-xs text-red-500 font-medium">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="space-y-2">
-                                <label for="with" class="block text-sm font-medium text-gray-900">Dengan</label>
-                                <input id="with" type="text" wire:model.defer="with" placeholder="Nama tim/klien"
-                                    class="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:outline-none transition">
-                            </div>
-
-                            <div class="space-y-2 md:col-span-3 lg:col-span-1">
-                                <label for="location" class="block text-sm font-medium text-gray-900">Lokasi</label>
-                                <select id="location" wire:model.defer="location"
-                                    class="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:border-gray-900 focus:outline-none transition">
-                                    <option value="" hidden>Pilih ruangan</option>
-                                    <option value="Ruangan 1">Ruangan 1</option>
-                                    <option value="Ruangan 2">Ruangan 2</option>
-                                    <option value="Ruangan 3">Ruangan 3</option>
-                                </select>
-                                @error('location') <p class="text-xs text-red-500 font-medium">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="md:col-span-3 space-y-2">
-                                <label for="notes" class="block text-sm font-medium text-gray-900">Catatan</label>
-                                <textarea id="notes" wire:model.defer="notes" rows="4"
-                                    class="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:outline-none transition resize-none"
-                                    placeholder="Agenda singkat / yang perlu dibawa"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
-                    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-4">
-                        <div class="flex-1">
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                <span class="flex items-center gap-2"
+                                    wire:loading.remove
+                                    wire:target="{{ $editingId ? 'update' : 'save' }}">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                     </svg>
-                                </div>
-                                <input type="text" wire:model.live.debounce.400ms="q"
-                                    placeholder="Cari participant, with, location, notes..."
-                                    class="w-full border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:outline-none transition">
+                                    @if($this->saveState === 'saved' && !$editingId)
+                                        Tersimpan!
+                                    @else
+                                        {{ $editingId ? 'Simpan Perubahan' : 'Simpan Data' }}
+                                    @endif
+                                </span>
+
+                                <span class="flex items-center gap-2"
+                                    wire:loading
+                                    wire:target="{{ $editingId ? 'update' : 'save' }}">
+                                    <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z"/>
+                                    </svg>
+                                    Menyimpan…
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <section class="{{ $card }}">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
+                            <div>
+                                <h3 class="text-base font-semibold text-gray-900">Planned</h3>
+                                <p class="text-sm text-gray-500">Rapat yang sudah dijadwalkan.</p>
                             </div>
                         </div>
-                        <select wire:model.live="statusFilter"
-                            class="border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:border-gray-900 focus:outline-none transition min-w-[160px]">
-                            <option value="all">Semua Status</option>
-                            <option value="planned">Planned</option>
-                            <option value="done">Done</option>
-                        </select>
+                    </div>
+
+                    <div class="p-5 space-y-3">
+                        @forelse ($planned as $m)
+                            <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="planned-{{ $m['id'] }}">
+                                <div class="flex items-start gap-3">
+                                    <div class="{{ $ico }}">{{ strtoupper(substr($m['department'] ?? 'M', 0, 1)) }}</div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['with'] ?? '—' }}</div>
+                                            <span class="{{ $chip }}">{{ \Illuminate\Support\Carbon::parse($m['date'])->format('d M Y') }}</span>
+                                            <span class="{{ $chip }}">{{ $m['time'] }}–{{ $m['time_end'] }}</span>
+                                        </div>
+                                        <div class="mt-1 text-[12px] text-gray-600">
+                                            {{ $m['location'] }} • {{ $m['participant'] }} peserta
+                                        </div>
+
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            <button class="{{ $btnOrn }}" wire:click="toOngoing({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="toOngoing({{ $m['id'] }})">Mulai sekarang</button>
+                                            <button class="{{ $btnBlk }}" wire:click="openEdit({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="openEdit({{ $m['id'] }})">Edit</button>
+                                            <button class="{{ $btnRed }}" wire:click="destroy({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="destroy({{ $m['id'] }})">Hapus</button>
+                                        </div>
+                                    </div>
+                                    <div class="{{ $mono }}">#{{ $m['id'] }}</div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-center py-8 text-gray-500 text-sm">Belum ada item planned</div>
+                        @endforelse
                     </div>
                 </section>
 
-                <section class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div class="px-5 py-4 border-b border-gray-200">
-                        <div class="flex items-center justify-between">
+                <section class="{{ $card }}">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-amber-600 rounded-full"></div>
                             <div>
-                                <h3 class="text-base font-semibold text-gray-900">Daftar Meeting</h3>
-                                <p class="text-sm text-gray-500">Total: {{ count($rows) }} meeting</p>
+                                <h3 class="text-base font-semibold text-gray-900">Ongoing</h3>
+                                <p class="text-sm text-gray-500">Rapat sedang berlangsung.</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm">
-                            <thead>
-                                <tr class="text-left text-gray-500 border-b border-gray-200">
-                                    <th class="px-5 py-3 font-medium">Tanggal</th>
-                                    <th class="px-5 py-3 font-medium">Waktu (Mulai–Selesai)</th>
-                                    <th class="px-5 py-3 font-medium">Departemen</th>
-                                    <th class="px-5 py-3 font-medium">Peserta</th>
-                                    <th class="px-5 py-3 font-medium">Dengan</th>
-                                    <th class="px-5 py-3 font-medium">Lokasi</th>
-                                    <th class="px-5 py-3 font-medium">Status</th>
-                                    <th class="px-5 py-3 font-medium">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                @forelse ($rows as $m)
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-5 py-3 font-medium text-gray-900">
-                                            {{ \Illuminate\Support\Carbon::parse($m['date'])->format('d M Y') }}
-                                        </td>
-                                        <td class="px-5 py-3 text-gray-700 font-medium">
-                                            {{ $m['time'] }}{{ isset($m['time_end']) ? ' – ' . $m['time_end'] : '' }}
-                                        </td>
-                                        <td class="px-5 py-3 text-gray-700">{{ $m['department'] ?? '-' }}</td>
-                                        <td class="px-5 py-3 text-gray-900 font-medium">{{ $m['participant'] }}</td>
-                                        <td class="px-5 py-3 text-gray-700 max-w-[200px] truncate" title="{{ $m['with'] }}">
-                                            {{ $m['with'] }}
-                                        </td>
-                                        <td class="px-5 py-3 text-gray-700 max-w-[220px] truncate"
-                                            title="{{ $m['location'] }}">
-                                            {{ $m['location'] }}
-                                        </td>
-                                        <td class="px-5 py-3">
-                                            @if($m['status'] === 'done')
-                                                <span
-                                                    class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
-                                                    Done
-                                                </span>
-                                            @else
-                                                <span
-                                                    class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
-                                                    Planned
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="px-5 py-3">
-                                            <div class="flex flex-wrap gap-2 justify-end">
-                                                <button wire:click="edit({{ $m['id'] }})" wire:loading.attr="disabled"
-                                                    wire:target="edit({{ $m['id'] }})"
-                                                    class="px-3 py-2 text-xs font-medium rounded-lg border border-gray-200 text-gray-700 hover:border-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-600/20 disabled:opacity-60 transition">
-                                                    <span wire:loading.remove wire:target="edit({{ $m['id'] }})">Edit</span>
-                                                    <span wire:loading wire:target="edit({{ $m['id'] }})">Memuat…</span>
-                                                </button>
-                                                @if($m['status'] === 'planned')
-                                                    <button wire:click="markDone({{ $m['id'] }})" wire:loading.attr="disabled"
-                                                        wire:target="markDone({{ $m['id'] }})"
-                                                        class="px-3 py-2 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/20 disabled:opacity-60 transition">
-                                                        <span wire:loading.remove wire:target="markDone({{ $m['id'] }})">Mark
-                                                            Done</span>
-                                                        <span wire:loading wire:target="markDone({{ $m['id'] }})">Memuat…</span>
-                                                    </button>
-                                                @else
-                                                    <button wire:click="markPlanned({{ $m['id'] }})"
-                                                        wire:loading.attr="disabled" wire:target="markPlanned({{ $m['id'] }})"
-                                                        class="px-3 py-2 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/20 disabled:opacity-60 transition">
-                                                        <span wire:loading.remove wire:target="markPlanned({{ $m['id'] }})">Set
-                                                            Planned</span>
-                                                        <span wire:loading
-                                                            wire:target="markPlanned({{ $m['id'] }})">Memuat…</span>
-                                                    </button>
-                                                @endif
-                                                <button wire:click="destroy({{ $m['id'] }})" wire:loading.attr="disabled"
-                                                    wire:target="destroy({{ $m['id'] }})"
-                                                    class="px-3 py-2 text-xs font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600/20 disabled:opacity-60 transition">
-                                                    <span wire:loading.remove
-                                                        wire:target="destroy({{ $m['id'] }})">Delete</span>
-                                                    <span wire:loading
-                                                        wire:target="destroy({{ $m['id'] }})">Menghapus…</span>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td class="py-12 text-center text-gray-500" colspan="8">
-                                            <div class="flex flex-col items-center gap-3">
-                                                <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M8 7V3m8 4V3M5 11h14M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                <p class="text-gray-500 font-medium">Belum ada jadwal meeting</p>
-                                                <p class="text-sm text-gray-400">Tambah meeting pertama Anda di form di atas
-                                                </p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div class="p-5 space-y-3">
+                        @forelse ($ongoing as $m)
+                            <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="ongoing-{{ $m['id'] }}">
+                                <div class="flex items-start gap-3">
+                                    <div class="{{ $ico }}">{{ strtoupper(substr($m['department'] ?? 'M', 0, 1)) }}</div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['with'] ?? '—' }}</div>
+                                            <span class="{{ $chip }}">{{ \Illuminate\Support\Carbon::parse($m['date'])->format('d M Y') }}</span>
+                                            <span class="{{ $chip }}">{{ $m['time'] }}–{{ $m['time_end'] }}</span>
+                                        </div>
+                                        <div class="mt-1 text-[12px] text-gray-600">
+                                            {{ $m['location'] }} • {{ $m['participant'] }} peserta
+                                        </div>
+
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            <button class="{{ $btnGrn }}" wire:click="toDone({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="toDone({{ $m['id'] }})">Selesaikan</button>
+                                            <button class="{{ $btnBlu }}" wire:click="toPlanned({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="toPlanned({{ $m['id'] }})">Kembalikan ke Planned</button>
+                                            <button class="{{ $btnBlk }}" wire:click="openEdit({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="openEdit({{ $m['id'] }})">Edit</button>
+                                            <button class="{{ $btnRed }}" wire:click="destroy({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="destroy({{ $m['id'] }})">Hapus</button>
+                                        </div>
+                                    </div>
+                                    <div class="{{ $mono }}">#{{ $m['id'] }}</div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-center py-8 text-gray-500 text-sm">Belum ada item ongoing</div>
+                        @endforelse
+                    </div>
+                </section>
+
+                <section class="{{ $card }}">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-emerald-600 rounded-full"></div>
+                            <div>
+                                <h3 class="text-base font-semibold text-gray-900">Done</h3>
+                                <p class="text-sm text-gray-500">Rapat yang telah selesai.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-5 space-y-3">
+                        @forelse ($done as $m)
+                            <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="done-{{ $m['id'] }}">
+                                <div class="flex items-start gap-3">
+                                    <div class="{{ $ico }}">{{ strtoupper(substr($m['department'] ?? 'M', 0, 1)) }}</div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['with'] ?? '—' }}</div>
+                                            <span class="{{ $chip }}">{{ \Illuminate\Support\Carbon::parse($m['date'])->format('d M Y') }}</span>
+                                            <span class="{{ $chip }}">{{ $m['time'] }}–{{ $m['time_end'] }}</span>
+                                        </div>
+                                        <div class="mt-1 text-[12px] text-gray-600">
+                                            {{ $m['location'] }} • {{ $m['participant'] }} peserta
+                                        </div>
+
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            <button class="{{ $btnBlk }}" wire:click="openEdit({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="openEdit({{ $m['id'] }})">Edit</button>
+                                            <button class="{{ $btnBlu }}" wire:click="toPlanned({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="toPlanned({{ $m['id'] }})">Jadwalkan Ulang (Planned)</button>
+                                            <button class="{{ $btnRed }}" wire:click="destroy({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="destroy({{ $m['id'] }})">Hapus</button>
+                                        </div>
+                                    </div>
+                                    <div class="{{ $mono }}">#{{ $m['id'] }}</div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-center py-8 text-gray-500 text-sm">Belum ada item selesai</div>
+                        @endforelse
                     </div>
                 </section>
 
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
+
+    @if ($modalEdit)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" wire:poll.800ms>
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="closeEdit"></div>
+
+            <div class="relative w-full max-w-xl bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="bg-gradient-to-r from-gray-900 to-black p-5 text-white relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-10 pointer-events-none">
+                        <div class="absolute top-0 -right-6 w-24 h-24 bg-white rounded-full blur-2xl"></div>
+                        <div class="absolute bottom-0 -left-4 w-16 h-16 bg-white rounded-full blur-xl"></div>
+                    </div>
+                    <div class="relative z-10 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold tracking-tight">Edit Meeting</h3>
+                        <button class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center" wire:click="closeEdit">
+                            <svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-5 space-y-4 overflow-y-auto flex-1">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="{{ $label }}">Tanggal</label>
+                            <input type="date" class="{{ $input }}" wire:model.defer="date">
+                        </div>
+                        <div>
+                            <label class="{{ $label }}">Status</label>
+                            <select class="{{ $input }}" wire:model.defer="status">
+                                <option value="planned">Planned</option>
+                                <option value="ongoing">Ongoing</option>
+                                <option value="done">Done</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="{{ $label }}">Mulai</label>
+                            <input type="time" class="{{ $input }}" wire:model.defer="time">
+                        </div>
+                        <div>
+                            <label class="{{ $label }}">Selesai</label>
+                            <input type="time" class="{{ $input }}" wire:model.defer="time_end">
+                        </div>
+                        <div>
+                            <label class="{{ $label }}">Departemen</label>
+                            <input type="text" class="{{ $input }}" wire:model.defer="department">
+                        </div>
+                        <div>
+                            <label class="{{ $label }}">Peserta</label>
+                            <input type="number" min="1" class="{{ $input }}" wire:model.defer="participant">
+                        </div>
+                        <div>
+                            <label class="{{ $label }}">Dengan</label>
+                            <input type="text" class="{{ $input }}" wire:model.defer="with">
+                        </div>
+                        <div>
+                            <label class="{{ $label }}">Lokasi</label>
+                            <input type="text" class="{{ $input }}" wire:model.defer="location">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="{{ $label }}">Catatan</label>
+                            <textarea rows="3" class="{{ $input }} !h-auto resize-none" wire:model.defer="notes"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 border-t border-gray-200 p-5">
+                    <div class="flex items-center justify-end gap-2.5">
+                        <button type="button" class="px-4 h-10 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 hover:border-gray-400 transition" wire:click="closeEdit">Batal</button>
+                        <button type="button" class="px-4 h-10 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition" wire:click="update">Simpan Perubahan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

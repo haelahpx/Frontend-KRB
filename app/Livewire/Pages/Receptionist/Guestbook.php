@@ -7,6 +7,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Guestbook as GuestbookModel;
 
 #[Layout('layouts.receptionist')]
@@ -30,10 +31,12 @@ class Guestbook extends Component
         'keperluan' => null,
         'petugas_penjaga' => null,
     ];
+
     public function mount(): void
     {
         $this->date = $this->date ?: now()->format('Y-m-d');
     }
+
     protected function rules(): array
     {
         return [
@@ -46,6 +49,7 @@ class Guestbook extends Component
             'petugas_penjaga' => ['required', 'string', 'max:255'],
         ];
     }
+
     protected function rulesEdit(): array
     {
         return [
@@ -79,11 +83,9 @@ class Guestbook extends Component
     {
         $this->edit['jam_out'] = $this->normalizeTime($v, true);
     }
-
     private function normalizeDate($v): ?string
     {
-        if (!$v)
-            return null;
+        if (!$v) return null;
         try {
             return Carbon::parse(str_replace('/', '-', $v))->format('Y-m-d');
         } catch (\Throwable $e) {
@@ -92,87 +94,90 @@ class Guestbook extends Component
     }
     private function normalizeTime($v, bool $nullable = false): ?string
     {
-        if ($nullable && $v === '')
-            return null;
-        if (!$v)
-            return null;
+        if ($nullable && $v === '') return null;
+        if (!$v) return null;
         try {
             return Carbon::parse($v)->format('H:i');
         } catch (\Throwable $e) {
             return $v;
         }
     }
+    private function companyId()
+    {
+        return optional(Auth::user())->company_id;
+    }
+    private function findOwnedOrFail(int $id): GuestbookModel
+    {
+        return GuestbookModel::whereKey($id)
+            ->where('company_id', $this->companyId())
+            ->firstOrFail();
+    }
     public function save(): void
     {
-        $this->date = $this->normalizeDate($this->date);
+        $this->date   = $this->normalizeDate($this->date);
         $this->jam_in = $this->normalizeTime($this->jam_in);
         $this->validate();
-
         GuestbookModel::create([
-            'date' => $this->date,
-            'jam_in' => $this->jam_in,
-            'jam_out' => null, // masih aktif -> tampil di "Kunjungan Terbaru"
-            'name' => $this->name,
-            'phone_number' => $this->phone_number,
-            'instansi' => $this->instansi,
-            'keperluan' => $this->keperluan,
-            'petugas_penjaga' => $this->petugas_penjaga,
+            'company_id'       => $this->companyId(),   
+            'date'             => $this->date,
+            'jam_in'           => $this->jam_in,
+            'jam_out'          => null, 
+            'name'             => $this->name,
+            'phone_number'     => $this->phone_number,
+            'instansi'         => $this->instansi,
+            'keperluan'        => $this->keperluan,
+            'petugas_penjaga'  => $this->petugas_penjaga,
         ]);
         $this->reset(['jam_in', 'name', 'phone_number', 'instansi', 'keperluan', 'petugas_penjaga']);
         $this->dispatch('notify', type: 'success', message: 'Entri disimpan ke Kunjungan Terbaru.');
         $this->dispatch('$refresh');
+        session()->flash('saved', true);
     }
-
     public function openEdit(int $id): void
     {
-        $row = GuestbookModel::findOrFail($id);
-        $this->editId = $row->guestbook_id ?? $row->getKey();
-
+        $row = $this->findOwnedOrFail($id);
+        $this->editId = $row->getKey();
         $this->edit = [
-            'date' => $row->date ? Carbon::parse($row->date)->format('Y-m-d') : null,
-            'jam_in' => $row->jam_in ? Carbon::parse($row->jam_in)->format('H:i') : null,
-            'jam_out' => $row->jam_out ? Carbon::parse($row->jam_out)->format('H:i') : null,
-            'name' => $row->name,
-            'phone_number' => $row->phone_number,
-            'instansi' => $row->instansi,
-            'keperluan' => $row->keperluan,
+            'date'            => $row->date ? Carbon::parse($row->date)->format('Y-m-d') : null,
+            'jam_in'          => $row->jam_in ? Carbon::parse($row->jam_in)->format('H:i') : null,
+            'jam_out'         => $row->jam_out ? Carbon::parse($row->jam_out)->format('H:i') : null,
+            'name'            => $row->name,
+            'phone_number'    => $row->phone_number,
+            'instansi'        => $row->instansi,
+            'keperluan'       => $row->keperluan,
             'petugas_penjaga' => $row->petugas_penjaga,
         ];
-
         $this->resetValidation();
         $this->showEdit = true;
     }
-
     public function saveEdit(): void
     {
         $this->validate($this->rulesEdit());
-        $row = GuestbookModel::findOrFail($this->editId);
-
+        $row = $this->findOwnedOrFail($this->editId);
         $row->update([
-            'date' => $this->edit['date'],
-            'jam_in' => $this->edit['jam_in'],
-            'jam_out' => $this->edit['jam_out'] ?: null,
-            'name' => $this->edit['name'],
-            'phone_number' => $this->edit['phone_number'],
-            'instansi' => $this->edit['instansi'],
-            'keperluan' => $this->edit['keperluan'],
+            'date'            => $this->edit['date'],
+            'jam_in'          => $this->edit['jam_in'],
+            'jam_out'         => $this->edit['jam_out'] ?: null,
+            'name'            => $this->edit['name'],
+            'phone_number'    => $this->edit['phone_number'],
+            'instansi'        => $this->edit['instansi'],
+            'keperluan'       => $this->edit['keperluan'],
             'petugas_penjaga' => $this->edit['petugas_penjaga'],
         ]);
-
         $this->showEdit = false;
         $this->dispatch('notify', type: 'success', message: 'Perubahan disimpan.');
         $this->dispatch('$refresh');
     }
-
     public function delete(int $id): void
     {
-        GuestbookModel::whereKey($id)->delete();
+        $row = $this->findOwnedOrFail($id);
+        $row->delete();
         $this->dispatch('notify', type: 'success', message: 'Entri dihapus.');
         $this->dispatch('$refresh');
     }
     public function setJamKeluarNow(int $id): void
     {
-        $row = GuestbookModel::findOrFail($id);
+        $row = $this->findOwnedOrFail($id);
         if ($row->jam_out) {
             $this->dispatch('notify', type: 'warning', message: 'Jam keluar sudah diisi.');
             return;
@@ -184,7 +189,8 @@ class Guestbook extends Component
     }
     public function getTodayLatestProperty()
     {
-        return GuestbookModel::whereDate('date', now()->toDateString())
+        return GuestbookModel::where('company_id', $this->companyId())
+            ->whereDate('date', now()->toDateString())
             ->whereNull('jam_out')
             ->latest('created_at')
             ->take(10)
@@ -192,7 +198,9 @@ class Guestbook extends Component
     }
     public function getEntriesProperty()
     {
-        $q = GuestbookModel::query()->whereNotNull('jam_out');
+        $q = GuestbookModel::query()
+            ->where('company_id', $this->companyId())
+            ->whereNotNull('jam_out');
         if ($this->filter_date) {
             $q->whereDate('date', $this->filter_date);
         }
@@ -200,16 +208,14 @@ class Guestbook extends Component
             $term = '%' . $this->q . '%';
             $q->where(function ($w) use ($term) {
                 $w->where('name', 'like', $term)
-                    ->orWhere('phone_number', 'like', $term)
-                    ->orWhere('instansi', 'like', $term)
-                    ->orWhere('keperluan', 'like', $term)
-                    ->orWhere('petugas_penjaga', 'like', $term);
+                ->orWhere('phone_number', 'like', $term)
+                ->orWhere('instansi', 'like', $term)
+                ->orWhere('keperluan', 'like', $term)
+                ->orWhere('petugas_penjaga', 'like', $term);
             });
         }
-
         return $q->latest('created_at')->paginate(10);
     }
-
     public function getServerClockProperty(): string
     {
         return Carbon::now(config('app.timezone', 'Asia/Jakarta'))->format('H:i:s');
@@ -219,12 +225,11 @@ class Guestbook extends Component
         $this->showEdit = false;
         $this->resetValidation();
     }
-
     public function render()
     {
         return view('livewire.pages.receptionist.guestbook', [
             'todayLatest' => $this->todayLatest,
-            'entries' => $this->entries,
+            'entries'     => $this->entries,
         ]);
     }
 }
