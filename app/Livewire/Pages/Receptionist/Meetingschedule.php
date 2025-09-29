@@ -2,6 +2,10 @@
 
 namespace App\Livewire\Pages\Receptionist;
 
+use App\Models\BookingRoom;
+use App\Models\Department;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -10,236 +14,365 @@ use Livewire\Component;
 #[Title('Meeting Schedule')]
 class MeetingSchedule extends Component
 {
-    public array $items = [];
-    public $date, $time, $time_end, $participant, $department, $with, $location, $notes, $status = 'planned';
+    /** Form state */
     public ?int $editingId = null;
     public bool $modalEdit = false;
+
+    public $meeting_title;
+    public $location;     // "Ruangan 1|2|3"
+    public $department_id; // FK departments.department_id
+    public $date;         // Y-m-d
+    public $participant;  // int
+    public $time;         // H:i
+    public $time_end;     // H:i
+    public $notes;
+
+    /** Checkbox requirements */
+    public array $requirements = []; // ['video','projector','whiteboard','catering','other']
+
+    /** UI state */
     public string $saveState = 'idle';
     public ?string $savedAt = null;
+
+    /** Buckets untuk Blade */
+    public array $planned = [];
+    public array $ongoing = [];
+    public array $done = [];
+
+    /** Data master */
+    public array $departments = []; // [['department_id'=>..., 'name'=>...], ...]
+
     public function mount(): void
     {
-        $this->items = session('ms_items', $this->seed());
+        $deptQuery = Department::query();
+
+        if ($cid = optional(Auth::user())->company_id) {
+            $deptQuery->where('company_id', $cid);
+        }
+
+        $this->departments = $deptQuery
+            ->orderBy('department_name')
+            ->get(['department_id', 'department_name'])
+            ->map(fn($d) => [
+                'department_id' => $d->department_id,
+                'name' => $d->department_name, // <- FIX: use department_name here
+            ])
+            ->all();
+
+        $this->reloadBuckets();
     }
-    private function seed(): array
-    {
-        return [
-            [
-                'id' => 1,
-                'date' => '2025-09-26',
-                'time' => '10:00',
-                'time_end' => '11:00',
-                'participant' => 6,
-                'department' => 'IT',
-                'with' => 'PT Sinar Abadi',
-                'location' => 'Ruangan 1',
-                'notes' => 'Bawa dokumen kontrak',
-                'status' => 'planned',
-            ],
-            [
-                'id' => 2,
-                'date' => '2025-09-27',
-                'time' => '14:30',
-                'time_end' => '15:30',
-                'participant' => 10,
-                'department' => 'Operasional',
-                'with' => 'Tim IT',
-                'location' => 'Ruangan 2',
-                'notes' => 'Update progres sprint',
-                'status' => 'planned',
-            ],
-            [
-                'id' => 3,
-                'date' => '2025-09-28',
-                'time' => '09:00',
-                'time_end' => '10:00',
-                'participant' => 3,
-                'department' => 'Riset',
-                'with' => 'Sekretariat',
-                'location' => 'Ruangan 3',
-                'notes' => 'Cek legal wording',
-                'status' => 'done',
-            ],
-        ];
-    }
-    private function persist(): void
-    {
-        session()->put('ms_items', $this->items);
-    }
+
+
+    /** Rules (tanpa STATUS manual) */
     protected function rules(): array
     {
         return [
-            'date' => 'required|date',
-            'time' => 'required|date_format:H:i',
-            'time_end' => 'required|date_format:H:i|after:time',
-            'participant' => 'required|integer|min:1',
-            'department' => 'required|string',
-            'with' => 'nullable|string|max:200',
-            'location' => 'required|in:Ruangan 1,Ruangan 2,Ruangan 3',
-            'notes' => 'nullable|string|max:1000',
-            'status' => 'required|in:planned,ongoing,done',
+            'meeting_title' => ['required', 'string', 'max:255'],
+            'location' => ['required', Rule::in(['Ruangan 1', 'Ruangan 2', 'Ruangan 3'])],
+
+            // departemen wajib & harus ada di tabel departments
+            'department_id' => ['required', 'integer', 'exists:departments,department_id'],
+
+            // Batasi agar kompatibel dengan MySQL DATE
+            'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:1000-01-01', 'before_or_equal:9999-12-31'],
+
+            'participant' => ['required', 'integer', 'min:1'],
+            'time' => ['required', 'date_format:H:i'],
+            'time_end' => ['required', 'date_format:H:i', 'after:time'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+
+            'requirements' => ['array'],
+            'requirements.*' => [Rule::in(['video', 'projector', 'whiteboard', 'catering', 'other'])],
         ];
     }
-    private function nextId(): int
+
+    protected function messages(): array
     {
-        return empty($this->items) ? 1 : (max(array_column($this->items, 'id')) + 1);
+        return [
+            'date.before_or_equal' => 'Tanggal terlalu jauh di masa depan. Maksimal 9999-12-31.',
+            'date.after_or_equal' => 'Tanggal terlalu jauh di masa lalu. Minimal 1000-01-01.',
+            'department_id.required' => 'Departemen wajib dipilih.',
+            'department_id.exists' => 'Departemen tidak valid.',
+        ];
     }
-    private function findIndex(int $id): ?int
+
+    /** Wajib isi notes jika pilih "other" */
+    protected function validateNotesIfOther(): void
     {
-        foreach ($this->items as $i => $m) {
-            if ($m['id'] === $id)
-                return $i;
+        if (in_array('other', $this->requirements ?? [], true)) {
+            $this->validate(['notes' => 'required|string|min:2|max:1000']);
         }
-        return null;
     }
+
     private function resetForm(): void
     {
         $this->reset([
+            'editingId',
+            'modalEdit',
+            'meeting_title',
+            'location',
+            'department_id',
             'date',
+            'participant',
             'time',
             'time_end',
-            'participant',
-            'department',
-            'with',
-            'location',
             'notes',
-            'status',
-            'editingId'
+            'requirements',
         ]);
-        $this->status = 'planned';
+        $this->requirements = [];
     }
+
+    /** ====== CRUD ====== */
+
     public function save(): void
     {
         $this->validate();
-        $this->items[] = [
-            'id' => $this->nextId(),
+        $this->validateNotesIfOther();
+
+        // Guard ekstra agar hanya YYYY-MM-DD
+        $this->date = substr((string) $this->date, 0, 10);
+
+        BookingRoom::create([
+            'room_id' => $this->mapRoomId($this->location),
+            'company_id' => optional(Auth::user())->company_id,
+            'user_id' => optional(Auth::user())->user_id ?? optional(Auth::user())->id,
+            'department_id' => (int) $this->department_id,
+            'meeting_title' => $this->meeting_title,
             'date' => $this->date,
-            'time' => $this->time,
-            'time_end' => $this->time_end,
-            'participant' => (int) $this->participant,
-            'department' => $this->department,
-            'with' => $this->with,
-            'location' => $this->location,
-            'notes' => $this->notes,
-            'status' => $this->status,
-        ];
-        $this->persist();
+            'number_of_attendees' => (int) $this->participant,
+            'start_time' => $this->combineDateTime($this->date, $this->time),
+            'end_time' => $this->combineDateTime($this->date, $this->time_end),
+            'special_notes' => $this->composeSpecialNotes($this->requirements, (string) $this->notes),
+        ]);
+
         $this->resetForm();
         $this->resetValidation();
         $this->saveState = 'saved';
         $this->savedAt = now()->toIso8601String();
+
+        $this->reloadBuckets();
         $this->dispatch('notify', type: 'success', message: 'Meeting ditambahkan.');
     }
+
     public function openEdit(int $id): void
     {
-        $idx = $this->findIndex($id);
-        if ($idx === null)
+        $row = BookingRoom::whereKey($id)->first();
+        if (!$row)
             return;
-        $m = $this->items[$idx];
-        $this->editingId = $id;
-        $this->date = $m['date'];
-        $this->time = $m['time'];
-        $this->time_end = $m['time_end'] ?? null;
-        $this->participant = $m['participant'];
-        $this->department = $m['department'] ?? null;
-        $this->with = $m['with'];
-        $this->location = $m['location'];
-        $this->notes = $m['notes'];
-        $this->status = $m['status'];
+
+        $meta = $this->parseSpecialNotes((string) $row->special_notes);
+
+        $this->editingId = $row->getKey();
+        $this->meeting_title = $row->meeting_title;
+        $this->location = $this->mapRoomName($row->room_id);
+        $this->department_id = $row->department_id;
+        $this->date = optional($row->date)->format('Y-m-d');
+        $this->participant = $row->number_of_attendees;
+        $this->time = optional($row->start_time)->format('H:i');
+        $this->time_end = optional($row->end_time)->format('H:i');
+        $this->notes = $meta['notes'] ?? null;
+        $this->requirements = $meta['requirements'] ?? [];
+
         $this->modalEdit = true;
     }
+
     public function closeEdit(): void
     {
         $this->modalEdit = false;
         $this->editingId = null;
     }
+
     public function update(): void
     {
         if (!$this->editingId)
             return;
+
         $this->validate();
-        $idx = $this->findIndex($this->editingId);
-        if ($idx === null)
+        $this->validateNotesIfOther();
+
+        // Guard ekstra agar hanya YYYY-MM-DD
+        $this->date = substr((string) $this->date, 0, 10);
+
+        $row = BookingRoom::whereKey($this->editingId)->first();
+        if (!$row)
             return;
-        $this->items[$idx] = [
-            'id' => $this->editingId,
+
+        $row->update([
+            'room_id' => $this->mapRoomId($this->location),
+            'meeting_title' => $this->meeting_title,
+            'department_id' => (int) $this->department_id,
             'date' => $this->date,
-            'time' => $this->time,
-            'time_end' => $this->time_end,
-            'participant' => (int) $this->participant,
-            'department' => $this->department,
-            'with' => $this->with,
-            'location' => $this->location,
-            'notes' => $this->notes,
-            'status' => $this->status,
-        ];
-        $this->persist();
+            'number_of_attendees' => (int) $this->participant,
+            'start_time' => $this->combineDateTime($this->date, $this->time),
+            'end_time' => $this->combineDateTime($this->date, $this->time_end),
+            'special_notes' => $this->composeSpecialNotes($this->requirements, (string) $this->notes),
+        ]);
+
         $this->modalEdit = false;
         $this->resetForm();
         $this->resetValidation();
+        $this->reloadBuckets();
+
         $this->dispatch('notify', type: 'success', message: 'Perubahan disimpan.');
     }
+
     public function destroy(int $id): void
     {
-        $this->items = array_values(array_filter($this->items, fn($m) => $m['id'] !== $id));
-        $this->persist();
+        BookingRoom::whereKey($id)->delete();
+        $this->reloadBuckets();
         $this->dispatch('notify', type: 'success', message: 'Meeting dihapus.');
     }
-    public function toPlanned(int $id): void
+
+    /** ====== Buckets Auto (tanpa kolom status & tanpa tag status) ====== */
+    private function reloadBuckets(): void
     {
-        $idx = $this->findIndex($id);
-        if ($idx === null)
-            return;
-        $this->items[$idx]['status'] = 'planned';
-        $this->persist();
+        $q = BookingRoom::query()
+            ->when(optional(Auth::user())->company_id, fn($qq, $cid) => $qq->where('company_id', $cid))
+            ->orderBy('date')
+            ->orderBy('start_time');
+
+        $all = $q->get();
+
+        $this->planned = [];
+        $this->ongoing = [];
+        $this->done = [];
+
+        foreach ($all as $r) {
+            $meta = $this->parseSpecialNotes((string) $r->special_notes);
+            $status = $this->computeStatus(
+                $r->date?->format('Y-m-d'),
+                $r->start_time?->format('H:i'),
+                $r->end_time?->format('H:i')
+            );
+
+            $ui = [
+                'id' => $r->getKey(),
+                'meeting_title' => $r->meeting_title,
+                'location' => $this->mapRoomName($r->room_id),
+                'date' => optional($r->date)->format('Y-m-d'),
+                'time' => optional($r->start_time)->format('H:i'),
+                'time_end' => optional($r->end_time)->format('H:i'),
+                'participant' => $r->number_of_attendees,
+                'department_id' => $r->department_id,
+                'requirements' => $meta['requirements'] ?? [],
+                'notes' => $meta['notes'] ?? null,
+            ];
+
+            if ($status === 'planned') {
+                $this->planned[] = $ui;
+            } elseif ($status === 'ongoing') {
+                $this->ongoing[] = $ui;
+            } else {
+                $this->done[] = $ui;
+            }
+        }
     }
-    public function toOngoing(int $id): void
+
+    /** ====== Helpers ====== */
+
+    private function combineDateTime(string $date, string $time): string
     {
-        $idx = $this->findIndex($id);
-        if ($idx === null)
-            return;
-        $this->items[$idx]['status'] = 'ongoing';
-        $this->persist();
+        return "{$date} {$time}:00";
     }
-    public function toDone(int $id): void
+
+    private function mapRoomId(?string $label): ?int
     {
-        $idx = $this->findIndex($id);
-        if ($idx === null)
-            return;
-        $this->items[$idx]['status'] = 'done';
-        $this->persist();
+        return match ($label) {
+            'Ruangan 1' => 1,
+            'Ruangan 2' => 2,
+            'Ruangan 3' => 3,
+            default => null,
+        };
     }
-    public function getPlannedProperty(): array
+
+    private function mapRoomName(?int $id): ?string
     {
-        $rows = array_filter($this->items, fn($m) => $m['status'] === 'planned');
-        usort($rows, fn($a, $b) => ($a['date'] <=> $b['date']) ?: ($a['time'] <=> $b['time']));
-        return array_values($rows);
+        return match ($id) {
+            1 => 'Ruangan 1',
+            2 => 'Ruangan 2',
+            3 => 'Ruangan 3',
+            default => null,
+        };
     }
-    public function getOngoingProperty(): array
+
+    /** Parse special_notes -> ['requirements','notes'] (abaikan STATUS legacy) */
+    private function parseSpecialNotes(string $raw): array
     {
-        $rows = array_filter($this->items, fn($m) => $m['status'] === 'ongoing');
-        usort($rows, fn($a, $b) => ($a['date'] <=> $b['date']) ?: ($a['time'] <=> $b['time']));
-        return array_values($rows);
+        $requirements = [];
+        $notes = $raw;
+
+        // Hilangkan tag STATUS legacy jika ada
+        if (preg_match('/\[STATUS=(planned|ongoing|done)\]/i', $notes, $m)) {
+            $notes = str_replace($m[0], '', $notes);
+        }
+
+        // REQ
+        if (preg_match('/\[REQ=([a-z,]+)\]/i', $notes, $m)) {
+            $requirements = array_values(array_filter(array_map('trim', explode(',', strtolower($m[1])))));
+            $notes = str_replace($m[0], '', $notes);
+        }
+
+        $notes = ltrim($notes);
+        return compact('requirements', 'notes');
     }
-    public function getDoneProperty(): array
+
+    /** Susun special_notes dari requirements + catatan user (tanpa STATUS) */
+    private function composeSpecialNotes(array $requirements, string $notes): string
     {
-        $rows = array_filter($this->items, fn($m) => $m['status'] === 'done');
-        usort($rows, fn($a, $b) => ($a['date'] <=> $b['date']) ?: ($a['time'] <=> $b['time']));
-        return array_values($rows);
+        $tags = [];
+
+        $reqs = array_values(array_unique(array_filter(
+            $requirements,
+            fn($r) =>
+            in_array($r, ['video', 'projector', 'whiteboard', 'catering', 'other'], true)
+        )));
+        if (!empty($reqs)) {
+            $tags[] = "[REQ=" . implode(',', $reqs) . "]";
+        }
+
+        $prefix = implode(' ', $tags);
+        return trim($prefix . "\n" . trim($notes));
     }
+
+    /** Hitung status dinamis dari waktu */
+    private function computeStatus(?string $date, ?string $start, ?string $end): string
+    {
+        if (!$date || !$start || !$end)
+            return 'planned';
+
+        $tz = config('app.timezone', 'UTC');
+        $now = now($tz);
+        $startAt = \Carbon\Carbon::createFromFormat('Y-m-d H:i', "{$date} {$start}", $tz);
+        $endAt = \Carbon\Carbon::createFromFormat('Y-m-d H:i', "{$date} {$end}", $tz);
+
+        if ($now->lt($startAt))
+            return 'planned';
+        if ($now->betweenIncluded($startAt, $endAt))
+            return 'ongoing';
+        return 'done';
+    }
+
+    /** Polling UI */
     public function tick(): void
     {
+        // refresh bucket agar otomatis pindah Planned -> Ongoing -> Done
+        $this->reloadBuckets();
+
+        // Glow kecil setelah simpan
         if ($this->saveState === 'saved' && $this->savedAt) {
             if (now()->diffInMilliseconds(\Carbon\Carbon::parse($this->savedAt)) >= 1500) {
                 $this->saveState = 'idle';
             }
         }
     }
+
     public function render()
     {
         return view('livewire.pages.receptionist.meetingschedule', [
             'planned' => $this->planned,
             'ongoing' => $this->ongoing,
             'done' => $this->done,
+            'departments' => $this->departments,
         ]);
     }
 }

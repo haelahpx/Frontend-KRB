@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id('package_id');
 
             $table->foreignId('company_id')->constrained('companies', 'company_id')->cascadeOnDelete();
-            $table->foreignId('department_id')->constrained('departments', 'department_id')->cascadeOnDelete();
             $table->foreignId('receptionist_id')->constrained('users', 'user_id')->cascadeOnDelete();
 
             $table->string('package_name');

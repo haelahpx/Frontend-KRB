@@ -1,20 +1,20 @@
-<div class="min-h-screen bg-gray-50" wire:poll.800ms="tick">
+<div class=" bg-gray-50" wire:poll.800ms="tick" wire:poll.keep-alive.2s="tick">
     @php
-        $card   = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
-        $label  = 'block text-sm font-medium text-gray-700 mb-2';
-        $input  = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
+        $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
+        $label = 'block text-sm font-medium text-gray-700 mb-2';
+        $input = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
         $btnBlk = 'px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition';
         $btnBlu = 'px-3 py-2 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/20 disabled:opacity-60 transition';
         $btnGrn = 'px-3 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 disabled:opacity-60 transition';
         $btnOrn = 'px-3 py-2 text-xs font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-600/20 disabled:opacity-60 transition';
         $btnRed = 'px-3 py-2 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600/20 disabled:opacity-60 transition';
-        $chip   = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
-        $mono   = 'text-[10px] font-mono text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md';
-        $ico    = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0';
+        $chip = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
+        $mono = 'text-[10px] font-mono text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md';
+        $ico = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0';
     @endphp
 
-    <main class="px-4 sm:px-6 lg:pl-0 lg:pr-6 py-6">
-        <div class="max-w-7xl space-y-8">
+    <main class="px-4 sm:px-6 py-6">
+        <div class="space-y-8">
 
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
                 <div class="pointer-events-none absolute inset-0 opacity-10">
@@ -47,55 +47,18 @@
 
                 <form class="p-5" wire:submit.prevent="{{ $editingId ? 'update' : 'save' }}">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <div>
-                            <label class="{{ $label }}">Tanggal</label>
-                            <input type="date" wire:model.defer="date" class="{{ $input }}">
-                            @error('date') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        {{-- 1. Meeting Title --}}
+                        <div class="md:col-span-3">
+                            <label class="{{ $label }}">Meeting Title</label>
+                            <input type="text" wire:model.defer="meeting_title" class="{{ $input }}" placeholder="Contoh: Weekly Sync, Kickoff Project, dll">
+                            @error('meeting_title') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                         </div>
 
+                        {{-- 2. Room --}}
                         <div>
-                            <label class="{{ $label }}">Waktu Mulai</label>
-                            <input type="time" wire:model.defer="time" class="{{ $input }}">
-                            @error('time') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="{{ $label }}">Waktu Selesai</label>
-                            <input type="time" wire:model.defer="time_end" class="{{ $input }}">
-                            @error('time_end') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="{{ $label }}">Departemen</label>
-                            <select wire:model.defer="department" class="{{ $input }}">
-                                <option value="" hidden>Pilih departemen</option>
-                                <option value="IT">IT</option>
-                                <option value="HR">HR</option>
-                                <option value="Finance">Finance</option>
-                                <option value="Marketing">Marketing</option>
-                                <option value="Operasional">Operasional</option>
-                                <option value="Riset">Riset</option>
-                                <option value="Lainnya">Lainnya</option>
-                            </select>
-                            @error('department') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="{{ $label }}">Jumlah Peserta</label>
-                            <input type="number" min="1" wire:model.defer="participant" class="{{ $input }}" placeholder="Berapa orang yang ikut">
-                            @error('participant') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="{{ $label }}">Dengan</label>
-                            <input type="text" wire:model.defer="with" class="{{ $input }}" placeholder="Nama tim/klien">
-                            @error('with') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="{{ $label }}">Lokasi</label>
+                            <label class="{{ $label }}">Room</label>
                             <select wire:model.defer="location" class="{{ $input }}">
-                                <option value="" hidden>Pilih ruangan</option>
+                                <option value="" hidden>Pilih room</option>
                                 <option value="Ruangan 1">Ruangan 1</option>
                                 <option value="Ruangan 2">Ruangan 2</option>
                                 <option value="Ruangan 3">Ruangan 3</option>
@@ -103,28 +66,96 @@
                             @error('location') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                         </div>
 
+                        {{-- 2b. Departemen (ambil department_id) --}}
                         <div>
-                            <label class="{{ $label }}">Status</label>
-                            <select wire:model.defer="status" class="{{ $input }}">
-                                <option value="planned">Planned</option>
-                                <option value="ongoing">Ongoing</option>
-                                <option value="done">Done</option>
+                            <label class="{{ $label }}">Departemen</label>
+                            <select wire:model.defer="department_id" class="{{ $input }}">
+                                <option value="" hidden>Pilih departemen</option>
+                                @foreach ($departments as $d)
+                                    <option value="{{ $d['department_id'] }}">{{ $d['name'] }}</option>
+                                @endforeach
                             </select>
-                            @error('status') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                            @error('department_id') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                         </div>
 
-                        <div class="md:col-span-3">
-                            <label class="{{ $label }}">Catatan</label>
-                            <textarea rows="4" wire:model.defer="notes" class="{{ $input }} !h-auto resize-none" placeholder="Agenda singkat / yang perlu dibawa"></textarea>
-                            @error('notes') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        {{-- 3. Tanggal --}}
+                        <div>
+                            <label class="{{ $label }}">Tanggal</label>
+                            <input type="date" wire:model.defer="date" class="{{ $input }}">
+                            @error('date') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                         </div>
+
+                        {{-- 4. Jumlah Peserta --}}
+                        <div>
+                            <label class="{{ $label }}">Jumlah Peserta</label>
+                            <input type="number" min="1" wire:model.defer="participant" class="{{ $input }}" placeholder="Berapa orang yang ikut">
+                            @error('participant') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        {{-- 5. Waktu Mulai --}}
+                        <div>
+                            <label class="{{ $label }}">Waktu Mulai</label>
+                            <input type="time" wire:model.defer="time" class="{{ $input }}">
+                            @error('time') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        {{-- 6. Waktu Selesai --}}
+                        <div>
+                            <label class="{{ $label }}">Waktu Selesai</label>
+                            <input type="time" wire:model.defer="time_end" class="{{ $input }}">
+                            @error('time_end') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        {{-- 7. (Status DIHAPUS - otomatis) --}}
+
+                        {{-- 8. Kebutuhan Ruangan (Checkbox) --}}
+                        <div class="md:col-span-3">
+                            <label class="{{ $label }}">Kebutuhan Ruangan</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 text-sm text-gray-700">
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="video" wire:model="requirements"
+                                           class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                    <span>Video Conference</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="projector" wire:model="requirements"
+                                           class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                    <span>Projector</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="whiteboard" wire:model="requirements"
+                                           class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                    <span>Whiteboard</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="catering" wire:model="requirements"
+                                           class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                    <span>Catering</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 cursor-pointer sm:col-span-2">
+                                    <input type="checkbox" value="other" wire:model="requirements"
+                                           class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                    <span>Other</span>
+                                </label>
+                            </div>
+                            @error('requirements.*') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        {{-- Catatan muncul hanya jika "Other" dipilih --}}
+                        @if (in_array('other', $requirements ?? [], true))
+                            <div class="md:col-span-3">
+                                <label class="{{ $label }}">Catatan</label>
+                                <textarea rows="4" wire:model.defer="notes" class="{{ $input }} !h-auto resize-none" placeholder="Jelaskan kebutuhan lainnya (wajib jika memilih Other)"></textarea>
+                                @error('notes') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                            </div>
+                        @endif
                     </div>
 
                     <div class="pt-5">
                         <div class="flex items-center gap-3">
                             @if($editingId)
                                 <button type="button"
-                                        wire:click="cancelEdit"
+                                        wire:click="closeEdit"
                                         class="px-4 h-10 rounded-xl border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 hover:border-gray-400 transition">
                                     Batal
                                 </button>
@@ -168,6 +199,7 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
+                {{-- PLANNED --}}
                 <section class="{{ $card }}">
                     <div class="px-6 py-4 border-b border-gray-200">
                         <div class="flex items-center gap-3">
@@ -183,10 +215,10 @@
                         @forelse ($planned as $m)
                             <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="planned-{{ $m['id'] }}">
                                 <div class="flex items-start gap-3">
-                                    <div class="{{ $ico }}">{{ strtoupper(substr($m['department'] ?? 'M', 0, 1)) }}</div>
+                                    <div class="{{ $ico }}">{{ strtoupper(substr(($m['meeting_title'] ?? 'M'), 0, 1)) }}</div>
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-2">
-                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['with'] ?? '—' }}</div>
+                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['meeting_title'] ?? '—' }}</div>
                                             <span class="{{ $chip }}">{{ \Illuminate\Support\Carbon::parse($m['date'])->format('d M Y') }}</span>
                                             <span class="{{ $chip }}">{{ $m['time'] }}–{{ $m['time_end'] }}</span>
                                         </div>
@@ -195,7 +227,6 @@
                                         </div>
 
                                         <div class="mt-3 flex flex-wrap gap-2">
-                                            <button class="{{ $btnOrn }}" wire:click="toOngoing({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="toOngoing({{ $m['id'] }})">Mulai sekarang</button>
                                             <button class="{{ $btnBlk }}" wire:click="openEdit({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="openEdit({{ $m['id'] }})">Edit</button>
                                             <button class="{{ $btnRed }}" wire:click="destroy({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="destroy({{ $m['id'] }})">Hapus</button>
                                         </div>
@@ -209,8 +240,9 @@
                     </div>
                 </section>
 
+                {{-- ONGOING --}}
                 <section class="{{ $card }}">
-                    <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="px-6 py-4 border border-t-0 border-gray-200">
                         <div class="flex items-center gap-3">
                             <div class="w-2 h-2 bg-amber-600 rounded-full"></div>
                             <div>
@@ -224,10 +256,10 @@
                         @forelse ($ongoing as $m)
                             <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="ongoing-{{ $m['id'] }}">
                                 <div class="flex items-start gap-3">
-                                    <div class="{{ $ico }}">{{ strtoupper(substr($m['department'] ?? 'M', 0, 1)) }}</div>
+                                    <div class="{{ $ico }}">{{ strtoupper(substr(($m['meeting_title'] ?? 'M'), 0, 1)) }}</div>
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-2">
-                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['with'] ?? '—' }}</div>
+                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['meeting_title'] ?? '—' }}</div>
                                             <span class="{{ $chip }}">{{ \Illuminate\Support\Carbon::parse($m['date'])->format('d M Y') }}</span>
                                             <span class="{{ $chip }}">{{ $m['time'] }}–{{ $m['time_end'] }}</span>
                                         </div>
@@ -236,8 +268,6 @@
                                         </div>
 
                                         <div class="mt-3 flex flex-wrap gap-2">
-                                            <button class="{{ $btnGrn }}" wire:click="toDone({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="toDone({{ $m['id'] }})">Selesaikan</button>
-                                            <button class="{{ $btnBlu }}" wire:click="toPlanned({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="toPlanned({{ $m['id'] }})">Kembalikan ke Planned</button>
                                             <button class="{{ $btnBlk }}" wire:click="openEdit({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="openEdit({{ $m['id'] }})">Edit</button>
                                             <button class="{{ $btnRed }}" wire:click="destroy({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="destroy({{ $m['id'] }})">Hapus</button>
                                         </div>
@@ -251,6 +281,7 @@
                     </div>
                 </section>
 
+                {{-- DONE --}}
                 <section class="{{ $card }}">
                     <div class="px-6 py-4 border-b border-gray-200">
                         <div class="flex items-center gap-3">
@@ -266,10 +297,10 @@
                         @forelse ($done as $m)
                             <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="done-{{ $m['id'] }}">
                                 <div class="flex items-start gap-3">
-                                    <div class="{{ $ico }}">{{ strtoupper(substr($m['department'] ?? 'M', 0, 1)) }}</div>
+                                    <div class="{{ $ico }}">{{ strtoupper(substr(($m['meeting_title'] ?? 'M'), 0, 1)) }}</div>
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-2">
-                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['with'] ?? '—' }}</div>
+                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['meeting_title'] ?? '—' }}</div>
                                             <span class="{{ $chip }}">{{ \Illuminate\Support\Carbon::parse($m['date'])->format('d M Y') }}</span>
                                             <span class="{{ $chip }}">{{ $m['time'] }}–{{ $m['time_end'] }}</span>
                                         </div>
@@ -279,7 +310,6 @@
 
                                         <div class="mt-3 flex flex-wrap gap-2">
                                             <button class="{{ $btnBlk }}" wire:click="openEdit({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="openEdit({{ $m['id'] }})">Edit</button>
-                                            <button class="{{ $btnBlu }}" wire:click="toPlanned({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="toPlanned({{ $m['id'] }})">Jadwalkan Ulang (Planned)</button>
                                             <button class="{{ $btnRed }}" wire:click="destroy({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="destroy({{ $m['id'] }})">Hapus</button>
                                         </div>
                                     </div>
@@ -318,46 +348,101 @@
 
                 <div class="p-5 space-y-4 overflow-y-auto flex-1">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        {{-- 1. Meeting Title --}}
+                        <div class="md:col-span-2">
+                            <label class="{{ $label }}">Meeting Title</label>
+                            <input type="text" class="{{ $input }}" wire:model.defer="meeting_title" placeholder="Judul meeting">
+                        </div>
+
+                        {{-- 2. Room --}}
+                        <div>
+                            <label class="{{ $label }}">Room</label>
+                            <select class="{{ $input }}" wire:model.defer="location">
+                                <option value="" hidden>Pilih room</option>
+                                <option value="Ruangan 1">Ruangan 1</option>
+                                <option value="Ruangan 2">Ruangan 2</option>
+                                <option value="Ruangan 3">Ruangan 3</option>
+                            </select>
+                        </div>
+
+                        {{-- 2b. Departemen --}}
+                        <div>
+                            <label class="{{ $label }}">Departemen</label>
+                            <select class="{{ $input }}" wire:model.defer="department_id">
+                                <option value="" hidden>Pilih departemen</option>
+                                @foreach ($departments as $d)
+                                    <option value="{{ $d['department_id'] }}">{{ $d['name'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- 3. Tanggal --}}
                         <div>
                             <label class="{{ $label }}">Tanggal</label>
                             <input type="date" class="{{ $input }}" wire:model.defer="date">
                         </div>
-                        <div>
-                            <label class="{{ $label }}">Status</label>
-                            <select class="{{ $input }}" wire:model.defer="status">
-                                <option value="planned">Planned</option>
-                                <option value="ongoing">Ongoing</option>
-                                <option value="done">Done</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="{{ $label }}">Mulai</label>
-                            <input type="time" class="{{ $input }}" wire:model.defer="time">
-                        </div>
-                        <div>
-                            <label class="{{ $label }}">Selesai</label>
-                            <input type="time" class="{{ $input }}" wire:model.defer="time_end">
-                        </div>
-                        <div>
-                            <label class="{{ $label }}">Departemen</label>
-                            <input type="text" class="{{ $input }}" wire:model.defer="department">
-                        </div>
+
+                        {{-- 4. Peserta --}}
                         <div>
                             <label class="{{ $label }}">Peserta</label>
                             <input type="number" min="1" class="{{ $input }}" wire:model.defer="participant">
                         </div>
+
+                        {{-- 5. Mulai --}}
                         <div>
-                            <label class="{{ $label }}">Dengan</label>
-                            <input type="text" class="{{ $input }}" wire:model.defer="with">
+                            <label class="{{ $label }}">Mulai</label>
+                            <input type="time" class="{{ $input }}" wire:model.defer="time">
                         </div>
+
+                        {{-- 6. Selesai --}}
                         <div>
-                            <label class="{{ $label }}">Lokasi</label>
-                            <input type="text" class="{{ $input }}" wire:model.defer="location">
+                            <label class="{{ $label }}">Selesai</label>
+                            <input type="time" class="{{ $input }}" wire:model.defer="time_end">
                         </div>
+
+                        {{-- 7. (Status dihapus) --}}
+
+                        {{-- 8. Kebutuhan Ruangan (Checkbox) --}}
                         <div class="md:col-span-2">
-                            <label class="{{ $label }}">Catatan</label>
-                            <textarea rows="3" class="{{ $input }} !h-auto resize-none" wire:model.defer="notes"></textarea>
+                            <label class="{{ $label }}">Kebutuhan Ruangan</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm text-gray-700">
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="video" wire:model="requirements"
+                                           class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                    <span>Video Conference</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="projector" wire:model="requirements"
+                                           class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                    <span>Projector</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="whiteboard" wire:model="requirements"
+                                           class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                    <span>Whiteboard</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="catering" wire:model="requirements"
+                                           class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                    <span>Catering</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 cursor-pointer sm:col-span-2">
+                                    <input type="checkbox" value="other" wire:model="requirements"
+                                           class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                    <span>Other</span>
+                                </label>
+                            </div>
+                            @error('requirements.*') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                         </div>
+
+                        {{-- Catatan (Edit) hanya jika "Other" --}}
+                        @if (in_array('other', $requirements ?? [], true))
+                            <div class="md:col-span-2">
+                                <label class="{{ $label }}">Catatan</label>
+                                <textarea rows="3" class="{{ $input }} !h-auto resize-none" wire:model.defer="notes" placeholder="Jelaskan kebutuhan lainnya (wajib jika memilih Other)"></textarea>
+                                @error('notes') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                            </div>
+                        @endif
                     </div>
                 </div>
 

@@ -32,7 +32,7 @@
             Documents
         </flux:sidebar.item>
 
-        <flux:sidebar.item icon="calendar" href="#">
+        <flux:sidebar.item icon="calendar" href="{{ route('receptionist.calendar') }}">
             Calendar
         </flux:sidebar.item>
     </flux:sidebar.nav>

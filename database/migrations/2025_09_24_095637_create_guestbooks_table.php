@@ -12,6 +12,7 @@ return new class extends Migration {
     {
         Schema::create('guestbooks', function (Blueprint $table) {
             $table->bigIncrements('guestbook_id');
+            $table->foreignId('company_id')->constrained('companies', 'company_id')->cascadeOnDelete();
             $table->date('date');
             $table->time('jam_in');
             $table->time('jam_out')->nullable();

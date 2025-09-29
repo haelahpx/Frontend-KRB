@@ -12,16 +12,15 @@ return new class extends Migration {
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->bigIncrements('document_id'); 
-            $table->unsignedBigInteger('company_id')->index()->constrained('companies', 'company_id')->cascadeOnDelete();
-            $table->unsignedBigInteger('user_id')->index()->constrained('users', 'user_id')->cascadeOnDelete();
-            $table->unsignedBigInteger('department_id')->index()->constrained('departments', 'department_id')->cascadeOnDelete();
+            $table->foreignId('company_id')->constrained('companies', 'company_id')->cascadeOnDelete();
+            $table->foreignId('receptionist_id')->constrained('users', 'user_id')->cascadeOnDelete(); 
             $table->string('document_name');
-            $table->string('nama_pengirim');
-            $table->string('nama_penerima');
+            $table->string('nama_pengirim')->nullable();
+            $table->string('nama_penerima')->nullable();
             $table->enum('type', ['document','invoice','etc'])->default('document');
             $table->string('penyimpanan', 50);
-            $table->dateTime('pengambilan');
-            $table->dateTime('pengiriman');
+            $table->dateTime('pengambilan')->nullable();
+            $table->dateTime('pengiriman')->nullable();
             $table->enum('status', ['pending','taken','delivered'])->default('pending'); 
             $table->timestamps();
         });

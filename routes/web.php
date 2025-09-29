@@ -22,6 +22,7 @@ use App\Livewire\Pages\Superadmin\Account as UserManagement;
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
 use App\Livewire\Pages\Receptionist\Guestbook as ReceptionistGuestbook;
 use App\Livewire\Pages\Receptionist\Documents as Documents;
+use App\Livewire\Pages\Receptionist\Calendar as CalendarPage;
 
 // ========== Auth Pages ==========
 use App\Livewire\Pages\Auth\Login as LoginPage;
@@ -108,6 +109,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/receptionist-guestbook', Guestbook::class)->name('receptionist.guestbook');
         Route::get('/receptionist-meetingschedule', MeetingSchedule::class)->name('receptionist.schedule');
         Route::get('/receptionist-document', Documents::class)->name('receptionist.documents');
+        Route::get('/receptionist-calendar', CalendarPage::class)->name('receptionist.calendar');
     });
     Route::middleware(['auth'])->group(function () {
     Route::get('/receptionist/documents', Documents::class)
