@@ -13,9 +13,9 @@ return new class extends Migration {
         Schema::create('tickets', function (Blueprint $table) {
             $table->id('ticket_id');
             $table->foreignId('company_id')->constrained('companies', 'company_id')->cascadeOnDelete();
-            $table->foreignId('department_id')->nullable()->constrained('departments', 'department_id')->nullOnDelete();
-            $table->foreignId('requestdept_id')->nullable()->constrained('departments', 'department_id')->nullOnDelete(); 
-            $table->foreignId('user_id')->nullable()->constrained('users', 'user_id')->nullOnDelete(); 
+            $table->foreignId('department_id')->constrained('departments', 'department_id')->cascadeOnDelete();
+            $table->foreignId('requestdept_id')->constrained('departments', 'department_id')->cascadeOnDelete(); 
+            $table->foreignId('user_id')->constrained('users', 'user_id')->cascadeOnDelete(); 
             $table->string('subject');
             $table->text('description')->nullable();
             $table->enum('priority', ['low', 'medium', 'high'])->default('low');

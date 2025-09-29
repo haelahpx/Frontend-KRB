@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->foreignId('room_id')->constrained('rooms', 'room_id')->cascadeOnDelete();
             $table->foreignId('company_id')->constrained('companies', 'company_id')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users', 'user_id')->cascadeOnDelete();          
-            $table->foreignId('department_id')->nullable()->constrained('departments', 'department_id')->nullOnDelete();
+            $table->foreignId('department_id')->constrained('departments', 'department_id')->cascadeOnDelete();
             $table->string('meeting_title');
             $table->date('date');
             $table->unsignedInteger('number_of_attendees')->default(0);

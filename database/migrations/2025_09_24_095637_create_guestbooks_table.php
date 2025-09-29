@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->string('name');
             $table->string('phone_number')->nullable();
             $table->string('instansi')->nullable();
-            $table->string('keperluan')->nullable();
+            $table->string('keperluan');
             $table->string('petugas_penjaga');
             $table->timestamps();
         });
