@@ -19,37 +19,49 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1) Company
+        // ====== Konfigurasi dasar ======
+        $emailDomain = 'krbogor.id'; 
+
+        // 1) Company: Kebun Raya Bogor
         $company = Company::updateOrCreate(
-            ['company_name' => 'Tech Corp'], // dicari berdasarkan nama
+            ['company_name' => 'Kebun Raya Bogor'],
             [
-                'company_address' => 'Jl. Mawar No. 123',
-                'company_email'   => 'info@techcorp.com',
+                'company_address' => 'Jl. Ir. H. Juanda No.13, Bogor',
+                'company_email'   => 'info@' . $emailDomain,
             ]
         );
-
         $companyId = $company->getKey();
 
-        // 2) Department
-        $dept = Department::firstOrCreate(
-            [
-                'company_id'      => $companyId,
-                'department_name' => 'IT Department',
-            ]
-        );
-
-        // 3) Roles
+        // 2) Roles
         $superAdminRole   = Role::firstOrCreate(['name' => 'Superadmin']);
         $adminRole        = Role::firstOrCreate(['name' => 'Admin']);
         $userRole         = Role::firstOrCreate(['name' => 'User']);
         $receptionistRole = Role::firstOrCreate(['name' => 'Receptionist']);
 
-        // 4) Users
+        // 3) Departments
+        $departmentNames = [
+            'IT',
+            'Finance',
+            'HRD',
+            'Marketing',
+            'Sales',
+            'Operations',
+        ];
+
+        $departments = [];
+        foreach ($departmentNames as $name) {
+            $departments[$name] = Department::firstOrCreate([
+                'company_id'      => $companyId,
+                'department_name' => $name,
+            ]);
+        }
+
+        // 4) Superadmin (tanpa department)
         User::firstOrCreate(
-            ['email' => 'superadmin@gmail.com'],
+            ['email' => "superadmin@{$emailDomain}"],
             [
                 'company_id'     => $companyId,
-                'department_id'  => $dept->getKey(),
+                'department_id'  => null, // tidak terikat department
                 'role_id'        => $superAdminRole->getKey(),
                 'full_name'      => 'Superadmin User',
                 'phone_number'   => '08000000000',
@@ -58,37 +70,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // 5) Receptionist (tanpa department)
         User::firstOrCreate(
-            ['email' => 'admin@gmail.com'],
+            ['email' => "receptionist@{$emailDomain}"],
             [
                 'company_id'     => $companyId,
-                'department_id'  => $dept->getKey(),
-                'role_id'        => $adminRole->getKey(),
-                'full_name'      => 'Admin User',
-                'phone_number'   => '08123456789',
-                'password'       => Hash::make('password'),
-                'remember_token' => Str::random(10),
-            ]
-        );
-
-        User::firstOrCreate(
-            ['email' => 'user@gmail.com'],
-            [
-                'company_id'     => $companyId,
-                'department_id'  => $dept->getKey(),
-                'role_id'        => $userRole->getKey(),
-                'full_name'      => 'Regular User',
-                'phone_number'   => '08987654321',
-                'password'       => Hash::make('password'),
-                'remember_token' => Str::random(10),
-            ]
-        );
-
-        User::firstOrCreate(
-            ['email' => 'receptionist@gmail.com'],
-            [
-                'company_id'     => $companyId,
-                'department_id'  => $dept->getKey(),
+                'department_id'  => null, // tidak terikat department
                 'role_id'        => $receptionistRole->getKey(),
                 'full_name'      => 'Receptionist User',
                 'phone_number'   => '087812345678',
@@ -97,21 +84,31 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 5) Rooms (contoh 3 ruangan)
-        Room::firstOrCreate(
-            ['room_number' => 'Room 101'],
-            ['company_id'  => $companyId]
-        );
-        Room::firstOrCreate(
-            ['room_number' => 'Room 202'],
-            ['company_id'  => $companyId]
-        );
-        Room::firstOrCreate(
-            ['room_number' => 'Room 303'],
-            ['company_id'  => $companyId]
-        );
+        // 6) Admin per department (email: admin-<slug-dept>@krbogor.id)
+        foreach ($departments as $deptName => $deptModel) {
+            $deptSlug   = Str::slug($deptName, '-'); // contoh: "IT" -> "it", "Human Resources" -> "human-resources"
+            $adminEmail = "admin-{$deptSlug}@{$emailDomain}";
 
-        // 6) Requirements (buat checklist form)
+            User::firstOrCreate(
+                ['email' => $adminEmail],
+                [
+                    'company_id'     => $companyId,
+                    'department_id'  => $deptModel->getKey(),
+                    'role_id'        => $adminRole->getKey(),
+                    'full_name'      => "Admin - {$deptName}",
+                    'phone_number'   => '081' . random_int(100000000, 999999999),
+                    'password'       => Hash::make('password'),
+                    'remember_token' => Str::random(10),
+                ]
+            );
+        }
+
+        // 7) Rooms
+        Room::firstOrCreate(['room_number' => 'Room 101'], ['company_id' => $companyId]);
+        Room::firstOrCreate(['room_number' => 'Room 202'], ['company_id' => $companyId]);
+        Room::firstOrCreate(['room_number' => 'Room 303'], ['company_id' => $companyId]);
+
+        // 8) Requirements
         foreach (['projector','whiteboard','video_conference','catering','other'] as $req) {
             Requirement::firstOrCreate(['name' => $req]);
         }
