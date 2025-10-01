@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
+// ========== Controllers (NEW) ==========
+use App\Http\Controllers\AttachmentController; // <-- [ADD] for attachments API
+
 // ========== Livewire Pages (User) ==========
 use App\Livewire\Pages\User\Home as UserHome;
 use App\Livewire\Pages\User\CreateTicket;
@@ -32,7 +35,7 @@ use App\Livewire\Pages\Auth\Register as RegisterPage;
 // ========== Error ==========
 use App\Livewire\Pages\Errors\error404 as Error404;
 
-//receptionist
+// receptionist
 use App\Livewire\Pages\Receptionist\Guestbook as Guestbook;
 use App\Livewire\Pages\Receptionist\MeetingSchedule as MeetingSchedule;
 
@@ -54,10 +57,10 @@ Route::get('/', function () {
     $roleName = $user->role->name ?? $user->role ?? null;
 
     return match ($roleName) {
-        'Superadmin'   => redirect()->route('superadmin.dashboard'),
-        'Admin'        => redirect()->route('admin.dashboard'),
+        'Superadmin' => redirect()->route('superadmin.dashboard'),
+        'Admin' => redirect()->route('admin.dashboard'),
         'Receptionist' => redirect()->route('receptionist.dashboard'),
-        default        => redirect()->route('user.home'),
+        default => redirect()->route('user.home'),
     };
 })->name('home');
 
@@ -67,7 +70,7 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
-    Route::get('/login',    LoginPage::class)->name('login');
+    Route::get('/login', LoginPage::class)->name('login');
     Route::get('/register', RegisterPage::class)->name('register');
 });
 
@@ -79,17 +82,36 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
 
     // ---------- User routes ----------
-    Route::get('/dashboard',     UserHome::class)->name('user.home');
+    Route::get('/dashboard', UserHome::class)->name('user.home');
     Route::get('/create-ticket', CreateTicket::class)->name('create-ticket');
 
     // Booking room (User)
-    Route::get('/book-room',     Bookroom::class)->name('book-room');      // form + calendar (komponen User\Bookroom)
+    Route::get('/book-room', Bookroom::class)->name('book-room');      // form + calendar (komponen User\Bookroom)
     Route::get('/bookingstatus', BookingStatus::class)->name('bookingstatus');
 
     // Profile & others
-    Route::get('/profile',       Profile::class)->name('profile');
-    Route::get('/package',       Package::class)->name('package');
-    Route::get('/ticketstatus',  Ticketstatus::class)->name('ticketstatus');
+    Route::get('/profile', Profile::class)->name('profile');
+    Route::get('/package', Package::class)->name('package');
+    Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
+
+    // ---------- Attachments API (NEW) ----------
+    // Signed upload: minta signature
+    Route::post('/attachments/signature', [AttachmentController::class, 'signature'])
+        ->name('attachments.signature');
+
+    // Simpan metadata setelah upload sukses di Cloudinary
+    Route::post('/attachments', [AttachmentController::class, 'store'])
+        ->name('attachments.store');
+
+    // List attachments per ticket (untuk tampil di detail ticket)
+    Route::get('/tickets/{ticket}/attachments', [AttachmentController::class, 'index'])
+        ->whereNumber('ticket')
+        ->name('attachments.index');
+
+    // Hapus attachment (hard delete: Cloudinary + DB)
+    Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])
+        ->whereNumber('attachment')
+        ->name('attachments.destroy');
 
     // ---------- Admin routes ----------
     Route::middleware('is.admin')->group(function () {
@@ -98,7 +120,7 @@ Route::middleware('auth')->group(function () {
 
     // ---------- Superadmin routes ----------
     Route::middleware('is.superadmin')->group(function () {
-        Route::get('/superadmin-dashboard',   SuperadminDashboard::class)->name('superadmin.dashboard');
+        Route::get('/superadmin-dashboard', SuperadminDashboard::class)->name('superadmin.dashboard');
         Route::get('/superadmin-announcement', Announcement::class)->name('superadmin.announcement');
         Route::get('/superadmin-information',  Information::class)->name('superadmin.information');
         Route::get('/superadmin-user',         UserManagement::class)->name('superadmin.user');
@@ -113,11 +135,29 @@ Route::middleware('auth')->group(function () {
         Route::get('/receptionist-document', Documents::class)->name('receptionist.documents');
         Route::get('/receptionist-calendar', CalendarPage::class)->name('receptionist.calendar');
     });
+
+    // (Tetap dipertahankan sesuai kode kamu)
     Route::middleware(['auth'])->group(function () {
-    Route::get('/receptionist/documents', Documents::class)
-        ->name('receptionist.documents');
-});
-        
+        Route::get('/receptionist/documents', Documents::class)
+            ->name('receptionist.documents');
+    });
+
+    Route::get('/test-signature', function (Request $r) {
+        $req = Request::create('/attachments/signature', 'POST', [
+            'ticket_id' => $r->query('ticket_id'),
+            'filename' => $r->query('filename'),
+            'bytes' => $r->query('bytes'),
+        ]);
+        return app(AttachmentController::class)->signature($req);
+    })->name('attachments.test')->middleware('auth');
+    Route::get('/test-attachment', function (Request $request) {
+        return view('test-attachment');
+    })->middleware('auth');
+    Route::get('/test-delete/{id}', function ($id) {
+        return app(\App\Http\Controllers\AttachmentController::class)->destroy($id);
+    })->middleware('auth');
+
+
     // Logout
     Route::post('/logout', function (Request $request) {
         Auth::logout();
