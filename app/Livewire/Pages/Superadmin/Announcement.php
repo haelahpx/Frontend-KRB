@@ -7,186 +7,143 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\WithPagination;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth; // ⬅️ tambahkan
+use Illuminate\Support\Facades\Auth;
 use App\Models\Announcement as AnnouncementModel;
 
 #[Layout('layouts.superadmin')]
-#[Title('announcement')]
+#[Title('Announcement')]
 class Announcement extends Component
 {
     use WithPagination;
 
-    // UI State
-    public bool $formVisible = false;
-    public bool $editMode = false;
-    public bool $showDeleteConfirm = false;
-
-    // Form fields
-    public ?int $announcementId = null;
+    // Derived from Auth
     public ?int $company_id = null;
-    public string $description = '';
-    public ?string $event_at = null; // 'Y-m-d\TH:i'
 
-    // Filters & sorting
+    // Table filter & sorting
     public string $search = '';
     public string $sortField = 'created_at';
     public string $sortDirection = 'desc';
 
-    // ⚠️ company_id kita set sendiri dari Auth, jadi tidak wajib dari user input
-    protected $rules = [
-        'company_id'  => 'sometimes|integer',
-        'description' => 'required|string|max:255',
-        'event_at'    => 'nullable|date',
-    ];
+    // Create form fields
+    public string $description = '';
+    public ?string $event_at = null;
 
-    protected $listeners = ['refreshAnnouncements' => '$refresh'];
+    // Edit modal state & fields
+    public bool $modalEdit = false;
+    public ?int $edit_id = null;
+    public string $edit_description = '';
+    public ?string $edit_event_at = null;
+
+    // Validation rules for the create form
+    protected function rules(): array
+    {
+        return [
+            'description' => 'required|string|max:255',
+            'event_at'    => 'nullable|date',
+        ];
+    }
+
+    // Validation rules for the edit modal
+    protected function editRules(): array
+    {
+        return [
+            'edit_description' => 'required|string|max:255',
+            'edit_event_at'    => 'nullable|date',
+        ];
+    }
+
+    public function mount(): void
+    {
+        // Set default company from the logged-in user
+        $this->company_id = Auth::user()?->company_id;
+    }
 
     public function updatingSearch(): void
     {
         $this->resetPage();
     }
 
-    public function sortBy(string $field): void
+    /**
+     * Create a new announcement.
+     */
+    public function store(): void
     {
-        $allowedSort = ['announcements_id', 'company_id', 'event_at', 'created_at'];
-        if (!in_array($field, $allowedSort, true)) return;
+        $this->validate();
 
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'asc';
-        }
+        AnnouncementModel::create([
+            'company_id'  => $this->company_id, // Get company from authenticated user
+            'description' => $this->description,
+            'event_at'    => $this->event_at ? Carbon::parse($this->event_at) : null,
+        ]);
 
+        $this->reset('description', 'event_at');
+        $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'Announcement berhasil dibuat.', duration: 3000);
         $this->resetPage();
     }
 
-    public function mount(): void
+    /**
+     * Open and prepare the edit modal.
+     */
+    public function openEdit(int $id): void
     {
-        // Set default company dari user login
-        $this->company_id = Auth::user()?->company_id;
+        $announcement = AnnouncementModel::where('company_id', $this->company_id)
+            ->findOrFail($id);
+
+        $this->edit_id = $announcement->getKey();
+        $this->edit_description = $announcement->description;
+        $this->edit_event_at = $announcement->event_at ? $announcement->event_at->format('Y-m-d\TH:i') : null;
+
+        $this->modalEdit = true;
+        $this->resetErrorBag();
     }
 
-    /* ---------- Create / Edit flow (inline form) ---------- */
-
-    public function toggleForm(): void
+    /**
+     * Close the edit modal and reset its state.
+     */
+    public function closeEdit(): void
     {
-        if ($this->editMode) {
-            $this->formVisible = true;
-            return;
-        }
-        $this->formVisible = !$this->formVisible;
-
-        if ($this->formVisible && !$this->editMode) {
-            $this->resetForm();
-            $this->company_id = Auth::user()?->company_id; // pastikan terisi saat create
-        }
+        $this->modalEdit = false;
+        $this->reset('edit_id', 'edit_description', 'edit_event_at');
     }
 
-    public function startCreate(): void
+    /**
+     * Update the announcement from the edit modal.
+     */
+    public function update(): void
     {
-        $this->resetForm();
-        $this->editMode = false;
-        $this->formVisible = true;
-        $this->company_id = Auth::user()?->company_id; // ⬅️ set dari Auth
+        $this->validate($this->editRules());
+
+        $announcement = AnnouncementModel::where('company_id', $this->company_id)
+            ->findOrFail($this->edit_id);
+
+        $announcement->update([
+            'description' => $this->edit_description,
+            'event_at'    => $this->edit_event_at ? Carbon::parse($this->edit_event_at) : null,
+        ]);
+
+        $this->closeEdit();
+        $this->dispatch('toast', type: 'success', title: 'Diupdate', message: 'Announcement berhasil diupdate.', duration: 3000);
     }
 
-    public function startEdit(int $id): void
+    /**
+     * Delete an announcement.
+     */
+    public function delete(int $id): void
     {
-        $announcement = AnnouncementModel::findOrFail($id);
+        AnnouncementModel::where('company_id', $this->company_id)
+            ->findOrFail($id)
+            ->delete();
 
-        $this->announcementId = $announcement->getKey();
-        // Boleh tampilkan company_id yang tersimpan, tapi saat save kita tetap override dari Auth
-        $this->company_id     = $announcement->company_id;
-        $this->description    = $announcement->description;
-        $this->event_at       = $announcement->event_at
-            ? $announcement->event_at->format('Y-m-d\TH:i')
-            : null;
-
-        $this->editMode    = true;
-        $this->formVisible = true;
-        $this->resetValidation();
-    }
-
-    public function save(): void
-    {
-        // Paksa company_id dari user login (mengabaikan input user)
-        $this->company_id = Auth::user()?->company_id;
-
-        $this->validate();
-
-        $payload = [
-            'company_id'  => $this->company_id, // ⬅️ nilai final dari Auth
-            'description' => $this->description,
-            'event_at'    => $this->event_at ? Carbon::parse($this->event_at) : null,
-        ];
-
-        if ($this->editMode && $this->announcementId) {
-            AnnouncementModel::findOrFail($this->announcementId)->update($payload);
-            session()->flash('message', 'Announcement updated successfully.');
-        } else {
-            AnnouncementModel::create($payload);
-            session()->flash('message', 'Announcement created successfully.');
-        }
-
-        $this->cancelForm();
-    }
-
-    public function cancelForm(): void
-    {
-        $this->formVisible = false;
-        $this->editMode = false;
-        $this->resetForm();
-        $this->resetValidation();
-    }
-
-    private function resetForm(): void
-    {
-        $this->announcementId = null;
-        // Jangan reset company_id ke null—biarkan tetap dari Auth saat create
-        $this->description = '';
-        $this->event_at = null;
-    }
-
-    /* ---------- Delete flow ---------- */
-
-    public function confirmDelete(int $id): void
-    {
-        $this->announcementId = $id;
-        $this->showDeleteConfirm = true;
-    }
-
-    public function cancelDelete(): void
-    {
-        $this->showDeleteConfirm = false;
-        $this->announcementId = null;
-    }
-
-    public function delete(): void
-    {
-        AnnouncementModel::findOrFail($this->announcementId)->delete();
-        session()->flash('message', 'Announcement deleted successfully.');
-        $this->showDeleteConfirm = false;
-        $this->announcementId = null;
-
-        if ($this->editMode) {
-            $this->cancelForm();
-        }
+        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Announcement berhasil dihapus.', duration: 3000);
+        $this->resetPage();
     }
 
     public function render()
     {
-        $userCompanyId = Auth::user()?->company_id;
-
         $announcements = AnnouncementModel::query()
-            // (Opsional) batasi hanya company milik user
-            ->when($userCompanyId, fn($q) => $q->where('company_id', $userCompanyId))
+            ->where('company_id', $this->company_id)
             ->when($this->search, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('description', 'like', "%{$this->search}%")
-                        ->orWhere('company_id', 'like', "%{$this->search}%")
-                        ->orWhere('announcements_id', 'like', "%{$this->search}%");
-                });
+                $query->where('description', 'like', "%{$this->search}%");
             })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate(10);

@@ -47,8 +47,7 @@
         <flux:sidebar.profile avatar="https://fluxui.dev/img/demo/user.png" name="Olivia Martin" />
         <flux:menu>
             <flux:menu.radio.group>
-                <flux:menu.radio checked>Olivia Martin</flux:menu.radio>
-                <flux:menu.radio>Truly Delta</flux:menu.radio>
+                <flux:menu.radio checked>{{ Auth::user()->full_name }}</flux:menu.radio>
             </flux:menu.radio.group>
             <flux:menu.separator />
 

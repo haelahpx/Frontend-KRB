@@ -53,8 +53,7 @@
         <flux:sidebar.profile avatar="https://fluxui.dev/img/demo/user.png" name="Meow Lala" />
         <flux:menu>
             <flux:menu.radio.group>
-                <flux:menu.radio checked>Meow Lala</flux:menu.radio>
-                <flux:menu.radio>Woofy Boo</flux:menu.radio>
+                <flux:menu.radio checked>{{ Auth::user()->full_name }}</flux:menu.radio>
             </flux:menu.radio.group>
             <flux:menu.separator />
             <flux:menu.item icon="arrow-right-start-on-rectangle" as="button" type="submit" form="logout-form">

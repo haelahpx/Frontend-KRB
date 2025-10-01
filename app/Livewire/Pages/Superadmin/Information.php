@@ -11,153 +11,140 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Information as InformationModel;
 
 #[Layout('layouts.superadmin')]
-#[Title('information')]
+#[Title('Information')]
 class Information extends Component
 {
     use WithPagination;
 
-    public bool $formVisible = false;
-    public bool $editMode = false;
-    public bool $showDeleteConfirm = false;
-
-    public ?int $informationId = null;
+    // Derived from Auth
     public ?int $company_id = null;
-    public string $description = '';
-    public ?string $event_at = null;
 
+    // Table filter & sorting
     public string $search = '';
     public string $sortField = 'created_at';
     public string $sortDirection = 'desc';
 
-    protected $rules = [
-        'company_id'  => 'sometimes|integer',
-        'description' => 'required|string|max:255',
-        'event_at'    => 'nullable|date',
-    ];
+    // Create form fields
+    public string $description = '';
+    public ?string $event_at = null;
 
-    public function updatingSearch()
+    // Edit modal state & fields
+    public bool $modalEdit = false;
+    public ?int $edit_id = null;
+    public string $edit_description = '';
+    public ?string $edit_event_at = null;
+
+    // Validation rules for the create form
+    protected function rules(): array
     {
-        $this->resetPage();
+        return [
+            'description' => 'required|string|max:255',
+            'event_at'    => 'nullable|date',
+        ];
     }
 
-    public function sortBy(string $field): void
+    // Validation rules for the edit modal
+    protected function editRules(): array
     {
-        $allowed = ['information_id', 'company_id', 'event_at', 'created_at'];
-        if (!in_array($field, $allowed)) return;
-
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'asc';
-        }
-        $this->resetPage();
+        return [
+            'edit_description' => 'required|string|max:255',
+            'edit_event_at'    => 'nullable|date',
+        ];
     }
 
     public function mount(): void
     {
+        // Set default company from the logged-in user
         $this->company_id = Auth::user()?->company_id;
     }
 
-    public function toggleForm(): void
+    public function updatingSearch(): void
     {
-        if ($this->editMode) {
-            $this->formVisible = true;
-            return;
-        }
-        $this->formVisible = !$this->formVisible;
-
-        if ($this->formVisible && !$this->editMode) {
-            $this->resetForm();
-            $this->company_id = Auth::user()?->company_id;
-        }
+        $this->resetPage();
     }
 
-    public function startEdit(int $id): void
+    /**
+     * Create new information.
+     */
+    public function store(): void
     {
-        $info = InformationModel::findOrFail($id);
-
-        $this->informationId = $info->getKey();
-        $this->company_id    = $info->company_id;
-        $this->description   = $info->description;
-        $this->event_at      = $info->event_at?->format('Y-m-d\TH:i');
-
-        $this->editMode    = true;
-        $this->formVisible = true;
-        $this->resetValidation();
-    }
-
-    public function save(): void
-    {
-        $this->company_id = Auth::user()?->company_id;
         $this->validate();
 
-        $payload = [
-            'company_id'  => $this->company_id,
+        InformationModel::create([
+            'company_id'  => $this->company_id, // Get company from authenticated user
             'description' => $this->description,
             'event_at'    => $this->event_at ? Carbon::parse($this->event_at) : null,
-        ];
+        ]);
 
-        if ($this->editMode && $this->informationId) {
-            InformationModel::findOrFail($this->informationId)->update($payload);
-            session()->flash('message', 'Information updated successfully.');
-        } else {
-            InformationModel::create($payload);
-            session()->flash('message', 'Information created successfully.');
-        }
-
-        $this->cancelForm();
+        $this->reset('description', 'event_at');
+        $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'Information berhasil dibuat.', duration: 3000);
+        $this->resetPage();
     }
 
-    public function cancelForm(): void
+    /**
+     * Open and prepare the edit modal.
+     */
+    public function openEdit(int $id): void
     {
-        $this->formVisible = false;
-        $this->editMode = false;
-        $this->resetForm();
-        $this->resetValidation();
+        $info = InformationModel::where('company_id', $this->company_id)
+            ->findOrFail($id);
+
+        $this->edit_id = $info->getKey();
+        $this->edit_description = $info->description;
+        $this->edit_event_at = $info->event_at ? $info->event_at->format('Y-m-d\TH:i') : null;
+
+        $this->modalEdit = true;
+        $this->resetErrorBag();
     }
 
-    private function resetForm(): void
+    /**
+     * Close the edit modal and reset its state.
+     */
+    public function closeEdit(): void
     {
-        $this->informationId = null;
-        $this->description = '';
-        $this->event_at = null;
+        $this->modalEdit = false;
+        $this->reset('edit_id', 'edit_description', 'edit_event_at');
     }
 
-    public function confirmDelete(int $id): void
+    /**
+     * Update the information from the edit modal.
+     */
+    public function update(): void
     {
-        $this->informationId = $id;
-        $this->showDeleteConfirm = true;
+        $this->validate($this->editRules());
+
+        $info = InformationModel::where('company_id', $this->company_id)
+            ->findOrFail($this->edit_id);
+
+        $info->update([
+            'description' => $this->edit_description,
+            'event_at'    => $this->edit_event_at ? Carbon::parse($this->edit_event_at) : null,
+        ]);
+
+        $this->closeEdit();
+        $this->dispatch('toast', type: 'success', title: 'Diupdate', message: 'Information berhasil diupdate.', duration: 3000);
+        $this->resetPage();
     }
 
-    public function cancelDelete(): void
+    /**
+     * Delete an information entry.
+     */
+    public function delete(int $id): void
     {
-        $this->showDeleteConfirm = false;
-        $this->informationId = null;
-    }
+        InformationModel::where('company_id', $this->company_id)
+            ->findOrFail($id)
+            ->delete();
 
-    public function delete(): void
-    {
-        InformationModel::findOrFail($this->informationId)->delete();
-        session()->flash('message', 'Information deleted successfully.');
-        $this->showDeleteConfirm = false;
-        $this->informationId = null;
-
-        if ($this->editMode) $this->cancelForm();
+        $this->resetPage();
+        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Information berhasil dihapus.', duration: 3000);
     }
 
     public function render()
     {
-        $companyId = Auth::user()?->company_id;
-
         $information = InformationModel::query()
-            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->where('company_id', $this->company_id)
             ->when($this->search, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('description', 'like', "%{$this->search}%")
-                        ->orWhere('company_id', 'like', "%{$this->search}%")
-                        ->orWhere('information_id', 'like', "%{$this->search}%");
-                });
+                $query->where('description', 'like', "%{$this->search}%");
             })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate(10);

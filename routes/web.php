@@ -23,6 +23,7 @@ use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
 use App\Livewire\Pages\Receptionist\Guestbook as ReceptionistGuestbook;
 use App\Livewire\Pages\Receptionist\Documents as Documents;
 use App\Livewire\Pages\Receptionist\Calendar as CalendarPage;
+use App\Livewire\Pages\Superadmin\Department as DepartmentPage;
 
 // ========== Auth Pages ==========
 use App\Livewire\Pages\Auth\Login as LoginPage;
@@ -101,6 +102,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/superadmin-announcement', Announcement::class)->name('superadmin.announcement');
         Route::get('/superadmin-information',  Information::class)->name('superadmin.information');
         Route::get('/superadmin-user',         UserManagement::class)->name('superadmin.user');
+        Route::get('/superadmin-department',   DepartmentPage::class)->name('superadmin.department');
     });
 
     // ---------- Receptionist routes ----------

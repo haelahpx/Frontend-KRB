@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+// <-- IMPORT THESE vvv
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,6 +27,18 @@ class Announcement extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+    
+    // vvv ADD THIS METHOD vvv
+    /**
+     * Get the company that the announcement belongs to.
+     */
+    public function company(): BelongsTo
+    {
+        // This links the 'company_id' on this announcement
+        // to the 'company_id' on the companies table.
+        return $this->belongsTo(Company::class, 'company_id', 'company_id');
+    }
+    // ^^^ ADD THIS METHOD ^^^
 
     public function getFormattedCreatedDateAttribute(): ?string
     {
