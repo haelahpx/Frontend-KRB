@@ -42,7 +42,7 @@
         // Solid monochrome icon puck
         getIconClasses(type) {
             const base =
-              'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg';
+            'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg';
             const variants = {
                 success: 'bg-black text-white',
                 error:   'bg-black text-white',
@@ -57,40 +57,36 @@
             const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ⓘ', neutral: '•' };
             return icons[type] || icons.info;
         }
-    }"
-    x-on:toast.window="addToast($event.detail)"
+    }" x-on:toast.window="addToast($event.detail)"
     class="fixed top-6 right-6 z-50 flex flex-col gap-4 w-[calc(100vw-3rem)] max-w-sm pointer-events-none"
     aria-live="polite">
 
     <template x-for="toast in toasts" :key="toast.id">
-        <div
-            x-transition:enter="transition ease-out duration-300 transform"
+        <div x-transition:enter="transition ease-out duration-300 transform"
             x-transition:enter-start="translate-x-full opacity-0 scale-95"
             x-transition:enter-end="translate-x-0 opacity-100 scale-100"
             x-transition:leave="transition ease-in duration-200 transform"
             x-transition:leave-start="translate-x-0 opacity-100 scale-100"
-            x-transition:leave-end="translate-x-full opacity-0 scale-95"
-            class="pointer-events-auto"
+            x-transition:leave-end="translate-x-full opacity-0 scale-95" class="pointer-events-auto"
             :class="getToastClasses(toast.type)">
             <div class="absolute top-0 left-0 right-0 h-1" :class="getAccentClasses(toast.type)"></div>
-            <div class="absolute top-0 left-0 right-0 h-1 opacity-50 animate-pulse" :class="getAccentClasses(toast.type)"></div>
+            <div class="absolute top-0 left-0 right-0 h-1 opacity-50 animate-pulse"
+                :class="getAccentClasses(toast.type)"></div>
             <div class="flex items-start gap-4">
                 <div :class="getIconClasses(toast.type)">
                     <span x-text="getIcon(toast.type)"></span>
                 </div>
                 <div class="flex-1 min-w-0 pt-1">
-                    <h4 x-show="toast.title"
-                        x-text="toast.title"
+                    <h4 x-show="toast.title" x-text="toast.title"
                         class="font-semibold text-base mb-1 leading-tight tracking-tight"></h4>
-                    <p x-show="toast.message"
-                       x-text="toast.message"
-                       class="text-sm leading-relaxed text-black/70"></p>
+                    <p x-show="toast.message" x-text="toast.message" class="text-sm leading-relaxed text-black/70"></p>
                 </div>
                 <button @click="removeToast(toast.id)"
-                        class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-black/60 hover:text-black hover:bg-black/5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black/20"
-                        aria-label="Close notification">
+                    class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-black/60 hover:text-black hover:bg-black/5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black/20"
+                    aria-label="Close notification">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
                     </svg>
                 </button>
             </div>

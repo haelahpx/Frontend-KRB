@@ -14,34 +14,28 @@ use Livewire\Component;
 #[Title('Meeting Schedule')]
 class MeetingSchedule extends Component
 {
-    /** Form state */
+
     public ?int $editingId = null;
     public bool $modalEdit = false;
 
     public $meeting_title;
-    public $location;     // "Ruangan 1|2|3"
-    public $department_id; // FK departments.department_id
-    public $date;         // Y-m-d
-    public $participant;  // int
-    public $time;         // H:i
-    public $time_end;     // H:i
+    public $location;
+    public $department_id;
+    public $date;
+    public $participant;
+    public $time;
+    public $time_end;
     public $notes;
 
-    /** Checkbox requirements */
-    public array $requirements = []; // ['video','projector','whiteboard','catering','other']
-
-    /** UI state */
+    public array $requirements = [];
     public string $saveState = 'idle';
     public ?string $savedAt = null;
 
-    /** Buckets untuk Blade */
     public array $planned = [];
     public array $ongoing = [];
     public array $done = [];
 
-    /** Data master */
-    public array $departments = []; // [['department_id'=>..., 'name'=>...], ...]
-
+    public array $departments = [];
     public function mount(): void
     {
         $deptQuery = Department::query();
@@ -55,32 +49,24 @@ class MeetingSchedule extends Component
             ->get(['department_id', 'department_name'])
             ->map(fn($d) => [
                 'department_id' => $d->department_id,
-                'name' => $d->department_name, // <- FIX: use department_name here
+                'name' => $d->department_name,
             ])
             ->all();
 
         $this->reloadBuckets();
     }
 
-
-    /** Rules (tanpa STATUS manual) */
     protected function rules(): array
     {
         return [
             'meeting_title' => ['required', 'string', 'max:255'],
             'location' => ['required', Rule::in(['Ruangan 1', 'Ruangan 2', 'Ruangan 3'])],
-
-            // departemen wajib & harus ada di tabel departments
             'department_id' => ['required', 'integer', 'exists:departments,department_id'],
-
-            // Batasi agar kompatibel dengan MySQL DATE
             'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:1000-01-01', 'before_or_equal:9999-12-31'],
-
             'participant' => ['required', 'integer', 'min:1'],
             'time' => ['required', 'date_format:H:i'],
             'time_end' => ['required', 'date_format:H:i', 'after:time'],
             'notes' => ['nullable', 'string', 'max:1000'],
-
             'requirements' => ['array'],
             'requirements.*' => [Rule::in(['video', 'projector', 'whiteboard', 'catering', 'other'])],
         ];
@@ -96,7 +82,6 @@ class MeetingSchedule extends Component
         ];
     }
 
-    /** Wajib isi notes jika pilih "other" */
     protected function validateNotesIfOther(): void
     {
         if (in_array('other', $this->requirements ?? [], true)) {
@@ -122,14 +107,12 @@ class MeetingSchedule extends Component
         $this->requirements = [];
     }
 
-    /** ====== CRUD ====== */
 
-    public function save(): void
+    public function save(): \Symfony\Component\HttpFoundation\Response
     {
         $this->validate();
         $this->validateNotesIfOther();
 
-        // Guard ekstra agar hanya YYYY-MM-DD
         $this->date = substr((string) $this->date, 0, 10);
 
         BookingRoom::create([
@@ -147,11 +130,8 @@ class MeetingSchedule extends Component
 
         $this->resetForm();
         $this->resetValidation();
-        $this->saveState = 'saved';
-        $this->savedAt = now()->toIso8601String();
 
-        $this->reloadBuckets();
-        $this->dispatch('notify', type: 'success', message: 'Meeting ditambahkan.');
+        return redirect()->to(url()->current());
     }
 
     public function openEdit(int $id): void
@@ -190,7 +170,6 @@ class MeetingSchedule extends Component
         $this->validate();
         $this->validateNotesIfOther();
 
-        // Guard ekstra agar hanya YYYY-MM-DD
         $this->date = substr((string) $this->date, 0, 10);
 
         $row = BookingRoom::whereKey($this->editingId)->first();
@@ -213,17 +192,17 @@ class MeetingSchedule extends Component
         $this->resetValidation();
         $this->reloadBuckets();
 
-        $this->dispatch('notify', type: 'success', message: 'Perubahan disimpan.');
+        $this->dispatch('toast', type: 'success', title: 'Tersimpan', message: 'Perubahan disimpan.', duration: 3000);
     }
 
     public function destroy(int $id): void
     {
         BookingRoom::whereKey($id)->delete();
         $this->reloadBuckets();
-        $this->dispatch('notify', type: 'success', message: 'Meeting dihapus.');
+
+        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Meeting dihapus.', duration: 3000);
     }
 
-    /** ====== Buckets Auto (tanpa kolom status & tanpa tag status) ====== */
     private function reloadBuckets(): void
     {
         $q = BookingRoom::query()
@@ -268,7 +247,6 @@ class MeetingSchedule extends Component
         }
     }
 
-    /** ====== Helpers ====== */
 
     private function combineDateTime(string $date, string $time): string
     {
@@ -295,18 +273,15 @@ class MeetingSchedule extends Component
         };
     }
 
-    /** Parse special_notes -> ['requirements','notes'] (abaikan STATUS legacy) */
     private function parseSpecialNotes(string $raw): array
     {
         $requirements = [];
         $notes = $raw;
 
-        // Hilangkan tag STATUS legacy jika ada
         if (preg_match('/\[STATUS=(planned|ongoing|done)\]/i', $notes, $m)) {
             $notes = str_replace($m[0], '', $notes);
         }
 
-        // REQ
         if (preg_match('/\[REQ=([a-z,]+)\]/i', $notes, $m)) {
             $requirements = array_values(array_filter(array_map('trim', explode(',', strtolower($m[1])))));
             $notes = str_replace($m[0], '', $notes);
@@ -316,15 +291,13 @@ class MeetingSchedule extends Component
         return compact('requirements', 'notes');
     }
 
-    /** Susun special_notes dari requirements + catatan user (tanpa STATUS) */
     private function composeSpecialNotes(array $requirements, string $notes): string
     {
         $tags = [];
 
         $reqs = array_values(array_unique(array_filter(
             $requirements,
-            fn($r) =>
-            in_array($r, ['video', 'projector', 'whiteboard', 'catering', 'other'], true)
+            fn($r) => in_array($r, ['video', 'projector', 'whiteboard', 'catering', 'other'], true)
         )));
         if (!empty($reqs)) {
             $tags[] = "[REQ=" . implode(',', $reqs) . "]";
@@ -334,7 +307,6 @@ class MeetingSchedule extends Component
         return trim($prefix . "\n" . trim($notes));
     }
 
-    /** Hitung status dinamis dari waktu */
     private function computeStatus(?string $date, ?string $start, ?string $end): string
     {
         if (!$date || !$start || !$end)
@@ -352,13 +324,10 @@ class MeetingSchedule extends Component
         return 'done';
     }
 
-    /** Polling UI */
     public function tick(): void
     {
-        // refresh bucket agar otomatis pindah Planned -> Ongoing -> Done
         $this->reloadBuckets();
 
-        // Glow kecil setelah simpan
         if ($this->saveState === 'saved' && $this->savedAt) {
             if (now()->diffInMilliseconds(\Carbon\Carbon::parse($this->savedAt)) >= 1500) {
                 $this->saveState = 'idle';
