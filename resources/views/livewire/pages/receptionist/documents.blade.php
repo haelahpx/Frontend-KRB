@@ -201,11 +201,9 @@
                                 <span wire:loading wire:target="openEdit({{ $r->document_id }})">Memuat…</span>
                             </button>
 
-                            {{-- ✅ FIXED BUTTON: hanya 'Sudah dikirim' (tanpa 'Menyimpan…') --}}
                             <button wire:click="setSudahDikirim({{ $r->document_id }})" wire:loading.attr="disabled"
                                 wire:target="setSudahDikirim({{ $r->document_id }})" class="{{ $btnGrn }} relative">
                                 <span class="inline-flex items-center gap-2">
-                                    {{-- Spinner opsional: bisa dihapus jika mau benar-benar tanpa ikon --}}
                                     <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" wire:loading
                                         wire:target="setSudahDikirim({{ $r->document_id }})">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
@@ -224,65 +222,6 @@
             </div>
         </div>
 
-        {{-- ===== TAKEN LIST ===== --}}
-        <div class="{{ $card }}">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <div>
-                        <h3 class="text-base font-semibold text-gray-900">Dokumen Taken</h3>
-                        <p class="text-sm text-gray-500">Menampilkan semua dokumen berstatus taken</p>
-                    </div>
-                </div>
-            </div>
-            <div class="p-5 space-y-3">
-                @forelse ($takenList as $r)
-                    <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-200"
-                        wire:key="taken-{{ $r->document_id }}">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-9 h-9 bg-gray-900 rounded-lg flex items-center justify-center text-white text-xs font-semibold">
-                                {{ strtoupper(substr($r->document_name, 0, 1)) }}
-                            </div>
-                            <div class="leading-tight">
-                                <div class="font-medium text-gray-800 text-sm">{{ $r->document_name }}</div>
-                                <div class="text-[11px] text-gray-500">
-                                    Pengambilan {{ optional($r->pengambilan)->format('H:i') ?? '—' }} • Pengirim
-                                    {{ $r->nama_pengirim ?? '—' }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button wire:click="openEdit({{ $r->document_id }})" wire:loading.attr="disabled"
-                                wire:target="openEdit({{ $r->document_id }})" class="{{ $btnBlk }}">
-                                <span wire:loading.remove wire:target="openEdit({{ $r->document_id }})">Edit</span>
-                                <span wire:loading wire:target="openEdit({{ $r->document_id }})">Memuat…</span>
-                            </button>
-
-                            {{-- ✅ FIXED BUTTON: hanya 'Sudah dikirim' (tanpa 'Menyimpan…') --}}
-                            <button wire:click="setSudahDikirim({{ $r->document_id }})" wire:loading.attr="disabled"
-                                wire:target="setSudahDikirim({{ $r->document_id }})" class="{{ $btnGrn }} relative">
-                                <span class="inline-flex items-center gap-2">
-                                    {{-- Spinner opsional: bisa dihapus jika mau benar-benar tanpa ikon --}}
-                                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" wire:loading
-                                        wire:target="setSudahDikirim({{ $r->document_id }})">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                            stroke-width="4" />
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                                    </svg>
-                                    <span>Sudah dikirim</span>
-                                </span>
-                            </button>
-                        </div>
-                    </div>
-                @empty
-                    <div class="text-center py-8 text-gray-500 text-sm">Tidak ada taken.</div>
-                @endforelse
-            </div>
-        </div>
-
-        {{-- ===== RIWAYAT ===== --}}
         <div class="{{ $card }}">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex items-center gap-3">

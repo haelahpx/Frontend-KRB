@@ -13,37 +13,32 @@ use Livewire\WithPagination;
 
 #[Layout('layouts.receptionist')]
 #[Title('Documents')]
+
 class Documents extends Component
 {
     use WithPagination;
-
     protected string $paginationTheme = 'tailwind';
     protected $queryString = ['q', 'filter_date'];
-
-    // === form fields (matched to your columns) ===
     public $document_name, $nama_pengirim, $nama_penerima;
     public $type = 'document';
     public $penyimpanan;
-    public $pengambilan_date, $pengambilan_time; // combined into pengambilan (datetime)
+    public $pengambilan_date, $pengambilan_time;
     public $status = 'pending';
-
-    // filters/ui
     public $filter_date;
     public $q = '';
     public bool $showEdit = false;
     public $editId = null;
 
-    // edit buffer
     public $edit = [
-        'document_name'    => null,
-        'nama_pengirim'    => null,
-        'nama_penerima'    => null,
-        'type'             => 'document',
-        'penyimpanan'      => null,
+        'document_name' => null,
+        'nama_pengirim' => null,
+        'nama_penerima' => null,
+        'type' => 'document',
+        'penyimpanan' => null,
         'pengambilan_date' => null,
         'pengambilan_time' => null,
-        'pengiriman'       => null, // datetime-local
-        'status'           => 'pending',
+        'pengiriman' => null,
+        'status' => 'pending',
     ];
 
     private function companyId()
@@ -65,8 +60,10 @@ class Documents extends Component
 
     private function combineDateTime(?string $date, ?string $time): ?Carbon
     {
-        if (empty($date) && empty($time)) return null;
-        if (empty($date)) return null;
+        if (empty($date) && empty($time))
+            return null;
+        if (empty($date))
+            return null;
         $time = $time ?: '00:00';
         return Carbon::createFromFormat('Y-m-d H:i', "{$date} {$time}", config('app.timezone', 'Asia/Jakarta'));
     }
@@ -74,62 +71,67 @@ class Documents extends Component
     protected function rules(): array
     {
         return [
-            'document_name'    => ['required', 'string', 'max:255'],
-            'nama_pengirim'    => ['nullable', 'string', 'max:255'],
-            'nama_penerima'    => ['nullable', 'string', 'max:255'],
-            'type'             => ['required', 'in:document,invoice,etc'],
-            'penyimpanan'      => ['nullable', 'string', 'max:50'],
+            'document_name' => ['required', 'string', 'max:255'],
+            'nama_pengirim' => ['nullable', 'string', 'max:255'],
+            'nama_penerima' => ['nullable', 'string', 'max:255'],
+            'type' => ['required', 'in:document,invoice,etc'],
+            'penyimpanan' => ['nullable', 'string', 'max:50'],
             'pengambilan_date' => ['nullable', 'date'],
             'pengambilan_time' => ['nullable', 'date_format:H:i'],
-            'status'           => ['required', 'in:pending,taken,delivered'],
+            'status' => ['required', 'in:pending,taken,delivered'],
         ];
     }
 
     protected function rulesEdit(): array
     {
         return [
-            'edit.document_name'    => ['required', 'string', 'max:255'],
-            'edit.nama_pengirim'    => ['nullable', 'string', 'max:255'],
-            'edit.nama_penerima'    => ['nullable', 'string', 'max:255'],
-            'edit.type'             => ['required', 'in:document,invoice,etc'],
-            'edit.penyimpanan'      => ['nullable', 'string', 'max:50'],
+            'edit.document_name' => ['required', 'string', 'max:255'],
+            'edit.nama_pengirim' => ['nullable', 'string', 'max:255'],
+            'edit.nama_penerima' => ['nullable', 'string', 'max:255'],
+            'edit.type' => ['required', 'in:document,invoice,etc'],
+            'edit.penyimpanan' => ['nullable', 'string', 'max:50'],
             'edit.pengambilan_date' => ['nullable', 'date'],
             'edit.pengambilan_time' => ['nullable', 'date_format:H:i'],
-            'edit.pengiriman'       => ['nullable', 'date'],
-            'edit.status'           => ['required', 'in:pending,taken,delivered'],
+            'edit.pengiriman' => ['nullable', 'date'],
+            'edit.status' => ['required', 'in:pending,taken,delivered'],
         ];
     }
 
-    public function updatedQ(): void { $this->resetPage(); }
-    public function updatedFilterDate(): void { $this->resetPage(); }
+    public function updatedQ(): void
+    {
+        $this->resetPage();
+    }
+    public function updatedFilterDate(): void
+    {
+        $this->resetPage();
+    }
 
     public function save(): void
     {
         $data = $this->validate();
 
-        // nullify empty string inputs
         foreach (['penyimpanan'] as $k) {
-            if (!array_key_exists($k, $data) || $data[$k] === '') $data[$k] = null;
+            if (!array_key_exists($k, $data) || $data[$k] === '')
+                $data[$k] = null;
         }
 
         $pengambilan = $this->combineDateTime($data['pengambilan_date'] ?? null, $data['pengambilan_time'] ?? null);
-        $statusInput  = $data['status'] ?? 'pending';
+        $statusInput = $data['status'] ?? 'pending';
 
-        $now        = Carbon::now(config('app.timezone', 'Asia/Jakarta'));
+        $now = Carbon::now(config('app.timezone', 'Asia/Jakarta'));
         $pengiriman = ($statusInput === 'delivered') ? $now : null;
 
         $payload = [
-            'company_id'      => $this->companyId(),
-            // ✅ your table has 'receptionist_id' (NOT user_id / department_id)
+            'company_id' => $this->companyId(),
             'receptionist_id' => Auth::id(),
-            'document_name'   => $data['document_name'],
-            'nama_pengirim'   => $data['nama_pengirim'] ?? null,
-            'nama_penerima'   => $data['nama_penerima'] ?? null,
-            'type'            => $data['type'],
-            'penyimpanan'     => $data['penyimpanan'] ?? null,
-            'pengambilan'     => $pengambilan,
-            'pengiriman'      => $pengiriman,
-            'status'          => $statusInput,
+            'document_name' => $data['document_name'],
+            'nama_pengirim' => $data['nama_pengirim'] ?? null,
+            'nama_penerima' => $data['nama_penerima'] ?? null,
+            'type' => $data['type'],
+            'penyimpanan' => $data['penyimpanan'] ?? null,
+            'pengambilan' => $pengambilan,
+            'pengiriman' => $pengiriman,
+            'status' => $statusInput,
         ];
 
         DocumentModel::create($payload);
@@ -137,11 +139,16 @@ class Documents extends Component
         $this->resetForm();
         session()->flash('saved', true);
 
-        $this->dispatch('notify', type: 'success', message: match($statusInput) {
+        $msg = match ($statusInput) {
             'delivered' => 'Dokumen langsung masuk Riwayat (Delivered).',
-            'taken'     => 'Dokumen disimpan ke kotak Taken.',
-            default     => 'Dokumen disimpan ke kotak Pending.',
-        });
+            'taken' => 'Dokumen disimpan ke kotak Taken.',
+            default => 'Dokumen disimpan ke kotak Pending.',
+        };
+        $this->dispatch('notify', type: 'success', message: $msg);
+
+        $this->dispatch('toast', type: 'success', message: $msg);
+
+        $this->dispatch('page-reload');
 
         $this->dispatch('$refresh');
     }
@@ -152,15 +159,15 @@ class Documents extends Component
         $this->editId = $r->getKey();
 
         $this->edit = [
-            'document_name'    => $r->document_name,
-            'nama_pengirim'    => $r->nama_pengirim,
-            'nama_penerima'    => $r->nama_penerima,
-            'type'             => $r->type,
-            'penyimpanan'      => $r->penyimpanan,
+            'document_name' => $r->document_name,
+            'nama_pengirim' => $r->nama_pengirim,
+            'nama_penerima' => $r->nama_penerima,
+            'type' => $r->type,
+            'penyimpanan' => $r->penyimpanan,
             'pengambilan_date' => optional($r->pengambilan)?->format('Y-m-d'),
             'pengambilan_time' => optional($r->pengambilan)?->format('H:i'),
-            'pengiriman'       => optional($r->pengiriman)?->format('Y-m-d\TH:i'),
-            'status'           => $r->status,
+            'pengiriman' => optional($r->pengiriman)?->format('Y-m-d\TH:i'),
+            'status' => $r->status,
         ];
 
         $this->resetValidation();
@@ -193,15 +200,18 @@ class Documents extends Component
             'document_name' => $this->edit['document_name'],
             'nama_pengirim' => $this->edit['nama_pengirim'],
             'nama_penerima' => $this->edit['nama_penerima'],
-            'type'          => $this->edit['type'],
-            'penyimpanan'   => $this->edit['penyimpanan'] !== '' ? $this->edit['penyimpanan'] : null,
-            'pengambilan'   => $pengambilan,
-            'pengiriman'    => $pengiriman,
-            'status'        => $status,
+            'type' => $this->edit['type'],
+            'penyimpanan' => $this->edit['penyimpanan'] !== '' ? $this->edit['penyimpanan'] : null,
+            'pengambilan' => $pengambilan,
+            'pengiriman' => $pengiriman,
+            'status' => $status,
         ]);
 
         $this->showEdit = false;
-        $this->dispatch('notify', type: 'success', message: 'Perubahan disimpan. Posisi kartu diperbarui sesuai status.');
+
+        $msg = 'Perubahan disimpan. Posisi kartu diperbarui sesuai status.';
+        $this->dispatch('notify', type: 'success', message: $msg);
+        $this->dispatch('toast', type: 'success', message: $msg);
         $this->dispatch('$refresh');
     }
 
@@ -211,6 +221,7 @@ class Documents extends Component
 
         if ($row->pengiriman) {
             $this->dispatch('notify', type: 'warning', message: 'Dokumen sudah dikirim.');
+            $this->dispatch('toast', type: 'warning', message: 'Dokumen sudah dikirim.');
             return;
         }
 
@@ -218,10 +229,12 @@ class Documents extends Component
 
         $row->update([
             'pengiriman' => $now,
-            'status'     => 'delivered',
+            'status' => 'delivered',
         ]);
 
-        $this->dispatch('notify', type: 'success', message: "Dikirim: {$now->format('d M Y H:i')}. Pindah ke Riwayat.");
+        $msg = "Dikirim: {$now->format('d M Y H:i')}. Pindah ke Riwayat.";
+        $this->dispatch('notify', type: 'success', message: $msg);
+        $this->dispatch('toast', type: 'success', message: $msg);
         $this->dispatch('$refresh');
     }
 
@@ -230,7 +243,9 @@ class Documents extends Component
         $now = Carbon::now(config('app.timezone', 'Asia/Jakarta'));
         $this->pengambilan_date = $now->format('Y-m-d');
         $this->pengambilan_time = $now->format('H:i');
+
         $this->dispatch('notify', type: 'info', message: 'Pengambilan di-set ke waktu saat ini.');
+        $this->dispatch('toast', type: 'info', message: 'Pengambilan di-set ke waktu saat ini.');
     }
 
     public function setEditPengambilanNow(): void
@@ -238,7 +253,9 @@ class Documents extends Component
         $now = Carbon::now(config('app.timezone', 'Asia/Jakarta'));
         $this->edit['pengambilan_date'] = $now->format('Y-m-d');
         $this->edit['pengambilan_time'] = $now->format('H:i');
+
         $this->dispatch('notify', type: 'info', message: 'Pengambilan (edit) di-set ke waktu saat ini.');
+        $this->dispatch('toast', type: 'info', message: 'Pengambilan (edit) di-set ke waktu saat ini.');
     }
 
     public function closeEdit(): void
@@ -250,7 +267,9 @@ class Documents extends Component
     public function delete(int $id): void
     {
         $this->findOwnedOrFail($id)->delete();
+
         $this->dispatch('notify', type: 'success', message: 'Dokumen dihapus.');
+        $this->dispatch('toast', type: 'success', message: 'Dokumen dihapus.');
         $this->dispatch('$refresh');
     }
 
@@ -271,11 +290,10 @@ class Documents extends Component
             'filter_date',
         ]);
 
-        $this->type   = 'document';
+        $this->type = 'document';
         $this->status = 'pending';
     }
 
-    // ===== Lists =====
     public function getPendingListProperty()
     {
         return DocumentModel::forCompany($this->companyId())
@@ -319,8 +337,8 @@ class Documents extends Component
     {
         return view('livewire.pages.receptionist.documents', [
             'pendingList' => $this->pendingList,
-            'takenList'   => $this->takenList,
-            'entries'     => $this->entries,
+            'takenList' => $this->takenList,
+            'entries' => $this->entries,
         ]);
     }
 }
