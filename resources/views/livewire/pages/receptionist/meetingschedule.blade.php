@@ -194,7 +194,7 @@
                     </form>
                 </section>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="space-y-6">
 
                     <section class="{{ $card }}">
                         <div class="px-6 py-4 border-b border-gray-200">

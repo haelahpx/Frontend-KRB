@@ -24,40 +24,18 @@
                 </div>
             </div>
 
-            @php
-                $stats = $stats ?? [
-                    ['label' => 'Tamu Hari Ini', 'value' => 128, 'badge' => '+12%', 'badgeClass' => 'bg-green-100 text-green-700'],
-                    ['label' => 'Jadwal Meeting', 'value' => 6, 'badge' => '3 berlangsung', 'badgeClass' => 'bg-blue-100 text-blue-700'],
-                    ['label' => 'Dokumen Baru', 'value' => 14, 'badge' => 'minggu ini', 'badgeClass' => 'bg-purple-100 text-purple-700'],
-                    ['label' => 'Antrian', 'value' => 3, 'badge' => 'menunggu', 'badgeClass' => 'bg-amber-100 text-amber-700'],
-                ];
-            @endphp
             <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 @foreach($stats as $s)
-                    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                        <p class="text-sm text-gray-500">{{ $s['label'] }}</p>
-                        <div class="mt-2 flex items-end gap-2">
-                            <h3 class="text-2xl font-semibold text-gray-900">{{ $s['value'] }}</h3>
-                            <span class="text-xs px-2 py-0.5 rounded-full {{ $s['badgeClass'] }}">{{ $s['badge'] }}</span>
-                        </div>
+                <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <p class="text-sm text-gray-500">{{ $s['label'] }}</p>
+                    <div class="mt-2 flex items-end gap-2">
+                        <h3 class="text-2xl font-semibold text-gray-900">{{ $s['value'] }}</h3>
+                        <span class="text-xs px-2 py-0.5 rounded-full {{ $s['badgeClass'] }}">{{ $s['badge'] }}</span>
                     </div>
+                </div>
                 @endforeach
             </section>
 
-            @php
-                $meetings = $meetings ?? [
-                    ['time' => '09:00 - 10:00', 'title' => 'Rapat Koordinasi', 'room' => 'Ruang Puspa', 'status' => 'Berlangsung'],
-                    ['time' => '10:30 - 11:30', 'title' => 'Kunjungan Dinas', 'room' => 'Ruang Rafflesia', 'status' => 'Berikutnya'],
-                    ['time' => '13:00 - 14:00', 'title' => 'Evaluasi Vendor', 'room' => 'Ruang Anggrek', 'status' => 'Terjadwal'],
-                ];
-                $guests = $guests ?? [
-                    ['name' => 'Alya', 'purpose' => 'Meeting CSR', 'time' => '08:55'],
-                    ['name' => 'Budi', 'purpose' => 'Kunjungan Riset', 'time' => '09:20'],
-                    ['name' => 'Citra', 'purpose' => 'Magang Admin', 'time' => '09:45'],
-                    ['name' => 'Deni', 'purpose' => 'Sewa Venue', 'time' => '10:05'],
-                    ['name' => 'Eka', 'purpose' => 'Pengambilan Dokumen', 'time' => '10:30'],
-                ];
-            @endphp
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
                     <div class="px-5 py-4 border-b border-gray-200">
@@ -65,44 +43,47 @@
                         <p class="text-sm text-gray-500">Ringkasan ruangan & waktu</p>
                     </div>
                     <ul class="divide-y divide-gray-200">
-                        @foreach ($meetings as $m)
-                            <li class="px-5 py-4 flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm text-gray-500">{{ $m['time'] }} • {{ $m['room'] }}</p>
-                                    <p class="font-medium text-gray-900">{{ $m['title'] }}</p>
-                                </div>
-                                @php
-                                    $statusClass = match ($m['status']) {
-                                        'Berlangsung' => 'bg-green-100 text-green-700',
-                                        'Berikutnya' => 'bg-blue-100 text-blue-700',
-                                        default => 'bg-gray-100 text-gray-700'
-                                    };
-                                @endphp
-                                <span class="text-xs px-2 py-1 rounded-full {{ $statusClass }}">{{ $m['status'] }}</span>
-                            </li>
-                        @endforeach
+                        @forelse ($meetings as $m)
+                        <li class="px-5 py-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">{{ $m['time'] }} • {{ $m['room'] }}</p>
+                                <p class="font-medium text-gray-900">{{ $m['title'] }}</p>
+                            </div>
+                            @php
+                            $statusClass = match ($m['status']) {
+                                'Berlangsung' => 'bg-green-100 text-green-700',
+                                'Berikutnya' => 'bg-blue-100 text-blue-700',
+                                default => 'bg-gray-100 text-gray-700'
+                            };
+                            @endphp
+                            <span class="text-xs px-2 py-1 rounded-full {{ $statusClass }}">{{ $m['status'] }}</span>
+                        </li>
+                        @empty
+                        <li class="px-5 py-8 text-center text-sm text-gray-500">Tidak ada meeting terjadwal hari ini.</li>
+                        @endforelse
                     </ul>
                     <div class="px-5 py-3 border-t border-gray-200 text-right">
                         <a href="{{ route('receptionist.schedule') }}"
                             class="text-sm font-medium text-gray-700 hover:text-gray-900">Lihat semua →</a>
                     </div>
                 </div>
-
                 <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
                     <div class="px-5 py-4 border-b border-gray-200">
                         <h3 class="text-base font-semibold text-gray-900">Buku Tamu (Hari Ini)</h3>
                         <p class="text-sm text-gray-500">{{ count($guests) }} entri terbaru</p>
                     </div>
                     <ul class="divide-y divide-gray-200">
-                        @foreach ($guests as $g)
-                            <li class="px-5 py-4 flex items-center justify-between">
-                                <div>
-                                    <p class="font-medium text-gray-900">{{ $g['name'] }}</p>
-                                    <p class="text-sm text-gray-500">{{ $g['purpose'] }}</p>
-                                </div>
-                                <span class="text-sm text-gray-500">{{ $g['time'] }}</span>
-                            </li>
-                        @endforeach
+                        @forelse ($guests as $g)
+                        <li class="px-5 py-4 flex items-center justify-between">
+                            <div>
+                                <p class="font-medium text-gray-900">{{ $g['name'] }}</p>
+                                <p class="text-sm text-gray-500">{{ $g['purpose'] }}</p>
+                            </div>
+                            <span class="text-sm text-gray-500">{{ $g['time'] }}</span>
+                        </li>
+                        @empty
+                        <li class="px-5 py-8 text-center text-sm text-gray-500">Belum ada tamu hari ini.</li>
+                        @endforelse
                     </ul>
                     <div class="px-5 py-3 border-t border-gray-200 text-right">
                         <a href="{{ route('receptionist.guestbook') }}"
@@ -110,21 +91,12 @@
                     </div>
                 </div>
             </section>
-
-            @php
-                $documents = $documents ?? [
-                    ['name' => 'Surat Undangan CSR.pdf', 'cat' => 'Surat', 'date' => now()->subDays(2)->toDateString()],
-                    ['name' => 'MoM Rapat Vendor.docx', 'cat' => 'Notulen', 'date' => now()->subDays(3)->toDateString()],
-                    ['name' => 'SOP Tamu Harian.pdf', 'cat' => 'SOP', 'date' => now()->subDays(4)->toDateString()],
-                ];
-                $daysInMonth = $daysInMonth ?? (int) now()->endOfMonth()->format('j');
-                $today = (int) now()->format('j');
-            @endphp
+            
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 rounded-2xl border border-gray-200 bg-white shadow-sm">
                     <div class="px-5 py-4 border-b border-gray-200">
                         <h3 class="text-base font-semibold text-gray-900">Dokumen Terbaru</h3>
-                        <p class="text-sm text-gray-500">Unggahan 7 hari terakhir</p>
+                        <p class="text-sm text-gray-500">5 unggahan terakhir</p>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm">
@@ -133,46 +105,46 @@
                                     <th class="px-5 py-3 font-medium">Nama</th>
                                     <th class="px-5 py-3 font-medium">Kategori</th>
                                     <th class="px-5 py-3 font-medium">Tanggal</th>
-                                    <th class="px-5 py-3 font-medium text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
-                                @foreach ($documents as $d)
-                                    <tr>
-                                        <td class="px-5 py-3 text-gray-900">{{ $d['name'] }}</td>
-                                        <td class="px-5 py-3 text-gray-700">{{ $d['cat'] }}</td>
-                                        <td class="px-5 py-3 text-gray-700">{{ $d['date'] }}</td>
-                                        <td class="px-5 py-3 text-right">
-                                            <button class="text-gray-700 hover:text-gray-900 font-medium"
-                                                wire:click="viewDocument('{{ $d['name'] }}')">Lihat</button>
-                                        </td>
-                                    </tr>
-                                @endforeach
+                                @forelse ($documents as $d)
+                                <tr>
+                                    <td class="px-5 py-3 text-gray-900">{{ $d['name'] }}</td>
+                                    <td class="px-5 py-3 text-gray-700">{{ $d['cat'] }}</td>
+                                    <td class="px-5 py-3 text-gray-700">{{ $d['date'] }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="3" class="px-5 py-8 text-center text-sm text-gray-500">Tidak ada dokumen terbaru.</td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
                     <div class="px-5 py-3 border-t border-gray-200 text-right">
-                        <a href="" class="text-sm font-medium text-gray-700 hover:text-gray-900">Lihat semua dokumen
-                            →</a>
+                        <a href="{{ route('receptionist.documents') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900">Lihat semua dokumen →</a>
                     </div>
                 </div>
-
                 <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
                     <div class="px-5 py-4 border-b border-gray-200">
                         <h3 class="text-base font-semibold text-gray-900">Kalender</h3>
                         <p class="text-sm text-gray-500">{{ now()->translatedFormat('F Y') }}</p>
                     </div>
                     <div class="p-5">
+                        @php
+                            $daysInMonth = (int) now()->endOfMonth()->format('j');
+                            $today = (int) now()->format('j');
+                        @endphp
                         <div class="grid grid-cols-7 text-center text-xs text-gray-500">
                             <span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span>
                         </div>
-                        <div class="mt-2 grid grid-cols-7 gap-1 text-sm">
+                        <div class="mt-2 grid grid-cols-7 gap-1 text-sm text-center">
                             @foreach (range(1, $daysInMonth) as $day)
-                                                    <div class="py-2 rounded-lg border
-                                                                {{ $day === $today ? 'border-gray-900 bg-gray-900 text-white'
-                                : 'border-gray-200 text-gray-700' }}">
-                                                        {{ $day }}
-                                                    </div>
+                            <div class="py-2 rounded-lg border
+                                {{ $day === $today ? 'border-gray-900 bg-gray-900 text-white font-semibold' : 'border-gray-200 text-gray-700' }}">
+                                {{ $day }}
+                            </div>
                             @endforeach
                         </div>
                         <div class="mt-4 space-y-2">
