@@ -63,12 +63,12 @@
             <form wire:submit.prevent="save" class="p-6 space-y-5">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label class="{{ $label }}">📅 Hari / Tanggal</label>
+                        <label class="{{ $label }}">Hari / Tanggal</label>
                         <input type="date" wire:model.defer="date" class="{{ $input }}">
                         @error('date') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="{{ $label }}">🕐 Jam Masuk</label>
+                        <label class="{{ $label }}">Jam Masuk</label>
                         <input type="time" wire:model.defer="jam_in" class="{{ $input }}">
                         @error('jam_in') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                     </div>
@@ -76,12 +76,12 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label class="{{ $label }}">👤 Nama Lengkap</label>
+                        <label class="{{ $label }}">Nama Lengkap</label>
                         <input type="text" wire:model.defer="name" placeholder="Masukkan nama lengkap" class="{{ $input }}">
                         @error('name') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="{{ $label }}">📱 Nomor HP</label>
+                        <label class="{{ $label }}">Nomor HP</label>
                         <input type="text" wire:model.defer="phone_number" placeholder="08xxxxxxxxxx" class="{{ $input }}">
                         @error('phone_number') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                     </div>
@@ -89,19 +89,19 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label class="{{ $label }}">🏢 Nama Instansi</label>
+                        <label class="{{ $label }}">Nama Instansi</label>
                         <input type="text" wire:model.defer="instansi" placeholder="Nama instansi/perusahaan" class="{{ $input }}">
                         @error('instansi') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="{{ $label }}">🎯 Keperluan</label>
+                        <label class="{{ $label }}">Keperluan</label>
                         <input type="text" wire:model.defer="keperluan" placeholder="Tujuan kunjungan" class="{{ $input }}">
                         @error('keperluan') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
                 <div>
-                    <label class="{{ $label }}">👮 Nama Petugas Penjaga</label>
+                    <label class="{{ $label }}">Nama Petugas Penjaga</label>
                     <input type="text" wire:model.defer="petugas_penjaga" placeholder="Nama petugas yang bertugas" class="{{ $input }}">
                     @error('petugas_penjaga') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                 </div>

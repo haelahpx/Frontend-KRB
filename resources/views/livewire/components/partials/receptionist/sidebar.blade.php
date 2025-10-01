@@ -20,7 +20,7 @@
 
         <flux:sidebar.item icon="calendar-days" href="{{ route('receptionist.schedule') }}"
             :current="request()->routeIs('meeting.schedule')">
-            Meeting Schedule
+            Booking Room
         </flux:sidebar.item>
 
         <flux:sidebar.item icon="inbox" href="{{ route('receptionist.guestbook') }}"

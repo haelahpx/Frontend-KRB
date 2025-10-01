@@ -129,8 +129,8 @@ class Guestbook extends Component
             'petugas_penjaga'  => $this->petugas_penjaga,
         ]);
         $this->reset(['jam_in', 'name', 'phone_number', 'instansi', 'keperluan', 'petugas_penjaga']);
-        $this->dispatch('notify', type: 'success', message: 'Entri disimpan ke Kunjungan Terbaru.');
         $this->dispatch('$refresh');
+        $this->dispatch('toast', type: 'success', title: 'Ditambah', message: 'Guest ditambah.', duration: 3000);
         session()->flash('saved', true);
     }
     public function openEdit(int $id): void
@@ -165,14 +165,14 @@ class Guestbook extends Component
             'petugas_penjaga' => $this->edit['petugas_penjaga'],
         ]);
         $this->showEdit = false;
-        $this->dispatch('notify', type: 'success', message: 'Perubahan disimpan.');
+        $this->dispatch('toast', type: 'success', title: 'Update', message: 'Guest diedit.', duration: 3000);
         $this->dispatch('$refresh');
     }
     public function delete(int $id): void
     {
         $row = $this->findOwnedOrFail($id);
         $row->delete();
-        $this->dispatch('notify', type: 'success', message: 'Entri dihapus.');
+        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Guest dihapus.', duration: 3000);
         $this->dispatch('$refresh');
     }
     public function setJamKeluarNow(int $id): void
