@@ -124,11 +124,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware('is.superadmin')->group(function () {
         Route::get('/superadmin-dashboard', SuperadminDashboard::class)->name('superadmin.dashboard');
         Route::get('/superadmin-announcement', Announcement::class)->name('superadmin.announcement');
-        Route::get('/superadmin-information',  Information::class)->name('superadmin.information');
-        Route::get('/superadmin-user',         UserManagement::class)->name('superadmin.user');
-        Route::get('/superadmin-department',   DepartmentPage::class)->name('superadmin.department');
-        Route::get('/superadmin-bookingroom',  SuperadminBookingroom::class)->name('superadmin.bookingroom');
-        Route::get('/superadmin-ticketsupport',SuperadminTicketsupport::class)->name('superadmin.ticketsupport');
+        Route::get('/superadmin-information', Information::class)->name('superadmin.information');
+        Route::get('/superadmin-user', UserManagement::class)->name('superadmin.user');
+        Route::get('/superadmin-department', DepartmentPage::class)->name('superadmin.department');
+        Route::get('/superadmin-bookingroom', SuperadminBookingroom::class)->name('superadmin.bookingroom');
+        Route::get('/superadmin-ticketsupport', SuperadminTicketsupport::class)->name('superadmin.ticketsupport');
     });
 
     // ---------- Receptionist routes ----------
@@ -160,6 +160,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/test-delete/{id}', function ($id) {
         return app(\App\Http\Controllers\AttachmentController::class)->destroy($id);
     })->middleware('auth');
+
+    // Temporary attachments (sebelum ticket dibuat)
+    Route::post('/attachments/signature-temp', [AttachmentController::class, 'signatureTemp'])
+        ->name('attachments.signatureTemp');
+
+    Route::delete('/attachments/temp', [AttachmentController::class, 'deleteTemp'])
+        ->name('attachments.deleteTemp');
+
+    Route::post('/tickets/finalize-attachments', [AttachmentController::class, 'finalizeTemp'])
+        ->name('attachments.finalizeTemp');
 
 
     // Logout

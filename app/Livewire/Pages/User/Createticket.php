@@ -3,47 +3,38 @@
 namespace App\Livewire\Pages\User;
 
 use Livewire\Component;
-use Livewire\WithFileUploads;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use App\Models\Department;
 use App\Models\Ticket;
-use App\Models\TicketAttachment;
 
 #[Layout('layouts.app')]
 #[Title('Create Ticket')]
 class CreateTicket extends Component
 {
-    use WithFileUploads;
-
     // Form fields
     public string $subject = '';
-    public string $priority = 'low';                 // <- lowercase sesuai enum baru
-    public ?int $assigned_department_id = null;      // departemen tujuan (assigned to)
+    public string $priority = 'low';                 // lowercase
+    public ?int $assigned_department_id = null;
     public string $description = '';
 
-    // Display-only (dept user login)
+    // Display-only
     public string $requester_department = '-';
 
-    /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile[] */
-    public array $attachments = [];
-
-    // Dropdown data: [{ department_id, department_name }]
+    // Dropdown data
     public array $departments = [];
+
+    // NEW: daftar file TMP (JSON string dari blade)
+    public string $temp_items_json = '[]';
 
     public function mount(): void
     {
         $user = Auth::user()->loadMissing(['department', 'company']);
 
-        // Info dept user yang login (display only)
-        $this->requester_department = optional($user->department)->department_name ?? '-';
-
-        // Default assign-to = dept user sendiri (boleh diganti)
+        $this->requester_department   = optional($user->department)->department_name ?? '-';
         $this->assigned_department_id = $user->department_id;
 
-        // Ambil semua department (filter by company jika ada)
         $this->departments = Department::query()
             ->when($user->company_id, fn ($q) => $q->where('company_id', $user->company_id))
             ->orderBy('department_name', 'asc')
@@ -55,10 +46,10 @@ class CreateTicket extends Component
     {
         return [
             'subject'                => ['required', 'string', 'max:255'],
-            'priority'               => ['required', 'in:low,medium,high'],            // <- lowercase only
+            'priority'               => ['required', 'in:low,medium,high'],
             'assigned_department_id' => ['required', 'exists:departments,department_id'],
             'description'            => ['nullable', 'string', 'max:10000'],
-            'attachments.*'          => ['file', 'max:10240', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
+            // NOTE: validasi lampiran dilakukan saat signature-temp (format & 10MB/file)
         ];
     }
 
@@ -68,41 +59,36 @@ class CreateTicket extends Component
 
         $user = Auth::user()->loadMissing(['department', 'company']);
 
-        // Simpan ticket (per skema baru)
+        // Simpan ticket persis seperti sebelumnya
         $ticket = Ticket::create([
             'company_id'     => $user->company_id,
-            'requestdept_id' => $user->department_id,          // departemen si pembuat tiket
-            'department_id'  => $this->assigned_department_id, // departemen tujuan (assigned)
+            'requestdept_id' => $user->department_id,
+            'department_id'  => $this->assigned_department_id,
             'user_id'        => $user->getKey(),
             'subject'        => $this->subject,
             'description'    => $this->description,
-            'priority'       => $this->priority,               // low/medium/high
+            'priority'       => $this->priority,
             'status'         => 'OPEN',
         ]);
 
-        // Simpan attachments (tanpa uploaded_by)
-        foreach ($this->attachments as $file) {
-            $path = $file->store('tickets/' . $ticket->getKey(), 'public');
-
-            TicketAttachment::create([
-                'ticket_id' => $ticket->getKey(),
-                'file_url'  => Storage::disk('public')->url($path),
-                'file_type' => $file->getClientOriginalExtension(),
-                // 'created_at' dibiarkan: DB pakai CURRENT_TIMESTAMP
-            ]);
+        // NEW: finalize Cloudinary TMP -> final + insert ke ticket_attachments
+        $items = json_decode($this->temp_items_json ?? '[]', true) ?? [];
+        if (!empty($items)) {
+            app(\App\Http\Controllers\AttachmentController::class)
+                ->finalizeTemp(new \Illuminate\Http\Request([
+                    'ticket_id' => $ticket->getKey(),
+                    'items'     => $items,
+                ]));
         }
 
-        // Reset form
-        $this->reset(['subject', 'priority', 'assigned_department_id', 'description', 'attachments']);
-
+        // Reset & redirect
+        $this->reset(['subject', 'priority', 'assigned_department_id', 'description', 'temp_items_json']);
         session()->flash('success', 'Ticket created successfully.');
-
         return redirect()->route('ticketstatus');
     }
 
     public function render()
     {
-        // NOTE: view name harus sesuai file: resources/views/livewire/pages/user/createticket.blade.php
         return view('livewire.pages.user.createticket');
     }
 }

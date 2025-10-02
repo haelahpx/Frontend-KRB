@@ -99,7 +99,7 @@
                                 @if ($t->department)
                                     <span class="text-gray-300">•</span>
                                     <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border-2 border-gray-400 bg-gray-50 text-gray-700">
-                                        🏷️ <span class="font-medium">{{ $t->department->department_name }}</span>
+                                        🏷 <span class="font-medium">{{ $t->department->department_name }}</span>
                                     </span>
                                 @endif
 
