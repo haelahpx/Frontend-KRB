@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->foreignId('ticket_id')->constrained('tickets', 'ticket_id')->cascadeOnDelete();
             $table->string('file_url');
             $table->string('file_type', 50)->nullable();
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
         });
 
     }

@@ -20,8 +20,8 @@ return new class extends Migration {
             $table->text('description')->nullable();
             $table->enum('priority', ['low', 'medium', 'high'])->default('low');
             $table->enum('status', ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'])->default('OPEN');
-            $table->timestamps();
             $table->index(['company_id', 'status', 'priority']);
+            $table->timestamps();
         });
 
     }

@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id('assignment_id');
             $table->foreignId('ticket_id')->constrained('tickets', 'ticket_id')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users', 'user_id')->cascadeOnDelete();
-            $table->timestamp('assigned_at')->useCurrent();
+            $table->timestamps();
         });
 
     }

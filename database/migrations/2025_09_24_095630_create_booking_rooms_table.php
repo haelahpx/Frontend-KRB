@@ -22,8 +22,8 @@ return new class extends Migration {
             $table->dateTime('start_time');
             $table->dateTime('end_time');
             $table->text('special_notes')->nullable();
-            $table->timestamps();
             $table->index(['date', 'room_id']);
+            $table->timestamps();
             
         });
 

@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->foreignId('ticket_id')->constrained('tickets', 'ticket_id')->cascadeOnDelete();
             $table->enum('status', ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']);
             $table->foreignId('changed_by')->constrained('users', 'user_id')->cascadeOnDelete();
-            $table->timestamp('changed_at')->useCurrent();
+            $table->timestamps();
         });
 
     }
