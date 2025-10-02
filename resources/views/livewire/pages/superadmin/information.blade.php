@@ -59,11 +59,16 @@
                 <div class="pt-5">
                     <button type="submit" wire:loading.attr="disabled" wire:target="store" class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition active:scale-95 hover:bg-black disabled:opacity-60 relative overflow-hidden">
                         <span class="flex items-center gap-2" wire:loading.remove wire:target="store">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
                             Save Information
                         </span>
                         <span class="flex items-center gap-2" wire:loading wire:target="store">
-                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" /></svg>
+                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
+                            </svg>
                             Saving...
                         </span>
                     </button>
@@ -76,7 +81,9 @@
             <div class="px-5 py-4 border-b border-gray-200">
                 <div class="relative flex-1">
                     <input type="text" wire:model.live="search" placeholder="Search information..." class="{{ $input }} pl-10 w-full placeholder:text-gray-400">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" /></svg>
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
+                    </svg>
                 </div>
             </div>
             <div class="divide-y divide-gray-200">
@@ -87,11 +94,13 @@
                             <div class="{{ $ico }}">{{ substr(optional($info->company)->company_name ?? 'C', 0, 1) }}</div>
                             <div class="min-w-0 flex-1">
                                 <h4 class="font-semibold text-gray-900 text-sm sm:text-base">{{ $info->description }}</h4>
-                                <p class="{{ $mono }} mt-1">#{{ $info->information_id }}</p>
+
                                 <div class="flex flex-wrap items-center gap-2 mt-2">
                                     @if($info->event_at)
                                     <span class="{{ $chip }}">
-                                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
                                         <span class="font-medium text-gray-700">{{ $info->formatted_event_date }}</span>
                                     </span>
                                     @endif
@@ -102,10 +111,30 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="text-right shrink-0">
+                        <div class="text-right shrink-0 space-y-2">
+                            <p class="{{ $mono }} mt-1">#{{ $info->information_id }}</p>
                             <div class="flex flex-wrap gap-2 justify-end pt-1">
-                                <button wire:click="openEdit({{ $info->information_id }})" class="{{ $btnBlk }}">Edit</button>
-                                <button wire:click="delete({{ $info->information_id }})" onclick="return confirm('Are you sure you want to delete this information?')" class="{{ $btnRed }}">Delete</button>
+                                <button
+                                    wire:click="openEdit({{ $info->information_id }})"
+                                    class="{{ $btnBlk }}"
+                                    wire:loading.attr="disabled"
+                                    wire:target="openEdit({{ $info->information_id }})"
+                                    wire:key="btn-edit-info-{{ $info->information_id }}">
+                                    <span wire:loading.remove wire:target="openEdit({{ $info->information_id }})">Edit</span>
+                                    <span wire:loading wire:target="openEdit({{ $info->information_id }})">Loading…</span>
+                                </button>
+
+                                <button
+                                    wire:click="delete({{ $info->information_id }})"
+                                    onclick="return confirm('Are you sure you want to delete this information?')"
+                                    class="{{ $btnRed }}"
+                                    wire:loading.attr="disabled"
+                                    wire:target="delete({{ $info->information_id }})"
+                                    wire:key="btn-del-info-{{ $info->information_id }}">
+                                    <span wire:loading.remove wire:target="delete({{ $info->information_id }})">Delete</span>
+                                    <span wire:loading wire:target="delete({{ $info->information_id }})">Deleting…</span>
+                                </button>
+
                             </div>
                         </div>
                     </div>
@@ -131,7 +160,9 @@
                 <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 class="text-base font-semibold text-gray-900">Edit Information</h3>
                     <button class="text-gray-500 hover:text-gray-700" type="button" wire:click="closeEdit" aria-label="Close">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
                 <form class="p-5" wire:submit.prevent="update">
@@ -151,11 +182,16 @@
                         <button type="button" class="px-4 h-10 rounded-xl border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 hover:border-gray-400 transition" wire:click="closeEdit">Cancel</button>
                         <button type="submit" wire:loading.attr="disabled" wire:target="update" class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition active:scale-95 hover:bg-black disabled:opacity-60">
                             <span class="flex items-center gap-2" wire:loading.remove wire:target="update">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
                                 Save Changes
                             </span>
                             <span class="flex items-center gap-2" wire:loading wire:target="update">
-                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" /></svg>
+                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
+                                </svg>
                                 Saving...
                             </span>
                         </button>

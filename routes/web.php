@@ -18,6 +18,7 @@ use App\Livewire\Pages\User\BookingStatus;     // <- konsisten PascalCase
 
 // ========== Livewire Pages (Admin / Superadmin / Receptionist) ==========
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
+use App\Livewire\Pages\Admin\Ticket as AdminTicket;
 use App\Livewire\Pages\Superadmin\Dashboard as SuperadminDashboard;
 use App\Livewire\Pages\Superadmin\Announcement;
 use App\Livewire\Pages\Superadmin\Information;
@@ -118,6 +119,7 @@ Route::middleware('auth')->group(function () {
     // ---------- Admin routes ----------
     Route::middleware('is.admin')->group(function () {
         Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
+        Route::get('/admin-ticket', AdminTicket::class)->name('admin.ticket');
     });
 
     // ---------- Superadmin routes ----------

@@ -13,4 +13,9 @@ class Room extends Model
     public $timestamps = true;
 
     protected $fillable = ['company_id', 'room_number'];
+
+    public function bookings()
+    {
+        return $this->hasMany(BookingRoom::class, 'room_id', 'room_id');
+    }
 }

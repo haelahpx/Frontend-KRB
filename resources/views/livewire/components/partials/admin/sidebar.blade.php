@@ -1,3 +1,14 @@
+@php
+// Ambil nama lengkap & inisial
+$fullName = trim(Auth::user()->full_name ?? 'User');
+$parts = preg_split('/\s+/', $fullName);
+$firstInitial = strtoupper(substr($parts[0] ?? 'U', 0, 1));
+$lastInitial = strtoupper(substr($parts[count($parts)-1] ?? '', 0, 1));
+$initials = $firstInitial . $lastInitial;
+
+// (Opsional) tampilkan status/role singkat
+$roleName = Auth::user()->role->name ?? 'Member';
+@endphp
 <flux:sidebar
     sticky
     collapsible="mobile"
@@ -26,12 +37,11 @@
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />
-
     <flux:sidebar.nav>
         <flux:sidebar.item icon="cog-6-tooth" href="#">Settings</flux:sidebar.item>
         <flux:sidebar.item icon="information-circle" href="#">Help</flux:sidebar.item>
 
-        {{-- Tombol Logout untuk MOBILE (karena dropdown di bawah hanya tampil desktop) --}}
+        {{-- Logout khusus MOBILE (karena dropdown di bawah hanya tampil desktop) --}}
         <flux:sidebar.item
             class="lg:hidden"
             icon="arrow-right-start-on-rectangle"
@@ -42,16 +52,22 @@
         </flux:sidebar.item>
     </flux:sidebar.nav>
 
-    {{-- Desktop-only profile + menu --}}
     <flux:dropdown position="top" align="start" class="max-lg:hidden">
-        <flux:sidebar.profile avatar="https://fluxui.dev/img/demo/user.png" name="Olivia Martin" />
+        <flux:sidebar.profile
+            avatar=""
+            name="{{ $fullName }}" />
         <flux:menu>
             <flux:menu.radio.group>
-                <flux:menu.radio checked>{{ Auth::user()->full_name }}</flux:menu.radio>
+                <flux:menu.radio checked>{{ $fullName }}</flux:menu.radio>
+                <flux:sidebar.item
+                    icon="user"
+                    href="{{ route('user.home') }}"
+                    class="cursor-pointer">User Page
+                </flux:sidebar.item>
             </flux:menu.radio.group>
+
             <flux:menu.separator />
 
-            {{-- Item Logout memicu FORM tersembunyi --}}
             <flux:menu.item
                 icon="arrow-right-start-on-rectangle"
                 as="button"
@@ -61,6 +77,7 @@
             </flux:menu.item>
         </flux:menu>
     </flux:dropdown>
+
 </flux:sidebar>
 
 {{-- FORM LOGOUT TERSEMBUNYI (satu kali saja, di luar komponen) --}}

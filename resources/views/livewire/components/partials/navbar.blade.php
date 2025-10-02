@@ -1,10 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.tailwindcss.com"></script>
+<div>
     <style>
         .nav-link {
             position: relative;
@@ -77,10 +71,20 @@
         .shadow-elegant {
             box-shadow: 0 4px 20px rgba(0, 0, 0, .1)
         }
-    </style>
-</head>
 
-<body class="bg-gray-100">
+        .profile-dropdown {
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity .2s ease, transform .2s ease;
+        }
+
+        .profile-dropdown.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
 
     <div class="bg-black border-b border-gray-800 shadow-elegant sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -94,7 +98,7 @@
 
                 {{-- DESKTOP NAV --}}
                 <nav class="hidden md:flex items-center gap-2">
-                    <a href="{{ route('home') }}" class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
+                    <a href="{{ route('user.home') }}" class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
             {{ request()->routeIs('home') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Home
                     </a>
@@ -116,19 +120,82 @@
                     </a>
                     @endguest
 
-                    {{-- Tampilkan Logout (dan optional Profile) untuk user yang sudah login --}}
+                    {{-- Tampilkan menu berdasarkan role untuk user yang sudah login --}}
                     @auth
-                    <a href="{{ route('profile') }}"
-                        class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                        Profile
-                    </a>
-                    <form method="POST" action="{{ route('logout') }}" class="ml-2">
-                        @csrf
-                        <button type="submit"
-                            class="btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
-                            Logout
-                        </button>
-                    </form>
+                        @if(auth()->user()->role->name === 'Superadmin')
+                            {{-- SuperAdmin: Profile with Dropdown --}}
+                            <div class="relative ml-2">
+                                <button id="profileDropdownBtn" type="button"
+                                    class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50 flex items-center gap-2">
+                                    Profile
+                                    <svg id="dropdownArrow" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                
+                                <div id="profileDropdown" class="profile-dropdown absolute right-0 mt-2 w-48 bg-gray-900 rounded-lg shadow-lg border border-gray-800 py-1 z-50">
+                                    <a href="{{ route('profile') }}"
+                                        class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                        My Profile
+                                    </a>
+                                    <a href="{{ route('superadmin.dashboard') }}"
+                                        class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                        SuperAdmin Dashboard
+                                    </a>
+                                    <div class="border-t border-gray-800 my-1"></div>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                            Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @elseif(auth()->user()->role->name === 'Admin')
+                            {{-- Admin: Profile with Dropdown --}}
+                            <div class="relative ml-2">
+                                <button id="adminDropdownBtn" type="button"
+                                    class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50 flex items-center gap-2">
+                                    Profile
+                                    <svg id="adminDropdownArrow" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                
+                                <div id="adminDropdown" class="profile-dropdown absolute right-0 mt-2 w-48 bg-gray-900 rounded-lg shadow-lg border border-gray-800 py-1 z-50">
+                                    <a href="{{ route('profile') }}"
+                                        class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                        My Profile
+                                    </a>
+                                    <a href="{{ route('admin.dashboard') }}"
+                                        class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                        Admin Dashboard
+                                    </a>
+                                    <div class="border-t border-gray-800 my-1"></div>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                            Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @else
+                            {{-- Regular User: Profile + Logout --}}
+                            <a href="{{ route('profile') }}"
+                                class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                                Profile
+                            </a>
+                            <form method="POST" action="{{ route('logout') }}" class="ml-2">
+                                @csrf
+                                <button type="submit"
+                                    class="btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                                    Logout
+                                </button>
+                            </form>
+                        @endif
                     @endauth
                 </nav>
 
@@ -182,25 +249,130 @@
                 </div>
                 @endguest
 
-                {{-- Auth: Profile + Logout --}}
+                {{-- Auth: Menu berdasarkan role --}}
                 @auth
-                <a href="{{ route('profile') }}"
-                    class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                    Profile
-                </a>
-                <form method="POST" action="{{ route('logout') }}" class="pt-2">
-                    @csrf
-                    <button type="submit"
-                        class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
-                        Logout
-                    </button>
-                </form>
+                    @if(auth()->user()->role->name === 'Superadmin')
+                        {{-- SuperAdmin Mobile Menu --}}
+                        <a href="{{ route('profile') }}"
+                            class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            My Profile
+                        </a>
+                        <a href="{{ route('superadmin.dashboard') }}"
+                            class="block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            SuperAdmin Dashboard
+                        </a>
+                    @elseif(auth()->user()->role->name === 'Admin')
+                        {{-- Admin Mobile Menu --}}
+                        <a href="{{ route('profile') }}"
+                            class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            Profile
+                        </a>
+                        <a href="{{ route('admin.dashboard') }}"
+                            class="block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            Admin Dashboard
+                        </a>
+                    @else
+                        {{-- Regular User Mobile Menu --}}
+                        <a href="{{ route('profile') }}"
+                            class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            Profile
+                        </a>
+                    @endif
+
+                    <form method="POST" action="{{ route('logout') }}" class="pt-2">
+                        @csrf
+                        <button type="submit"
+                            class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
+                            Logout
+                        </button>
+                    </form>
                 @endauth
             </div>
         </div>
     </div>
 
     <script>
+        // Profile Dropdown functionality for Superadmin
+        const profileDropdownBtn = document.getElementById('profileDropdownBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const dropdownArrow = document.getElementById('dropdownArrow');
+        
+        if (profileDropdownBtn && profileDropdown) {
+            let isDropdownOpen = false;
+
+            profileDropdownBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                isDropdownOpen = !isDropdownOpen;
+                
+                if (isDropdownOpen) {
+                    profileDropdown.classList.add('show');
+                    dropdownArrow.style.transform = 'rotate(180deg)';
+                } else {
+                    profileDropdown.classList.remove('show');
+                    dropdownArrow.style.transform = 'rotate(0deg)';
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!profileDropdownBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                    isDropdownOpen = false;
+                    profileDropdown.classList.remove('show');
+                    dropdownArrow.style.transform = 'rotate(0deg)';
+                }
+            });
+
+            // Close dropdown on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && isDropdownOpen) {
+                    isDropdownOpen = false;
+                    profileDropdown.classList.remove('show');
+                    dropdownArrow.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
+
+        // Admin Dropdown functionality
+        const adminDropdownBtn = document.getElementById('adminDropdownBtn');
+        const adminDropdown = document.getElementById('adminDropdown');
+        const adminDropdownArrow = document.getElementById('adminDropdownArrow');
+        
+        if (adminDropdownBtn && adminDropdown) {
+            let isAdminDropdownOpen = false;
+
+            adminDropdownBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                isAdminDropdownOpen = !isAdminDropdownOpen;
+                
+                if (isAdminDropdownOpen) {
+                    adminDropdown.classList.add('show');
+                    adminDropdownArrow.style.transform = 'rotate(180deg)';
+                } else {
+                    adminDropdown.classList.remove('show');
+                    adminDropdownArrow.style.transform = 'rotate(0deg)';
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!adminDropdownBtn.contains(e.target) && !adminDropdown.contains(e.target)) {
+                    isAdminDropdownOpen = false;
+                    adminDropdown.classList.remove('show');
+                    adminDropdownArrow.style.transform = 'rotate(0deg)';
+                }
+            });
+
+            // Close dropdown on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && isAdminDropdownOpen) {
+                    isAdminDropdownOpen = false;
+                    adminDropdown.classList.remove('show');
+                    adminDropdownArrow.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
+
+        // Mobile menu functionality
         const menu = document.getElementById('mobile-menu');
         const sheet = menu.querySelector('.mobile-menu-slide');
         const burger = document.getElementById('hamburger');
@@ -236,6 +408,4 @@
             }
         });
     </script>
-</body>
-
-</html>
+</div>

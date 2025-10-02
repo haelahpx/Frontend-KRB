@@ -180,16 +180,22 @@
                                 <button class="{{ $btnBlk }}"
                                     wire:click="openEdit({{ $u->user_id }})"
                                     wire:loading.attr="disabled"
-                                    wire:target="openEdit">
-                                    Edit
+                                    wire:target="openEdit({{ $u->user_id }})"
+                                    wire:key="btn-edit-{{ $u->user_id }}">
+                                    <span wire:loading.remove wire:target="openEdit({{ $u->user_id }})">Edit</span>
+                                    <span wire:loading wire:target="openEdit({{ $u->user_id }})">Loading…</span>
                                 </button>
+
                                 <button class="{{ $btnRed }}"
                                     wire:click="delete({{ $u->user_id }})"
                                     onclick="return confirm('Hapus user ini?')"
                                     wire:loading.attr="disabled"
-                                    wire:target="delete">
-                                    Hapus
+                                    wire:target="delete({{ $u->user_id }})"
+                                    wire:key="btn-del-{{ $u->user_id }}">
+                                    <span wire:loading.remove wire:target="delete({{ $u->user_id }})">Hapus</span>
+                                    <span wire:loading wire:target="delete({{ $u->user_id }})">Menghapus…</span>
                                 </button>
+
                             </div>
                         </div>
                     </div>

@@ -29,4 +29,8 @@ class BookingRoom extends Model
         return $this->belongsToMany(Requirement::class, 'booking_requirements', 'bookingroom_id', 'requirement_id')
                     ->withTimestamps();
     }
+    public function room()
+    {
+        return $this->belongsTo(Room::class, 'room_id', 'room_id');
+    }
 }
