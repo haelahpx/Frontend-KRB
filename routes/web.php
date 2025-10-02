@@ -148,21 +148,6 @@ Route::middleware('auth')->group(function () {
             ->name('receptionist.documents');
     });
 
-    Route::get('/test-signature', function (Request $r) {
-        $req = Request::create('/attachments/signature', 'POST', [
-            'ticket_id' => $r->query('ticket_id'),
-            'filename' => $r->query('filename'),
-            'bytes' => $r->query('bytes'),
-        ]);
-        return app(AttachmentController::class)->signature($req);
-    })->name('attachments.test')->middleware('auth');
-    Route::get('/test-attachment', function (Request $request) {
-        return view('test-attachment');
-    })->middleware('auth');
-    Route::get('/test-delete/{id}', function ($id) {
-        return app(\App\Http\Controllers\AttachmentController::class)->destroy($id);
-    })->middleware('auth');
-
     // Temporary attachments (sebelum ticket dibuat)
     Route::post('/attachments/signature-temp', [AttachmentController::class, 'signatureTemp'])
         ->name('attachments.signatureTemp');
