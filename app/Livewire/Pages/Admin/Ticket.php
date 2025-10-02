@@ -17,39 +17,38 @@ class Ticket extends Component
 {
     use WithPagination;
 
+    /** Filters */
     public ?string $search = null;
-    public ?string $priority = null;
-    public ?string $status = null;
+    public ?string $priority = null;  // low|medium|high
+    public ?string $status = null;    // open|in_progress|resolved|closed|deleted (UI)
 
     protected $paginationTheme = 'tailwind';
 
+    /** Roles */
     private const ADMIN_ROLE_NAMES = ['Superadmin', 'Admin'];
-    private const AGENT_ROLE_NAMES = ['User'];
+    private const AGENT_ROLE_NAMES = ['User']; // adjust to your agent roles
+
+    /** DB allowed (UPPERCASE) — matches migration */
     private const DB_ALLOWED_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'DELETED'];
+
+    /** UI→DB map (all lowercase UI to uppercase DB) */
     private const UI_TO_DB_STATUS_MAP = [
-        'open' => 'OPEN',
+        'open'        => 'OPEN',
         'in_progress' => 'IN_PROGRESS',
-        'resolved' => 'RESOLVED',
-        'closed' => 'CLOSED',
-        'deleted' => 'DELETED',
+        'resolved'    => 'RESOLVED',
+        'closed'      => 'CLOSED',
+        'deleted'     => 'DELETED',
     ];
 
-    public function tick()
-    {
-    }
-    public function updatingSearch()
-    {
-        $this->resetPage();
-    }
-    public function updatingPriority()
-    {
-        $this->resetPage();
-    }
-    public function updatingStatus()
-    {
-        $this->resetPage();
-    }
+    /** wire:poll workaround */
+    public function tick() {} // no-op so poll doesn't throw MethodNotFound
 
+    /* ---------- pagination resets ---------- */
+    public function updatingSearch()  { $this->resetPage(); }
+    public function updatingPriority(){ $this->resetPage(); }
+    public function updatingStatus()  { $this->resetPage(); }
+
+    /* ---------- auth helpers ---------- */
     protected function currentAdmin()
     {
         $user = Auth::user();
@@ -71,6 +70,7 @@ class Ticket extends Component
         return $u && $u->role && $u->role->name === 'Superadmin';
     }
 
+    /* ---------- allowed agents (filtered by admin’s dept/company) ---------- */
     protected function allowedAgentsQuery()
     {
         $admin = $this->currentAdmin();
@@ -96,10 +96,13 @@ class Ticket extends Component
             ->get(['user_id', 'full_name', 'department_id']);
     }
 
+    /* =========================
+       Modal state (Edit Ticket)
+       ========================= */
     public bool $modalEdit = false;
     public ?int $editId = null;
-    public ?int $edit_agent_id = null;
-    public string $edit_status = 'open';
+    public ?int $edit_agent_id = null; // selected agent (can be null)
+    public string $edit_status = 'open'; // UI: open|in_progress|resolved|closed|deleted
 
     public function openEdit(int $ticketId): void
     {
@@ -116,7 +119,11 @@ class Ticket extends Component
         }
 
         $this->editId = $ticketId;
+
+        // prefill agent
         $this->edit_agent_id = optional($ticket->assignment)->user_id;
+
+        // prefill status for UI (DB is UPPERCASE)
         $this->edit_status = strtolower($ticket->status);
         $this->modalEdit = true;
     }
@@ -127,14 +134,14 @@ class Ticket extends Component
         $this->edit_status = 'open';
     }
 
+    /** Save assignment + status */
     public function saveEdit(): void
     {
         if (!$this->ensureAdmin()) {
             session()->flash('error', 'Unauthorized.');
             return;
         }
-        if (!$this->editId)
-            return;
+        if (!$this->editId) return;
 
         $ticket = TicketModel::with('assignment')->findOrFail($this->editId);
 
@@ -143,6 +150,7 @@ class Ticket extends Component
             return;
         }
 
+        // Validate agent if chosen (must be in allowed scope)
         if ($this->edit_agent_id) {
             $isAllowed = $this->allowedAgentsQuery()
                 ->where('user_id', $this->edit_agent_id)
@@ -153,10 +161,11 @@ class Ticket extends Component
             }
         }
 
+        // Apply assignment (create/update or delete if cleared)
         if ($this->edit_agent_id) {
             TicketAssignmentModel::updateOrCreate(
                 ['ticket_id' => $ticket->ticket_id],
-                ['user_id' => $this->edit_agent_id]
+                ['user_id'   => $this->edit_agent_id]
             );
         } else {
             if ($ticket->assignment) {
@@ -164,6 +173,7 @@ class Ticket extends Component
             }
         }
 
+        // Apply status (store exactly what UI picks, mapped to UPPERCASE)
         $targetDb = self::UI_TO_DB_STATUS_MAP[$this->edit_status] ?? 'OPEN';
         if (!\in_array($targetDb, self::DB_ALLOWED_STATUSES, true)) {
             $this->addError('edit_status', 'Invalid status.');
@@ -180,6 +190,7 @@ class Ticket extends Component
         session()->flash('message', "Ticket #{$id} saved.");
     }
 
+    /** Soft delete: mark as DELETED (hidden from default view) */
     public function deleteTicket(int $ticketId): void
     {
         if (!$this->ensureAdmin()) {
@@ -207,8 +218,10 @@ class Ticket extends Component
         $ticket->save();
 
         session()->flash('message', "Ticket #{$ticketId} moved to Trash.");
+        // keep current page/filters; wire:poll will refresh lists
     }
 
+    /* ---------- render (group tickets into boxes) ---------- */
     public function render()
     {
         $query = TicketModel::query()
@@ -218,47 +231,55 @@ class Ticket extends Component
             ])
             ->orderByDesc('ticket_id');
 
+        // search
         if ($this->search) {
             $s = '%' . $this->search . '%';
-            $query->where(
-                fn($q) =>
+            $query->where(fn($q) =>
                 $q->where('subject', 'like', $s)
-                    ->orWhere('description', 'like', $s)
+                  ->orWhere('description', 'like', $s)
             );
         }
 
+        // priority
         if ($this->priority) {
             $query->where('priority', $this->priority);
         }
 
+        // status filter (UI -> DB)
         if ($this->status) {
             $dbStatus = self::UI_TO_DB_STATUS_MAP[$this->status] ?? null;
             if ($dbStatus) {
                 $query->where('status', $dbStatus);
             }
         } else {
+            // Default: hide DELETED from all views
             $query->where('status', '!=', 'DELETED');
         }
 
         $tickets = $query->paginate(30);
+
+        // group strictly by DB status
         $collection = $tickets->getCollection();
-        $open = $collection->filter(fn($t) => $t->status === 'OPEN');
+
+        $open       = $collection->filter(fn($t) => $t->status === 'OPEN');
         $inProgress = $collection->filter(fn($t) => $t->status === 'IN_PROGRESS');
-        $resolved = $collection->filter(fn($t) => $t->status === 'RESOLVED');
-        $closed = $collection->filter(fn($t) => $t->status === 'CLOSED');
+        $resolved   = $collection->filter(fn($t) => $t->status === 'RESOLVED');
+        $closed     = $collection->filter(fn($t) => $t->status === 'CLOSED');
+
+        // When filter == deleted, provide a deleted bucket for the Blade
         $deleted = null;
         if ($this->status === 'deleted') {
             $deleted = $collection->filter(fn($t) => $t->status === 'DELETED');
         }
 
         return view('livewire.pages.admin.ticket', [
-            'tickets' => $tickets,
-            'open' => $open,
+            'tickets'    => $tickets,
+            'open'       => $open,
             'inProgress' => $inProgress,
-            'resolved' => $resolved,
-            'closed' => $closed,
-            'deleted' => $deleted,
-            'agents' => $this->agents,
+            'resolved'   => $resolved,
+            'closed'     => $closed,
+            'deleted'    => $deleted,
+            'agents'     => $this->agents,
         ]);
     }
 }

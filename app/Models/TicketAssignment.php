@@ -11,15 +11,25 @@ class TicketAssignment extends Model
     protected $primaryKey = 'assignment_id';
     public $timestamps = true;
 
-    // match your columns exactly
-    protected $fillable = ['ticket_id', 'user_id'];
+    // Match your columns exactly
+    protected $fillable = [
+        'ticket_id',
+        'user_id',      // alias "agent" -> users.user_id
+        'assigned_at',
+    ];
+
+    protected $casts = [
+        'assigned_at' => 'datetime',
+    ];
 
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class, 'ticket_id', 'ticket_id');
     }
 
-    // alias "agent" → users.user_id
+    /**
+     * Alias "agent" -> users.user_id
+     */
     public function agent(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
