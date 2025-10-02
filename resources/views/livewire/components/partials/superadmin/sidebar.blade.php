@@ -1,14 +1,11 @@
-{{-- resources/views/livewire/components/partials/superadmin/sidebar.blade.php --}}
 @php
-    // Ambil nama lengkap & inisial
-    $fullName = trim(Auth::user()->full_name ?? 'User');
-    $parts = preg_split('/\s+/', $fullName);
-    $firstInitial = strtoupper(substr($parts[0] ?? 'U', 0, 1));
-    $lastInitial  = strtoupper(substr($parts[count($parts)-1] ?? '', 0, 1));
-    $initials = $firstInitial . $lastInitial;
+$fullName = trim(Auth::user()->full_name ?? 'User');
+$parts = preg_split('/\s+/', $fullName);
+$firstInitial = strtoupper(substr($parts[0] ?? 'U', 0, 1));
+$lastInitial = strtoupper(substr($parts[count($parts)-1] ?? '', 0, 1));
+$initials = $firstInitial . $lastInitial;
 
-    // (Opsional) tampilkan status/role singkat
-    $roleName = Auth::user()->role->name ?? 'Member';
+$roleName = Auth::user()->role->name ?? 'Member';
 @endphp
 
 <flux:sidebar
@@ -77,17 +74,9 @@
             :current="request()->routeIs('superadmin.bookingroom')">
             Booking Room
         </flux:sidebar.item>
-
-        <flux:sidebar.item
-            icon="ticket"
-            href="{{ route('superadmin.ticketsupport') }}"
-            :current="request()->routeIs('superadmin.ticketsupport')">
-            Ticket Support
-        </flux:sidebar.item>
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />
-    {{-- Nav kedua (Settings/Help + Logout mobile) --}}
     <flux:sidebar.nav>
         <flux:sidebar.item icon="cog-6-tooth" href="#">Settings</flux:sidebar.item>
         <flux:sidebar.item icon="information-circle" href="#">Help</flux:sidebar.item>
@@ -103,16 +92,18 @@
         </flux:sidebar.item>
     </flux:sidebar.nav>
 
-    {{-- Dropdown menu (desktop) --}}
     <flux:dropdown position="top" align="start" class="max-lg:hidden">
-        {{-- Pakai profil default FLUX untuk pemicu dropdown (tanpa avatar, biar tidak dobel) --}}
         <flux:sidebar.profile
             avatar=""
             name="{{ $fullName }}" />
-
         <flux:menu>
             <flux:menu.radio.group>
                 <flux:menu.radio checked>{{ $fullName }}</flux:menu.radio>
+                <flux:sidebar.item
+                    icon="user"
+                    href="{{ route('user.home') }}"
+                    class="cursor-pointer">User Page
+                </flux:sidebar.item>
             </flux:menu.radio.group>
 
             <flux:menu.separator />
@@ -129,12 +120,12 @@
 
 </flux:sidebar>
 
-{{-- FORM LOGOUT TERSEMBUNYI --}}
 <form id="logout-form" method="POST" action="{{ route('logout') }}" class="hidden">
     @csrf
 </form>
 
-{{-- Optional utility kalau mau pakai class, bukan inline style, untuk logo putih --}}
 <style>
-    .img-white { filter: brightness(0) invert(1); }
+    .img-white {
+        filter: brightness(0) invert(1);
+    }
 </style>

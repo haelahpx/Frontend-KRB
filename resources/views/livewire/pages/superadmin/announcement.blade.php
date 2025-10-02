@@ -95,7 +95,6 @@
                             <div class="{{ $ico }}">{{ substr(optional($announcement->company)->company_name ?? 'C', 0, 1) }}</div>
                             <div class="min-w-0 flex-1">
                                 <h4 class="font-semibold text-gray-900 text-sm sm:text-base">{{ $announcement->description }}</h4>
-                                <p class="{{ $mono }} mt-1">#{{ $announcement->announcements_id }}</p>
                                 <div class="flex flex-wrap items-center gap-2 mt-2">
                                     @if($announcement->event_at)
                                     <span class="{{ $chip }}">
@@ -112,10 +111,30 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="text-right shrink-0">
+                        <div class="text-right shrink-0 space-y-2">
+                            <p class="{{ $mono }} mt-1">#{{ $announcement->announcements_id }}</p>
                             <div class="flex flex-wrap gap-2 justify-end pt-1">
-                                <button wire:click="openEdit({{ $announcement->announcements_id }})" class="{{ $btnBlk }}">Edit</button>
-                                <button wire:click="delete({{ $announcement->announcements_id }})" onclick="return confirm('Are you sure you want to delete this announcement?')" class="{{ $btnRed }}">Delete</button>
+                                <button
+                                    wire:click="openEdit({{ $announcement->announcements_id }})"
+                                    class="{{ $btnBlk }}"
+                                    wire:loading.attr="disabled"
+                                    wire:target="openEdit({{ $announcement->announcements_id }})"
+                                    wire:key="btn-edit-ann-{{ $announcement->announcements_id }}">
+                                    <span wire:loading.remove wire:target="openEdit({{ $announcement->announcements_id }})">Edit</span>
+                                    <span wire:loading wire:target="openEdit({{ $announcement->announcements_id }})">Loading…</span>
+                                </button>
+
+                                <button
+                                    wire:click="delete({{ $announcement->announcements_id }})"
+                                    onclick="return confirm('Are you sure you want to delete this announcement?')"
+                                    class="{{ $btnRed }}"
+                                    wire:loading.attr="disabled"
+                                    wire:target="delete({{ $announcement->announcements_id }})"
+                                    wire:key="btn-del-ann-{{ $announcement->announcements_id }}">
+                                    <span wire:loading.remove wire:target="delete({{ $announcement->announcements_id }})">Delete</span>
+                                    <span wire:loading wire:target="delete({{ $announcement->announcements_id }})">Deleting…</span>
+                                </button>
+
                             </div>
                         </div>
                     </div>

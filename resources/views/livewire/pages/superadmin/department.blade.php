@@ -36,7 +36,6 @@
             </div>
         </div>
 
-        {{-- FORM CREATE (inline) --}}
         <section class="{{ $card }}">
             <div class="px-5 py-4 border-b border-gray-200">
                 <h3 class="text-base font-semibold text-gray-900">Tambah Department</h3>
@@ -74,15 +73,16 @@
             </form>
         </section>
 
-        {{-- LIST DEPARTMENTS --}}
         <div class="{{ $card }}">
+            {{-- Header --}}
             <div class="px-5 py-4 border-b border-gray-200">
                 <div class="flex flex-col lg:flex-row lg:items-center gap-4">
                     <div class="relative flex-1">
                         <input type="text" wire:model.live="search" placeholder="Cari department…"
                             class="{{ $input }} pl-10 w-full placeholder:text-gray-400">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
                         </svg>
                     </div>
                 </div>
@@ -91,14 +91,17 @@
             <div class="divide-y divide-gray-200">
                 @forelse ($rows as $r)
                 <div class="px-5 py-5 hover:bg-gray-50 transition-colors" wire:key="dept-{{ $r->department_id }}">
-                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                        <div class="flex items-start gap-3 flex-1">
+                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+
+                        {{-- Left --}}
+                        <div class="flex items-start gap-4 flex-1">
                             <div class="{{ $ico }}">{{ strtoupper(substr($r->department_name, 0, 1)) }}</div>
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-2">
-                                    <h4 class="font-semibold text-gray-900 text-sm sm:text-base truncate">
-                                        {{ $r->department_name }}
-                                    </h4>
+                            <div class="min-w-0 flex-1 space-y-2">
+                                <h4 class="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                                    {{ $r->department_name }}
+                                </h4>
+
+                                <div class="flex flex-wrap gap-3">
                                     <span class="{{ $chip }}">
                                         <span class="text-gray-500">Created:</span>
                                         <span class="font-medium text-gray-700">{{ $r->created_at?->format('Y-m-d H:i') }}</span>
@@ -108,24 +111,31 @@
                                         <span class="font-medium text-gray-700">{{ $r->updated_at?->format('Y-m-d H:i') }}</span>
                                     </span>
                                 </div>
-                                <p class="{{ $mono }} mt-1">#{{ $r->department_id }}</p>
                             </div>
                         </div>
+
                         <div class="text-right shrink-0 space-y-2">
-                            <div class="flex flex-wrap gap-2 justify-end pt-1">
-                                <button class="{{ $btnBlk }}"
+                            <p class="{{ $mono }}">#{{ $r->department_id }}</p>
+                            <div class="flex flex-wrap gap-2 justify-end">
+                                <button
+                                    class="{{ $btnBlk }}"
                                     wire:click="openEdit({{ $r->department_id }})"
                                     wire:loading.attr="disabled"
-                                    wire:target="openEdit">
-                                    Edit
+                                    wire:target="openEdit({{ $r->department_id }})">
+                                    <span wire:loading.remove wire:target="openEdit({{ $r->department_id }})">Edit</span>
+                                    <span wire:loading wire:target="openEdit({{ $r->department_id }})">Loading…</span>
                                 </button>
-                                <button class="{{ $btnRed }}"
+
+                                <button
+                                    class="{{ $btnRed }}"
                                     wire:click="delete({{ $r->department_id }})"
                                     onclick="return confirm('Hapus department ini?')"
                                     wire:loading.attr="disabled"
-                                    wire:target="delete">
-                                    Hapus
+                                    wire:target="delete({{ $r->department_id }})">
+                                    <span wire:loading.remove wire:target="delete({{ $r->department_id }})">Hapus</span>
+                                    <span wire:loading wire:target="delete({{ $r->department_id }})">Menghapus…</span>
                                 </button>
+
                             </div>
                         </div>
                     </div>
@@ -135,6 +145,7 @@
                 @endforelse
             </div>
 
+            {{-- Pagination --}}
             @if($rows->hasPages())
             <div class="px-5 py-4 bg-gray-50 border-t border-gray-200">
                 <div class="flex justify-center">
@@ -143,6 +154,7 @@
             </div>
             @endif
         </div>
+
 
         {{-- MODAL EDIT (tanpa Alpine, murni Livewire) --}}
         @if($modalEdit)
