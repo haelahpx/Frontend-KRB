@@ -13,13 +13,38 @@ use App\Models\Department;
 #[Title('Ticket Status')]
 class Ticketstatus extends Component
 {
-    // Nilai harus match DB!
-    public string $statusFilter    = '';          // '', OPEN, PROCESS, COMPLETE
-    public string $priorityFilter  = '';          // '', LOW, MEDIUM, HIGH, CRITICAL
-    public string $departmentFilter = '';         // '' atau department_id
-    public string $sortFilter      = 'recent';    // recent | oldest | due
+    // accepts lowercase (UI) but maps to UPPERCASE (DB)
+    public string $statusFilter      = '';       // '', open|assigned|in_progress|resolved|closed
+    public string $priorityFilter    = '';       // '', low|medium|high
+    public string $departmentFilter  = '';       // '' or department_id
+    public string $sortFilter        = 'recent'; // recent|oldest|due
 
     public $departments;
+
+    private const DB_ALLOWED_STATUSES = ['OPEN','ASSIGNED','IN_PROGRESS','RESOLVED','CLOSED'];
+
+    private const UI_TO_DB_STATUS_MAP = [
+        'open'        => 'OPEN',
+        'assigned'    => 'ASSIGNED',
+        'in_progress' => 'IN_PROGRESS',
+        'resolved'    => 'RESOLVED',
+        'closed'      => 'CLOSED',
+        // accept legacy uppercase from querystring too
+        'OPEN'        => 'OPEN',
+        'ASSIGNED'    => 'ASSIGNED',
+        'IN_PROGRESS' => 'IN_PROGRESS',
+        'RESOLVED'    => 'RESOLVED',
+        'CLOSED'      => 'CLOSED',
+    ];
+
+    private const UI_TO_DB_PRIORITY_MAP = [
+        'low'    => 'low',
+        'medium' => 'medium',
+        'high'   => 'high',
+        'LOW'    => 'low',
+        'MEDIUM' => 'medium',
+        'HIGH'   => 'high',
+    ];
 
     protected $queryString = [
         'statusFilter'     => ['except' => ''],
@@ -55,12 +80,21 @@ class Ticketstatus extends Component
         $q = $this->baseQuery();
 
         if ($this->statusFilter !== '') {
-            // DB simpan UPPERCASE -> kita pakai persis dari select
-            $q->where('status', $this->statusFilter);
+            $mapped = self::UI_TO_DB_STATUS_MAP[$this->statusFilter] ?? '';
+            if ($mapped && \in_array($mapped, self::DB_ALLOWED_STATUSES, true)) {
+                $q->where('status', $mapped);
+            } else {
+                $q->whereRaw('1=0'); // invalid status -> no results
+            }
         }
 
         if ($this->priorityFilter !== '') {
-            $q->where('priority', $this->priorityFilter);
+            $prio = self::UI_TO_DB_PRIORITY_MAP[$this->priorityFilter] ?? '';
+            if ($prio) {
+                $q->where('priority', $prio);
+            } else {
+                $q->whereRaw('1=0');
+            }
         }
 
         if ($this->departmentFilter !== '') {
@@ -81,14 +115,18 @@ class Ticketstatus extends Component
         ]);
     }
 
+    /** Requester marks their ticket complete → RESOLVED (or CLOSED if you prefer) */
     public function markComplete(int $ticketId): void
     {
         $ticket = Ticket::whereKey($ticketId)
-            ->where('user_id', Auth::user()->getKey())
+            ->where('user_id', Auth::id())
             ->first();
 
-        if ($ticket && $ticket->status !== 'COMPLETE') {
-            $ticket->update(['status' => 'COMPLETE']);
+        if (!$ticket) return;
+
+        if ($ticket->status !== 'RESOLVED') {
+            $ticket->update(['status' => 'RESOLVED']);
+            session()->flash('message', 'Ticket marked as resolved.');
         }
     }
 }

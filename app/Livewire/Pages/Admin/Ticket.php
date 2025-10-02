@@ -4,93 +4,261 @@ namespace App\Livewire\Pages\Admin;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Ticket as TicketModel;
+use App\Models\User as UserModel;
+use App\Models\TicketAssignment as TicketAssignmentModel;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
-use App\Models\Ticket as TicketModel;
-use App\Models\User;
-use App\Models\Role;                // <-- pastikan ada model Role (PK: role_id, kolom name)
-use App\Models\TicketAssignment;
-use Carbon\Carbon;
 
 #[Layout('layouts.admin')]
-#[Title('Admin - Ticket')]
+#[Title('Admin-Ticket')]
 class Ticket extends Component
 {
     use WithPagination;
 
-    public ?int $selectedTicketId = null;
-    public ?int $selectedAgentId  = null;
+    public ?string $search = null;
+    public ?string $priority = null;
+    public ?string $status = null;
 
-    // akan diisi id role untuk "user" saat mount
-    protected ?int $userRoleId = null;
+    protected $paginationTheme = 'tailwind';
 
-    public function mount(): void
+    private const ADMIN_ROLE_NAMES = ['Superadmin', 'Admin'];
+    private const AGENT_ROLE_NAMES = ['User'];
+    private const DB_ALLOWED_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'DELETED'];
+    private const UI_TO_DB_STATUS_MAP = [
+        'open' => 'OPEN',
+        'in_progress' => 'IN_PROGRESS',
+        'resolved' => 'RESOLVED',
+        'closed' => 'CLOSED',
+        'deleted' => 'DELETED',
+    ];
+
+    public function tick()
     {
-        // Ambil role_id untuk role bernama "user"
-        $this->userRoleId = Role::where('name', 'user')->value('role_id');
+    }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatingPriority()
+    {
+        $this->resetPage();
+    }
+    public function updatingStatus()
+    {
+        $this->resetPage();
+    }
 
-        if (!$this->userRoleId) {
-            session()->flash('error', 'Role "user" tidak ditemukan. Cek tabel    roles (kolom name & role_id).');
+    protected function currentAdmin()
+    {
+        $user = Auth::user();
+        if ($user && !$user->relationLoaded('role')) {
+            $user->load('role');
         }
+        return $user;
     }
 
-    protected function rules(): array
+    protected function ensureAdmin(): bool
     {
-        $deptId = Auth::user()->department_id;
-
-        return [
-            'selectedAgentId' => [
-                'required',
-                'integer',
-                // Validasi: agent harus ada di tabel users.user_id DAN memenuhi dept & role = user
-                Rule::exists('users', 'user_id')
-                    ->where(fn($q) => $q->where('department_id', $deptId)
-                        ->where('role_id', $this->userRoleId)),
-            ],
-        ];
+        $u = $this->currentAdmin();
+        return $u && $u->role && \in_array($u->role->name, self::ADMIN_ROLE_NAMES, true);
     }
 
-    public function assignAgent(int $ticketId): void
+    protected function isSuperadmin(): bool
     {
-        $this->validate();
+        $u = $this->currentAdmin();
+        return $u && $u->role && $u->role->name === 'Superadmin';
+    }
 
-        $deptId = Auth::user()->department_id;
+    protected function allowedAgentsQuery()
+    {
+        $admin = $this->currentAdmin();
 
-        // Pastikan ticket memang milik departemen admin
-        $ticket = TicketModel::where('ticket_id', $ticketId)
-            ->where('department_id', $deptId)
-            ->firstOrFail();
+        $q = UserModel::query()
+            ->whereHas('role', fn($qr) => $qr->whereIn('name', self::AGENT_ROLE_NAMES));
 
-        // Simpan/Update penugasan (1 ticket 1 assignment; kalau mau multi, ganti ke create saja)
-        TicketAssignment::updateOrCreate(
-            ['ticket_id' => $ticketId],
-            ['agent_id' => $this->selectedAgentId, 'assigned_at' => Carbon::now()]
-        );
+        if (!$this->isSuperadmin()) {
+            if (isset($admin->company_id)) {
+                $q->where('company_id', $admin->company_id);
+            }
+            if (!empty($admin->department_id)) {
+                $q->where('department_id', $admin->department_id);
+            }
+        }
+        return $q;
+    }
 
-        // Update status ticket
-        $ticket->status = 'ASSIGNED'; // atau 'IN_PROGRESS' sesuai flow-mu
+    public function getAgentsProperty()
+    {
+        return $this->allowedAgentsQuery()
+            ->orderBy('full_name')
+            ->get(['user_id', 'full_name', 'department_id']);
+    }
+
+    public bool $modalEdit = false;
+    public ?int $editId = null;
+    public ?int $edit_agent_id = null;
+    public string $edit_status = 'open';
+
+    public function openEdit(int $ticketId): void
+    {
+        if (!$this->ensureAdmin()) {
+            session()->flash('error', 'Unauthorized.');
+            return;
+        }
+
+        $ticket = TicketModel::with('assignment')->findOrFail($ticketId);
+
+        if ($ticket->status === 'CLOSED') {
+            session()->flash('error', "Ticket #{$ticketId} is closed and cannot be edited.");
+            return;
+        }
+
+        $this->editId = $ticketId;
+        $this->edit_agent_id = optional($ticket->assignment)->user_id;
+        $this->edit_status = strtolower($ticket->status);
+        $this->modalEdit = true;
+    }
+
+    public function closeEdit(): void
+    {
+        $this->reset(['modalEdit', 'editId', 'edit_agent_id', 'edit_status']);
+        $this->edit_status = 'open';
+    }
+
+    public function saveEdit(): void
+    {
+        if (!$this->ensureAdmin()) {
+            session()->flash('error', 'Unauthorized.');
+            return;
+        }
+        if (!$this->editId)
+            return;
+
+        $ticket = TicketModel::with('assignment')->findOrFail($this->editId);
+
+        if ($ticket->status === 'CLOSED') {
+            $this->addError('edit_status', 'This ticket is already closed.');
+            return;
+        }
+
+        if ($this->edit_agent_id) {
+            $isAllowed = $this->allowedAgentsQuery()
+                ->where('user_id', $this->edit_agent_id)
+                ->exists();
+            if (!$isAllowed) {
+                $this->addError('edit_agent_id', 'Agent is not in your department.');
+                return;
+            }
+        }
+
+        if ($this->edit_agent_id) {
+            TicketAssignmentModel::updateOrCreate(
+                ['ticket_id' => $ticket->ticket_id],
+                ['user_id' => $this->edit_agent_id]
+            );
+        } else {
+            if ($ticket->assignment) {
+                $ticket->assignment()->delete();
+            }
+        }
+
+        $targetDb = self::UI_TO_DB_STATUS_MAP[$this->edit_status] ?? 'OPEN';
+        if (!\in_array($targetDb, self::DB_ALLOWED_STATUSES, true)) {
+            $this->addError('edit_status', 'Invalid status.');
+            return;
+        }
+
+        if ($ticket->status !== $targetDb) {
+            $ticket->status = $targetDb;
+            $ticket->save();
+        }
+
+        $id = $ticket->ticket_id;
+        $this->closeEdit();
+        session()->flash('message', "Ticket #{$id} saved.");
+    }
+
+    public function deleteTicket(int $ticketId): void
+    {
+        if (!$this->ensureAdmin()) {
+            session()->flash('error', 'Unauthorized.');
+            return;
+        }
+
+        $ticket = TicketModel::find($ticketId);
+        if (!$ticket) {
+            session()->flash('error', 'Ticket not found.');
+            return;
+        }
+
+        if ($ticket->status === 'CLOSED') {
+            session()->flash('error', "Ticket #{$ticketId} is closed and cannot be deleted.");
+            return;
+        }
+
+        if ($ticket->status === 'DELETED') {
+            session()->flash('message', "Ticket #{$ticketId} already deleted.");
+            return;
+        }
+
+        $ticket->status = 'DELETED';
         $ticket->save();
 
-        session()->flash('message', 'Agent berhasil di-assign.');
-        $this->reset(['selectedAgentId', 'selectedTicketId']);
+        session()->flash('message', "Ticket #{$ticketId} moved to Trash.");
     }
 
     public function render()
     {
-        $deptId = Auth::user()->department_id;
+        $query = TicketModel::query()
+            ->with([
+                'user:user_id,full_name',
+                'assignment.agent:user_id,full_name',
+            ])
+            ->orderByDesc('ticket_id');
 
-        $tickets = TicketModel::where('department_id', $deptId)
-            ->orderByDesc('created_at')
-            ->paginate(10);
+        if ($this->search) {
+            $s = '%' . $this->search . '%';
+            $query->where(
+                fn($q) =>
+                $q->where('subject', 'like', $s)
+                    ->orWhere('description', 'like', $s)
+            );
+        }
 
-        // List agen: role "user" + satu departemen
-        $agents = User::where('department_id', $deptId)
-            ->where('role_id', $this->userRoleId)
-            ->orderBy('full_name')
-            ->get(['user_id', 'full_name']); // pilih kolom yang dipakai
+        if ($this->priority) {
+            $query->where('priority', $this->priority);
+        }
 
-        return view('livewire.pages.admin.ticket', compact('tickets', 'agents'));
+        if ($this->status) {
+            $dbStatus = self::UI_TO_DB_STATUS_MAP[$this->status] ?? null;
+            if ($dbStatus) {
+                $query->where('status', $dbStatus);
+            }
+        } else {
+            $query->where('status', '!=', 'DELETED');
+        }
+
+        $tickets = $query->paginate(30);
+        $collection = $tickets->getCollection();
+        $open = $collection->filter(fn($t) => $t->status === 'OPEN');
+        $inProgress = $collection->filter(fn($t) => $t->status === 'IN_PROGRESS');
+        $resolved = $collection->filter(fn($t) => $t->status === 'RESOLVED');
+        $closed = $collection->filter(fn($t) => $t->status === 'CLOSED');
+        $deleted = null;
+        if ($this->status === 'deleted') {
+            $deleted = $collection->filter(fn($t) => $t->status === 'DELETED');
+        }
+
+        return view('livewire.pages.admin.ticket', [
+            'tickets' => $tickets,
+            'open' => $open,
+            'inProgress' => $inProgress,
+            'resolved' => $resolved,
+            'closed' => $closed,
+            'deleted' => $deleted,
+            'agents' => $this->agents,
+        ]);
     }
 }

@@ -24,28 +24,30 @@ class Ticket extends Model
         'status',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'user_id');
-    }
-
-    public function company()
-    {
-        return $this->belongsTo(Company::class, 'company_id', 'company_id');
-    }
-
     public function department()
     {
-        return $this->belongsTo(Department::class, 'department_id', 'department_id');
+        return $this->belongsTo(\App\Models\Department::class, 'department_id', 'department_id');
     }
 
-    public function requesterDepartment()
+    public function user()
     {
-        return $this->belongsTo(Department::class, 'requestdept_id', 'department_id');
+        return $this->belongsTo(\App\Models\User::class, 'user_id', 'user_id');
     }
 
-    public function attachments()
+    public function assignments()
     {
-        return $this->hasMany(TicketAttachment::class, 'ticket_id', 'ticket_id');
+        return $this->hasMany(TicketAssignment::class, 'ticket_id', 'ticket_id');
     }
+
+    public function latestAssignment()
+    {
+        return $this->hasOne(TicketAssignment::class, 'ticket_id', 'ticket_id')
+            ->latestOfMany('assigned_at');
+    }
+
+    public function assignment()
+    {
+        return $this->hasOne(TicketAssignment::class, 'ticket_id', 'ticket_id');
+    }
+
 }

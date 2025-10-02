@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->string('subject');
             $table->text('description')->nullable();
             $table->enum('priority', ['low', 'medium', 'high'])->default('low');
-            $table->enum('status', ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'])->default('OPEN');
+            $table->enum('status', ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'DELETED'])->default('OPEN');
             $table->index(['company_id', 'status', 'priority']);
             $table->timestamps();
         });
