@@ -28,7 +28,7 @@
                     <p class="text-gray-600 mb-6">Fill out the form below to submit a new support ticket</p>
 
                     {{-- IMPORTANT: pastikan layout punya <meta name="csrf-token" content="{{ csrf_token() }}"> --}}
-                    <form class="space-y-6" wire:submit.prevent="save" onsubmit="beforeSubmitAttachSync()">
+                    <form class="space-y-6" wire:submit.prevent="save" onsubmit="return beforeSubmitAttachSync()">
                         @csrf
 
                         {{-- ===== basic fields (tetap) ===== --}}
@@ -100,7 +100,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-900 mb-2">Attachments</label>
                             <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
-                                {{-- ganti dari wire:model="attachments" ke input biasa; kita handle via JS untuk Cloudinary --}}
+                                {{-- input biasa; JS handle ke Cloudinary --}}
                                 <input
                                     type="file"
                                     id="file-upload"
@@ -134,7 +134,6 @@
                                     </ul>
                                 </div>
                             </div>
-                            {{-- error dari rules lama dihapus karena tidak lagi pakai wire:model attachments --}}
                         </div>
 
                         <div class="flex space-x-4 pt-4">
@@ -173,7 +172,8 @@
   const progPct  = document.getElementById('progpercent');
   const progMsg  = document.getElementById('progmsg');
 
-  let tempItems  = JSON.parse(hidden.value || '[]');
+  let tempItems     = JSON.parse(hidden.value || '[]');
+  let activeUploads = 0;
 
   function setProgress(p, msg) {
     progWrap.classList.remove('hidden');
@@ -189,8 +189,9 @@
 
   function syncHidden() {
     hidden.value = JSON.stringify(tempItems || []);
-    // <-- WAJIB untuk Livewire mendeteksi perubahan <input type="hidden">
-    hidden.dispatchEvent(new Event('input'));
+    // WAJIB: pakai input + change agar Livewire pasti detect
+    hidden.dispatchEvent(new Event('input',  { bubbles: true }));
+    hidden.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   function renderList() {
@@ -211,21 +212,21 @@
         </span>
         <button type="button" class="text-red-600 text-xs underline">Remove</button>
       `;
-      li.querySelector('button').addEventListener('click', async () => {
-        try {
-          await fetch('/attachments/temp', {
-            method: 'DELETE',
-            headers: {
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ public_id: item.public_id, file_type: item.resource_type })
-          });
-        } catch (_) {}
+      // OPTIMISTIC REMOVE + sync dulu, baru call API delete
+      li.querySelector('button').addEventListener('click', () => {
         tempItems = tempItems.filter(x => x.public_id !== item.public_id);
         syncHidden();
-        renderList();
+        li.remove();
+
+        fetch('/attachments/temp', {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ public_id: item.public_id, file_type: item.resource_type })
+        }).catch(()=>{ /* no-op */ });
       });
       listEl.appendChild(li);
     });
@@ -287,6 +288,7 @@
         fd.append('upload_preset', sig.upload_preset);
         fd.append('folder', sig.folder);
 
+        activeUploads++;
         const cloudJson = await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open('POST', `https://api.cloudinary.com/v1_1/${sig.cloud_name}/auto/upload`);
@@ -298,7 +300,7 @@
                           : reject({ status: xhr.status, body: xhr.responseText });
           xhr.onerror = () => reject({ status: 0, body: 'network error' });
           xhr.send(fd);
-        });
+        }).finally(() => { activeUploads--; });
 
         // 3) add to list & sinkron ke Livewire
         const item = {
@@ -316,6 +318,7 @@
         setProgress(100, 'Done');
       } catch (err) {
         console.error(err);
+        activeUploads = Math.max(0, activeUploads - 1);
         hideProgress();           // jangan nyangkut di 5%
         toast('Upload failed');
       }
@@ -324,7 +327,14 @@
 
   // dipanggil saat submit form (Livewire) — pastikan nilai terbaru terkirim
   window.beforeSubmitAttachSync = function () {
+    if (activeUploads > 0) {
+      alert('Masih ada upload yang berjalan. Tunggu selesai dulu ya.');
+      return false;
+    }
     syncHidden();
+    // Debug (opsional): lihat payload final yang terkirim ke Livewire
+    console.debug('Final payload temp_items_json:', hidden.value);
+    return true; // izinkan submit
   };
 })();
 </script>
