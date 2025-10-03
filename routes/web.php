@@ -24,7 +24,6 @@ use App\Livewire\Pages\Superadmin\Announcement;
 use App\Livewire\Pages\Superadmin\Information;
 use App\Livewire\Pages\Superadmin\Account as UserManagement;
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
-use App\Livewire\Pages\Receptionist\Guestbook as ReceptionistGuestbook;
 use App\Livewire\Pages\Receptionist\Documents as Documents;
 use App\Livewire\Pages\Receptionist\Calendar as CalendarPage;
 use App\Livewire\Pages\Superadmin\Department as DepartmentPage;
@@ -120,6 +119,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('is.admin')->group(function () {
         Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
         Route::get('/admin-ticket', AdminTicket::class)->name('admin.ticket');
+
     });
 
     // ---------- Superadmin routes ----------

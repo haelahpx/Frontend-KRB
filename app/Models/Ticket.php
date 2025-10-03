@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Ticket extends Model
 {
@@ -24,17 +27,27 @@ class Ticket extends Model
         'status',
     ];
 
-    public function department()
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'company_id', 'company_id');
+    }
+
+    public function department(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Department::class, 'department_id', 'department_id');
     }
 
-    public function user()
+    public function requesterDepartment(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class, 'user_id', 'user_id');
     }
 
-    public function assignments()
+    public function attachments(): HasMany
     {
         return $this->hasMany(TicketAssignment::class, 'ticket_id', 'ticket_id');
     }
@@ -45,7 +58,7 @@ class Ticket extends Model
             ->latestOfMany('assigned_at');
     }
 
-    public function assignment()
+    public function assignment(): HasOne
     {
         return $this->hasOne(TicketAssignment::class, 'ticket_id', 'ticket_id');
     }
