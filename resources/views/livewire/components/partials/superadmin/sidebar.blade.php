@@ -1,13 +1,3 @@
-@php
-$fullName = trim(Auth::user()->full_name ?? 'User');
-$parts = preg_split('/\s+/', $fullName);
-$firstInitial = strtoupper(substr($parts[0] ?? 'U', 0, 1));
-$lastInitial = strtoupper(substr($parts[count($parts)-1] ?? '', 0, 1));
-$initials = $firstInitial . $lastInitial;
-
-$roleName = Auth::user()->role->name ?? 'Member';
-@endphp
-
 <flux:sidebar
     sticky
     collapsible="mobile"

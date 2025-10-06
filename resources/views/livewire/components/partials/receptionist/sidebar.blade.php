@@ -49,14 +49,28 @@
         </flux:sidebar.item>
     </flux:sidebar.nav>
 
+    {{-- Profil + menu (desktop) --}}
     <flux:dropdown position="top" align="start" class="max-lg:hidden">
-        <flux:sidebar.profile avatar="https://fluxui.dev/img/demo/user.png" name="Meow Lala" />
+        <flux:sidebar.profile avatar="" name="{{ $fullName }}" />
+
         <flux:menu>
             <flux:menu.radio.group>
-                <flux:menu.radio checked>{{ Auth::user()->full_name }}</flux:menu.radio>
+                <flux:menu.radio checked>{{ $fullName }}</flux:menu.radio>
+                <flux:sidebar.item
+                    icon="user"
+                    href="{{ route('user.home') }}"
+                    class="cursor-pointer">
+                    User Page
+                </flux:sidebar.item>
             </flux:menu.radio.group>
+
             <flux:menu.separator />
-            <flux:menu.item icon="arrow-right-start-on-rectangle" as="button" type="submit" form="logout-form">
+
+            <flux:menu.item
+                icon="arrow-right-start-on-rectangle"
+                as="button"
+                type="submit"
+                form="logout-form">
                 Logout
             </flux:menu.item>
         </flux:menu>

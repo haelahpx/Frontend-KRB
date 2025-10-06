@@ -1,3 +1,14 @@
+@php
+use Illuminate\Support\Facades\Auth;
+
+$user = Auth::user();
+
+$fullName = trim($user->full_name ?? 'User');
+$parts = preg_split('/\s+/', $fullName);
+$firstInitial = strtoupper(substr($parts[0] ?? 'U', 0, 1));
+$lastInitial = strtoupper(substr($parts[count($parts)-1] ?? '', 0, 1));
+$initials = $firstInitial . $lastInitial;
+@endphp
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 
@@ -12,9 +23,9 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 
-<body class="min-h-screen bg-white dark:bg-zinc-800 flex">
+<body class="min-h-screen bg-white flex">
     {{-- Mobile header only (<lg) --}}
-    <flux:header class="lg:hidden fixed top-0 inset-x-0 z-50 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
+    <flux:header class="lg:hidden fixed top-0 inset-x-0 z-50 bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
         <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
         <div class="font-medium">Kebun Raya Bogor</div>
@@ -22,10 +33,16 @@
         <flux:spacer />
 
         <flux:dropdown position="top" align="start">
-            <flux:profile avatar="https://fluxui.dev/img/demo/user.png" />
+            <flux:profile avatar-text="{{ strtoupper($initials) }}" />
             <flux:menu>
                 <flux:menu.radio.group>
-                    <flux:menu.radio checked>{{ Auth::user()->full_name }}</flux:menu.radio>
+                    <flux:menu.radio checked>{{ $fullName }}</flux:menu.radio>
+                    <flux:sidebar.item
+                        icon="user"
+                        href="{{ route('user.home') }}"
+                        class="cursor-pointer">
+                        User Page
+                    </flux:sidebar.item>
                 </flux:menu.radio.group>
 
                 <flux:menu.separator />

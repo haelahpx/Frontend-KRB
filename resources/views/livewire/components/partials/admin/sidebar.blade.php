@@ -1,23 +1,3 @@
-@php
-use Illuminate\Support\Facades\Auth;
-
-// Ambil user (aman dari null)
-$user = Auth::user();
-
-// Nama lengkap & inisial
-$fullName = trim($user->full_name ?? 'User');
-$parts = preg_split('/\s+/', $fullName);
-$firstInitial = strtoupper(substr($parts[0] ?? 'U', 0, 1));
-$lastInitial  = strtoupper(substr($parts[count($parts)-1] ?? '', 0, 1));
-$initials     = $firstInitial . $lastInitial;
-
-// (Opsional) tampilkan status/role singkat
-$roleName = $user->role->name ?? 'Member';
-
-// (Opsional) URL avatar jika ada di database, kalau tidak ada biarkan null
-$avatarUrl = $user->avatar_url ?? null;
-@endphp
-
 <flux:sidebar
     sticky
     collapsible="mobile"
@@ -27,8 +7,7 @@ $avatarUrl = $user->avatar_url ?? null;
         border-r border-zinc-200 dark:border-zinc-700
         lg:w-64 w-[85vw] max-w-sm
         z-40
-    "
->
+    ">
     <flux:sidebar.header>
         <flux:sidebar.brand
             href="#"
@@ -43,14 +22,12 @@ $avatarUrl = $user->avatar_url ?? null;
         <flux:sidebar.item
             icon="home"
             href="{{ route('admin.dashboard') }}"
-            :current="request()->routeIs('admin.dashboard')"
-        >Home</flux:sidebar.item>
+            :current="request()->routeIs('admin.dashboard')">Home</flux:sidebar.item>
 
         <flux:sidebar.item
             icon="inbox"
             href="{{ route('admin.ticket') }}"
-            :current="request()->routeIs('admin.ticket')"
-        >Ticket</flux:sidebar.item>
+            :current="request()->routeIs('admin.ticket')">Ticket</flux:sidebar.item>
 
         <flux:sidebar.item icon="document-text" href="#">Documents</flux:sidebar.item>
         <flux:sidebar.item icon="calendar" href="#">Calendar</flux:sidebar.item>
@@ -68,20 +45,14 @@ $avatarUrl = $user->avatar_url ?? null;
             icon="arrow-right-start-on-rectangle"
             as="button"
             type="submit"
-            form="logout-form"
-        >
+            form="logout-form">
             Logout
         </flux:sidebar.item>
     </flux:sidebar.nav>
 
     {{-- Profil + menu (desktop) --}}
     <flux:dropdown position="top" align="start" class="max-lg:hidden">
-        @if($avatarUrl)
-            <flux:sidebar.profile avatar="{{ $avatarUrl }}" name="{{ $fullName }}" />
-        @else
-            {{-- Jika tidak ada avatar, tetap pakai komponen dengan avatar kosong (komponen biasanya fallback ke huruf) --}}
-            <flux:sidebar.profile avatar="" name="{{ $fullName }}" />
-        @endif
+        <flux:sidebar.profile avatar="" name="{{ $fullName }}" />
 
         <flux:menu>
             <flux:menu.radio.group>
@@ -89,8 +60,7 @@ $avatarUrl = $user->avatar_url ?? null;
                 <flux:sidebar.item
                     icon="user"
                     href="{{ route('user.home') }}"
-                    class="cursor-pointer"
-                >
+                    class="cursor-pointer">
                     User Page
                 </flux:sidebar.item>
             </flux:menu.radio.group>
@@ -101,8 +71,7 @@ $avatarUrl = $user->avatar_url ?? null;
                 icon="arrow-right-start-on-rectangle"
                 as="button"
                 type="submit"
-                form="logout-form"
-            >
+                form="logout-form">
                 Logout
             </flux:menu.item>
         </flux:menu>
