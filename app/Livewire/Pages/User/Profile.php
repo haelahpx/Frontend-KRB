@@ -6,18 +6,18 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password as PasswordRule;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 #[Layout('layouts.app')]
 #[Title('Profile')]
 class Profile extends Component
 {
-    // state untuk Blade/Alpine
     public array $profile = [];
     public array $stats = [];
 
-    // field password (pakai konvensi *_confirmation untuk "confirmed")
     public string $current_password = '';
     public string $new_password = '';
     public string $new_password_confirmation = '';
@@ -27,17 +27,16 @@ class Profile extends Component
         $user = Auth::user()->loadMissing(['department', 'company', 'role']);
 
         $this->profile = [
-            'fullName'   => $user->name,
-            'email'      => $user->email,
-            'phone_number'      => $user->phone_number ?? null,
-            'employeeId' => $user->employee_id ?? null,
-            'department' => optional($user->department)->department_name ?? '-',
-            'company'     => optional($user->company)->company_name ?? '-',
-            'joinDate'   => optional($user->joined_at ?? $user->created_at)?->format('M Y'),
-            'role'       => optional($user->role)->name ?? (is_string($user->role) ? $user->role : '-'),
+            'fullName'     => $user->name,
+            'email'        => $user->email,
+            'phone_number' => $user->phone_number ?? null,
+            'employeeId'   => $user->employee_id ?? null,
+            'department'   => optional($user->department)->department_name ?? '-',
+            'company'      => optional($user->company)->company_name ?? '-',
+            'joinDate'     => optional($user->joined_at ?? $user->created_at)?->format('M Y'),
+            'role'         => optional($user->role)->name ?? (is_string($user->role) ? $user->role : '-'),
         ];
 
-        // Sesuaikan ini dengan modelmu: tickets(), bookings(), packages()
         $this->stats = [
             'openTickets'    => method_exists($user, 'tickets')  ? $user->tickets()->where('status', 'open')->count() : 0,
             'activeBookings' => method_exists($user, 'bookings') ? $user->bookings()->where('status', 'active')->count() : 0,
@@ -48,20 +47,50 @@ class Profile extends Component
 
     public function updatePassword(): void
     {
-        $this->validate([
-            'current_password'            => ['required', 'current_password'],
-            'new_password'                => ['required', 'string', 'confirmed', PasswordRule::min(8)],
-        ], [], [
-            'current_password' => 'current password',
-            'new_password'     => 'new password',
-        ]);
+        $this->resetErrorBag();
+        $this->resetValidation();
 
-        $user = Auth::user();
-        $user->forceFill(['password' => Hash::make($this->new_password)])->save();
+        try {
+            $validated = $this->validate([
+                'current_password'            => ['required', 'string'],
+                'new_password'                => ['required', 'string', 'confirmed', PasswordRule::min(8)],
+            ]);
 
-        // bersihkan field & kasih event ke front-end
-        $this->reset(['current_password', 'new_password', 'new_password_confirmation']);
-        $this->dispatch('password-updated');
+            $user = auth()->user();
+
+            // Check current password
+            if (! Hash::check($this->current_password, $user->password)) {
+                $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Kata sandi saat ini salah.', duration: 3000);
+                return;
+            }
+
+            // Ensure new password is different
+            if (Hash::check($this->new_password, $user->password)) {
+                $this->dispatch('toast', type: 'warning', title: 'Tidak Valid', message: 'Kata sandi baru harus berbeda dari yang lama.', duration: 3000);
+                return;
+            }
+
+            // Save new password
+            $user->password = Hash::make($this->new_password);
+            $saved = $user->save();
+
+            if (! $saved) {
+                $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Gagal memperbarui kata sandi. Silakan coba lagi.', duration: 3000);
+                return;
+            }
+
+            // Reset fields
+            $this->reset(['current_password', 'new_password', 'new_password_confirmation']);
+
+            // Success toast
+            $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'Kata sandi berhasil diperbarui.', duration: 3000);
+
+        } catch (ValidationException $e) {
+            $this->dispatch('toast', type: 'error', title: 'Validasi Gagal', message: 'Periksa kembali input Anda.', duration: 3000);
+            throw $e;
+        } catch (Throwable $e) {
+            $this->dispatch('toast', type: 'error', title: 'Kesalahan', message: 'Terjadi kesalahan tak terduga.', duration: 3000);
+        }
     }
 
     public function render()
