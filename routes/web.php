@@ -15,6 +15,7 @@ use App\Livewire\Pages\User\Profile;
 use App\Livewire\Pages\User\Package;
 use App\Livewire\Pages\User\Ticketstatus;
 use App\Livewire\Pages\User\BookingStatus;
+use App\Livewire\Pages\User\Ticketshow;
 
 // ========== Livewire Pages (Admin / Superadmin / Receptionist) ==========
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
@@ -48,6 +49,7 @@ use App\Livewire\Pages\Errors\error404 as Error404;
 | Root: arahkan sesuai status login & role
 |--------------------------------------------------------------------------
 */
+
 Route::get('/', function () {
     if (!Auth::check()) {
         return redirect()->route('login');
@@ -93,6 +95,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', Profile::class)->name('profile');
     Route::get('/package', Package::class)->name('package');
     Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
+    Route::get('/tickets/{ticket:ticket_id}', Ticketshow::class)->name('user.ticket.show');
 
     // ---------- Attachments API ----------
     Route::post('/attachments/signature', [AttachmentController::class, 'signature'])

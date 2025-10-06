@@ -63,4 +63,9 @@ class Ticket extends Model
         return $this->hasOne(TicketAssignment::class, 'ticket_id', 'ticket_id');
     }
 
+    public function comments(): HasMany
+    {
+        return $this->hasMany(TicketComment::class, 'ticket_id', 'ticket_id');
+    }
+
 }
