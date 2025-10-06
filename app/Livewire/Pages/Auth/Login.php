@@ -37,8 +37,7 @@ class Login extends Component
     {
         $this->validate();
 
-        // Throttle percobaan login
-        $key = 'login:'.Str::lower($this->email).'|'.request()->ip();
+        $key = 'login:' . Str::lower($this->email) . '|' . request()->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $sec = RateLimiter::availableIn($key);
             throw ValidationException::withMessages([
@@ -46,23 +45,24 @@ class Login extends Component
             ]);
         }
 
-        // Attempt login + remember me
         $ok = Auth::attempt(
             ['email' => Str::lower($this->email), 'password' => $this->password],
             $this->remember
         );
 
         if (! $ok) {
-            RateLimiter::hit($key, 60); 
+            RateLimiter::hit($key, 60);
             throw ValidationException::withMessages([
                 'email' => 'Invalid credentials.',
             ]);
         }
 
         RateLimiter::clear($key);
-        session()->regenerate();
 
-        return redirect()->intended(route('home'));
+        request()->session()->regenerate();
+        session()->forget('url.intended');
+
+        return redirect()->route('home');
     }
 
     public function render()

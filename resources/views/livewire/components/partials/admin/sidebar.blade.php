@@ -9,13 +9,15 @@
         z-40
     ">
     <flux:sidebar.header>
+        {{-- Brand: text putih + logo putih --}}
         <flux:sidebar.brand
             href="#"
             logo="{{ asset('images/logo/kebun-raya-bogor.png') }}"
-            name="Kebun Raya Bogor." />
+            name="Kebun Raya Bogor."
+            class="text-white"
+            style="filter: brightness(0) invert(1);" />
         <flux:sidebar.collapse class="lg:hidden" />
     </flux:sidebar.header>
-
     <flux:sidebar.search placeholder="Search..." />
 
     <flux:sidebar.nav>
@@ -39,7 +41,6 @@
         <flux:sidebar.item icon="cog-6-tooth" href="#">Settings</flux:sidebar.item>
         <flux:sidebar.item icon="information-circle" href="#">Help</flux:sidebar.item>
 
-        {{-- Logout khusus MOBILE (karena dropdown di bawah hanya tampil desktop) --}}
         <flux:sidebar.item
             class="lg:hidden"
             icon="arrow-right-start-on-rectangle"

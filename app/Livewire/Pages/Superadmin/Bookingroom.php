@@ -3,12 +3,19 @@
 namespace App\Livewire\Pages\Superadmin;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use App\Models\Room;
+use Carbon\Carbon;
+
+// Aliases Model
+use App\Models\BookingRoom as BR;
+use App\Models\Room as RM;
+use App\Models\Department as DP;
 use App\Models\Requirement;
 
 #[Layout('layouts.superadmin')]
@@ -17,204 +24,269 @@ class Bookingroom extends Component
 {
     use WithPagination;
 
-    // ===== Context
-    public int $companyId;
-
-    // ===== Rooms (create)
-    public string $room_number = '';
+    // UI state
     public string $search = '';
+    public string $departmentFilter = '';
+    public int    $perPage = 10;
+    public string $sortBy  = 'start_time';
+    public string $sortDir = 'desc';
 
-    // ===== Rooms (edit modal)
-    public bool $roomModal = false;
-    public ?int $room_edit_id = null;
-    public string $room_edit_number = '';
+    protected $queryString = [
+        'search'           => ['except' => ''],
+        'departmentFilter' => ['except' => ''],
+        'perPage'          => ['except' => 10],
+        'sortBy'           => ['except' => 'start_time'],
+        'sortDir'          => ['except' => 'desc'],
+    ];
 
-    // ===== Requirements (create)
-    public string $req_name = '';
-    public string $req_search = '';
+    // Modal & edit state (EDIT ONLY)
+    public bool  $modal = false;
+    public ?int  $editingId = null;
 
-    // ===== Requirements (edit modal)
-    public bool $reqModal = false;
-    public ?int $req_edit_id = null;
-    public string $req_edit_name = '';
+    // Form fields
+    public $room_id;
+    public $department_id;
+    public $meeting_title;
+    public $date;
+    public $number_of_attendees;
+    public $start_time;
+    public $end_time;
+    public $special_notes;
+
+    // Requirement checklist in modal
+    public array $selectedRequirements = [];
+    public $allRequirements = []; // [{requirement_id, name}]
+
+    // Lookups for list cards
+    public array $roomLookup = [];
+    public array $deptLookup = [];
+
+    private array $sortable = ['meeting_title', 'date', 'start_time', 'end_time', 'number_of_attendees'];
+
+    protected function rules(): array
+    {
+        return [
+            'room_id'              => ['required', 'integer', Rule::exists('rooms', 'room_id')],
+            'department_id'        => ['required', 'integer', Rule::exists('departments', 'department_id')],
+            'meeting_title'        => ['required', 'string', 'max:255'],
+            'date'                 => ['required', 'date'],
+            'number_of_attendees'  => ['required', 'integer', 'min:1'],
+            'start_time'           => ['required', 'date'],
+            'end_time'             => ['required', 'date', 'after:start_time'],
+            'special_notes'        => ['nullable', 'string'],
+            'selectedRequirements' => ['array'],
+        ];
+    }
 
     public function mount(): void
     {
-        $this->companyId = (int) (Auth::user()->company_id ?? 0);
+        $companyId = Auth::user()->company_id;
+
+        // Display column for Room
+        $roomNameCol = Schema::hasColumn('rooms', 'name') ? 'name'
+            : (Schema::hasColumn('rooms', 'room_name') ? 'room_name'
+                : (Schema::hasColumn('rooms', 'room_number') ? 'room_number' : null));
+        if (!$roomNameCol) {
+            throw new \RuntimeException('Rooms table needs a display column (name / room_name / room_number).');
+        }
+
+        $rooms = RM::where('company_id', $companyId)
+            ->orderBy($roomNameCol)
+            ->get(['room_id', "$roomNameCol as name"]);
+        $this->roomLookup = $rooms->pluck('name', 'room_id')->toArray();
+
+        // Display column for Department
+        $deptNameCol = Schema::hasColumn('departments', 'name') ? 'name'
+            : (Schema::hasColumn('departments', 'department_name') ? 'department_name' : null);
+        if (!$deptNameCol) {
+            throw new \RuntimeException('Departments table needs a display column (name / department_name).');
+        }
+
+        $departments = DP::where('company_id', $companyId)
+            ->orderBy($deptNameCol)
+            ->get(['department_id', "$deptNameCol as name"]);
+        $this->deptLookup = $departments->pluck('name', 'department_id')->toArray();
+
+        // Load requirement master (global)
+        $this->allRequirements = Requirement::orderBy('name')->get(['requirement_id', 'name']);
+
+        if (!in_array($this->sortBy, $this->sortable, true)) $this->sortBy = 'start_time';
+        $this->sortDir = $this->sortDir === 'asc' ? 'asc' : 'desc';
     }
 
-    // ===== Pagination search reset (match two lists)
-    public function updatingSearch(): void { $this->resetPage(pageName: 'roomsPage'); }
-    public function updatingReqSearch(): void { $this->resetPage(pageName: 'reqsPage'); }
-
-    // ===== Validation
-    protected function roomCreateRules(): array
+    // Pagination refreshers
+    public function updatingSearch()
     {
-        return [
-            'room_number' => [
-                'required', 'string', 'max:255',
-                Rule::unique('rooms', 'room_number')
-                    ->where(fn($q) => $q->where('company_id', $this->companyId)),
-            ],
-        ];
+        $this->resetPage();
+    }
+    public function updatingDepartmentFilter()
+    {
+        $this->resetPage();
+    }
+    public function updatingPerPage()
+    {
+        $this->resetPage();
     }
 
-    protected function roomEditRules(): array
+    public function sort(string $field): void
     {
-        return [
-            'room_edit_number' => [
-                'required', 'string', 'max:255',
-                Rule::unique('rooms', 'room_number')
-                    ->where(fn($q) => $q->where('company_id', $this->companyId))
-                    ->ignore($this->room_edit_id, 'room_id'),
-            ],
-        ];
+        if (!in_array($field, $this->sortable, true)) return;
+        if ($this->sortBy === $field) {
+            $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $field;
+            $this->sortDir = 'asc';
+        }
+        $this->resetPage();
     }
 
-    protected function reqCreateRules(): array
+    /* ---------- Edit-only Modal ---------- */
+    public function openEdit(int $id): void
     {
-        // Requirement tidak pakai company_id (global)
-        return [
-            'req_name' => [
-                'required', 'string', 'max:255',
-                Rule::unique('requirements', 'name'),
-            ],
-        ];
+        $companyId = Auth::user()->company_id;
+        $data = BR::where('company_id', $companyId)->findOrFail($id);
+
+        $this->editingId = $data->bookingroom_id;
+
+        $this->room_id             = $data->room_id;
+        $this->department_id       = $data->department_id;
+        $this->meeting_title       = $data->meeting_title;
+        $this->date                = $data->date;
+        $this->number_of_attendees = $data->number_of_attendees;
+        $this->start_time          = Carbon::parse($data->start_time)->format('Y-m-d\TH:i');
+        $this->end_time            = Carbon::parse($data->end_time)->format('Y-m-d\TH:i');
+        $this->special_notes       = $data->special_notes;
+
+        // Load selected requirements (pivot)
+        $this->selectedRequirements = DB::table('booking_requirements')
+            ->where('bookingroom_id', $id)
+            ->pluck('requirement_id')
+            ->toArray();
+
+        $this->modal = true;
+        $this->resetErrorBag();
     }
 
-    protected function reqEditRules(): array
+    public function closeModal(): void
     {
-        return [
-            'req_edit_name' => [
-                'required', 'string', 'max:255',
-                Rule::unique('requirements', 'name')
-                    ->ignore($this->req_edit_id, 'requirement_id'),
-            ],
-        ];
+        $this->modal = false;
+        $this->resetErrorBag();
     }
 
-    // ===== Rooms: Create/List
-    public function roomStore(): void
+    /* ---------- Update & Delete only ---------- */
+    public function update(): void
     {
-        $this->validate($this->roomCreateRules());
+        $this->validate();
 
-        Room::create([
-            'company_id'  => $this->companyId,
-            'room_number' => $this->room_number,
+        $companyId = Auth::user()->company_id;
+        $row = BR::where('company_id', $companyId)->findOrFail($this->editingId);
+
+        // Update booking data
+        $row->update([
+            'room_id'             => $this->room_id,
+            'department_id'       => $this->department_id,
+            'meeting_title'       => $this->meeting_title,
+            'date'                => $this->date,
+            'number_of_attendees' => $this->number_of_attendees,
+            'start_time'          => Carbon::parse($this->start_time)->toDateTimeString(),
+            'end_time'            => Carbon::parse($this->end_time)->toDateTimeString(),
+            'special_notes'       => $this->special_notes,
         ]);
 
-        $this->room_number = '';
-        session()->flash('success', 'Room berhasil dibuat.');
-        $this->resetPage(pageName: 'roomsPage');
+        // Sync requirements (pivot)
+        DB::table('booking_requirements')
+            ->where('bookingroom_id', $row->bookingroom_id)
+            ->delete();
+
+        $now = now();
+        foreach ($this->selectedRequirements as $reqId) {
+            DB::table('booking_requirements')->insert([
+                'bookingroom_id' => $row->bookingroom_id,
+                'requirement_id' => $reqId,
+                'created_at'     => $now,
+                'updated_at'     => $now,
+            ]);
+        }
+
+        $this->closeModal();
+        $this->resetForm();
+        session()->flash('success', 'Booking updated (requirements included).');
     }
 
-    public function roomOpenEdit(int $id): void
+    public function delete(int $id): void
     {
-        $r = Room::where('company_id', $this->companyId)->findOrFail($id);
-        $this->room_edit_id = $r->room_id;
-        $this->room_edit_number = $r->room_number;
-        $this->roomModal = true;
-        $this->resetErrorBag();
+        $companyId = Auth::user()->company_id;
+        $row = BR::where('company_id', $companyId)->findOrFail($id);
+        $row->delete();
+
+        // clean pivot
+        DB::table('booking_requirements')->where('bookingroom_id', $id)->delete();
+
+        session()->flash('success', 'Booking deleted.');
+        $this->resetPage();
     }
 
-    public function roomCloseEdit(): void
+    private function resetForm(): void
     {
-        $this->roomModal = false;
-        $this->reset('room_edit_id', 'room_edit_number');
-        $this->resetErrorBag();
+        $this->reset([
+            'editingId',
+            'room_id',
+            'department_id',
+            'meeting_title',
+            'date',
+            'number_of_attendees',
+            'start_time',
+            'end_time',
+            'special_notes',
+            'selectedRequirements',
+        ]);
     }
 
-    public function roomUpdate(): void
-    {
-        $this->validate($this->roomEditRules());
-
-        $r = Room::where('company_id', $this->companyId)->findOrFail($this->room_edit_id);
-        $r->update(['room_number' => $this->room_edit_number]);
-
-        $this->roomCloseEdit();
-        session()->flash('success', 'Room berhasil diupdate.');
-    }
-
-    public function roomDelete(int $id): void
-    {
-        Room::where('company_id', $this->companyId)->findOrFail($id)->delete();
-        if ($this->room_edit_id === $id) $this->roomCloseEdit();
-
-        session()->flash('success', 'Room berhasil dihapus.');
-        $this->resetPage(pageName: 'roomsPage');
-    }
-
-    public function getRoomsProperty()
-    {
-        return Room::query()
-            ->where('company_id', $this->companyId)
-            ->when($this->search !== '', fn($q) => $q->where('room_number', 'like', "%{$this->search}%"))
-            ->orderByDesc('created_at')
-            ->paginate(10, pageName: 'roomsPage');
-    }
-
-    // ===== Requirements: Create/List
-    public function reqStore(): void
-    {
-        $this->validate($this->reqCreateRules());
-
-        Requirement::create(['name' => $this->req_name]);
-
-        $this->req_name = '';
-        session()->flash('success', 'Requirement berhasil dibuat.');
-        $this->resetPage(pageName: 'reqsPage');
-    }
-
-    public function reqOpenEdit(int $id): void
-    {
-        $q = Requirement::findOrFail($id);
-        $this->req_edit_id = $q->requirement_id;
-        $this->req_edit_name = $q->name;
-        $this->reqModal = true;
-        $this->resetErrorBag();
-    }
-
-    public function reqCloseEdit(): void
-    {
-        $this->reqModal = false;
-        $this->reset('req_edit_id', 'req_edit_name');
-        $this->resetErrorBag();
-    }
-
-    public function reqUpdate(): void
-    {
-        $this->validate($this->reqEditRules());
-
-        $q = Requirement::findOrFail($this->req_edit_id);
-        $q->update(['name' => $this->req_edit_name]);
-
-        $this->reqCloseEdit();
-        session()->flash('success', 'Requirement berhasil diupdate.');
-    }
-
-    public function reqDelete(int $id): void
-    {
-        Requirement::findOrFail($id)->delete();
-        if ($this->req_edit_id === $id) $this->reqCloseEdit();
-
-        session()->flash('success', 'Requirement berhasil dihapus.');
-        $this->resetPage(pageName: 'reqsPage');
-    }
-
-    public function getRequirementsProperty()
-    {
-        return Requirement::query()
-            ->when($this->req_search !== '', fn($q) => $q->where('name', 'like', "%{$this->req_search}%"))
-            ->orderBy('name')
-            ->paginate(10, pageName: 'reqsPage');
-    }
-
-    // ===== Render
     public function render()
     {
+        $companyId = Auth::user()->company_id;
+
+        // Base query
+        $bookings = BR::query()
+            ->select([
+                'booking_rooms.*',
+                DB::raw("COALESCE(u.full_name, '') as user_full_name"),
+            ])
+            ->leftJoin('users as u', 'u.user_id', '=', 'booking_rooms.user_id')
+            ->where('booking_rooms.company_id', $companyId)
+            ->when($this->departmentFilter, fn($q) => $q->where('booking_rooms.department_id', $this->departmentFilter))
+            ->when($this->search !== '', function ($q) {
+                $s = "%{$this->search}%";
+                $q->where(function ($qq) use ($s) {
+                    $qq->where('booking_rooms.meeting_title', 'like', $s)
+                        ->orWhere('booking_rooms.special_notes', 'like', $s);
+                });
+            })
+            ->orderBy($this->sortBy, $this->sortDir)
+            ->paginate($this->perPage);
+
+        // Build requirements map for the page (avoid queries in Blade)
+        $ids = $bookings->pluck('bookingroom_id')->all();
+
+        $requirementsMap = [];
+        if (!empty($ids)) {
+            $rows = DB::table('booking_requirements as br')
+                ->join('requirements as r', 'r.requirement_id', '=', 'br.requirement_id')
+                ->whereIn('br.bookingroom_id', $ids)
+                ->orderBy('r.name')
+                ->get(['br.bookingroom_id', 'r.name']);
+
+            foreach ($rows as $row) {
+                $requirementsMap[$row->bookingroom_id][] = $row->name;
+            }
+        }
+
         return view('livewire.pages.superadmin.bookingroom', [
-            'rooms'        => $this->rooms,
-            'requirements' => $this->requirements,
+            'bookings'         => $bookings,
+            'roomLookup'       => $this->roomLookup,
+            'deptLookup'       => $this->deptLookup,
+            'requirementsMap'  => $requirementsMap, // bookingroom_id => [names...]
+            'allRequirements'  => $this->allRequirements, // for modal checklist
         ]);
     }
 }

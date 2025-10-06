@@ -19,6 +19,13 @@ class Department extends Model
 
     protected $fillable = ['company_id', 'department_name'];
 
+    public function getNameAttribute()
+    {
+        return $this->attributes['name']
+            ?? $this->attributes['department_name']
+            ?? null;
+    }
+
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class, 'company_id', 'company_id');

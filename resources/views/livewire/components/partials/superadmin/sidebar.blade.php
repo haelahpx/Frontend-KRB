@@ -50,7 +50,26 @@
             :current="request()->routeIs('superadmin.user')">
             User Management
         </flux:sidebar.item>
-
+        <flux:sidebar.group expandable heading="Booking Room" class="grid">
+            <flux:sidebar.item
+                icon="calendar"
+                href="{{ route('superadmin.bookingroom') }}"
+                :current="request()->routeIs('superadmin.bookingroom')">
+                Booking Room
+            </flux:sidebar.item>
+            <flux:sidebar.item
+                icon="building-office"
+                href="{{ route('superadmin.manageroom') }}"
+                :current="request()->routeIs('superadmin.manageroom')">
+                Manage Room
+            </flux:sidebar.item>
+            <flux:sidebar.item
+                icon="check-badge"
+                href="{{ route('superadmin.managerequirements') }}"
+                :current="request()->routeIs('superadmin.managerequirements')">
+                Manage Requirements
+            </flux:sidebar.item>
+        </flux:sidebar.group>
         <flux:sidebar.item
             icon="building-office"
             href="{{ route('superadmin.department') }}"
@@ -58,12 +77,6 @@
             Department Management
         </flux:sidebar.item>
 
-        <flux:sidebar.item
-            icon="calendar"
-            href="{{ route('superadmin.bookingroom') }}"
-            :current="request()->routeIs('superadmin.bookingroom')">
-            Booking Room
-        </flux:sidebar.item>
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />
@@ -71,7 +84,6 @@
         <flux:sidebar.item icon="cog-6-tooth" href="#">Settings</flux:sidebar.item>
         <flux:sidebar.item icon="information-circle" href="#">Help</flux:sidebar.item>
 
-        {{-- Logout khusus MOBILE (karena dropdown di bawah hanya tampil desktop) --}}
         <flux:sidebar.item
             class="lg:hidden"
             icon="arrow-right-start-on-rectangle"

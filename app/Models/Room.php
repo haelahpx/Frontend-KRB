@@ -14,8 +14,20 @@ class Room extends Model
 
     protected $fillable = ['company_id', 'room_number'];
 
+    public function getNameAttribute()
+    {
+        return $this->attributes['name']
+            ?? $this->attributes['room_name']
+            ?? $this->attributes['room_number']
+            ?? null;
+    }
     public function bookings()
     {
         return $this->hasMany(BookingRoom::class, 'room_id', 'room_id');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'company_id', 'company_id');
     }
 }

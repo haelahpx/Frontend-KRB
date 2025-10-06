@@ -13,9 +13,16 @@ class BookingRoom extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'room_id','company_id','user_id','department_id',
-        'meeting_title','date','number_of_attendees',
-        'start_time','end_time','special_notes',
+        'room_id',
+        'company_id',
+        'user_id',
+        'department_id',
+        'meeting_title',
+        'date',
+        'number_of_attendees',
+        'start_time',
+        'end_time',
+        'special_notes',
     ];
 
     protected $casts = [
@@ -27,10 +34,20 @@ class BookingRoom extends Model
     public function requirements()
     {
         return $this->belongsToMany(Requirement::class, 'booking_requirements', 'bookingroom_id', 'requirement_id')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
     public function room()
     {
         return $this->belongsTo(Room::class, 'room_id', 'room_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id', 'department_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 }
