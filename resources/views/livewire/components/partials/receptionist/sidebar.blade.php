@@ -53,10 +53,10 @@
         </flux:sidebar.item>
 
         <flux:sidebar.item
-            icon="calendar"
-            href="{{ route('receptionist.calendar') }}"
-            :current="request()->routeIs('receptionist.calendar')">
-            Calendar
+            icon="gift"
+            href="{{ route('receptionist.package') }}"
+            :current="request()->routeIs('receptionist.package')">
+            Package
         </flux:sidebar.item>
     </flux:sidebar.nav>
 
