@@ -36,15 +36,6 @@
         </div>
     </div>
 
-    {{-- FLASH --}}
-    @foreach (['success','info','error'] as $f)
-        @if (session()->has($f))
-            <div class="bg-white border border-gray-200 shadow-lg rounded-xl px-4 py-3 text-sm {{ $f === 'error' ? 'text-rose-700' : 'text-gray-800' }}">
-                {{ session($f) }}
-            </div>
-        @endif
-    @endforeach
-
     {{-- TOOLBAR --}}
     <div class="{{ $card }}">
         <div class="px-5 py-4 border-b border-gray-200">

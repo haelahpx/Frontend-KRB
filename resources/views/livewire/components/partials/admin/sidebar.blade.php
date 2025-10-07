@@ -48,9 +48,6 @@
         >
             Ticket
         </flux:sidebar.item>
-
-        <flux:sidebar.item icon="document-text" href="#">Documents</flux:sidebar.item>
-        <flux:sidebar.item icon="calendar" href="#">Calendar</flux:sidebar.item>
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />

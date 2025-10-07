@@ -5,50 +5,38 @@ namespace App\Livewire\Pages\Admin;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use App\Models\Ticket as TicketModel;
-use App\Models\User as UserModel;
-use App\Models\TicketAssignment as TicketAssignmentModel;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 
 #[Layout('layouts.admin')]
-#[Title('Admin-Ticket')]
+#[Title('Admin - Ticket')]
 class Ticket extends Component
 {
     use WithPagination;
 
-    /** Filters */
-    public ?string $search = null;
+    public ?string $search   = null;
     public ?string $priority = null;  // low|medium|high
-    public ?string $status = null;    // open|in_progress|resolved|closed|deleted (UI)
+    public ?string $status   = null;  // open|in_progress|resolved|closed (no deleted in UI)
 
-    protected $paginationTheme = 'tailwind';
+    protected string $paginationTheme = 'tailwind';
 
-    /** Roles */
     private const ADMIN_ROLE_NAMES = ['Superadmin', 'Admin'];
-    private const AGENT_ROLE_NAMES = ['User']; // adjust to your agent roles
 
-    /** DB allowed (UPPERCASE) — matches migration */
-    private const DB_ALLOWED_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'DELETED'];
-
-    /** UI→DB map (all lowercase UI to uppercase DB) */
     private const UI_TO_DB_STATUS_MAP = [
         'open'        => 'OPEN',
         'in_progress' => 'IN_PROGRESS',
         'resolved'    => 'RESOLVED',
         'closed'      => 'CLOSED',
-        'deleted'     => 'DELETED',
     ];
 
-    /** wire:poll workaround */
-    public function tick() {} // no-op
+    public function tick() {} // for wire:poll
 
-    /* ---------- pagination resets ---------- */
-    public function updatingSearch()  { $this->resetPage(); }
-    public function updatingPriority(){ $this->resetPage(); }
-    public function updatingStatus()  { $this->resetPage(); }
+    public function updatingSearch()   { $this->resetPage(); }
+    public function updatingPriority() { $this->resetPage(); }
+    public function updatingStatus()   { $this->resetPage(); }
 
-    /* ---------- auth helpers ---------- */
     protected function currentAdmin()
     {
         $user = Auth::user();
@@ -70,127 +58,14 @@ class Ticket extends Component
         return $u && $u->role && $u->role->name === 'Superadmin';
     }
 
-    /* ---------- allowed agents ---------- */
-    protected function allowedAgentsQuery()
+    public function resetFilters(): void
     {
-        $admin = $this->currentAdmin();
-
-        $q = UserModel::query()
-            ->whereHas('role', fn($qr) => $qr->whereIn('name', self::AGENT_ROLE_NAMES));
-
-        if (!$this->isSuperadmin()) {
-            if (isset($admin->company_id)) {
-                $q->where('company_id', $admin->company_id);
-            }
-            if (!empty($admin->department_id)) {
-                $q->where('department_id', $admin->department_id);
-            }
-        }
-        return $q;
+        $this->search = null;
+        $this->priority = null;
+        $this->status = null;
+        $this->resetPage();
     }
 
-    public function getAgentsProperty()
-    {
-        return $this->allowedAgentsQuery()
-            ->orderBy('full_name')
-            ->get(['user_id', 'full_name', 'department_id']);
-    }
-
-    /* =========================
-       Modal state (Edit Ticket)
-       ========================= */
-    public bool $modalEdit = false;
-    public ?int $editId = null;
-    public ?int $edit_agent_id = null; // selected agent (can be null)
-    public string $edit_status = 'open'; // UI: open|in_progress|resolved|closed|deleted
-
-    public function openEdit(int $ticketId): void
-    {
-        if (!$this->ensureAdmin()) {
-            session()->flash('error', 'Unauthorized.');
-            return;
-        }
-
-        $ticket = TicketModel::with('assignment')->findOrFail($ticketId);
-
-        if ($ticket->status === 'CLOSED') {
-            session()->flash('error', "Ticket #{$ticketId} is closed and cannot be edited.");
-            return;
-        }
-
-        $this->editId = $ticketId;
-
-        // prefill agent
-        $this->edit_agent_id = optional($ticket->assignment)->user_id;
-
-        // prefill status for UI (DB is UPPERCASE)
-        $this->edit_status = strtolower($ticket->status);
-        $this->modalEdit = true;
-    }
-
-    public function closeEdit(): void
-    {
-        $this->reset(['modalEdit', 'editId', 'edit_agent_id', 'edit_status']);
-        $this->edit_status = 'open';
-    }
-
-    /** Save assignment + status */
-    public function saveEdit(): void
-    {
-        if (!$this->ensureAdmin()) {
-            session()->flash('error', 'Unauthorized.');
-            return;
-        }
-        if (!$this->editId) return;
-
-        $ticket = TicketModel::with('assignment')->findOrFail($this->editId);
-
-        if ($ticket->status === 'CLOSED') {
-            $this->addError('edit_status', 'This ticket is already closed.');
-            return;
-        }
-
-        // Validate agent if chosen (must be in allowed scope)
-        if ($this->edit_agent_id) {
-            $isAllowed = $this->allowedAgentsQuery()
-                ->where('user_id', $this->edit_agent_id)
-                ->exists();
-            if (!$isAllowed) {
-                $this->addError('edit_agent_id', 'Agent is not in your department.');
-                return;
-            }
-        }
-
-        // Apply assignment (create/update or delete if cleared)
-        if ($this->edit_agent_id) {
-            TicketAssignmentModel::updateOrCreate(
-                ['ticket_id' => $ticket->ticket_id],
-                ['user_id'   => $this->edit_agent_id]
-            );
-        } else {
-            if ($ticket->assignment) {
-                $ticket->assignment()->delete();
-            }
-        }
-
-        // Apply status (store exactly what UI picks, mapped to UPPERCASE)
-        $targetDb = self::UI_TO_DB_STATUS_MAP[$this->edit_status] ?? 'OPEN';
-        if (!\in_array($targetDb, self::DB_ALLOWED_STATUSES, true)) {
-            $this->addError('edit_status', 'Invalid status.');
-            return;
-        }
-
-        if ($ticket->status !== $targetDb) {
-            $ticket->status = $targetDb;
-            $ticket->save();
-        }
-
-        $id = $ticket->ticket_id;
-        $this->closeEdit();
-        session()->flash('message', "Ticket #{$id} saved.");
-    }
-
-    /** Soft delete: mark as DELETED (hidden from default view) */
     public function deleteTicket(int $ticketId): void
     {
         if (!$this->ensureAdmin()) {
@@ -198,7 +73,8 @@ class Ticket extends Component
             return;
         }
 
-        $ticket = TicketModel::find($ticketId);
+        // If your Ticket PK is ticket_id, ensure the model sets $primaryKey='ticket_id'
+        $ticket = TicketModel::where('ticket_id', $ticketId)->first();
         if (!$ticket) {
             session()->flash('error', 'Ticket not found.');
             return;
@@ -217,66 +93,67 @@ class Ticket extends Component
         $ticket->status = 'DELETED';
         $ticket->save();
 
+        $this->resetPage();
         session()->flash('message', "Ticket #{$ticketId} moved to Trash.");
     }
 
-    /* ---------- render ---------- */
     public function render()
     {
         $query = TicketModel::query()
             ->with([
-                'user:user_id,full_name',
+                // Ticket owner (user) + its department_id for potential chaining
+                'user:user_id,full_name,department_id',
+                // Department that is directly referenced by the ticket (department_id on tickets table)
+                'department:department_id,department_name',
+                // If you have assignment relation
                 'assignment.agent:user_id,full_name',
-                // ✅ attachments from ticket_attachments, select only needed cols
-                'attachments:attachment_id,ticket_id,file_url,file_type,original_filename',
+                // Attachments for count & quick preview purposes
+                'attachments:attachment_id,ticket_id,file_url,file_type,original_filename,bytes',
             ])
+            ->withCount('attachments')
             ->orderByDesc('ticket_id');
 
-        // search
-        if ($this->search) {
-            $s = '%' . $this->search . '%';
-            $query->where(fn($q) =>
-                $q->where('subject', 'like', $s)
-                  ->orWhere('description', 'like', $s)
-            );
+        $admin = $this->currentAdmin();
+
+        // Hide DELETED tickets
+        $query->where('status', '!=', 'DELETED');
+
+        // Multi-tenant scoping (only if columns exist)
+        if ($admin && !$this->isSuperadmin()) {
+            if (Schema::hasColumn('tickets', 'company_id') && isset($admin->company_id)) {
+                $query->where('company_id', $admin->company_id);
+            }
+            if (Schema::hasColumn('tickets', 'department_id') && !empty($admin->department_id)) {
+                $query->where('department_id', $admin->department_id);
+            }
         }
 
-        // priority
+        // Search
+        if ($this->search) {
+            $s = '%' . $this->search . '%';
+            $query->where(function ($q) use ($s) {
+                $q->where('subject', 'like', $s)
+                  ->orWhere('description', 'like', $s);
+            });
+        }
+
+        // Priority
         if ($this->priority) {
             $query->where('priority', $this->priority);
         }
 
-        // status filter (UI -> DB)
+        // Status (UI → DB map)
         if ($this->status) {
             $dbStatus = self::UI_TO_DB_STATUS_MAP[$this->status] ?? null;
-            if ($dbStatus) $query->where('status', $dbStatus);
-        } else {
-            // Default: hide DELETED
-            $query->where('status', '!=', 'DELETED');
+            if ($dbStatus) {
+                $query->where('status', $dbStatus);
+            }
         }
 
         $tickets = $query->paginate(30);
 
-        // buckets by DB status
-        $collection = $tickets->getCollection();
-        $open       = $collection->filter(fn($t) => $t->status === 'OPEN');
-        $inProgress = $collection->filter(fn($t) => $t->status === 'IN_PROGRESS');
-        $resolved   = $collection->filter(fn($t) => $t->status === 'RESOLVED');
-        $closed     = $collection->filter(fn($t) => $t->status === 'CLOSED');
-
-        $deleted = null;
-        if ($this->status === 'deleted') {
-            $deleted = $collection->filter(fn($t) => $t->status === 'DELETED');
-        }
-
         return view('livewire.pages.admin.ticket', [
-            'tickets'    => $tickets,
-            'open'       => $open,
-            'inProgress' => $inProgress,
-            'resolved'   => $resolved,
-            'closed'     => $closed,
-            'deleted'    => $deleted,
-            'agents'     => $this->agents,
+            'tickets' => $tickets,
         ]);
     }
 }
