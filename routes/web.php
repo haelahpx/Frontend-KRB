@@ -33,7 +33,7 @@ use App\Livewire\Pages\Superadmin\Managerequirement as Managerequirements;
 use App\Livewire\Pages\Admin\RoomMonitoring as RoomMonitoringPage;
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
 use App\Livewire\Pages\Receptionist\Documents as Documents;
-use App\Livewire\Pages\Receptionist\Calendar as CalendarPage;
+use App\Livewire\Pages\Receptionist\package as ReceptPackage;
 use App\Livewire\Pages\Receptionist\Guestbook as Guestbook;
 use App\Livewire\Pages\Receptionist\MeetingSchedule as MeetingSchedule;
 
@@ -148,7 +148,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/receptionist-guestbook', Guestbook::class)->name('receptionist.guestbook');
         Route::get('/receptionist-meetingschedule', MeetingSchedule::class)->name('receptionist.schedule');
         Route::get('/receptionist-document', Documents::class)->name('receptionist.documents');
-        Route::get('/receptionist-calendar', CalendarPage::class)->name('receptionist.calendar');
+        Route::get('/receptionist-package', Package::class)->name('receptionist.package');
+        Route::get('/receptionist-package', ReceptPackage::class)->name('receptionist.package');
     });
 
     // ---------- Logout (BERSIHKAN intended + invalidate session) ----------
