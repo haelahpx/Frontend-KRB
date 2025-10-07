@@ -147,16 +147,6 @@
                             </div>
                             @endforeach
                         </div>
-                        <div class="mt-4 space-y-2">
-                            <div class="flex items-center gap-2 text-sm">
-                                <span class="inline-block w-3 h-3 rounded bg-gray-900"></span>
-                                <span>Hari ini</span>
-                            </div>
-                            <div class="flex items-center gap-2 text-sm">
-                                <span class="inline-block w-3 h-3 rounded bg-blue-600"></span>
-                                <span>Memiliki meeting</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>

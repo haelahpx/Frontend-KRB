@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gray-50 p-6" wire:poll.1000ms.keep-alive>
+<div class="min-h-screen bg-gray-50" wire:poll.1000ms.keep-alive>
     @php
         $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
         $head = 'bg-gradient-to-r from-gray-900 to-black';
@@ -16,7 +16,7 @@
         $editIn = 'w-full h-10 bg-white border border-gray-300 rounded-lg px-3 text-gray-800 focus:border-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition hover:border-gray-400 placeholder:text-gray-400';
     @endphp
 
-    <div class="max-w-7xl mx-auto space-y-8">
+    <div class="px-4 sm:px-6 py-6 space-y-8">
         @if (session('saved'))
             <div class="rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 px-4 py-3 shadow-sm">
                 <div class="flex items-center gap-2 text-sm font-medium">

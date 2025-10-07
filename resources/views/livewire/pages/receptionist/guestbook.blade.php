@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gray-50 p-6" wire:poll.1000ms>
+<div class="min-h-screen bg-gray-50" wire:poll.1000ms>
     @php
         $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
         $head = 'bg-gradient-to-r from-gray-900 to-black';
@@ -16,18 +16,7 @@
         $editIn = 'w-full h-10 bg-white border border-gray-300 rounded-lg px-3 text-gray-800 focus:border-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition hover:border-gray-400 placeholder:text-gray-400';
     @endphp
 
-    <div class="max-w-7xl mx-auto space-y-8">
-        @if (session('saved'))
-            <div class="rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 px-4 py-3 shadow-sm">
-                <div class="flex items-center gap-2 text-sm font-medium">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Data berhasil disimpan.
-                </div>
-            </div>
-        @endif
-
+    <div class="px-4 sm:px-6 py-6 space-y-8">
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
             <div class="pointer-events-none absolute inset-0 opacity-10">
                 <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>

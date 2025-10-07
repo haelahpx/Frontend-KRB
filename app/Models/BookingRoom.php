@@ -26,7 +26,7 @@ class BookingRoom extends Model
     ];
 
     protected $casts = [
-        'date'       => 'date:Y-m-d',
+        'date'       => 'date',
         'start_time' => 'datetime',
         'end_time'   => 'datetime',
     ];
