@@ -5,7 +5,8 @@ namespace App\Livewire\Pages\Superadmin;
 use Livewire\Component;
 
 #[Layout('layouts.superadmin')]
-#[Title('Superadmin Dashboard')]class Agentlist extends Component
+#[Title('Agent List')]
+class Agentlist extends Component
 {
     public function render()
     {

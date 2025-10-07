@@ -155,7 +155,6 @@
         </div>
     </div>
 </div>
-
 <script>
 (function () {
   const ALLOWED = ['jpg','jpeg','png','webp','pdf','doc','docx','xlsx','zip'];
@@ -176,25 +175,27 @@
   let activeUploads = 0;
 
   function setProgress(p, msg) {
+    if (!progWrap) return;
     progWrap.classList.remove('hidden');
     const c = Math.max(0, Math.min(100, Math.round(p)));
-    progBar.style.width = c + '%';
-    progPct.textContent = c + '%';
-    if (msg) progMsg.textContent = msg;
+    if (progBar) progBar.style.width = c + '%';
+    if (progPct) progPct.textContent = c + '%';
+    if (msg && progMsg) progMsg.textContent = msg;
     if (c >= 100) setTimeout(() => progWrap.classList.add('hidden'), 900);
   }
-  function hideProgress(){ progWrap.classList.add('hidden'); }
+  function hideProgress(){ if (progWrap) progWrap.classList.add('hidden'); }
   function humanKB(b){ return (b/1024).toFixed(1) + ' KB'; }
   function toast(msg){ console.log(msg); } // ganti ke toast kustom kalau ada
 
   function syncHidden() {
     hidden.value = JSON.stringify(tempItems || []);
-    // WAJIB: pakai input + change agar Livewire pasti detect
+    // WAJIB: beri event agar Livewire/DOM detect perubahan
     hidden.dispatchEvent(new Event('input',  { bubbles: true }));
     hidden.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   function renderList() {
+    if (!listEl) return;
     listEl.innerHTML = '';
     if (!tempItems.length) {
       const li = document.createElement('li');
@@ -207,17 +208,22 @@
       const li = document.createElement('li');
       li.className = 'flex items-center justify-between';
       li.innerHTML = `
-        <span>${item.original_filename}
+        <span class="truncate">${item.original_filename}
           <span class="text-xs text-gray-400">(${humanKB(item.bytes)})</span>
         </span>
-        <button type="button" class="text-red-600 text-xs underline">Remove</button>
+        <div class="flex items-center gap-3">
+          <a href="${item.secure_url}" target="_blank" class="text-xs underline text-blue-600">Open</a>
+          <button type="button" class="text-red-600 text-xs underline">Remove</button>
+        </div>
       `;
-      // OPTIMISTIC REMOVE + sync dulu, baru call API delete
-      li.querySelector('button').addEventListener('click', () => {
+      const btn = li.querySelector('button');
+      btn.addEventListener('click', () => {
+        // optimistic remove
         tempItems = tempItems.filter(x => x.public_id !== item.public_id);
         syncHidden();
         li.remove();
 
+        // Attempt server-side delete of the TMP item (best-effort)
         fetch('/attachments/temp', {
           method: 'DELETE',
           headers: {
@@ -226,7 +232,10 @@
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ public_id: item.public_id, file_type: item.resource_type })
-        }).catch(()=>{ /* no-op */ });
+        }).then(res => {
+          // optionally check response and show toast if failed
+          if (!res.ok) res.json().then(j => console.warn('deleteTemp failed', j)).catch(()=>{});
+        }).catch(()=>{ /* ignore network error */ });
       });
       listEl.appendChild(li);
     });
@@ -234,22 +243,28 @@
   renderList();
 
   // open dialog when clicking the box text
-  dropBox?.addEventListener('click', (e) => {
-    if (!(e.target instanceof HTMLInputElement)) input?.click();
-  });
+  if (dropBox) {
+    dropBox.addEventListener('click', (e) => {
+      if (!(e.target instanceof HTMLInputElement)) input?.click();
+    });
+  }
 
   // drag&drop UX
-  dropBox?.addEventListener('dragover', e => { e.preventDefault(); dropBox.classList.add('bg-gray-50'); });
-  dropBox?.addEventListener('dragleave', () => dropBox.classList.remove('bg-gray-50'));
-  dropBox?.addEventListener('drop', async e => {
-    e.preventDefault(); dropBox.classList.remove('bg-gray-50');
-    if (e.dataTransfer?.files?.length) await handleFiles(e.dataTransfer.files);
-  });
+  if (dropBox) {
+    dropBox.addEventListener('dragover', e => { e.preventDefault(); dropBox.classList.add('bg-gray-50'); });
+    dropBox.addEventListener('dragleave', () => dropBox.classList.remove('bg-gray-50'));
+    dropBox.addEventListener('drop', async e => {
+      e.preventDefault(); dropBox.classList.remove('bg-gray-50');
+      if (e.dataTransfer?.files?.length) await handleFiles(e.dataTransfer.files);
+    });
+  }
 
-  input?.addEventListener('change', async (e) => {
-    if (e.target.files?.length) await handleFiles(e.target.files);
-    e.target.value = ''; // reset supaya bisa pilih file yang sama lagi
-  });
+  if (input) {
+    input.addEventListener('change', async (e) => {
+      if (e.target.files?.length) await handleFiles(e.target.files);
+      e.target.value = ''; // reset supaya bisa pilih file yang sama lagi
+    });
+  }
 
   async function handleFiles(files) {
     for (const f of files) {
@@ -260,7 +275,7 @@
       try {
         setProgress(5, 'Requesting permission…');
 
-        // 1) minta signature TEMP
+        // 1) minta signature TEMP dari server
         const sigResp = await fetch('/attachments/signature-temp', {
           method: 'POST',
           headers: {
@@ -279,14 +294,20 @@
         }
         const sig = await sigResp.json();
 
-        // 2) upload Cloudinary TMP (progress)
+        // 2) upload ke Cloudinary (TEMP) — sertakan access_mode dan type/resource_type
         const fd = new FormData();
         fd.append('file', f);
         fd.append('api_key', sig.api_key);
         fd.append('timestamp', sig.timestamp);
         fd.append('signature', sig.signature);
-        fd.append('upload_preset', sig.upload_preset);
+        // upload_preset mungkin diperlukan (controller mengembalikan upload_preset)
+        if (sig.upload_preset) fd.append('upload_preset', sig.upload_preset);
         fd.append('folder', sig.folder);
+        // important: make uploaded asset publicly deliverable
+        fd.append('access_mode', sig.access_mode || 'public');
+        // tell cloudinary to autodetect resource type and perform an upload
+        fd.append('resource_type', 'auto');
+        fd.append('type', 'upload');
 
         activeUploads++;
         const cloudJson = await new Promise((resolve, reject) => {
@@ -295,32 +316,45 @@
           xhr.upload.onprogress = (evt) => {
             if (evt.lengthComputable) setProgress((evt.loaded / evt.total) * 100, 'Uploading…');
           };
-          xhr.onload  = () => (xhr.status >= 200 && xhr.status < 300)
-                          ? resolve(JSON.parse(xhr.responseText))
-                          : reject({ status: xhr.status, body: xhr.responseText });
+          xhr.onload  = () => {
+            try {
+              const parsed = JSON.parse(xhr.responseText || '{}');
+              if (xhr.status >= 200 && xhr.status < 300) resolve(parsed);
+              else reject({ status: xhr.status, body: parsed });
+            } catch (e) {
+              reject({ status: xhr.status, body: xhr.responseText });
+            }
+          };
           xhr.onerror = () => reject({ status: 0, body: 'network error' });
           xhr.send(fd);
-        }).finally(() => { activeUploads--; });
+        }).finally(() => { activeUploads = Math.max(0, activeUploads - 1); });
 
-        // 3) add to list & sinkron ke Livewire
+        // 3) sukses → push ke array & sinkron ke Livewire
         const item = {
           public_id: cloudJson.public_id,
-          secure_url: cloudJson.secure_url,
-          bytes: cloudJson.bytes,
-          resource_type: cloudJson.resource_type,
-          format: cloudJson.format,
-          original_filename: (cloudJson.original_filename || 'file') + (cloudJson.format ? '.' + cloudJson.format : '')
+          secure_url: cloudJson.secure_url || cloudJson.url || `https://res.cloudinary.com/${sig.cloud_name}/${cloudJson.resource_type || 'raw'}/upload/v${cloudJson.version || ''}/${cloudJson.public_id}${cloudJson.format?'.'+cloudJson.format:''}`,
+          bytes: cloudJson.bytes || f.size,
+          resource_type: cloudJson.resource_type || 'raw',
+          format: cloudJson.format || (f.name.split('.').pop()||''),
+          original_filename: (cloudJson.original_filename || f.name)
         };
+
         tempItems.push(item);
         syncHidden();
         renderList();
 
         setProgress(100, 'Done');
       } catch (err) {
-        console.error(err);
+        console.error('upload error', err);
         activeUploads = Math.max(0, activeUploads - 1);
-        hideProgress();           // jangan nyangkut di 5%
-        toast('Upload failed');
+        hideProgress();
+        // try to show better message if possible
+        if (err && err.body) {
+          try { const jb = (typeof err.body === 'string') ? JSON.parse(err.body) : err.body; toast(jb.error?.message || jb.message || 'Upload failed'); }
+          catch(e){ toast('Upload failed'); }
+        } else {
+          toast('Upload failed');
+        }
       }
     }
   }
@@ -335,6 +369,5 @@
     // Debug (opsional): lihat payload final yang terkirim ke Livewire
     console.debug('Final payload temp_items_json:', hidden.value);
     return true; // izinkan submit
-  };
 })();
 </script>
