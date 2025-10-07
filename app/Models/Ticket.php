@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\TicketAttachment;
+use App\Models\TicketAssignment;
+use App\Models\TicketComment;
+use App\Models\User;
+use App\Models\Company;
+use App\Models\Department;
 
 class Ticket extends Model
 {
@@ -39,23 +45,25 @@ class Ticket extends Model
 
     public function department(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Department::class, 'department_id', 'department_id');
+        return $this->belongsTo(Department::class, 'department_id', 'department_id');
     }
 
     public function requesterDepartment(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'user_id', 'user_id');
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    /** ✅ Correct relation to ticket_attachments */
     public function attachments(): HasMany
     {
-        return $this->hasMany(TicketAssignment::class, 'ticket_id', 'ticket_id');
+        return $this->hasMany(TicketAttachment::class, 'ticket_id', 'ticket_id');
     }
 
-    public function latestAssignment()
+    /** If you need the most recent assignment, key by PK to avoid 'assigned_at' column issues */
+    public function latestAssignment(): HasOne
     {
         return $this->hasOne(TicketAssignment::class, 'ticket_id', 'ticket_id')
-            ->latestOfMany('assigned_at');
+            ->latestOfMany('assignment_id');
     }
 
     public function assignment(): HasOne
@@ -67,5 +75,4 @@ class Ticket extends Model
     {
         return $this->hasMany(TicketComment::class, 'ticket_id', 'ticket_id');
     }
-
 }

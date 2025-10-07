@@ -7,7 +7,9 @@
         border-r border-zinc-200 dark:border-zinc-700
         lg:w-64 w-[85vw] max-w-sm
         z-40
-    ">
+    "
+>
+    {{-- Logo + Brand + Collapse (mobile) --}}
     <flux:sidebar.header>
         {{-- Brand: text putih + logo putih --}}
         <flux:sidebar.brand
@@ -15,21 +17,37 @@
             logo="{{ asset('images/logo/kebun-raya-bogor.png') }}"
             name="Kebun Raya Bogor."
             class="text-white"
-            style="filter: brightness(0) invert(1);" />
+            style="filter: brightness(0) invert(1);"
+        />
         <flux:sidebar.collapse class="lg:hidden" />
     </flux:sidebar.header>
+
     <flux:sidebar.search placeholder="Search..." />
 
     <flux:sidebar.nav>
         <flux:sidebar.item
             icon="home"
             href="{{ route('admin.dashboard') }}"
-            :current="request()->routeIs('admin.dashboard')">Home</flux:sidebar.item>
+            :current="request()->routeIs('admin.dashboard')"
+        >
+            Home
+        </flux:sidebar.item>
+
+        <flux:sidebar.item
+            icon="calendar-days"
+            href="{{ route('admin.room.monitoring') }}"
+            :current="request()->routeIs('admin.room.monitoring')"
+        >
+            Booking room
+        </flux:sidebar.item>
 
         <flux:sidebar.item
             icon="inbox"
             href="{{ route('admin.ticket') }}"
-            :current="request()->routeIs('admin.ticket')">Ticket</flux:sidebar.item>
+            :current="request()->routeIs('admin.ticket')"
+        >
+            Ticket
+        </flux:sidebar.item>
 
         <flux:sidebar.item icon="document-text" href="#">Documents</flux:sidebar.item>
         <flux:sidebar.item icon="calendar" href="#">Calendar</flux:sidebar.item>
@@ -46,7 +64,8 @@
             icon="arrow-right-start-on-rectangle"
             as="button"
             type="submit"
-            form="logout-form">
+            form="logout-form"
+        >
             Logout
         </flux:sidebar.item>
     </flux:sidebar.nav>
@@ -61,7 +80,8 @@
                 <flux:sidebar.item
                     icon="user"
                     href="{{ route('user.home') }}"
-                    class="cursor-pointer">
+                    class="cursor-pointer"
+                >
                     User Page
                 </flux:sidebar.item>
             </flux:menu.radio.group>
@@ -72,7 +92,8 @@
                 icon="arrow-right-start-on-rectangle"
                 as="button"
                 type="submit"
-                form="logout-form">
+                form="logout-form"
+            >
                 Logout
             </flux:menu.item>
         </flux:menu>

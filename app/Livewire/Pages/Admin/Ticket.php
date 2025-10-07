@@ -41,7 +41,7 @@ class Ticket extends Component
     ];
 
     /** wire:poll workaround */
-    public function tick() {} // no-op so poll doesn't throw MethodNotFound
+    public function tick() {} // no-op
 
     /* ---------- pagination resets ---------- */
     public function updatingSearch()  { $this->resetPage(); }
@@ -70,7 +70,7 @@ class Ticket extends Component
         return $u && $u->role && $u->role->name === 'Superadmin';
     }
 
-    /* ---------- allowed agents (filtered by admin’s dept/company) ---------- */
+    /* ---------- allowed agents ---------- */
     protected function allowedAgentsQuery()
     {
         $admin = $this->currentAdmin();
@@ -218,16 +218,17 @@ class Ticket extends Component
         $ticket->save();
 
         session()->flash('message', "Ticket #{$ticketId} moved to Trash.");
-        // keep current page/filters; wire:poll will refresh lists
     }
 
-    /* ---------- render (group tickets into boxes) ---------- */
+    /* ---------- render ---------- */
     public function render()
     {
         $query = TicketModel::query()
             ->with([
                 'user:user_id,full_name',
                 'assignment.agent:user_id,full_name',
+                // ✅ attachments from ticket_attachments, select only needed cols
+                'attachments:attachment_id,ticket_id,file_url,file_type,original_filename',
             ])
             ->orderByDesc('ticket_id');
 
@@ -248,25 +249,21 @@ class Ticket extends Component
         // status filter (UI -> DB)
         if ($this->status) {
             $dbStatus = self::UI_TO_DB_STATUS_MAP[$this->status] ?? null;
-            if ($dbStatus) {
-                $query->where('status', $dbStatus);
-            }
+            if ($dbStatus) $query->where('status', $dbStatus);
         } else {
-            // Default: hide DELETED from all views
+            // Default: hide DELETED
             $query->where('status', '!=', 'DELETED');
         }
 
         $tickets = $query->paginate(30);
 
-        // group strictly by DB status
+        // buckets by DB status
         $collection = $tickets->getCollection();
-
         $open       = $collection->filter(fn($t) => $t->status === 'OPEN');
         $inProgress = $collection->filter(fn($t) => $t->status === 'IN_PROGRESS');
         $resolved   = $collection->filter(fn($t) => $t->status === 'RESOLVED');
         $closed     = $collection->filter(fn($t) => $t->status === 'CLOSED');
 
-        // When filter == deleted, provide a deleted bucket for the Blade
         $deleted = null;
         if ($this->status === 'deleted') {
             $deleted = $collection->filter(fn($t) => $t->status === 'DELETED');

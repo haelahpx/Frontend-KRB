@@ -30,7 +30,7 @@ use App\Livewire\Pages\Superadmin\Bookingroom as SuperadminBookingroom;
 use App\Livewire\Pages\Superadmin\Ticketsupport as SuperadminTicketsupport;
 use App\Livewire\pages\Superadmin\Manageroom as Manageroom;
 use App\Livewire\Pages\Superadmin\Managerequirement as Managerequirements;
-
+use App\Livewire\Pages\Admin\RoomMonitoring as RoomMonitoringPage;
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
 use App\Livewire\Pages\Receptionist\Documents as Documents;
 use App\Livewire\Pages\Receptionist\Calendar as CalendarPage;
@@ -126,6 +126,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('is.admin')->group(function () {
         Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
         Route::get('/admin-ticket', AdminTicket::class)->name('admin.ticket');
+        Route::get('/admin-roommonitoring', RoomMonitoringPage::class)->name('admin.room.monitoring');
     });
 
     // ---------- Superadmin routes ----------

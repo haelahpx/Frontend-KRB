@@ -8,18 +8,19 @@ class TicketAttachment extends Model
 {
     protected $table = 'ticket_attachments';
     protected $primaryKey = 'attachment_id';
-    public $timestamps = false; // tabel hanya punya created_at default NOW()
 
-    // Lengkapi semua kolom yg mungkin kita isi
+    // Your table shows only created_at with a DB default → no updated_at
+    public $timestamps = false;
+
     protected $fillable = [
         'ticket_id',
         'file_url',
         'file_type',
-        'uploaded_by',           // nullable
-        'cloudinary_public_id',  // nullable
-        'bytes',                 // nullable
-        'original_filename',     // nullable
-        'created_at',            // biarkan DB isi default, tapi bolehlah diisi manual
+        'uploaded_by',
+        'cloudinary_public_id',
+        'bytes',
+        'original_filename',
+        'created_at',
     ];
 
     protected $casts = [
