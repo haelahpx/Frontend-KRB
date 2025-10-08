@@ -82,11 +82,20 @@
                             <span class="font-mono font-medium text-gray-800">#{{ $t->ticket_id }}</span>
 
                             <span class="text-gray-300">•</span>
-                            <span class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium
-                                    @if($priority === 'high') bg-orange-50 text-orange-700 border-2 border-orange-400
-                                    @elseif($priority === 'medium') bg-yellow-50 text-yellow-700 border-2 border-yellow-400
-                                    @elseif($priority === 'low') bg-gray-50 text-gray-700 border-2 border-gray-400
-                                    @else bg-gray-50 text-gray-700 border-2 border-gray-400 @endif">
+
+                            @php
+                                // fallback to 'low' styling if priority empty/unknown
+                                $isHigh = $priority === 'high';
+                                $isMedium = $priority === 'medium';
+                                $isLow = $priority === 'low' || $priority === '';
+                            @endphp
+
+                            <span @class([
+                                'inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium',
+                                'bg-orange-50 text-orange-700 border-2 border-orange-400' => $isHigh,
+                                'bg-yellow-50 text-yellow-700 border-2 border-yellow-400' => $isMedium,
+                                'bg-gray-50 text-gray-700 border-2 border-gray-400' => $isLow,
+                            ])>
                                 {{ $priority ? ucfirst($priority) : 'Low' }}
                             </span>
 
@@ -107,11 +116,19 @@
                         </div>
                     </div>
 
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium
-                            @if($status === 'open') bg-yellow-50 text-yellow-700 border-2 border-yellow-500
-                            @elseif($status === 'assigned' || $status === 'in_progress') bg-blue-50 text-blue-700 border-2 border-blue-500
-                            @elseif($status === 'resolved' || $status === 'closed' || $status === 'complete') bg-green-50 text-green-700 border-2 border-green-500
-                            @else bg-gray-50 text-gray-700 border-2 border-gray-500 @endif">
+                    @php
+                        $isOpen = $status === 'open';
+                        $isAssignedOrProgress = in_array($status, ['assigned', 'in_progress'], true);
+                        $isResolved = in_array($status, ['resolved', 'closed', 'complete'], true);
+                    @endphp
+
+                    <span @class([
+                            'inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium',
+                            'bg-yellow-50 text-yellow-700 border-2 border-yellow-500' => $isOpen,
+                            'bg-blue-50 text-blue-700 border-2 border-blue-500' => $isAssignedOrProgress,
+                            'bg-green-50 text-green-700 border-2 border-green-500' => $isResolved,
+                            'bg-gray-50 text-gray-700 border-2 border-gray-500' => (!$isOpen && !$isAssignedOrProgress && !$isResolved),
+                        ])>
                         {{ $status ? ucfirst(str_replace('_', ' ', $status)) : 'Open' }}
                     </span>
                 </div>

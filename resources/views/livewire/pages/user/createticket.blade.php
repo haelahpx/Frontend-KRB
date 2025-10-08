@@ -39,7 +39,12 @@
                                     type="text"
                                     wire:model.defer="subject"
                                     placeholder="Enter ticket subject"
-                                    class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border @error('subject') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                    @class([
+                                      'w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent',
+                                      'border-red-500'  => $errors->has('subject'),
+                                      'border-gray-300' => !$errors->has('subject'),
+                                      'border'          => true
+                                    ])>
                                 @error('subject') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                             </div>
 
@@ -47,7 +52,12 @@
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Priority</label>
                                 <select
                                     wire:model="priority"
-                                    class="w-full px-3 py-2 text-gray-900 border @error('priority') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                    @class([
+                                      'w-full px-3 py-2 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent',
+                                      'border-red-500'  => $errors->has('priority'),
+                                      'border-gray-300' => !$errors->has('priority'),
+                                      'border'          => true
+                                    ])>
                                     <option value="">Select priority</option>
                                     <option value="low">Low</option>
                                     <option value="medium">Medium</option>
@@ -71,7 +81,12 @@
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Assigned to what department</label>
                                 <select
                                     wire:model="assigned_department_id"
-                                    class="w-full px-3 py-2 text-gray-900 border @error('assigned_department_id') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                    @class([
+                                      'w-full px-3 py-2 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent',
+                                      'border-red-500'  => $errors->has('assigned_department_id'),
+                                      'border-gray-300' => !$errors->has('assigned_department_id'),
+                                      'border'          => true
+                                    ])>
                                     <option value="">Select department</option>
                                     @foreach($this->departments as $dept)
                                         <option value="{{ $dept['department_id'] }}">{{ $dept['department_name'] }}</option>
@@ -87,7 +102,12 @@
                                 wire:model.defer="description"
                                 rows="6"
                                 placeholder="Describe your issue in detail..."
-                                class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border @error('description') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"></textarea>
+                                @class([
+                                  'w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none',
+                                  'border-red-500'  => $errors->has('description'),
+                                  'border-gray-300' => !$errors->has('description'),
+                                  'border'          => true
+                                ])></textarea>
                             @error('description') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                         </div>
 

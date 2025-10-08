@@ -2,12 +2,12 @@
 @php
 // Two-letter initials from full name (first + last)
 $initials = function (?string $fullName): string {
-$fullName = trim($fullName ?? '');
-if ($fullName === '') return 'US';
-$parts = preg_split('/\s+/', $fullName);
-$first = strtoupper(mb_substr($parts[0] ?? 'U', 0, 1));
-$last = strtoupper(mb_substr($parts[count($parts)-1] ?? $parts[0] ?? 'S', 0, 1));
-return $first.$last;
+    $fullName = trim($fullName ?? '');
+    if ($fullName === '') return 'US';
+    $parts = preg_split('/\s+/', $fullName);
+    $first = strtoupper(mb_substr($parts[0] ?? 'U', 0, 1));
+    $last = strtoupper(mb_substr($parts[count($parts)-1] ?? $parts[0] ?? 'S', 0, 1));
+    return $first.$last;
 };
 
 $isCreate = request()->routeIs('create-ticket') || request()->is('create-ticket');
@@ -25,14 +25,19 @@ $status = strtolower($ticket->status ?? 'open');
 
             <div class="ml-auto inline-flex rounded-md overflow-hidden bg-gray-100 border border-gray-200">
                 <a href="{{ route('create-ticket') }}"
-                    @class([ 'px-4 py-2 text-sm font-medium transition-colors' , 'bg-gray-900 text-white'=> $isCreate,
-                    'text-gray-700 hover:text-gray-900' => ! $isCreate,
+                    @class([
+                        'px-4 py-2 text-sm font-medium transition-colors',
+                        'bg-gray-900 text-white' => $isCreate,
+                        'text-gray-700 hover:text-gray-900' => ! $isCreate,
                     ])>
                     Create Ticket
                 </a>
+
                 <a href="{{ route('ticketstatus') }}"
-                    @class([ 'px-4 py-2 text-sm font-medium transition-colors border-l border-gray-200' ,
-                    // On detail page we still highlight the "Ticket Status" tab to match list context 'bg-gray-900 text-white'=> true,
+                    @class([
+                        'px-4 py-2 text-sm font-medium transition-colors border-l border-gray-200',
+                        // On detail page we still highlight the "Ticket Status" tab to match list context
+                        'bg-gray-900 text-white' => true,
                     ])>
                     Ticket Status
                 </a>
@@ -54,11 +59,20 @@ $status = strtolower($ticket->status ?? 'open');
 
                         {{-- Priority chip (same tone as list) --}}
                         <span class="text-gray-300">•</span>
-                        <span class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium
-                            @if($priority === 'high') bg-orange-50 text-orange-700 border-2 border-orange-400
-                            @elseif($priority === 'medium') bg-yellow-50 text-yellow-700 border-2 border-yellow-400
-                            @elseif($priority === 'low') bg-gray-50 text-gray-700 border-2 border-gray-400
-                            @else bg-gray-50 text-gray-700 border-2 border-gray-400 @endif">
+
+                        @php
+                            $isHigh = $priority === 'high';
+                            $isMedium = $priority === 'medium';
+                            $isLow = $priority === 'low' || $priority === '';
+                        @endphp
+
+                        <span
+                            @class([
+                                'inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium',
+                                'bg-orange-50 text-orange-700 border-2 border-orange-400' => $isHigh,
+                                'bg-yellow-50 text-yellow-700 border-2 border-yellow-400' => $isMedium,
+                                'bg-gray-50 text-gray-700 border-2 border-gray-400' => $isLow,
+                            ])>
                             {{ $priority ? ucfirst($priority) : 'Low' }}
                         </span>
 
@@ -72,11 +86,21 @@ $status = strtolower($ticket->status ?? 'open');
 
                         {{-- Status chip (same mapping as list) --}}
                         <span class="text-gray-300">•</span>
-                        <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium
-                            @if($status === 'open') bg-yellow-50 text-yellow-700 border-2 border-yellow-500
-                            @elseif(in_array($status, ['assigned','in_progress','process'])) bg-blue-50 text-blue-700 border-2 border-blue-500
-                            @elseif(in_array($status, ['resolved','closed','complete'])) bg-green-50 text-green-700 border-2 border-green-500
-                            @else bg-gray-50 text-gray-700 border-2 border-gray-500 @endif">
+
+                        @php
+                            $isOpen = $status === 'open';
+                            $isAssignedOrProgress = in_array($status, ['assigned','in_progress','process'], true);
+                            $isResolved = in_array($status, ['resolved','closed','complete'], true);
+                        @endphp
+
+                        <span
+                            @class([
+                                'inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium',
+                                'bg-yellow-50 text-yellow-700 border-2 border-yellow-500' => $isOpen,
+                                'bg-blue-50 text-blue-700 border-2 border-blue-500' => $isAssignedOrProgress,
+                                'bg-green-50 text-green-700 border-2 border-green-500' => $isResolved,
+                                'bg-gray-50 text-gray-700 border-2 border-gray-500' => (! $isOpen && ! $isAssignedOrProgress && ! $isResolved),
+                            ])>
                             {{ ucfirst(str_replace('_', ' ', $status)) }}
                         </span>
                     </div>
@@ -129,17 +153,20 @@ $status = strtolower($ticket->status ?? 'open');
             <div class="space-y-5">
                 @forelse ($ticket->comments as $comment)
                 @php
-                $isMine = $comment->user_id === auth()->id();
-                $name = $comment->user->full_name ?? $comment->user->name ?? 'User';
-                $init = $initials($name);
+                    $isMine = $comment->user_id === auth()->id();
+                    $name = $comment->user->full_name ?? $comment->user->name ?? 'User';
+                    $init = $initials($name);
                 @endphp
 
                 <div class="flex {{ $isMine ? 'flex-row' : 'flex-row-reverse' }} items-start gap-3">
                     {{-- Avatar --}}
                     <div class="flex-shrink-0">
-                        <span class="inline-flex h-9 w-9 rounded-full
-                                {{ $isMine ? 'bg-black text-white' : 'bg-gray-200 text-gray-800' }}
-                                items-center justify-center text-[11px] font-bold">
+                        <span
+                            @class([
+                                'inline-flex h-9 w-9 rounded-full items-center justify-center text-[11px] font-bold',
+                                'bg-black text-white' => $isMine,
+                                'bg-gray-200 text-gray-800' => ! $isMine,
+                            ])>
                             {{ $init }}
                         </span>
                     </div>
@@ -153,9 +180,12 @@ $status = strtolower($ticket->status ?? 'open');
                             </p>
                         </div>
 
-                        <div class="mt-1 rounded-xl
-                                {{ $isMine ? 'bg-black text-white border-2 border-black' : 'bg-gray-50 text-gray-900 border-2 border-black/20' }}
-                                px-4 py-3 shadow-sm">
+                        <div
+                            @class([
+                                'mt-1 rounded-xl px-4 py-3 shadow-sm',
+                                'bg-black text-white border-2 border-black' => $isMine,
+                                'bg-gray-50 text-gray-900 border-2 border-black/20' => ! $isMine,
+                            ])>
                             <p class="text-sm whitespace-pre-wrap leading-relaxed">{{ $comment->comment_text }}</p>
                         </div>
                     </div>
