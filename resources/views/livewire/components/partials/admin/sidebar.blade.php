@@ -48,6 +48,13 @@
         >
             Ticket
         </flux:sidebar.item>
+        <flux:sidebar.item
+            icon="users"
+            href="{{ route('admin.usermanagement') }}"
+            :current="request()->routeIs('admin.usermanagement')"
+        >
+            User Management
+        </flux:sidebar.item>
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />

@@ -24,11 +24,10 @@ $initials = $firstInitial . $lastInitial;
 </head>
 
 <body class="min-h-screen bg-white flex">
-    {{-- Mobile header only (<lg) --}}
     <flux:header class="lg:hidden fixed top-0 inset-x-0 z-50 bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
         <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
-        <div class="font-medium">Kebun Raya Bogor</div>
+        <div class="font-medium text-white">Kebun Raya Bogor</div>
 
         <flux:spacer />
 

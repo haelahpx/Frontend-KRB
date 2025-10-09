@@ -1,18 +1,25 @@
 {{-- resources/views/livewire/pages/receptionist/meetingschedule.blade.php --}}
 @php
     use Carbon\Carbon;
-    // Robust, null-safe helpers so Blade never throws 500 during render
+
+    // Helpers aman supaya render nggak 500
     if (!function_exists('fmtDate')) {
-        function fmtDate($v) {
-            try { return $v ? Carbon::parse($v)->format('d M Y') : '—'; }
-            catch (\Throwable $e) { return '—'; }
+        function fmtDate($v)
+        {
+            try {
+                return $v ? Carbon::parse($v)->format('d M Y') : '—';
+            } catch (\Throwable $e) {
+                return '—';
+            }
         }
     }
     if (!function_exists('fmtTime')) {
-        function fmtTime($v) {
-            try { return $v ? Carbon::parse($v)->format('H:i') : '—'; }
-            catch (\Throwable $e) {
-                return (is_string($v) && preg_match('/^\d{2}:\d{2}/', $v)) ? substr($v,0,5) : '—';
+        function fmtTime($v)
+        {
+            try {
+                return $v ? Carbon::parse($v)->format('H:i') : '—';
+            } catch (\Throwable $e) {
+                return (is_string($v) && preg_match('/^\d{2}:\d{2}/', $v)) ? substr($v, 0, 5) : '—';
             }
         }
     }
@@ -21,31 +28,30 @@
     $label = 'block text-sm font-medium text-gray-700 mb-2';
     $input = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
     $btnBlk = 'px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition';
-    $btnBlu = 'px-3 py-2 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/20 disabled:opacity-60 transition';
-    $btnGrn = 'px-3 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 disabled:opacity-60 transition';
-    $btnOrn = 'px-3 py-2 text-xs font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-600/20 disabled:opacity-60 transition';
     $btnRed = 'px-3 py-2 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600/20 disabled:opacity-60 transition';
     $chip = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
     $mono = 'text-[10px] font-mono text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md';
     $ico = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0';
 @endphp
 
-<div class="bg-gray-50" @if($polling) wire:poll.2s="tick" @endif>
+<div class="bg-gray-50" @if(($polling ?? false)) wire:poll.2s="tick" @endif>
     <main class="px-4 sm:px-6 py-6">
         <div class="space-y-8">
 
             {{-- Hero --}}
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
                 <div class="pointer-events-none absolute inset-0 opacity-10">
                     <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
                     <div class="absolute bottom-0 -left-4 w-16 h-16 bg-white rounded-full blur-lg"></div>
                 </div>
                 <div class="relative z-10 p-6 sm:p-8">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+                        <div
+                            class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M8 7V3m8 4V3M5 11h14M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zm7-6v3l2 2" />
+                                    d="M8 7V3m8 4V3M5 11h14M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zm7-6v3l2 2" />
                             </svg>
                         </div>
                         <div>
@@ -60,17 +66,19 @@
             <section class="{{ $card }}">
                 <div class="px-5 py-4 border-b border-gray-200">
                     <h3 class="text-base font-semibold text-gray-900">
-                        {{ $editingId ? 'Edit Meeting' : 'Tambah Meeting' }}
+                        {{ ($editingId ?? null) ? 'Edit Meeting' : 'Tambah Meeting' }}
                     </h3>
                     <p class="text-sm text-gray-500">Isi detail rapat berikut.</p>
                 </div>
 
-                <form class="p-5" wire:submit.prevent="{{ $editingId ? 'update' : 'save' }}">
+                <form class="p-5" wire:submit.prevent="{{ ($editingId ?? null) ? 'update' : 'save' }}">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                         <div class="md:col-span-3">
                             <label class="{{ $label }}">Meeting Title</label>
-                            <input type="text" wire:model.defer="meeting_title" class="{{ $input }}" placeholder="Contoh: Weekly Sync, Kickoff Project, dll">
-                            @error('meeting_title') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                            <input type="text" wire:model.defer="meeting_title" class="{{ $input }}"
+                                placeholder="Contoh: Weekly Sync, Kickoff Project, dll">
+                            @error('meeting_title') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
@@ -81,18 +89,21 @@
                                 <option value="Ruangan 2">Ruangan 2</option>
                                 <option value="Ruangan 3">Ruangan 3</option>
                             </select>
-                            @error('location') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                            @error('location') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="{{ $label }}">Departemen</label>
                             <select wire:model.defer="department_id" class="{{ $input }}">
                                 <option value="" hidden>Pilih departemen</option>
-                                @foreach ($departments as $d)
-                                    <option value="{{ $d['department_id'] }}">{{ $d['name'] }}</option>
+                                @foreach (($departments ?? []) as $d)
+                                    <option value="{{ data_get($d, 'department_id') }}">{{ data_get($d, 'name', '—') }}
+                                    </option>
                                 @endforeach
                             </select>
-                            @error('department_id') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                            @error('department_id') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
@@ -103,8 +114,10 @@
 
                         <div>
                             <label class="{{ $label }}">Jumlah Peserta</label>
-                            <input type="number" min="1" wire:model.defer="participant" class="{{ $input }}" placeholder="Berapa orang yang ikut">
-                            @error('participant') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                            <input type="number" min="1" wire:model.defer="participant" class="{{ $input }}"
+                                placeholder="Berapa orang yang ikut">
+                            @error('participant') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
@@ -116,48 +129,43 @@
                         <div>
                             <label class="{{ $label }}">Waktu Selesai</label>
                             <input type="time" wire:model.defer="time_end" class="{{ $input }}">
-                            @error('time_end') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                            @error('time_end') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>
+                            @enderror
                         </div>
 
+                        {{-- Kebutuhan Ruangan (dinamis dari DB) --}}
                         <div class="md:col-span-3">
                             <label class="{{ $label }}">Kebutuhan Ruangan</label>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 text-sm text-gray-700">
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" value="video" wire:model="requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span>Video Conference</span>
-                                </label>
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" value="projector" wire:model="requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span>Projector</span>
-                                </label>
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" value="whiteboard" wire:model="requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span>Whiteboard</span>
-                                </label>
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" value="catering" wire:model="requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span>Catering</span>
-                                </label>
-                                <label class="inline-flex items-center gap-2 cursor-pointer sm:col-span-2">
-                                    <input type="checkbox" value="other" wire:model="requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span>Other</span>
-                                </label>
+                            <div
+                                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 text-sm text-gray-700">
+                                @foreach (($requirementOptions ?? []) as $opt)
+                                    <label class="inline-flex items-center gap-2 cursor-pointer"
+                                        wire:key="req-opt-{{ $opt['id'] }}">
+                                        <input type="checkbox" value="{{ $opt['id'] }}" wire:model="requirements"
+                                            class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                        <span>{{ $opt['name'] }}</span>
+                                    </label>
+                                @endforeach
                             </div>
-                            @error('requirements.*') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                            @error('requirements.*') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>
+                            @enderror
                         </div>
 
-                        @if (in_array('other', $requirements ?? [], true))
+                        {{-- Catatan wajib jika pilih "Other" (ID dari DB) --}}
+                        @if (!empty($otherId) && in_array($otherId, ($requirements ?? []), true))
                             <div class="md:col-span-3">
                                 <label class="{{ $label }}">Catatan</label>
-                                <textarea rows="4" wire:model.defer="notes" class="{{ $input }} !h-auto resize-none" placeholder="Jelaskan kebutuhan lainnya (wajib jika memilih Other)"></textarea>
-                                @error('notes') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                                <textarea rows="4" wire:model.defer="notes" class="{{ $input }} !h-auto resize-none"
+                                    placeholder="Jelaskan kebutuhan lainnya (wajib jika memilih 'Other')"></textarea>
+                                @error('notes') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>
+                                @enderror
                             </div>
                         @endif
                     </div>
 
                     <div class="pt-5">
                         <div class="flex items-center gap-3">
-                            @if($editingId)
+                            @if(($editingId ?? null))
                                 <button type="button" wire:click="closeEdit"
                                     class="px-4 h-10 rounded-xl border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 hover:border-gray-400 transition">
                                     Batal
@@ -165,23 +173,26 @@
                             @endif
 
                             <button type="submit" wire:loading.attr="disabled"
-                                wire:target="{{ $editingId ? 'update' : 'save' }}"
-                                class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium
-                                       shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20
-                                       transition active:scale-95 hover:bg-black disabled:opacity-60 relative overflow-hidden"
+                                wire:target="{{ ($editingId ?? null) ? 'update' : 'save' }}"
+                                class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition active:scale-95 hover:bg-black disabled:opacity-60 relative overflow-hidden"
                                 wire:loading.class="opacity-80 cursor-wait">
 
-                                <span class="flex items-center gap-2" wire:loading.remove wire:target="{{ $editingId ? 'update' : 'save' }}">
+                                <span class="flex items-center gap-2" wire:loading.remove
+                                    wire:target="{{ ($editingId ?? null) ? 'update' : 'save' }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7" />
                                     </svg>
-                                    {{ $editingId ? 'Simpan Perubahan' : 'Simpan Data' }}
+                                    {{ ($editingId ?? null) ? 'Simpan Perubahan' : 'Simpan Data' }}
                                 </span>
 
-                                <span class="flex items-center gap-2" wire:loading wire:target="{{ $editingId ? 'update' : 'save' }}">
+                                <span class="flex items-center gap-2" wire:loading
+                                    wire:target="{{ ($editingId ?? null) ? 'update' : 'save' }}">
                                     <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4" />
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
                                     </svg>
                                     Menyimpan…
                                 </span>
@@ -207,26 +218,36 @@
                     </div>
 
                     <div class="p-5 space-y-3">
-                        @forelse ($planned as $m)
-                            <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="planned-{{ $m['id'] }}">
+                        @forelse (($planned ?? []) as $m)
+                            @php
+                                $id = data_get($m, 'id');
+                                $rowNo = $loop->iteration;
+                            @endphp
+                            <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="planned-{{ $id }}">
                                 <div class="flex items-start gap-3">
-                                    <div class="{{ $ico }}">{{ strtoupper(substr(($m['meeting_title'] ?? 'M'), 0, 1)) }}</div>
+                                    <div class="{{ $ico }}">
+                                        {{ strtoupper(substr((string) data_get($m, 'meeting_title', 'M'), 0, 1)) }}</div>
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-2">
-                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['meeting_title'] ?? '—' }}</div>
-                                            <span class="{{ $chip }}">{{ fmtDate($m['date']) }}</span>
-                                            <span class="{{ $chip }}">{{ fmtTime($m['time']) }}–{{ fmtTime($m['time_end']) }}</span>
+                                            <div class="font-semibold text-gray-900 text-sm">
+                                                {{ data_get($m, 'meeting_title', '—') }}</div>
+                                            <span class="{{ $chip }}">{{ fmtDate(data_get($m, 'date')) }}</span>
+                                            <span
+                                                class="{{ $chip }}">{{ fmtTime(data_get($m, 'time')) }}–{{ fmtTime(data_get($m, 'time_end')) }}</span>
                                         </div>
                                         <div class="mt-1 text-[12px] text-gray-600">
-                                            {{ $m['location'] ?? '—' }} • {{ (int)($m['participant'] ?? 0) }} peserta
+                                            {{ data_get($m, 'location', '—') }} • {{ (int) data_get($m, 'participant', 0) }}
+                                            peserta
                                         </div>
 
                                         <div class="mt-3 flex flex-wrap gap-2">
-                                            <button class="{{ $btnBlk }}" wire:click="openEdit({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="openEdit({{ $m['id'] }})">Edit</button>
-                                            <button class="{{ $btnRed }}" wire:click="destroy({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="destroy({{ $m['id'] }})">Hapus</button>
+                                            <button class="{{ $btnBlk }}" wire:click="openEdit({{ $id }})"
+                                                wire:loading.attr="disabled" wire:target="openEdit">Edit</button>
+                                            <button class="{{ $btnRed }}" wire:click="destroy({{ $id }})"
+                                                wire:loading.attr="disabled" wire:target="destroy">Hapus</button>
                                         </div>
                                     </div>
-                                    <div class="{{ $mono }}">#{{ $m['id'] }}</div>
+                                    <div class="{{ $mono }}">No. {{ $rowNo }}</div>
                                 </div>
                             </div>
                         @empty
@@ -237,7 +258,7 @@
 
                 {{-- Ongoing --}}
                 <section class="{{ $card }}">
-                    <div class="px-6 py-4 border border-t-0 border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200">
                         <div class="flex items-center gap-3">
                             <div class="w-2 h-2 bg-amber-600 rounded-full"></div>
                             <div>
@@ -248,26 +269,36 @@
                     </div>
 
                     <div class="p-5 space-y-3">
-                        @forelse ($ongoing as $m)
-                            <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="ongoing-{{ $m['id'] }}">
+                        @forelse (($ongoing ?? []) as $m)
+                            @php
+                                $id = data_get($m, 'id');
+                                $rowNo = $loop->iteration;
+                            @endphp
+                            <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="ongoing-{{ $id }}">
                                 <div class="flex items-start gap-3">
-                                    <div class="{{ $ico }}">{{ strtoupper(substr(($m['meeting_title'] ?? 'M'), 0, 1)) }}</div>
+                                    <div class="{{ $ico }}">
+                                        {{ strtoupper(substr((string) data_get($m, 'meeting_title', 'M'), 0, 1)) }}</div>
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-2">
-                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['meeting_title'] ?? '—' }}</div>
-                                            <span class="{{ $chip }}">{{ fmtDate($m['date']) }}</span>
-                                            <span class="{{ $chip }}">{{ fmtTime($m['time']) }}–{{ fmtTime($m['time_end']) }}</span>
+                                            <div class="font-semibold text-gray-900 text-sm">
+                                                {{ data_get($m, 'meeting_title', '—') }}</div>
+                                            <span class="{{ $chip }}">{{ fmtDate(data_get($m, 'date')) }}</span>
+                                            <span
+                                                class="{{ $chip }}">{{ fmtTime(data_get($m, 'time')) }}–{{ fmtTime(data_get($m, 'time_end')) }}</span>
                                         </div>
                                         <div class="mt-1 text-[12px] text-gray-600">
-                                            {{ $m['location'] ?? '—' }} • {{ (int)($m['participant'] ?? 0) }} peserta
+                                            {{ data_get($m, 'location', '—') }} • {{ (int) data_get($m, 'participant', 0) }}
+                                            peserta
                                         </div>
 
                                         <div class="mt-3 flex flex-wrap gap-2">
-                                            <button class="{{ $btnBlk }}" wire:click="openEdit({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="openEdit({{ $m['id'] }})">Edit</button>
-                                            <button class="{{ $btnRed }}" wire:click="destroy({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="destroy({{ $m['id'] }})">Hapus</button>
+                                            <button class="{{ $btnBlk }}" wire:click="openEdit({{ $id }})"
+                                                wire:loading.attr="disabled" wire:target="openEdit">Edit</button>
+                                            <button class="{{ $btnRed }}" wire:click="destroy({{ $id }})"
+                                                wire:loading.attr="disabled" wire:target="destroy">Hapus</button>
                                         </div>
                                     </div>
-                                    <div class="{{ $mono }}">#{{ $m['id'] }}</div>
+                                    <div class="{{ $mono }}">No. {{ $rowNo }}</div>
                                 </div>
                             </div>
                         @empty
@@ -289,26 +320,36 @@
                     </div>
 
                     <div class="p-5 space-y-3">
-                        @forelse ($done as $m)
-                            <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="done-{{ $m['id'] }}">
+                        @forelse (($done ?? []) as $m)
+                            @php
+                                $id = data_get($m, 'id');
+                                $rowNo = $loop->iteration;
+                            @endphp
+                            <div class="p-3 rounded-lg bg-gray-50 border border-gray-200" wire:key="done-{{ $id }}">
                                 <div class="flex items-start gap-3">
-                                    <div class="{{ $ico }}">{{ strtoupper(substr(($m['meeting_title'] ?? 'M'), 0, 1)) }}</div>
+                                    <div class="{{ $ico }}">
+                                        {{ strtoupper(substr((string) data_get($m, 'meeting_title', 'M'), 0, 1)) }}</div>
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-2">
-                                            <div class="font-semibold text-gray-900 text-sm">{{ $m['meeting_title'] ?? '—' }}</div>
-                                            <span class="{{ $chip }}">{{ fmtDate($m['date']) }}</span>
-                                            <span class="{{ $chip }}">{{ fmtTime($m['time']) }}–{{ fmtTime($m['time_end']) }}</span>
+                                            <div class="font-semibold text-gray-900 text-sm">
+                                                {{ data_get($m, 'meeting_title', '—') }}</div>
+                                            <span class="{{ $chip }}">{{ fmtDate(data_get($m, 'date')) }}</span>
+                                            <span
+                                                class="{{ $chip }}">{{ fmtTime(data_get($m, 'time')) }}–{{ fmtTime(data_get($m, 'time_end')) }}</span>
                                         </div>
                                         <div class="mt-1 text-[12px] text-gray-600">
-                                            {{ $m['location'] ?? '—' }} • {{ (int)($m['participant'] ?? 0) }} peserta
+                                            {{ data_get($m, 'location', '—') }} • {{ (int) data_get($m, 'participant', 0) }}
+                                            peserta
                                         </div>
 
                                         <div class="mt-3 flex flex-wrap gap-2">
-                                            <button class="{{ $btnBlk }}" wire:click="openEdit({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="openEdit({{ $m['id'] }})">Edit</button>
-                                            <button class="{{ $btnRed }}" wire:click="destroy({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="destroy({{ $m['id'] }})">Hapus</button>
+                                            <button class="{{ $btnBlk }}" wire:click="openEdit({{ $id }})"
+                                                wire:loading.attr="disabled" wire:target="openEdit">Edit</button>
+                                            <button class="{{ $btnRed }}" wire:click="destroy({{ $id }})"
+                                                wire:loading.attr="disabled" wire:target="destroy">Hapus</button>
                                         </div>
                                     </div>
-                                    <div class="{{ $mono }}">#{{ $m['id'] }}</div>
+                                    <div class="{{ $mono }}">No. {{ $rowNo }}</div>
                                 </div>
                             </div>
                         @empty
@@ -322,11 +363,12 @@
     </main>
 
     {{-- Modal Edit --}}
-    @if ($modalEdit)
+    @if (($modalEdit ?? false))
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="closeEdit"></div>
 
-            <div class="relative w-full max-w-xl bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden max-h-[90vh] flex flex-col">
+            <div
+                class="relative w-full max-w-xl bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden max-h-[90vh] flex flex-col">
                 <div class="bg-gradient-to-r from-gray-900 to-black p-5 text-white relative overflow-hidden">
                     <div class="absolute inset-0 opacity-10 pointer-events-none">
                         <div class="absolute top-0 -right-6 w-24 h-24 bg-white rounded-full blur-2xl"></div>
@@ -334,10 +376,12 @@
                     </div>
                     <div class="relative z-10 flex items-center justify-between">
                         <h3 class="text-lg font-semibold tracking-tight">Edit Meeting</h3>
-                        <button class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center" wire:click="closeEdit">
+                        <button
+                            class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center"
+                            wire:click="closeEdit">
                             <svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M6 18L18 6M6 6l12 12" />
+                                    d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
@@ -347,7 +391,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                         <div class="md:col-span-2">
                             <label class="{{ $label }}">Meeting Title</label>
-                            <input type="text" class="{{ $input }}" wire:model.defer="meeting_title" placeholder="Judul meeting">
+                            <input type="text" class="{{ $input }}" wire:model.defer="meeting_title"
+                                placeholder="Judul meeting">
                         </div>
 
                         <div>
@@ -364,8 +409,8 @@
                             <label class="{{ $label }}">Departemen</label>
                             <select class="{{ $input }}" wire:model.defer="department_id">
                                 <option value="" hidden>Pilih departemen</option>
-                                @foreach ($departments as $d)
-                                    <option value="{{ $d['department_id'] }}">{{ $d['name'] }}</option>
+                                @foreach (($departments ?? []) as $d)
+                                    <option value="{{ data_get($d, 'department_id') }}">{{ data_get($d, 'name', '—') }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -390,37 +435,28 @@
                             <input type="time" class="{{ $input }}" wire:model.defer="time_end">
                         </div>
 
+                        {{-- Kebutuhan Ruangan (dinamis di modal) --}}
                         <div class="md:col-span-2">
                             <label class="{{ $label }}">Kebutuhan Ruangan</label>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm text-gray-700">
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" value="video" wire:model="requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span>Video Conference</span>
-                                </label>
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" value="projector" wire:model="requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span>Projector</span>
-                                </label>
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" value="whiteboard" wire:model="requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span>Whiteboard</span>
-                                </label>
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" value="catering" wire:model="requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span>Catering</span>
-                                </label>
-                                <label class="inline-flex items-center gap-2 cursor-pointer sm:col-span-2">
-                                    <input type="checkbox" value="other" wire:model="requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span>Other</span>
-                                </label>
+                                @foreach (($requirementOptions ?? []) as $opt)
+                                    <label class="inline-flex items-center gap-2 cursor-pointer"
+                                        wire:key="req-opt-modal-{{ $opt['id'] }}">
+                                        <input type="checkbox" value="{{ $opt['id'] }}" wire:model="requirements"
+                                            class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                        <span>{{ $opt['name'] }}</span>
+                                    </label>
+                                @endforeach
                             </div>
-                            @error('requirements.*') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                            @error('requirements.*') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>
+                            @enderror
                         </div>
 
-                        @if (in_array('other', $requirements ?? [], true))
+                        @if (!empty($otherId) && in_array($otherId, ($requirements ?? []), true))
                             <div class="md:col-span-2">
                                 <label class="{{ $label }}">Catatan</label>
-                                <textarea rows="3" class="{{ $input }} !h-auto resize-none" wire:model.defer="notes" placeholder="Jelaskan kebutuhan lainnya (wajib jika memilih Other)"></textarea>
+                                <textarea rows="3" class="{{ $input }} !h-auto resize-none" wire:model.defer="notes"
+                                    placeholder="Jelaskan kebutuhan lainnya (wajib jika memilih 'Other')"></textarea>
                                 @error('notes') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                             </div>
                         @endif
@@ -429,8 +465,12 @@
 
                 <div class="bg-gray-50 border-t border-gray-200 p-5">
                     <div class="flex items-center justify-end gap-2.5">
-                        <button type="button" class="px-4 h-10 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 hover:border-gray-400 transition" wire:click="closeEdit">Batal</button>
-                        <button type="button" class="px-4 h-10 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition" wire:click="update">Simpan Perubahan</button>
+                        <button type="button"
+                            class="px-4 h-10 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 hover:border-gray-400 transition"
+                            wire:click="closeEdit">Batal</button>
+                        <button type="button"
+                            class="px-4 h-10 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition"
+                            wire:click="update">Simpan Perubahan</button>
                     </div>
                 </div>
             </div>

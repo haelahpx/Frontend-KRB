@@ -4,6 +4,7 @@ namespace App\Livewire\Pages\Receptionist;
 
 use App\Models\BookingRoom;
 use App\Models\Department;
+use App\Models\Requirement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -26,7 +27,12 @@ class MeetingSchedule extends Component
     public $time_end;
     public $notes;
 
+    /** @var int[] requirement IDs */
     public array $requirements = [];
+
+    /** @var array<int,array{id:int,name:string}> */
+    public array $requirementOptions = [];
+
     public string $saveState = 'idle';
     public ?string $savedAt = null;
 
@@ -38,22 +44,36 @@ class MeetingSchedule extends Component
     // to temporarily stop polling if a render error happened
     public bool $polling = true;
 
+    /** cache: id “Other” kalau ada */
+    private ?int $otherRequirementId = null;
+
     public function mount(): void
     {
-        $deptQuery = Department::query();
+        // Seed minimal kalau kosong (opsional aman)
+        if (Requirement::count() === 0) {
+            Requirement::upsertByName(['Video Conference','Projector','Whiteboard','Catering','Other']);
+        }
 
+        // Load Departments (scoped by company)
+        $deptQuery = Department::query();
         if ($cid = optional(Auth::user())->company_id) {
             $deptQuery->where('company_id', $cid);
         }
-
         $this->departments = $deptQuery
             ->orderBy('department_name')
             ->get(['department_id', 'department_name'])
             ->map(fn ($d) => [
                 'department_id' => $d->department_id,
                 'name' => $d->department_name,
-            ])
+            ])->all();
+
+        // Load Requirement options
+        $this->requirementOptions = Requirement::orderBy('name')
+            ->get(['requirement_id','name'])
+            ->map(fn($r) => ['id' => (int)$r->requirement_id, 'name' => (string)$r->name])
             ->all();
+
+        $this->otherRequirementId = $this->findOtherRequirementId();
 
         $this->reloadBuckets();
     }
@@ -70,7 +90,7 @@ class MeetingSchedule extends Component
             'time_end' => ['required', 'date_format:H:i', 'after:time'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'requirements' => ['array'],
-            'requirements.*' => [Rule::in(['video', 'projector', 'whiteboard', 'catering', 'other'])],
+            'requirements.*' => ['integer', 'exists:requirements,requirement_id'],
         ];
     }
 
@@ -86,7 +106,7 @@ class MeetingSchedule extends Component
 
     protected function validateNotesIfOther(): void
     {
-        if (in_array('other', $this->requirements ?? [], true)) {
+        if ($this->otherRequirementId && in_array($this->otherRequirementId, $this->requirements, true)) {
             $this->validate(['notes' => 'required|string|min:2|max:1000']);
         }
     }
@@ -117,11 +137,8 @@ class MeetingSchedule extends Component
         $this->date = substr((string) $this->date, 0, 10);
 
         $rid = $this->mapRoomId($this->location);
-        if ($rid === null) {
-            throw new \RuntimeException('Invalid room selection.');
-        }
+        if ($rid === null) throw new \RuntimeException('Invalid room selection.');
 
-        // If your DB columns are TIME, write ':00' (see comment below)
         BookingRoom::create([
             'room_id'             => $rid,
             'company_id'          => optional(Auth::user())->company_id,
@@ -158,7 +175,8 @@ class MeetingSchedule extends Component
         $this->time          = $this->safeTimeHi($row->start_time);
         $this->time_end      = $this->safeTimeHi($row->end_time);
         $this->notes         = $meta['notes'] ?? null;
-        $this->requirements  = $meta['requirements'] ?? [];
+        /** @var int[] */
+        $this->requirements  = $meta['requirement_ids'] ?? [];
 
         $this->modalEdit = true;
     }
@@ -182,9 +200,7 @@ class MeetingSchedule extends Component
         if (!$row) return;
 
         $rid = $this->mapRoomId($this->location);
-        if ($rid === null) {
-            throw new \RuntimeException('Invalid room selection.');
-        }
+        if ($rid === null) throw new \RuntimeException('Invalid room selection.');
 
         $row->update([
             'room_id'             => $rid,
@@ -192,8 +208,8 @@ class MeetingSchedule extends Component
             'department_id'       => (int) $this->department_id,
             'date'                => $this->date,
             'number_of_attendees' => (int) $this->participant,
-            'start_time'          => $this->combineDateTime($this->date, $this->time),     // if TIME col: $this->time.':00'
-            'end_time'            => $this->combineDateTime($this->date, $this->time_end), // if TIME col: $this->time_end.':00'
+            'start_time'          => $this->combineDateTime($this->date, $this->time),
+            'end_time'            => $this->combineDateTime($this->date, $this->time_end),
             'special_notes'       => $this->composeSpecialNotes($this->requirements, (string) $this->notes),
         ]);
 
@@ -222,9 +238,7 @@ class MeetingSchedule extends Component
 
         $all = $q->get();
 
-        $this->planned = [];
-        $this->ongoing = [];
-        $this->done    = [];
+        $this->planned = $this->ongoing = $this->done = [];
 
         foreach ($all as $r) {
             $meta  = $this->parseSpecialNotes((string) ($r->special_notes ?? ''));
@@ -241,26 +255,22 @@ class MeetingSchedule extends Component
                 'time_end'      => $end,
                 'participant'   => (int) $r->number_of_attendees,
                 'department_id' => (int) $r->department_id,
-                'requirements'  => $meta['requirements'] ?? [],
+                // pilihan requirement (ID) bila kamu mau render chip di list
+                'requirements'  => $meta['requirement_ids'] ?? [],
                 'notes'         => $meta['notes'] ?? null,
             ];
 
             $status = $this->computeStatus($date, $start, $end);
 
-            if ($status === 'planned') {
-                $this->planned[] = $ui;
-            } elseif ($status === 'ongoing') {
-                $this->ongoing[] = $ui;
-            } else {
-                $this->done[] = $ui;
-            }
+            if ($status === 'planned')      $this->planned[] = $ui;
+            elseif ($status === 'ongoing')  $this->ongoing[] = $ui;
+            else                            $this->done[]    = $ui;
         }
     }
 
     private function combineDateTime(string $date, string $time): string
     {
-        // If your DB columns are DATETIME, store combined string.
-        // If your DB columns are TIME, store just "$time:00" and adjust casts accordingly.
+        // If DATETIME: simpan "Y-m-d H:i:00"; jika kolom TIME, simpan "$time:00".
         return "{$date} {$time}:00";
     }
 
@@ -284,59 +294,65 @@ class MeetingSchedule extends Component
         };
     }
 
+    /**
+     * Parse special_notes:
+     * - New format: [REQID=1,2,3]
+     * - Legacy format (supported): [REQ=video,projector]
+     */
     private function parseSpecialNotes(string $raw): array
     {
-        $requirements = [];
         $notes = $raw;
+        $ids = [];
 
+        // strip status tag jika ada
         if (preg_match('/\[STATUS=(planned|ongoing|done)\]/i', $notes, $m)) {
             $notes = str_replace($m[0], '', $notes);
         }
 
-        if (preg_match('/\[REQ=([a-z,]+)\]/i', $notes, $m)) {
-            $requirements = array_values(array_filter(array_map('trim', explode(',', strtolower($m[1])))));
+        // New: [REQID=1,2,3]
+        if (preg_match('/\[REQID=([\d,\s]+)\]/i', $notes, $m)) {
+            $ids = array_values(array_filter(array_map('intval', explode(',', $m[1]))));
+            $notes = str_replace($m[0], '', $notes);
+        }
+        // Legacy: [REQ=name,name]
+        elseif (preg_match('/\[REQ=([a-z0-9 _\-,]+)\]/i', $notes, $m)) {
+            $names = array_values(array_filter(array_map(fn($x)=>trim(strtolower($x)), explode(',', $m[1]))));
+            if ($names) {
+                $ids = Requirement::whereIn(\DB::raw('LOWER(name)'), $names)->pluck('requirement_id')->map(fn($v)=>(int)$v)->all();
+            }
             $notes = str_replace($m[0], '', $notes);
         }
 
         $notes = ltrim($notes);
-        return compact('requirements', 'notes');
+
+        return [
+            'requirement_ids' => $ids,
+            'notes'           => $notes,
+        ];
     }
 
-    private function composeSpecialNotes(array $requirements, string $notes): string
+    private function composeSpecialNotes(array $requirementIds, string $notes): string
     {
-        $tags = [];
+        // Simpan hanya sebagai ID agar stabil
+        $cleanIds = array_values(array_unique(array_map('intval', array_filter($requirementIds, fn($v)=>$v !== null))));
+        $tag = $cleanIds ? '[REQID='.implode(',', $cleanIds).']' : '';
 
-        $reqs = array_values(array_unique(array_filter(
-            $requirements,
-            fn ($r) => in_array($r, ['video', 'projector', 'whiteboard', 'catering', 'other'], true)
-        )));
-        if (!empty($reqs)) {
-            $tags[] = "[REQ=" . implode(',', $reqs) . "]";
-        }
-
-        $prefix = implode(' ', $tags);
-        return trim($prefix . "\n" . trim($notes));
+        return trim($tag . "\n" . trim($notes));
     }
 
     private function safeDateYmd($value): ?string
     {
         if (!$value) return null;
-        try {
-            return \Carbon\Carbon::parse($value)->format('Y-m-d');
-        } catch (\Throwable $e) {
-            return is_string($value) ? substr($value, 0, 10) : null;
-        }
+        try { return \Carbon\Carbon::parse($value)->format('Y-m-d'); }
+        catch (\Throwable $e) { return is_string($value) ? substr($value, 0, 10) : null; }
     }
 
     private function safeTimeHi($value): ?string
     {
         if (!$value) return null;
-        try {
-            return \Carbon\Carbon::parse($value)->format('H:i');
-        } catch (\Throwable $e) {
-            if (is_string($value) && preg_match('/^\d{2}:\d{2}/', $value)) {
-                return substr($value, 0, 5); // handles "14:00:00"
-            }
+        try { return \Carbon\Carbon::parse($value)->format('H:i'); }
+        catch (\Throwable $e) {
+            if (is_string($value) && preg_match('/^\d{2}:\d{2}/', $value)) return substr($value, 0, 5);
             return null;
         }
     }
@@ -364,12 +380,11 @@ class MeetingSchedule extends Component
     public function tick(): void
     {
         if (!$this->polling) return;
-
         try {
             $this->reloadBuckets();
         } catch (\Throwable $e) {
             \Log::error('[MeetingSchedule tick] '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            $this->polling = false; // pause polling to avoid repeated 500s
+            $this->polling = false;
             $this->dispatch('toast', type: 'error', title: 'Auto-refresh paused',
                 message: 'Terjadi error saat refresh. Cek log untuk detail.', duration: 4000);
         }
@@ -378,10 +393,18 @@ class MeetingSchedule extends Component
     public function render()
     {
         return view('livewire.pages.receptionist.meetingschedule', [
-            'planned'     => $this->planned,
-            'ongoing'     => $this->ongoing,
-            'done'        => $this->done,
-            'departments' => $this->departments,
+            'planned'            => $this->planned,
+            'ongoing'            => $this->ongoing,
+            'done'               => $this->done,
+            'departments'        => $this->departments,
+            'requirementOptions' => $this->requirementOptions,
+            'otherId'            => $this->otherRequirementId,
         ]);
+    }
+
+    private function findOtherRequirementId(): ?int
+    {
+        $other = Requirement::whereRaw('LOWER(name) = ?', ['other'])->value('requirement_id');
+        return $other ? (int)$other : null;
     }
 }

@@ -32,12 +32,6 @@
             </div>
         </div>
 
-        @if (session()->has('success'))
-        <div class="bg-white border border-gray-200 shadow-lg rounded-xl px-4 py-3 text-sm text-gray-800">
-            {{ session('success') }}
-        </div>
-        @endif
-
         {{-- TOOLBAR --}}
         <div class="{{ $card }}">
             <div class="px-5 py-4 border-b border-gray-200">
@@ -82,6 +76,9 @@
             {{-- LIST --}}
             <div class="divide-y divide-gray-200">
                 @forelse ($tickets as $t)
+                @php
+                    $rowNo = (($tickets->firstItem() ?? 1) + $loop->index);
+                @endphp
                 <div class="px-5 py-5 hover:bg-gray-50 transition-colors" wire:key="ticket-{{ $t->ticket_id }}">
                     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                         <div class="flex items-start gap-3 flex-1">
@@ -150,7 +147,7 @@
                         </div>
 
                         <div class="text-right shrink-0 space-y-2">
-                            <div class="{{ $mono }}">#{{ $t->ticket_id }}</div>
+                            <div class="{{ $mono }}">No. {{ $rowNo }}</div>
                             <div class="flex flex-wrap gap-2 justify-end pt-1">
                                 <button class="{{ $btnBlk }}"
                                     wire:click="openEdit({{ $t->ticket_id }})"

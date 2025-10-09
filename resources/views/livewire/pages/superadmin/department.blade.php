@@ -90,6 +90,9 @@
 
             <div class="divide-y divide-gray-200">
                 @forelse ($rows as $r)
+                @php
+                    $rowNo = (($rows->firstItem() ?? 1) + $loop->index);
+                @endphp
                 <div class="px-5 py-5 hover:bg-gray-50 transition-colors" wire:key="dept-{{ $r->department_id }}">
                     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
 
@@ -115,7 +118,7 @@
                         </div>
 
                         <div class="text-right shrink-0 space-y-2">
-                            <p class="{{ $mono }}">#{{ $r->department_id }}</p>
+                            <p class="{{ $mono }}">No. {{ $rowNo }}</p> 
                             <div class="flex flex-wrap gap-2 justify-end">
                                 <button
                                     class="{{ $btnBlk }}"

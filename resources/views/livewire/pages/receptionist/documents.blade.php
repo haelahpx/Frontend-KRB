@@ -258,6 +258,9 @@
 
             <div class="divide-y divide-gray-200">
                 @forelse ($entries as $e)
+                    @php
+                        $rowNo = ($entries->firstItem() ?? 1) + $loop->index;
+                    @endphp
                     <div class="px-6 py-5 hover:bg-gray-50 transition-colors" wire:key="entry-{{ $e->document_id }}">
                         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                             <div class="flex items-start gap-3 flex-1">
@@ -322,7 +325,7 @@
                             </div>
 
                             <div class="text-right shrink-0 space-y-2">
-                                <div class="{{ $mono }}">#{{ $e->document_id }}</div>
+                                <div class="{{ $mono }}">No. {{ $rowNo }}</div>
                                 <div class="text:[11px] text-gray-500">{{ $e->created_at->format('d M Y H:i') }}</div>
                                 <div class="flex flex-wrap gap-2 justify-end pt-1.5">
                                     <button wire:click="openEdit({{ $e->document_id }})" wire:loading.attr="disabled"

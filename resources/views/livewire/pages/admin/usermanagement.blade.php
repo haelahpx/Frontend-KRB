@@ -1,3 +1,5 @@
+{{-- resources/views/livewire/pages/admin/usermanagement.blade.php --}}
+
 <div class="bg-gray-50">
     @php
         $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
@@ -29,18 +31,25 @@
                     <div>
                         <h2 class="text-lg sm:text-xl font-semibold">User Management</h2>
                         <p class="text-sm text-white/80">
-                            Mengelola user untuk perusahaan: <span class="font-semibold">{{ $company_name }}</span>
+                            Perusahaan: <span class="font-semibold">{{ $company_name }}</span>
+                            <span class="mx-2">•</span>
+                            Departemen: <span class="font-semibold">{{ $department_name }}</span>
+                        </p>
+                        <p class="text-xs text-white/60 mt-1">
+                            Halaman ini <strong>terkunci</strong> untuk menampilkan & mengelola user pada departemen
+                            yang sama dengan Anda.
                         </p>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- FORM CREATE (inline) --}}
+        {{-- FORM CREATE --}}
         <section class="{{ $card }}">
             <div class="px-5 py-4 border-b border-gray-200">
                 <h3 class="text-base font-semibold text-gray-900">Tambah User</h3>
-                <p class="text-sm text-gray-500">Isi form untuk menambahkan user baru.</p>
+                <p class="text-sm text-gray-500">User baru otomatis masuk ke departemen: <span
+                        class="font-medium">{{ $department_name }}</span></p>
             </div>
 
             <form class="p-5" wire:submit.prevent="store">
@@ -72,39 +81,21 @@
                         @error('password') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
                         @enderror
                     </div>
-                    <div>
-                        <label class="{{ $label }}">Company</label>
-                        <input type="text" class="{{ $input }}" value="{{ $company_name }}" readonly>
-                        @error('company_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
-                        @enderror
-                    </div>
 
-                    {{-- ROLE (live model to trigger mapping) --}}
                     <div>
                         <label class="{{ $label }}">Role</label>
-                        <select class="{{ $input }}" wire:model.live="role_id">
+                        <select class="{{ $input }}" wire:model.defer="role_id">
                             <option value="">Pilih role</option>
                             @foreach ($roles as $r)
                                 <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
                             @endforeach
                         </select>
-                        @if($role_id == $roleReceptionistId || $role_id == $roleSuperadminId)
-                            <p class="mt-1 text-xs text-gray-500">Department akan diisi otomatis.</p>
-                        @endif
                         @error('role_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                     </div>
 
-                    {{-- DEPARTMENT --}}
-                    <div class="md:col-span-2">
-                        <label class="{{ $label }}">Department</label>
-                        <select class="{{ $input }}" wire:model.defer="department_id" required>
-                            <option value="">Pilih department</option>
-                            @foreach ($departments as $d)
-                                <option value="{{ $d->department_id }}">{{ $d->department_name }}</option>
-                            @endforeach
-                        </select>
-                        @error('department_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
-                        @enderror
+                    <div>
+                        <label class="{{ $label }}">Department (Terkunci)</label>
+                        <input type="text" class="{{ $input }}" value="{{ $department_name }}" readonly>
                     </div>
                 </div>
 
@@ -146,6 +137,7 @@
                                 d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
                         </svg>
                     </div>
+
                     <div class="relative">
                         <select wire:model.live="roleFilter" class="{{ $input }} pl-10 w-full lg:w-60">
                             <option value="">Semua Role</option>
@@ -165,8 +157,15 @@
             <div class="divide-y divide-gray-200">
                 @forelse ($users as $u)
                     @php
+                        $roleName = strtolower($u->role->name ?? '');
+                        $isSelf = auth()->id() === $u->user_id;
+                        $canEdit = !in_array($roleName, ['admin', 'superadmin']) || $isSelf;   // admin/superadmin hanya boleh edit diri sendiri
+                        $canDelete = !in_array($roleName, ['admin', 'superadmin']);              // tidak boleh hapus admin/superadmin
+
+                        // Nomor urut rapi (berdasar pagination): 1,2,3,4...
                         $rowNo = (($users->firstItem() ?? 1) - 0) + $loop->index;
                     @endphp
+
                     <div class="px-5 py-5 hover:bg-gray-50 transition-colors" wire:key="user-{{ $u->user_id }}">
                         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                             <div class="flex items-start gap-3 flex-1">
@@ -184,6 +183,9 @@
                                             <span
                                                 class="font-medium text-gray-700">{{ $u->department->department_name ?? 'N/A' }}</span>
                                         </span>
+                                        @if($isSelf)
+                                            <span class="{{ $chip }}">You</span>
+                                        @endif
                                     </div>
                                     <p class="text-[12px] text-gray-500 truncate">{{ $u->email }}</p>
                                     @if($u->phone_number)
@@ -191,29 +193,44 @@
                                     @endif
                                 </div>
                             </div>
+
                             <div class="text-right shrink-0 space-y-2">
+                                {{-- Tampilkan nomor urut, bukan DB id --}}
                                 <div class="{{ $mono }}">No. {{ $rowNo }}</div>
                                 <div class="flex flex-wrap gap-2 justify-end pt-1">
-                                    <button class="{{ $btnBlk }}" wire:click="openEdit({{ $u->user_id }})"
-                                        wire:loading.attr="disabled" wire:target="openEdit({{ $u->user_id }})"
-                                        wire:key="btn-edit-{{ $u->user_id }}">
-                                        <span wire:loading.remove wire:target="openEdit({{ $u->user_id }})">Edit</span>
-                                        <span wire:loading wire:target="openEdit({{ $u->user_id }})">Loading…</span>
-                                    </button>
+                                    @if($canEdit)
+                                        <button class="{{ $btnBlk }}" wire:click="openEdit({{ $u->user_id }})"
+                                            wire:loading.attr="disabled" wire:target="openEdit({{ $u->user_id }})"
+                                            wire:key="btn-edit-{{ $u->user_id }}">
+                                            <span wire:loading.remove wire:target="openEdit({{ $u->user_id }})">Edit</span>
+                                            <span wire:loading wire:target="openEdit({{ $u->user_id }})">Loading…</span>
+                                        </button>
+                                    @else
+                                        <button class="{{ $btnBlk }} opacity-50 cursor-not-allowed" disabled
+                                            title="Anda tidak bisa mengedit akun Admin lain">
+                                            Edit
+                                        </button>
+                                    @endif
 
-                                    <button class="{{ $btnRed }}" wire:click="delete({{ $u->user_id }})"
-                                        onclick="return confirm('Hapus user ini?')" wire:loading.attr="disabled"
-                                        wire:target="delete({{ $u->user_id }})" wire:key="btn-del-{{ $u->user_id }}">
-                                        <span wire:loading.remove wire:target="delete({{ $u->user_id }})">Hapus</span>
-                                        <span wire:loading wire:target="delete({{ $u->user_id }})">Menghapus…</span>
-                                    </button>
-
+                                    @if($canDelete)
+                                        <button class="{{ $btnRed }}" wire:click="delete({{ $u->user_id }})"
+                                            onclick="return confirm('Hapus user ini?')" wire:loading.attr="disabled"
+                                            wire:target="delete({{ $u->user_id }})" wire:key="btn-del-{{ $u->user_id }}">
+                                            <span wire:loading.remove wire:target="delete({{ $u->user_id }})">Hapus</span>
+                                            <span wire:loading wire:target="delete({{ $u->user_id }})">Menghapus…</span>
+                                        </button>
+                                    @else
+                                        <button class="{{ $btnRed }} opacity-50 cursor-not-allowed" disabled
+                                            title="Akun Admin tidak bisa dihapus">
+                                            Hapus
+                                        </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
                     </div>
                 @empty
-                    <div class="px-5 py-14 text-center text-gray-500 text-sm">Tidak ada user yang cocok.</div>
+                    <div class="px-5 py-14 text-center text-gray-500 text-sm">Tidak ada user pada departemen ini.</div>
                 @endforelse
             </div>
 
@@ -226,14 +243,13 @@
             @endif
         </div>
 
-        {{-- MODAL EDIT (Tanpa AlpineJS, murni Livewire) --}}
+        {{-- MODAL EDIT --}}
         @if($modalEdit)
             <div class="fixed inset-0 z-[60] flex items-center justify-center" role="dialog" aria-modal="true"
                 wire:key="modal-edit" wire:keydown.escape.window="closeEdit">
                 {{-- Overlay --}}
                 <button type="button" class="absolute inset-0 bg-black/50" aria-label="Close overlay"
-                    wire:click="closeEdit">
-                </button>
+                    wire:click="closeEdit"></button>
 
                 {{-- Dialog --}}
                 <div class="relative w-full max-w-2xl mx-4 {{ $card }} focus:outline-none" tabindex="-1">
@@ -274,7 +290,6 @@
                                     autocomplete="new-password">
                             </div>
 
-                            {{-- ROLE (live model to trigger mapping) --}}
                             <div>
                                 <label class="{{ $label }}">Role</label>
                                 <select class="{{ $input }}" wire:model.live="edit_role_id">
@@ -283,24 +298,13 @@
                                         <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
                                     @endforeach
                                 </select>
-                                @if($edit_role_id == $roleReceptionistId || $edit_role_id == $roleSuperadminId)
-                                    <p class="mt-1 text-xs text-gray-500">Department akan diisi otomatis.</p>
-                                @endif
                                 @error('edit_role_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
                                 @enderror
                             </div>
 
-                            {{-- DEPARTMENT --}}
                             <div>
-                                <label class="{{ $label }}">Department</label>
-                                <select class="{{ $input }}" wire:model.defer="edit_department_id">
-                                    <option value="">Pilih department</option>
-                                    @foreach ($departments as $d)
-                                        <option value="{{ $d->department_id }}">{{ $d->department_name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('edit_department_id') <p class="mt-1 text-xs text-rose-600 font-medium">
-                                {{ $message }}</p> @enderror
+                                <label class="{{ $label }}">Department (Terkunci)</label>
+                                <input type="text" class="{{ $input }}" value="{{ $department_name }}" readonly>
                             </div>
                         </div>
 

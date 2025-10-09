@@ -84,6 +84,9 @@
             {{-- LIST --}}
             <div class="divide-y divide-gray-200">
                 @forelse ($bookings as $b)
+                @php
+                    $rowNo = (($bookings->firstItem() ?? 1) + $loop->index);
+                @endphp
                 <div class="px-5 py-5 hover:bg-gray-50 transition-colors" wire:key="br-{{ $b->bookingroom_id }}">
                     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                         <div class="flex items-start gap-3 flex-1">
@@ -125,7 +128,7 @@
                         </div>
 
                         <div class="text-right shrink-0 space-y-2">
-                            <div class="{{ $mono }}">#{{ $b->bookingroom_id }}</div>
+                            <div class="{{ $mono }}">No. {{ $rowNo }}</div>
                             <div class="flex flex-wrap gap-2 justify-end pt-1">
                                 <button class="{{ $btnBlk }}"
                                     wire:click="openEdit({{ $b->bookingroom_id }})"
