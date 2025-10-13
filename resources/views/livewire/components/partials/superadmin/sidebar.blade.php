@@ -57,10 +57,6 @@
                 :current="request()->routeIs('superadmin.ticketsupport')">
                 Ticket list
             </flux:sidebar.item>
-            <flux:sidebar.item icon="building-office" href="{{ route('superadmin.manageroom') }}"
-                :current="request()->routeIs('superadmin.manageroom')">
-                Agent list
-            </flux:sidebar.item>
         </flux:sidebar.group>
 
 

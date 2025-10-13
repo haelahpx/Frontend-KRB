@@ -16,6 +16,7 @@ use App\Livewire\Pages\User\Package;
 use App\Livewire\Pages\User\Ticketstatus;
 use App\Livewire\Pages\User\BookingStatus;
 use App\Livewire\Pages\User\Ticketshow;
+use App\Livewire\Pages\User\Bookvehicle;
 
 // ========== Livewire Pages (Admin / Superadmin / Receptionist) ==========
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
@@ -60,10 +61,10 @@ Route::get('/', function () {
     $roleName = $user->role->name ?? $user->role ?? null;
 
     return match ($roleName) {
-        'Superadmin'   => redirect()->route('superadmin.dashboard'),
-        'Admin'        => redirect()->route('admin.dashboard'),
+        'Superadmin' => redirect()->route('superadmin.dashboard'),
+        'Admin' => redirect()->route('admin.dashboard'),
         'Receptionist' => redirect()->route('receptionist.dashboard'),
-        default        => redirect()->route('user.home'),
+        default => redirect()->route('user.home'),
     };
 })->name('home');
 
@@ -91,6 +92,9 @@ Route::middleware('auth')->group(function () {
     // Booking room (User)
     Route::get('/book-room', Bookroom::class)->name('book-room');
     Route::get('/bookingstatus', BookingStatus::class)->name('bookingstatus');
+
+    // Booking vehicle (User)
+    Route::get('/book-vehicle', Bookvehicle::class)->name('book-vehicle');
 
     // Profile & others
     Route::get('/profile', Profile::class)->name('profile');
