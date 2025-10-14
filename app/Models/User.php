@@ -7,10 +7,11 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes; // <— tambahkan
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes; // <— aktifkan
 
     protected $table = 'users';
 
@@ -33,12 +34,13 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password' => 'hashed',
+            'password' => 'hashed',      // biar otomatis hash saat di-set
+            'deleted_at' => 'datetime',  // opsional (biar eksplisit)
         ];
     }
 
     /**
-     * Store email in lowercase.
+     * Simpan email lowercase.
      */
     protected function email(): Attribute
     {
@@ -48,7 +50,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Virtual "name" attribute mapping ke full_name.
+     * Virtual "name" -> full_name.
      */
     protected function name(): Attribute
     {
@@ -59,15 +61,14 @@ class User extends Authenticatable
     }
 
     /**
-     * Override Auth identifier agar pakai user_id.
+     * Gunakan user_id sebagai auth identifier.
      */
     public function getAuthIdentifierName()
     {
-        return 'user_id'; // bukan $this->primaryKey
+        return 'user_id';
     }
 
-    // ===== RELATIONSHIPS =====
-
+    // ===== RELATIONS =====
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class, 'company_id', 'company_id');

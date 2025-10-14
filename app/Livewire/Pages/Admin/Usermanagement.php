@@ -59,10 +59,10 @@ class Usermanagement extends Component
     {
         $auth = Auth::user()->loadMissing(['company', 'department']);
 
-        $this->company_id = (int) ($auth->company_id ?? 0);
-        $this->department_id = (int) ($auth->department_id ?? 0);
-        $this->company_name = optional($auth->company)->company_name ?? '-';
-        $this->department_name = optional($auth->department)->department_name ?? '-';
+        $this->company_id     = (int) ($auth->company_id ?? 0);
+        $this->department_id  = (int) ($auth->department_id ?? 0);
+        $this->company_name   = optional($auth->company)->company_name ?? '-';
+        $this->department_name= optional($auth->department)->department_name ?? '-';
 
         // Roles dropdown: hide superadmin & receptionist
         $this->roles = Role::query()
@@ -73,25 +73,20 @@ class Usermanagement extends Component
             ->toArray();
     }
 
-    public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
-    public function updatingRoleFilter(): void
-    {
-        $this->resetPage();
-    }
+    public function updatingSearch(): void { $this->resetPage(); }
+    public function updatingRoleFilter(): void { $this->resetPage(); }
 
     /* ======================== Validation ======================== */
 
     protected function createRules(): array
     {
         return [
-            'full_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
+            'full_name'    => ['required', 'string', 'max:255'],
+            // unique pada baris yang belum dihapus (deleted_at NULL)
+            'email'        => ['required', 'email', 'unique:users,email,NULL,user_id,deleted_at,NULL'],
             'phone_number' => ['nullable', 'string', 'max:30'],
-            'password' => ['required', 'string', 'min:6'],
-            'role_id' => [
+            'password'     => ['required', 'string', 'min:6'],
+            'role_id'      => [
                 'required',
                 'integer',
                 // Block receptionist & superadmin server-side
@@ -103,19 +98,19 @@ class Usermanagement extends Component
 
     protected function editRules(): array
     {
-        $ignore = $this->editingId ? ",{$this->editingId},user_id" : '';
+        $id = $this->editingId ?? 'NULL';
         return [
-            'edit_full_name' => ['required', 'string', 'max:255'],
-            'edit_email' => ['required', 'email', "unique:users,email{$ignore}"],
+            'edit_full_name'    => ['required', 'string', 'max:255'],
+            // ignore ID yang sedang diedit, tetap filter deleted_at NULL
+            'edit_email'        => ["required", "email", "unique:users,email,{$id},user_id,deleted_at,NULL"],
             'edit_phone_number' => ['nullable', 'string', 'max:30'],
-            'edit_role_id' => [
+            'edit_role_id'      => [
                 'required',
                 'integer',
-                // Block receptionist & superadmin server-side
                 Rule::exists('roles', 'role_id')
                     ->where(fn($q) => $q->whereNotIn('name', ['receptionist', 'superadmin'])),
             ],
-            // edit_password optional
+            // edit_password opsional
         ];
     }
 
@@ -126,24 +121,24 @@ class Usermanagement extends Component
         $data = $this->validate($this->createRules());
 
         User::create([
-            'full_name' => $data['full_name'],
-            'email' => strtolower($data['email']),
-            'phone_number' => $data['phone_number'] ?? null,
-            'password' => bcrypt($this->password),
-            'role_id' => (int) $data['role_id'],
-            'company_id' => $this->company_id,    // lock to auth company
-            'department_id' => $this->department_id, // lock to auth department
+            'full_name'     => $data['full_name'],
+            'email'         => strtolower($data['email']),
+            'phone_number'  => $data['phone_number'] ?? null,
+            // Model sudah cast 'password' => 'hashed', jadi TIDAK perlu bcrypt()
+            'password'      => $this->password,
+            'role_id'       => (int) $data['role_id'],
+            'company_id'    => $this->company_id,     // lock ke company auth
+            'department_id' => $this->department_id,  // lock ke dept auth
         ]);
 
-        // ✅ Best UX: clear inputs, errors, and go back to first page (freshest on top)
+        // Bersihkan form & kembali ke page pertama
         $this->resetCreateForm();
         $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'User dibuat.', duration: 3000);
-        $this->resetPage(); // rerender & ensure the latest item is visible on page 1
+        $this->resetPage();
     }
 
     private function resetCreateForm(): void
     {
-        // clear form & errors
         $this->reset([
             'full_name',
             'email',
@@ -169,31 +164,31 @@ class Usermanagement extends Component
 
         $targetRole = strtolower($u->role->name ?? '');
 
-        // Rule: admin/superadmin can only be edited by themselves
+        // Rule: admin/superadmin hanya bisa diedit dirinya sendiri
         if (in_array($targetRole, ['admin', 'superadmin'], true) && $u->user_id !== Auth::id()) {
             $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Anda tidak bisa mengedit akun Admin lain.', duration: 4000);
             return;
         }
 
-        $this->editingId = (int) $u->user_id;
-        $this->edit_full_name = (string) $u->full_name;
-        $this->edit_email = (string) $u->email;
+        $this->editingId         = (int) $u->user_id;
+        $this->edit_full_name    = (string) $u->full_name;
+        $this->edit_email        = (string) $u->email;
         $this->edit_phone_number = $u->phone_number;
-        $this->edit_role_id = $u->role_id;
-        $this->edit_password = null;
+        $this->edit_role_id      = $u->role_id;
+        $this->edit_password     = null;
 
         $this->modalEdit = true;
     }
 
     public function closeEdit(): void
     {
-        $this->modalEdit = false;
-        $this->editingId = null;
-        $this->edit_full_name = '';
-        $this->edit_email = '';
-        $this->edit_phone_number = null;
-        $this->edit_role_id = null;
-        $this->edit_password = null;
+        $this->modalEdit        = false;
+        $this->editingId        = null;
+        $this->edit_full_name   = '';
+        $this->edit_email       = '';
+        $this->edit_phone_number= null;
+        $this->edit_role_id     = null;
+        $this->edit_password    = null;
 
         $this->resetErrorBag();
         $this->resetValidation();
@@ -201,8 +196,7 @@ class Usermanagement extends Component
 
     public function update(): void
     {
-        if (!$this->editingId)
-            return;
+        if (!$this->editingId) return;
 
         $u = User::with('role')
             ->where('company_id', $this->company_id)
@@ -212,7 +206,7 @@ class Usermanagement extends Component
 
         $targetRole = strtolower($u->role->name ?? '');
 
-        // Rule: admin/superadmin can only be updated by themselves
+        // Rule: admin/superadmin hanya bisa update dirinya sendiri
         if (in_array($targetRole, ['admin', 'superadmin'], true) && $u->user_id !== Auth::id()) {
             $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Anda tidak bisa mengedit akun Admin lain.', duration: 4000);
             return;
@@ -221,15 +215,15 @@ class Usermanagement extends Component
         $data = $this->validate($this->editRules());
 
         $payload = [
-            'full_name' => $data['edit_full_name'],
-            'email' => strtolower($data['edit_email']),
+            'full_name'    => $data['edit_full_name'],
+            'email'        => strtolower($data['edit_email']),
             'phone_number' => $data['edit_phone_number'] ?? null,
-            'role_id' => (int) $data['edit_role_id'],
-            // department_id remains locked
+            'role_id'      => (int) $data['edit_role_id'],
         ];
 
         if (!empty($this->edit_password)) {
-            $payload['password'] = bcrypt($this->edit_password);
+            // Model cast akan meng-hash otomatis
+            $payload['password'] = $this->edit_password;
         }
 
         $u->update($payload);
@@ -238,7 +232,7 @@ class Usermanagement extends Component
         $this->dispatch('toast', type: 'success', title: 'Diupdate', message: 'User diupdate.', duration: 3000);
     }
 
-    /* ======================== Delete ======================== */
+    /* ======================== Delete (Soft Delete) ======================== */
 
     public function delete(int $id): void
     {
@@ -261,19 +255,56 @@ class Usermanagement extends Component
             return;
         }
 
-        // Block self-delete (optional but safer)
+        // Block self-delete
         if ($u->user_id === Auth::id()) {
             $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Tidak boleh menghapus akun sendiri.', duration: 4000);
             return;
         }
 
+        // ✅ Soft delete (kolom deleted_at terisi)
         $u->delete();
 
         if ($this->editingId === $id) {
             $this->closeEdit();
         }
 
-        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'User dihapus.', duration: 3000);
+        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'User dihapus (soft delete).', duration: 3000);
+    }
+
+    /* ===== (Opsional) Trash actions: restore & force delete ===== */
+
+    public function restore(int $id): void
+    {
+        $u = User::onlyTrashed()
+            ->where('company_id', $this->company_id)
+            ->where('department_id', $this->department_id)
+            ->where('user_id', $id)
+            ->first();
+
+        if (!$u) {
+            $this->dispatch('toast', type: 'warning', title: 'Tidak ditemukan', message: 'User tidak ditemukan di Trash.', duration: 3000);
+            return;
+        }
+
+        $u->restore();
+        $this->dispatch('toast', type: 'success', title: 'Dipulihkan', message: 'User dipulihkan.', duration: 3000);
+    }
+
+    public function destroy(int $id): void
+    {
+        $u = User::onlyTrashed()
+            ->where('company_id', $this->company_id)
+            ->where('department_id', $this->department_id)
+            ->where('user_id', $id)
+            ->first();
+
+        if (!$u) {
+            $this->dispatch('toast', type: 'warning', title: 'Tidak ditemukan', message: 'User tidak ditemukan di Trash.', duration: 3000);
+            return;
+        }
+
+        $u->forceDelete();
+        $this->dispatch('toast', type: 'success', title: 'Dihapus Permanen', message: 'User dihapus permanen.', duration: 3000);
     }
 
     /* ======================== Render ======================== */
@@ -294,9 +325,10 @@ class Usermanagement extends Component
                 });
             })
             ->when($this->roleFilter, fn($q) => $q->where('users.role_id', (int) $this->roleFilter))
+            // Admin tampil duluan, lalu urut terbaru
             ->orderByRaw("CASE WHEN LOWER(roles.name) = 'admin' THEN 0 ELSE 1 END")
             ->orderByDesc('users.user_id')
-            ->select('users.*') // important for pagination & model hydration
+            ->select('users.*') // penting untuk pagination & model hydration
             ->paginate(10);
 
         return view('livewire.pages.admin.usermanagement', [
