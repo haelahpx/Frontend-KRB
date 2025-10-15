@@ -111,122 +111,136 @@
             {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
                         Book Room
                     </a>
+                    <a href="{{ route('book-vehicle') }}" class="nav-link px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800/50
+            {{ request()->routeIs('book-vehicle') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300' }}">
+                        Book Vehicle
+                    </a>
+
 
                     {{-- Tampilkan Login/Register hanya untuk guest --}}
                     @guest
-                    <a href="{{ route('login') }}"
-                        class="ml-2 btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
-                        Login / Register
-                    </a>
+                        <a href="{{ route('login') }}"
+                            class="ml-2 btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                            Login / Register
+                        </a>
                     @endguest
 
                     {{-- Tampilkan menu berdasarkan role untuk user yang sudah login --}}
                     @auth
-                    @if(auth()->user()->role->name === 'Superadmin')
-                    {{-- SuperAdmin: Profile with Dropdown --}}
-                    <div class="relative ml-2">
-                        <button id="profileDropdownBtn" type="button"
-                            class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50 flex items-center gap-2">
-                            Profile
-                            <svg id="dropdownArrow" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
+                        @if(auth()->user()->role->name === 'Superadmin')
+                            {{-- SuperAdmin: Profile with Dropdown --}}
+                            <div class="relative ml-2">
+                                <button id="profileDropdownBtn" type="button"
+                                    class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50 flex items-center gap-2">
+                                    Profile
+                                    <svg id="dropdownArrow" class="w-4 h-4 transition-transform" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
 
-                        <div id="profileDropdown" class="profile-dropdown absolute right-0 mt-2 w-48 bg-gray-900 rounded-lg shadow-lg border border-gray-800 py-1 z-50">
+                                <div id="profileDropdown"
+                                    class="profile-dropdown absolute right-0 mt-2 w-48 bg-gray-900 rounded-lg shadow-lg border border-gray-800 py-1 z-50">
+                                    <a href="{{ route('profile') }}"
+                                        class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                        My Profile
+                                    </a>
+                                    <a href="{{ route('superadmin.dashboard') }}"
+                                        class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                        SuperAdmin Dashboard
+                                    </a>
+                                    <div class="border-t border-gray-800 my-1"></div>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                            Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @elseif(auth()->user()->role->name === 'Admin')
+                            {{-- Admin: Profile with Dropdown --}}
+                            <div class="relative ml-2">
+                                <button id="adminDropdownBtn" type="button"
+                                    class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50 flex items-center gap-2">
+                                    Profile
+                                    <svg id="adminDropdownArrow" class="w-4 h-4 transition-transform" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                <div id="adminDropdown"
+                                    class="profile-dropdown absolute right-0 mt-2 w-48 bg-gray-900 rounded-lg shadow-lg border border-gray-800 py-1 z-50">
+                                    <a href="{{ route('profile') }}"
+                                        class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                        My Profile
+                                    </a>
+                                    <a href="{{ route('admin.dashboard') }}"
+                                        class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                        Admin Dashboard
+                                    </a>
+                                    <div class="border-t border-gray-800 my-1"></div>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                            Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @elseif(auth()->user()->role->name === 'Receptionist')
+                            {{-- Receptionist: Profile with Dropdown --}}
+                            <div class="relative ml-2">
+                                <button id="receptionistDropdownBtn" type="button"
+                                    class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50 flex items-center gap-2">
+                                    Profile
+                                    <svg id="receptionistDropdownArrow" class="w-4 h-4 transition-transform" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                <div id="receptionistDropdown"
+                                    class="profile-dropdown absolute right-0 mt-2 w-48 bg-gray-900 rounded-lg shadow-lg border border-gray-800 py-1 z-50">
+                                    <a href="{{ route('profile') }}"
+                                        class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                        My Profile
+                                    </a>
+                                    <a href="{{ route('receptionist.dashboard') }}"
+                                        class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                        Receptionist Dashboard
+                                    </a>
+                                    <div class="border-t border-gray-800 my-1"></div>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                            Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                        @else
+                            {{-- Regular User: Profile + Logout --}}
                             <a href="{{ route('profile') }}"
-                                class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
-                                My Profile
+                                class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                                Profile
                             </a>
-                            <a href="{{ route('superadmin.dashboard') }}"
-                                class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
-                                SuperAdmin Dashboard
-                            </a>
-                            <div class="border-t border-gray-800 my-1"></div>
-                            <form method="POST" action="{{ route('logout') }}">
+                            <form method="POST" action="{{ route('logout') }}" class="ml-2">
                                 @csrf
                                 <button type="submit"
-                                    class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
+                                    class="btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
                                     Logout
                                 </button>
                             </form>
-                        </div>
-                    </div>
-                    @elseif(auth()->user()->role->name === 'Admin')
-                    {{-- Admin: Profile with Dropdown --}}
-                    <div class="relative ml-2">
-                        <button id="adminDropdownBtn" type="button"
-                            class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50 flex items-center gap-2">
-                            Profile
-                            <svg id="adminDropdownArrow" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-
-                        <div id="adminDropdown" class="profile-dropdown absolute right-0 mt-2 w-48 bg-gray-900 rounded-lg shadow-lg border border-gray-800 py-1 z-50">
-                            <a href="{{ route('profile') }}"
-                                class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
-                                My Profile
-                            </a>
-                            <a href="{{ route('admin.dashboard') }}"
-                                class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
-                                Admin Dashboard
-                            </a>
-                            <div class="border-t border-gray-800 my-1"></div>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit"
-                                    class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
-                                    Logout
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    @elseif(auth()->user()->role->name === 'Receptionist')
-                    {{-- Receptionist: Profile with Dropdown --}}
-                    <div class="relative ml-2">
-                        <button id="receptionistDropdownBtn" type="button"
-                            class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50 flex items-center gap-2">
-                            Profile
-                            <svg id="receptionistDropdownArrow" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-
-                        <div id="receptionistDropdown" class="profile-dropdown absolute right-0 mt-2 w-48 bg-gray-900 rounded-lg shadow-lg border border-gray-800 py-1 z-50">
-                            <a href="{{ route('profile') }}"
-                                class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
-                                My Profile
-                            </a>
-                            <a href="{{ route('receptionist.dashboard') }}"
-                                class="block px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
-                                Receptionist Dashboard
-                            </a>
-                            <div class="border-t border-gray-800 my-1"></div>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit"
-                                    class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-800 transition-colors">
-                                    Logout
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
-                    @else
-                    {{-- Regular User: Profile + Logout --}}
-                    <a href="{{ route('profile') }}"
-                        class="nav-link px-4 py-3 text-sm font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                        Profile
-                    </a>
-                    <form method="POST" action="{{ route('logout') }}" class="ml-2">
-                        @csrf
-                        <button type="submit"
-                            class="btn-hover bg-white text-black px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
-                            Logout
-                        </button>
-                    </form>
-                    @endif
+                        @endif
                     @endauth
                 </nav>
 
@@ -264,6 +278,12 @@
         {{ request()->routeIs('book-room') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
                     Book Room
                 </a>
+                <a href="{{ route('book-vehicle') }}"
+                    class="block px-4 py-3 text-base font-medium rounded-lg
+        {{ request()->routeIs('book-vehicle') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
+                    Book Vehicle
+                </a>
+
                 <a href="{{ route('package') }}"
                     class="block px-4 py-3 text-base font-medium rounded-lg
         {{ request()->routeIs('package') ? 'bg-gray-800/50 text-white' : 'text-white hover:text-gray-300 hover:bg-gray-800/50' }}">
@@ -272,61 +292,61 @@
 
                 {{-- Guest: tombol Login/Register --}}
                 @guest
-                <div class="pt-2">
-                    <a href="{{ route('login') }}"
-                        class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
-                        Login / Register
-                    </a>
-                </div>
+                    <div class="pt-2">
+                        <a href="{{ route('login') }}"
+                            class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
+                            Login / Register
+                        </a>
+                    </div>
                 @endguest
 
                 {{-- Auth: Menu berdasarkan role --}}
                 @auth
-                @if(auth()->user()->role->name === 'Superadmin')
-                {{-- SuperAdmin Mobile Menu --}}
-                <a href="{{ route('profile') }}"
-                    class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                    My Profile
-                </a>
-                <a href="{{ route('superadmin.dashboard') }}"
-                    class="block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                    SuperAdmin Dashboard
-                </a>
-                @elseif(auth()->user()->role->name === 'Admin')
-                {{-- Admin Mobile Menu --}}
-                <a href="{{ route('profile') }}"
-                    class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                    Profile
-                </a>
-                <a href="{{ route('admin.dashboard') }}"
-                    class="block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                    Admin Dashboard
-                </a>
-                @elseif(auth()->user()->role->name === 'Receptionist')
-                {{-- Receptionist Mobile Menu --}}
-                <a href="{{ route('profile') }}"
-                    class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                    Profile
-                </a>
-                <a href="{{ route('receptionist.dashboard') }}"
-                    class="block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                    Receptionist Dashboard
-                </a>
-                @else
-                {{-- Regular User Mobile Menu --}}
-                <a href="{{ route('profile') }}"
-                    class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
-                    Profile
-                </a>
-                @endif
+                    @if(auth()->user()->role->name === 'Superadmin')
+                        {{-- SuperAdmin Mobile Menu --}}
+                        <a href="{{ route('profile') }}"
+                            class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            My Profile
+                        </a>
+                        <a href="{{ route('superadmin.dashboard') }}"
+                            class="block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            SuperAdmin Dashboard
+                        </a>
+                    @elseif(auth()->user()->role->name === 'Admin')
+                        {{-- Admin Mobile Menu --}}
+                        <a href="{{ route('profile') }}"
+                            class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            Profile
+                        </a>
+                        <a href="{{ route('admin.dashboard') }}"
+                            class="block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            Admin Dashboard
+                        </a>
+                    @elseif(auth()->user()->role->name === 'Receptionist')
+                        {{-- Receptionist Mobile Menu --}}
+                        <a href="{{ route('profile') }}"
+                            class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            Profile
+                        </a>
+                        <a href="{{ route('receptionist.dashboard') }}"
+                            class="block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            Receptionist Dashboard
+                        </a>
+                    @else
+                        {{-- Regular User Mobile Menu --}}
+                        <a href="{{ route('profile') }}"
+                            class="mt-2 block px-4 py-3 text-base font-medium rounded-lg text-white hover:text-gray-300 hover:bg-gray-800/50">
+                            Profile
+                        </a>
+                    @endif
 
-                <form method="POST" action="{{ route('logout') }}" class="pt-2">
-                    @csrf
-                    <button type="submit"
-                        class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
-                        Logout
-                    </button>
-                </form>
+                    <form method="POST" action="{{ route('logout') }}" class="pt-2">
+                        @csrf
+                        <button type="submit"
+                            class="block w-full text-center px-4 py-3 text-base font-medium text-black bg-white rounded-md hover:bg-gray-200 transition-colors">
+                            Logout
+                        </button>
+                    </form>
                 @endauth
             </div>
         </div>
