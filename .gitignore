@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+storage/app/keys/*.json
+storage/app/google_tokens/*.json
+*.pem
+*.p12
+*service-account*.json
