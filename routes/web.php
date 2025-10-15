@@ -17,6 +17,7 @@ use App\Livewire\Pages\User\Ticketstatus;
 use App\Livewire\Pages\User\BookingStatus;
 use App\Livewire\Pages\User\Ticketshow;
 use App\Livewire\Pages\User\Bookvehicle;
+use App\Livewire\Pages\User\Meetonline;
 
 // ========== Livewire Pages (Admin / Superadmin / Receptionist) ==========
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
@@ -38,6 +39,7 @@ use App\Livewire\Pages\Receptionist\Documents as Documents;
 use App\Livewire\Pages\Receptionist\package as ReceptPackage;
 use App\Livewire\Pages\Receptionist\Guestbook as Guestbook;
 use App\Livewire\Pages\Receptionist\MeetingSchedule as MeetingSchedule;
+use App\Livewire\Pages\Receptionist\BookingsApproval;
 
 // ========== Auth Pages ==========
 use App\Livewire\Pages\Auth\Login as LoginPage;
@@ -45,6 +47,8 @@ use App\Livewire\Pages\Auth\Register as RegisterPage;
 
 // ========== Error ==========
 use App\Livewire\Pages\Errors\error404 as Error404;
+use App\Services\GoogleMeetService;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -83,7 +87,24 @@ Route::middleware('guest')->group(function () {
 | Auth only
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth'])->group(function () {
+    Route::get('/google/connect', fn(GoogleMeetService $svc)
+        => redirect($svc->getAuthUrl()))->name('google.connect');
+
+    // match the URL Google is calling:
+    Route::get('/oauth2callback', function (Illuminate\Http\Request $request) {
+        $code = $request->query('code');
+        if (!$code) {
+            abort(400, 'Missing authorization code');
+        }
+        app(App\Services\GoogleMeetService::class)->handleCallback($code);
+        return redirect()->route('dashboard')->with('success', 'Google connected!');
+    })->name('google.callback')->middleware('auth');
+
+
+    Route::get('/google/debug-auth-url', function (\App\Services\GoogleMeetService $svc) {
+        return $svc->getAuthUrl(); // open it and inspect the query param redirect_uri=
+    })->middleware('auth');
 
     // ---------- User routes ----------
     Route::get('/dashboard', UserHome::class)->name('user.home');
@@ -92,6 +113,7 @@ Route::middleware('auth')->group(function () {
     // Booking room (User)
     Route::get('/book-room', Bookroom::class)->name('book-room');
     Route::get('/bookingstatus', BookingStatus::class)->name('bookingstatus');
+    Route::get('/book-online', Meetonline::class)->name('user.meetonline');
 
     // Booking vehicle (User)
     Route::get('/book-vehicle', Bookvehicle::class)->name('book-vehicle');
@@ -157,6 +179,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/receptionist-document', Documents::class)->name('receptionist.documents');
         Route::get('/receptionist-package', Package::class)->name('receptionist.package');
         Route::get('/receptionist-package', ReceptPackage::class)->name('receptionist.package');
+        Route::get('/receptionist-bookings', BookingsApproval::class)->name('receptionist.bookings');
     });
 
     // ---------- Logout (BERSIHKAN intended + invalidate session) ----------

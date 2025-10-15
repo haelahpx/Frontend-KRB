@@ -1,16 +1,35 @@
 <div class="max-w-7xl mx-auto p-6">
+    {{-- HEADER CARD --}}
     <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6 mb-8">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <h1 class="text-3xl font-bold text-gray-900">Room Booking System</h1>
-            <div class="flex bg-gray-100 rounded-md p-1">
-                <button wire:click="switchView('form')"
-                    class="px-4 py-2 text-sm font-medium rounded transition-colors {{ $view === 'form' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900' }}">
-                    Book Room
-                </button>
-                <button wire:click="switchView('calendar')"
-                    class="px-4 py-2 text-sm font-medium rounded transition-colors {{ $view === 'calendar' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900' }}">
-                    Calendar View
-                </button>
+
+            <div class="flex items-center gap-3">
+                {{-- SWITCH: Offline / Online --}}
+                <div class="flex bg-gray-100 rounded-md p-1">
+                    <a href="{{ route('book-room') }}"
+                       class="px-4 py-2 text-sm font-medium rounded transition-colors
+                              {{ request()->routeIs('book-room') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:text-gray-900' }}">
+                        Offline (Room)
+                    </a>
+                    <a href="{{ route('user.meetonline') }}"
+                       class="px-4 py-2 text-sm font-medium rounded transition-colors
+                              {{ request()->routeIs('user.meetonline') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:text-gray-900' }}">
+                        Online Meeting
+                    </a>
+                </div>
+
+                {{-- EXISTING: Form / Calendar toggle --}}
+                <div class="flex bg-gray-100 rounded-md p-1">
+                    <button wire:click="switchView('form')"
+                        class="px-4 py-2 text-sm font-medium rounded transition-colors {{ $view === 'form' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900' }}">
+                        Book Room
+                    </button>
+                    <button wire:click="switchView('calendar')"
+                        class="px-4 py-2 text-sm font-medium rounded transition-colors {{ $view === 'calendar' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900' }}">
+                        Calendar View
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -268,7 +287,7 @@
                                 </div>
                             @endforeach
                         </div>
-                    </div>  
+                    </div>
                 </div>
             </div>
 

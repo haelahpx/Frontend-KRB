@@ -42,13 +42,11 @@ class Ticket extends Model
         return $this->belongsTo(\App\Models\Department::class, 'department_id', 'department_id');
     }
 
-    // requesterDepartment seharusnya merujuk ke kolom requestdept_id
     public function requesterDepartment(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Department::class, 'requestdept_id', 'department_id');
     }
 
-    // attachments must reference TicketAttachment (not TicketAssignment)
     public function attachments(): HasMany
     {
         return $this->hasMany(\App\Models\TicketAttachment::class, 'ticket_id', 'ticket_id');
@@ -70,7 +68,6 @@ class Ticket extends Model
         return $this->hasMany(TicketComment::class, 'ticket_id', 'ticket_id');
     }
 
-    // Optional: compatibility accessors (kalau blade masih pakai title/notes/id)
     public function getTitleAttribute()
     {
         return $this->subject;
@@ -85,4 +82,24 @@ class Ticket extends Model
     {
         return $this->ticket_id;
     }
+
+    protected function loadRecentComments(): void
+    {
+        $since = \Carbon\Carbon::now($this->tz)->subDays(7);
+
+        $q = \App\Models\TicketComment::query()
+            ->where('created_at', '>=', $since)
+            ->with([
+                'user:user_id,full_name',
+                'ticket' => fn($tq) => $tq->select('ticket_id', 'subject', 'status', 'department_id', 'company_id'),
+            ])
+            ->where('user_id', '!=', \Illuminate\Support\Facades\Auth::id())
+            ->whereHas('ticket', fn($t) => $t->where('status', '!=', 'DELETED'))
+            ->orderByDesc('created_at');
+
+        $this->recentComments = $this->scopeForAdmin($q, 'ticket_comments')
+            ->take(8)
+            ->get(['ticket_id', 'user_id', 'comment_text', 'created_at']);
+    }
+
 }

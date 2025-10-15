@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BookingRoom extends Model
 {
@@ -23,6 +24,14 @@ class BookingRoom extends Model
         'start_time',
         'end_time',
         'special_notes',
+        'status',
+        'approved_by',
+        'is_approve',
+        'booking_type',          // meeting | online_meeting | hybrid
+        'online_provider',       // zoom | google_meet
+        'online_meeting_url',
+        'online_meeting_code',
+        'online_meeting_password',
     ];
 
     protected $casts = [
@@ -31,23 +40,42 @@ class BookingRoom extends Model
         'end_time'   => 'datetime',
     ];
 
-    public function requirements()
-    {
-        return $this->belongsToMany(Requirement::class, 'booking_requirements', 'bookingroom_id', 'requirement_id')
-            ->withTimestamps();
-    }
-    public function room()
+    public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class, 'room_id', 'room_id');
     }
 
-    public function department()
+    public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'department_id', 'department_id');
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    // Helper to generate online meeting link
+    public static function generateMeetingUrl(string $provider): array
+    {
+        if ($provider === 'zoom') {
+            $code = rand(1000000000, 9999999999);
+            return [
+                'url' => "https://zoom.us/j/{$code}",
+                'code' => (string)$code,
+                'password' => strtoupper(substr(md5($code), 0, 6)),
+            ];
+        }
+
+        // google meet pattern: xxx-xxxx-xxx
+        $chars = 'abcdefghijklmnopqrstuvwxyz';
+        $seg = fn($n) => substr(str_shuffle(str_repeat($chars, $n)), 0, $n);
+        $link = "https://meet.google.com/{$seg(3)}-{$seg(4)}-{$seg(3)}";
+
+        return [
+            'url' => $link,
+            'code' => strtoupper(substr(md5($link), 0, 6)),
+            'password' => strtoupper(substr(md5($link . 'pwd'), 0, 8)),
+        ];
     }
 }

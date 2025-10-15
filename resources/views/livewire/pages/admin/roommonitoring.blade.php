@@ -43,7 +43,7 @@
                 {{-- Search --}}
                 <div class="relative flex-1">
                     <input type="text" wire:model.live="q" placeholder="Search meeting title or notes..."
-                           class="{{ $input }} pl-10 w-full placeholder:text-gray-400">
+                        class="{{ $input }} pl-10 w-full placeholder:text-gray-400">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
