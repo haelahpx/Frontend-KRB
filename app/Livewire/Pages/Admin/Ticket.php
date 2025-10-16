@@ -18,7 +18,7 @@ class Ticket extends Component
 
     public ?string $search   = null;
     public ?string $priority = null;  // low|medium|high
-    public ?string $status   = null;  // open|in_progress|resolved|closed (no deleted in UI)
+    public ?string $status   = null;  // open|in_progress|resolved|closed
 
     protected string $paginationTheme = 'tailwind';
 
@@ -31,7 +31,7 @@ class Ticket extends Component
         'closed'      => 'CLOSED',
     ];
 
-    public function tick() {} // for wire:poll
+    public function tick() {}
 
     public function updatingSearch()   { $this->resetPage(); }
     public function updatingPriority() { $this->resetPage(); }
@@ -66,6 +66,9 @@ class Ticket extends Component
         $this->resetPage();
     }
 
+    /**
+     * Soft delete Ticket (set deleted_at).
+     */
     public function deleteTicket(int $ticketId): void
     {
         if (!$this->ensureAdmin()) {
@@ -73,41 +76,62 @@ class Ticket extends Component
             return;
         }
 
-        // If your Ticket PK is ticket_id, ensure the model sets $primaryKey='ticket_id'
         $ticket = TicketModel::where('ticket_id', $ticketId)->first();
         if (!$ticket) {
             session()->flash('error', 'Ticket not found.');
             return;
         }
 
-        if ($ticket->status === 'CLOSED') {
-            session()->flash('error', "Ticket #{$ticketId} is closed and cannot be deleted.");
-            return;
-        }
 
-        if ($ticket->status === 'DELETED') {
-            session()->flash('message', "Ticket #{$ticketId} already deleted.");
-            return;
-        }
-
-        $ticket->status = 'DELETED';
-        $ticket->save();
+        $ticket->delete(); // <-- soft delete
 
         $this->resetPage();
         session()->flash('message', "Ticket #{$ticketId} moved to Trash.");
+    }
+
+
+    public function restoreTicket(int $ticketId): void
+    {
+        if (!$this->ensureAdmin()) {
+            session()->flash('error', 'Unauthorized.');
+            return;
+        }
+
+        $ticket = TicketModel::onlyTrashed()->where('ticket_id', $ticketId)->first();
+        if (!$ticket) {
+            session()->flash('error', 'Trashed ticket not found.');
+            return;
+        }
+
+        $ticket->restore();
+        session()->flash('message', "Ticket #{$ticketId} restored.");
+    }
+
+    public function forceDeleteTicket(int $ticketId): void
+    {
+        if (!$this->isSuperadmin()) {
+            session()->flash('error', 'Only Superadmin can permanently delete.');
+            return;
+        }
+
+        $ticket = TicketModel::onlyTrashed()->where('ticket_id', $ticketId)->first();
+        if (!$ticket) {
+            session()->flash('error', 'Trashed ticket not found.');
+            return;
+        }
+
+        $ticket->forceDelete();
+
+        session()->flash('message', "Ticket #{$ticketId} permanently deleted.");
     }
 
     public function render()
     {
         $query = TicketModel::query()
             ->with([
-                // Ticket owner (user) + its department_id for potential chaining
                 'user:user_id,full_name,department_id',
-                // Department that is directly referenced by the ticket (department_id on tickets table)
                 'department:department_id,department_name',
-                // If you have assignment relation
                 'assignment.agent:user_id,full_name',
-                // Attachments for count & quick preview purposes
                 'attachments:attachment_id,ticket_id,file_url,file_type,original_filename,bytes',
             ])
             ->withCount('attachments')
@@ -115,10 +139,6 @@ class Ticket extends Component
 
         $admin = $this->currentAdmin();
 
-        // Hide DELETED tickets
-        $query->where('status', '!=', 'DELETED');
-
-        // Multi-tenant scoping (only if columns exist)
         if ($admin && !$this->isSuperadmin()) {
             if (Schema::hasColumn('tickets', 'company_id') && isset($admin->company_id)) {
                 $query->where('company_id', $admin->company_id);
@@ -128,7 +148,6 @@ class Ticket extends Component
             }
         }
 
-        // Search
         if ($this->search) {
             $s = '%' . $this->search . '%';
             $query->where(function ($q) use ($s) {
@@ -137,12 +156,10 @@ class Ticket extends Component
             });
         }
 
-        // Priority
         if ($this->priority) {
             $query->where('priority', $this->priority);
         }
 
-        // Status (UI → DB map)
         if ($this->status) {
             $dbStatus = self::UI_TO_DB_STATUS_MAP[$this->status] ?? null;
             if ($dbStatus) {

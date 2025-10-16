@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Pages\Receptionist;
 
-use App\Models\Documents as DocumentModel;
+use App\Models\Delivery; // gunakan tabel deliveries
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
@@ -12,33 +12,40 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('layouts.receptionist')]
-#[Title('Documents')]
-
+#[Title('Deliveries')]
 class Documents extends Component
 {
     use WithPagination;
+
     protected string $paginationTheme = 'tailwind';
     protected $queryString = ['q', 'filter_date'];
+
+    /**
+     * Menjaga kompatibilitas dengan form/blade lama:
+     * - document_name  -> item_name (DB)
+     * - penyimpanan    -> storage_id (DB)
+     */
     public $document_name, $nama_pengirim, $nama_penerima;
-    public $type = 'document';
-    public $penyimpanan;
+    public $type = 'document';         // 'document' | 'package'
+    public $penyimpanan;               // storage_id
     public $pengambilan_date, $pengambilan_time;
-    public $status = 'pending';
+    public $status = 'pending';        // 'pending' | 'stored' | 'delivered' | 'taken'
     public $filter_date;
     public $q = '';
+
     public bool $showEdit = false;
     public $editId = null;
 
     public $edit = [
-        'document_name' => null,
-        'nama_pengirim' => null,
-        'nama_penerima' => null,
-        'type' => 'document',
-        'penyimpanan' => null,
+        'document_name'    => null,
+        'nama_pengirim'    => null,
+        'nama_penerima'    => null,
+        'type'             => 'document',
+        'penyimpanan'      => null,
         'pengambilan_date' => null,
         'pengambilan_time' => null,
-        'pengiriman' => null,
-        'status' => 'pending',
+        'pengiriman'       => null,
+        'status'           => 'pending',
     ];
 
     private function companyId()
@@ -46,24 +53,22 @@ class Documents extends Component
         return optional(Auth::user())->company_id;
     }
 
-    private function findOwnedOrFail(int $id): DocumentModel
+    private function findOwnedOrFail(int $id): Delivery
     {
-        $row = DocumentModel::whereKey($id)
+        $row = Delivery::whereKey($id)
             ->where('company_id', $this->companyId())
             ->first();
 
         if (!$row) {
-            throw new ModelNotFoundException('Document not found or not owned.');
+            throw new ModelNotFoundException('Delivery not found or not owned.');
         }
         return $row;
     }
 
     private function combineDateTime(?string $date, ?string $time): ?Carbon
     {
-        if (empty($date) && empty($time))
-            return null;
-        if (empty($date))
-            return null;
+        if (empty($date) && empty($time)) return null;
+        if (empty($date)) return null;
         $time = $time ?: '00:00';
         return Carbon::createFromFormat('Y-m-d H:i', "{$date} {$time}", config('app.timezone', 'Asia/Jakarta'));
     }
@@ -71,49 +76,38 @@ class Documents extends Component
     protected function rules(): array
     {
         return [
-            'document_name' => ['required', 'string', 'max:255'],
-            'nama_pengirim' => ['nullable', 'string', 'max:255'],
-            'nama_penerima' => ['nullable', 'string', 'max:255'],
-            'type' => ['required', 'in:document,invoice,etc'],
-            'penyimpanan' => ['nullable', 'string', 'max:50'],
+            'document_name'    => ['required', 'string', 'max:255'],                 // -> item_name
+            'nama_pengirim'    => ['nullable', 'string', 'max:255'],
+            'nama_penerima'    => ['nullable', 'string', 'max:255'],
+            'type'             => ['required', 'in:document,package'],
+            'penyimpanan'      => ['nullable', 'integer', 'exists:storages,storage_id'], // -> storage_id
             'pengambilan_date' => ['nullable', 'date'],
             'pengambilan_time' => ['nullable', 'date_format:H:i'],
-            'status' => ['required', 'in:pending,taken,delivered'],
+            'status'           => ['required', 'in:pending,stored,delivered,taken'],
         ];
     }
 
     protected function rulesEdit(): array
     {
         return [
-            'edit.document_name' => ['required', 'string', 'max:255'],
-            'edit.nama_pengirim' => ['nullable', 'string', 'max:255'],
-            'edit.nama_penerima' => ['nullable', 'string', 'max:255'],
-            'edit.type' => ['required', 'in:document,invoice,etc'],
-            'edit.penyimpanan' => ['nullable', 'string', 'max:50'],
+            'edit.document_name'    => ['required', 'string', 'max:255'],
+            'edit.nama_pengirim'    => ['nullable', 'string', 'max:255'],
+            'edit.nama_penerima'    => ['nullable', 'string', 'max:255'],
+            'edit.type'             => ['required', 'in:document,package'],
+            'edit.penyimpanan'      => ['nullable', 'integer', 'exists:storages,storage_id'],
             'edit.pengambilan_date' => ['nullable', 'date'],
             'edit.pengambilan_time' => ['nullable', 'date_format:H:i'],
-            'edit.pengiriman' => ['nullable', 'date'],
-            'edit.status' => ['required', 'in:pending,taken,delivered'],
+            'edit.pengiriman'       => ['nullable', 'date'],
+            'edit.status'           => ['required', 'in:pending,stored,delivered,taken'],
         ];
     }
 
-    public function updatedQ(): void
-    {
-        $this->resetPage();
-    }
-    public function updatedFilterDate(): void
-    {
-        $this->resetPage();
-    }
+    public function updatedQ(): void { $this->resetPage(); }
+    public function updatedFilterDate(): void { $this->resetPage(); }
 
     public function save(): void
     {
         $data = $this->validate();
-
-        foreach (['penyimpanan'] as $k) {
-            if (!array_key_exists($k, $data) || $data[$k] === '')
-                $data[$k] = null;
-        }
 
         $pengambilan = $this->combineDateTime($data['pengambilan_date'] ?? null, $data['pengambilan_time'] ?? null);
         $statusInput = $data['status'] ?? 'pending';
@@ -121,35 +115,38 @@ class Documents extends Component
         $now = Carbon::now(config('app.timezone', 'Asia/Jakarta'));
         $pengiriman = ($statusInput === 'delivered') ? $now : null;
 
+        $storageId = isset($data['penyimpanan']) && $data['penyimpanan'] !== ''
+            ? (int) $data['penyimpanan']
+            : null;
+
         $payload = [
-            'company_id' => $this->companyId(),
+            'company_id'      => $this->companyId(),
             'receptionist_id' => Auth::id(),
-            'document_name' => $data['document_name'],
-            'nama_pengirim' => $data['nama_pengirim'] ?? null,
-            'nama_penerima' => $data['nama_penerima'] ?? null,
-            'type' => $data['type'],
-            'penyimpanan' => $data['penyimpanan'] ?? null,
-            'pengambilan' => $pengambilan,
-            'pengiriman' => $pengiriman,
-            'status' => $statusInput,
+            'item_name'       => $data['document_name'],
+            'nama_pengirim'   => $data['nama_pengirim'] ?? null,
+            'nama_penerima'   => $data['nama_penerima'] ?? null,
+            'type'            => $data['type'],
+            'storage_id'      => $storageId,
+            'pengambilan'     => $pengambilan,
+            'pengiriman'      => $pengiriman,
+            'status'          => $statusInput,
         ];
 
-        DocumentModel::create($payload);
+        Delivery::create($payload);
 
         $this->resetForm();
         session()->flash('saved', true);
 
         $msg = match ($statusInput) {
-            'delivered' => 'Dokumen langsung masuk Riwayat (Delivered).',
-            'taken' => 'Dokumen disimpan ke kotak Taken.',
-            default => 'Dokumen disimpan ke kotak Pending.',
+            'delivered' => 'Item langsung masuk Riwayat (Delivered).',
+            'taken'     => 'Item disimpan ke kotak Taken.',
+            'stored'    => 'Item disimpan ke kotak Stored.',
+            default     => 'Item disimpan ke kotak Pending.',
         };
+
         $this->dispatch('notify', type: 'success', message: $msg);
-
         $this->dispatch('toast', type: 'success', message: $msg);
-
         $this->dispatch('page-reload');
-
         $this->dispatch('$refresh');
     }
 
@@ -159,15 +156,15 @@ class Documents extends Component
         $this->editId = $r->getKey();
 
         $this->edit = [
-            'document_name' => $r->document_name,
-            'nama_pengirim' => $r->nama_pengirim,
-            'nama_penerima' => $r->nama_penerima,
-            'type' => $r->type,
-            'penyimpanan' => $r->penyimpanan,
+            'document_name'    => $r->item_name,
+            'nama_pengirim'    => $r->nama_pengirim,
+            'nama_penerima'    => $r->nama_penerima,
+            'type'             => $r->type,
+            'penyimpanan'      => $r->storage_id,
             'pengambilan_date' => optional($r->pengambilan)?->format('Y-m-d'),
             'pengambilan_time' => optional($r->pengambilan)?->format('H:i'),
-            'pengiriman' => optional($r->pengiriman)?->format('Y-m-d\TH:i'),
-            'status' => $r->status,
+            'pengiriman'       => optional($r->pengiriman)?->format('Y-m-d\TH:i'),
+            'status'           => $r->status,
         ];
 
         $this->resetValidation();
@@ -197,14 +194,14 @@ class Documents extends Component
         }
 
         $row->update([
-            'document_name' => $this->edit['document_name'],
+            'item_name'     => $this->edit['document_name'],
             'nama_pengirim' => $this->edit['nama_pengirim'],
             'nama_penerima' => $this->edit['nama_penerima'],
-            'type' => $this->edit['type'],
-            'penyimpanan' => $this->edit['penyimpanan'] !== '' ? $this->edit['penyimpanan'] : null,
-            'pengambilan' => $pengambilan,
-            'pengiriman' => $pengiriman,
-            'status' => $status,
+            'type'          => $this->edit['type'],
+            'storage_id'    => ($this->edit['penyimpanan'] !== '' ? (int)$this->edit['penyimpanan'] : null),
+            'pengambilan'   => $pengambilan,
+            'pengiriman'    => $pengiriman,
+            'status'        => $status,
         ]);
 
         $this->showEdit = false;
@@ -215,61 +212,12 @@ class Documents extends Component
         $this->dispatch('$refresh');
     }
 
-    public function setSudahDikirim(int $id): void
-    {
-        $row = $this->findOwnedOrFail($id);
-
-        if ($row->pengiriman) {
-            $this->dispatch('notify', type: 'warning', message: 'Dokumen sudah dikirim.');
-            $this->dispatch('toast', type: 'warning', message: 'Dokumen sudah dikirim.');
-            return;
-        }
-
-        $now = Carbon::now(config('app.timezone', 'Asia/Jakarta'));
-
-        $row->update([
-            'pengiriman' => $now,
-            'status' => 'delivered',
-        ]);
-
-        $msg = "Dikirim: {$now->format('d M Y H:i')}. Pindah ke Riwayat.";
-        $this->dispatch('notify', type: 'success', message: $msg);
-        $this->dispatch('toast', type: 'success', message: $msg);
-        $this->dispatch('$refresh');
-    }
-
-    public function setPengambilanNow(): void
-    {
-        $now = Carbon::now(config('app.timezone', 'Asia/Jakarta'));
-        $this->pengambilan_date = $now->format('Y-m-d');
-        $this->pengambilan_time = $now->format('H:i');
-
-        $this->dispatch('notify', type: 'info', message: 'Pengambilan di-set ke waktu saat ini.');
-        $this->dispatch('toast', type: 'info', message: 'Pengambilan di-set ke waktu saat ini.');
-    }
-
-    public function setEditPengambilanNow(): void
-    {
-        $now = Carbon::now(config('app.timezone', 'Asia/Jakarta'));
-        $this->edit['pengambilan_date'] = $now->format('Y-m-d');
-        $this->edit['pengambilan_time'] = $now->format('H:i');
-
-        $this->dispatch('notify', type: 'info', message: 'Pengambilan (edit) di-set ke waktu saat ini.');
-        $this->dispatch('toast', type: 'info', message: 'Pengambilan (edit) di-set ke waktu saat ini.');
-    }
-
-    public function closeEdit(): void
-    {
-        $this->showEdit = false;
-        $this->resetValidation();
-    }
-
+    /** Soft delete only */
     public function delete(int $id): void
     {
-        $this->findOwnedOrFail($id)->delete();
-
-        $this->dispatch('notify', type: 'success', message: 'Dokumen dihapus.');
-        $this->dispatch('toast', type: 'success', message: 'Dokumen dihapus.');
+        $this->findOwnedOrFail($id)->delete(); // soft delete
+        $this->dispatch('notify', type: 'success', message: 'Item dihapus (soft delete).');
+        $this->dispatch('toast', type: 'success', message: 'Item dihapus (soft delete).');
         $this->dispatch('$refresh');
     }
 
@@ -294,10 +242,22 @@ class Documents extends Component
         $this->status = 'pending';
     }
 
+    // ======== Lists / Query (otomatis exclude soft-deleted) ========
+
     public function getPendingListProperty()
     {
-        return DocumentModel::forCompany($this->companyId())
+        return Delivery::byCompany($this->companyId())
             ->where('status', 'pending')
+            ->whereNull('pengiriman')
+            ->latest('created_at')
+            ->take(50)
+            ->get();
+    }
+
+    public function getStoredListProperty()
+    {
+        return Delivery::byCompany($this->companyId())
+            ->where('status', 'stored')
             ->whereNull('pengiriman')
             ->latest('created_at')
             ->take(50)
@@ -306,7 +266,7 @@ class Documents extends Component
 
     public function getTakenListProperty()
     {
-        return DocumentModel::forCompany($this->companyId())
+        return Delivery::byCompany($this->companyId())
             ->where('status', 'taken')
             ->whereNull('pengiriman')
             ->latest('created_at')
@@ -316,8 +276,8 @@ class Documents extends Component
 
     public function getEntriesProperty()
     {
-        $q = DocumentModel::forCompany($this->companyId())
-            ->whereNotNull('pengiriman'); // delivered only
+        $q = Delivery::byCompany($this->companyId())
+            ->whereNotNull('pengiriman'); // riwayat (delivered)
 
         if ($this->filter_date) {
             $q->whereDate('pengambilan', $this->filter_date);
@@ -335,10 +295,12 @@ class Documents extends Component
 
     public function render()
     {
+        // tetap gunakan blade lama jika struktur UI kamu belum diubah
         return view('livewire.pages.receptionist.documents', [
             'pendingList' => $this->pendingList,
-            'takenList' => $this->takenList,
-            'entries' => $this->entries,
+            'storedList'  => $this->storedList,
+            'takenList'   => $this->takenList,
+            'entries'     => $this->entries,
         ]);
     }
 }

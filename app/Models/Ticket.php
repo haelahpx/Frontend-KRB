@@ -3,18 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+
 class Ticket extends Model
 {
     use HasFactory;
-
+    use SoftDeletes;
     protected $table = 'tickets';
     protected $primaryKey = 'ticket_id';
     public $timestamps = true;
+
+    protected $dates = ['deleted_at'];
 
     protected $fillable = [
         'company_id',

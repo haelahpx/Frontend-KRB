@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Pages\Receptionist;
 
-use App\Models\Package as PackageModel; // alias to avoid name collision
+use App\Models\Delivery as DeliveryModel;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -16,26 +16,32 @@ class Package extends Component
 {
     use WithPagination;
 
-    public $showModal = false;
-    public ?int $editId = null;
+    public bool $showModal = false;
+    public ?int $editId = null;             // delivery_id
     public ?string $createdAtDisplay = null;
 
+    /**
+     * form mapping:
+     * - package_name  -> deliveries.item_name
+     * - penyimpanan   -> deliveries.storage_id
+     * - pengambilan   -> deliveries.pengambilan (datetime)
+     */
     public array $form = [
-        'package_name' => '',
+        'package_name'  => '',
         'nama_pengirim' => '',
         'nama_penerima' => '',
-        'penyimpanan' => null,  
-        'pengambilan' => null,  
+        'penyimpanan'   => null,  // storage_id (nullable)
+        'pengambilan'   => null,  // Y-m-d\TH:i (nullable)
     ];
 
     protected function rules(): array
     {
         return [
-            'form.package_name' => ['required', 'string', 'max:255'],
+            'form.package_name'  => ['required', 'string', 'max:255'],
             'form.nama_pengirim' => ['required', 'string', 'max:255'],
             'form.nama_penerima' => ['required', 'string', 'max:255'],
-            'form.penyimpanan' => ['nullable', 'in:rak1,rak2,rak3'],
-            'form.pengambilan' => ['nullable', 'date_format:Y-m-d\TH:i'],
+            'form.penyimpanan'   => ['nullable', 'integer', 'exists:storages,storage_id'],
+            'form.pengambilan'   => ['nullable', 'date_format:Y-m-d\TH:i'],
         ];
     }
 
@@ -49,21 +55,33 @@ class Package extends Component
 
     public function openEdit(int $id): void
     {
-        $pkg = PackageModel::query()
+        $pkg = DeliveryModel::query()
             ->where('company_id', Auth::user()->company_id)
-            ->findOrFail($id);
+            ->where('type', 'package')
+            ->where('delivery_id', $id)
+            ->firstOrFail();
 
-        $this->editId = $pkg->package_id;
+        $this->editId = $pkg->delivery_id;
 
         $this->form = [
-            'package_name' => $pkg->package_name,
+            'package_name'  => $pkg->item_name,
             'nama_pengirim' => $pkg->nama_pengirim,
             'nama_penerima' => $pkg->nama_penerima,
-            'penyimpanan' => $pkg->penyimpanan,
-            'pengambilan' => $pkg->pengambilan?->format('Y-m-d\TH:i'),
+            'penyimpanan'   => $pkg->storage_id,
+            // jika model belum di-cast datetime, fallback handle string
+            'pengambilan'   => $pkg->pengambilan
+                ? ( $pkg->pengambilan instanceof Carbon
+                        ? $pkg->pengambilan->format('Y-m-d\TH:i')
+                        : Carbon::parse($pkg->pengambilan)->format('Y-m-d\TH:i') )
+                : null,
         ];
 
-        $this->createdAtDisplay = $pkg->created_at?->format('d M Y, H:i');
+        $this->createdAtDisplay = $pkg->created_at
+            ? ( $pkg->created_at instanceof Carbon
+                    ? $pkg->created_at->format('d M Y, H:i')
+                    : Carbon::parse($pkg->created_at)->format('d M Y, H:i') )
+            : null;
+
         $this->showModal = true;
     }
 
@@ -71,51 +89,66 @@ class Package extends Component
     {
         $this->validate();
 
-        $pengambilanStr = $this->form['pengambilan'] ?? null;
-        $pengambilan = $pengambilanStr ? Carbon::createFromFormat('Y-m-d\TH:i', $pengambilanStr) : null;
+        $pengambilan = $this->form['pengambilan']
+            ? Carbon::createFromFormat('Y-m-d\TH:i', $this->form['pengambilan'], config('app.timezone', 'Asia/Jakarta'))
+            : null;
+
+        // Aturan status sederhana: ada pengambilan -> taken, belum -> stored
         $status = $pengambilan ? 'taken' : 'stored';
 
-        $data = [
-            'company_id' => Auth::user()->company_id,
+        $payload = [
+            'company_id'      => Auth::user()->company_id,
             'receptionist_id' => Auth::id(),
-            'package_name' => $this->form['package_name'],
-            'nama_pengirim' => $this->form['nama_pengirim'],
-            'nama_penerima' => $this->form['nama_penerima'],
-            'penyimpanan' => $this->form['penyimpanan'] ?: null,
-            'pengambilan' => $pengambilan,
-            'status' => $status,
+            'item_name'       => $this->form['package_name'],
+            'nama_pengirim'   => $this->form['nama_pengirim'],
+            'nama_penerima'   => $this->form['nama_penerima'],
+            'storage_id'      => $this->form['penyimpanan'] ?: null,
+            'pengambilan'     => $pengambilan,
+            'pengiriman'      => null,       // tidak dipakai di halaman ini
+            'status'          => $status,    // 'stored' | 'taken'
+            'type'            => 'package',  // paksa type package (default tabel = document)
         ];
 
         if ($this->editId) {
-            PackageModel::where('company_id', $data['company_id'])
-                ->whereKey($this->editId)
-                ->update($data);
+            DeliveryModel::query()
+                ->where('company_id', $payload['company_id'])
+                ->where('type', 'package')
+                ->where('delivery_id', $this->editId)
+                ->update($payload);
         } else {
-            PackageModel::create($data);
+            DeliveryModel::create($payload);
         }
 
         $this->showModal = false;
-        $this->dispatch('toast', type: 'success', title: 'Ditambah', message: 'Paket ditambah.', duration: 3000);
-        $this->resetPage();
+        $this->dispatch('toast', type: 'success', title: $this->editId ? 'Diubah' : 'Ditambah', message: 'Paket disimpan.', duration: 3000);
         $this->resetForm();
         $this->resetPage();
     }
 
+    /** Soft delete ONLY */
     public function delete(int $id): void
     {
-        $pkg = \App\Models\Package::findOrFail($id);
-        $pkg->delete();
-        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Paket dihapus.', duration: 3000);
+        $pkg = DeliveryModel::query()
+            ->where('company_id', Auth::user()->company_id)
+            ->where('type', 'package')
+            ->where('delivery_id', $id)
+            ->firstOrFail();
+
+        $pkg->delete(); // soft delete
+
+        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Paket dihapus (soft delete).', duration: 3000);
         $this->resetPage();
     }
 
     public function markDone(int $id): void
     {
-        PackageModel::where('company_id', Auth::user()->company_id)
-            ->whereKey($id)
+        DeliveryModel::query()
+            ->where('company_id', Auth::user()->company_id)
+            ->where('type', 'package')
+            ->where('delivery_id', $id)
             ->update([
-                'status' => 'taken',
-                'pengambilan' => now(),
+                'status'      => 'taken',
+                'pengambilan' => now(config('app.timezone', 'Asia/Jakarta')),
             ]);
 
         $this->dispatch('toast', message: 'Moved to Done.');
@@ -123,10 +156,12 @@ class Package extends Component
 
     public function markStored(int $id): void
     {
-        PackageModel::where('company_id', Auth::user()->company_id)
-            ->whereKey($id)
+        DeliveryModel::query()
+            ->where('company_id', Auth::user()->company_id)
+            ->where('type', 'package')
+            ->where('delivery_id', $id)
             ->update([
-                'status' => 'stored',
+                'status'      => 'stored',
                 'pengambilan' => null,
             ]);
 
@@ -141,11 +176,11 @@ class Package extends Component
     private function resetForm(): void
     {
         $this->form = [
-            'package_name' => '',
+            'package_name'  => '',
             'nama_pengirim' => '',
             'nama_penerima' => '',
-            'penyimpanan' => null,
-            'pengambilan' => null,
+            'penyimpanan'   => null,
+            'pengambilan'   => null,
         ];
         $this->createdAtDisplay = null;
     }
@@ -154,17 +189,29 @@ class Package extends Component
     {
         $companyId = Auth::user()->company_id;
 
-        $ongoing = PackageModel::query()
-            ->with('receptionist')
+        $ongoing = DeliveryModel::query()
+            ->with('receptionist') // pastikan relasi ada di model
             ->where('company_id', $companyId)
+            ->where('type', 'package')
             ->where('status', 'stored')
+            ->select([
+                'deliveries.*',
+                'item_name as package_name',   // alias untuk Blade lama
+                'storage_id as penyimpanan',
+            ])
             ->latest('created_at')
             ->paginate(8, pageName: 'ongoing');
 
-        $done = PackageModel::query()
+        $done = DeliveryModel::query()
             ->with('receptionist')
             ->where('company_id', $companyId)
+            ->where('type', 'package')
             ->where('status', 'taken')
+            ->select([
+                'deliveries.*',
+                'item_name as package_name',
+                'storage_id as penyimpanan',
+            ])
             ->latest('pengambilan')
             ->paginate(8, pageName: 'done');
 
