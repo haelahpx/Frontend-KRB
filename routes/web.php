@@ -40,6 +40,7 @@ use App\Livewire\Pages\Receptionist\package as ReceptPackage;
 use App\Livewire\Pages\Receptionist\Guestbook as Guestbook;
 use App\Livewire\Pages\Receptionist\MeetingSchedule as MeetingSchedule;
 use App\Livewire\Pages\Receptionist\BookingsApproval;
+use App\Livewire\Pages\Receptionist\RoomApproval;
 
 // ========== Auth Pages ==========
 use App\Livewire\Pages\Auth\Login as LoginPage;
@@ -85,7 +86,7 @@ Route::middleware('guest')->group(function () {
 /*
 |--------------------------------------------------------------------------
 | Auth only
-|--------------------------------------------------------------------------
+|-------------------------------------------------z-------------------------
 */
 Route::middleware(['auth'])->group(function () {
     Route::get('/google/connect', fn(GoogleMeetService $svc)
@@ -180,6 +181,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/receptionist-package', Package::class)->name('receptionist.package');
         Route::get('/receptionist-package', ReceptPackage::class)->name('receptionist.package');
         Route::get('/receptionist-bookings', BookingsApproval::class)->name('receptionist.bookings');
+        Route::get('/receptionist-roomapproval', RoomApproval::class)->name('receptionist.roomapproval');
     });
 
     // ---------- Logout (BERSIHKAN intended + invalidate session) ----------

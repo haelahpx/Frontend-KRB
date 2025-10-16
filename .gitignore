@@ -27,3 +27,9 @@ storage/app/google_tokens/*.json
 *.pem
 *.p12
 *service-account*.json
+# Ignore Google OAuth tokens and service account keys
+/storage/app/google_tokens/
+/storage/app/keys/
+
+# Optional: ignore any JSON credentials in storage just in case
+/storage/app/*.json

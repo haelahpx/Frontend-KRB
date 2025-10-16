@@ -50,6 +50,7 @@
                         <h4 class="font-semibold mb-2">⏰ Booking Rules</h4>
                         <ul class="list-disc pl-5 space-y-1">
                             <li>Waktu dibagi dalam <strong>slot 30 menit</strong> (misalnya 09:00–09:30, 09:30–10:00).</li>
+                            <li>Isi <strong>judul meeting </strong>yang jelas.</li>
                             <li>Booking harus dimulai minimal <strong>15 menit dari sekarang</strong> (lead time).</li>
                             <li>Jika waktu yang kamu pilih terlewat saat mengisi form, sistem akan otomatis
                                 <strong>menggeser ke slot berikutnya</strong> dan menampilkan pesan pemberitahuan.</li>
@@ -278,7 +279,7 @@
                             {{-- Body: time rows × room columns --}}
                             @foreach($timeSlots as $t)
                                 <div class="grid border-b border-gray-100"
-                                     style="grid-template-columns: repeat({{ count($visibleRooms) }}, minmax(160px,1fr));">
+                                    style="grid-template-columns: repeat({{ count($visibleRooms) }}, minmax(160px,1fr));">
                                     @foreach($visibleRooms as $room)
                                         @php $slotBooking = $this->getBookingForSlot($room['id'], $date, $t); @endphp
 

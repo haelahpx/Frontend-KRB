@@ -20,12 +20,27 @@ class GoogleMeetService
         $this->client->setClientId(env('GOOGLE_CLIENT_ID'));
         $this->client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
         $this->client->setRedirectUri(env('GOOGLE_REDIRECT_URI'));
-        $this->client->setAccessType('offline');             // needed for refresh_token
-        $this->client->setPrompt('consent');                 // first time only
-        $this->client->setIncludeGrantedScopes(true);        // incremental auth
+        $this->client->setAccessType('offline');
+        $this->client->setPrompt('consent');
+        $this->client->setIncludeGrantedScopes(true);
         $this->client->setScopes(explode(' ', env('GOOGLE_SCOPES')));
     }
 
+    private function tokenPath(int $userId): string
+    {
+        $dir = storage_path('app/google_tokens');
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        return $dir . DIRECTORY_SEPARATOR . "user_{$userId}.json";
+    }
+
+    public function getAuthUrl(): string
+    {
+        return $this->client->createAuthUrl();
+    }
+
+    //Dipanggil saat callback OAuth Google (kamu sudah punya ini)
     public function handleCallback(string $code): void
     {
         $token = $this->client->fetchAccessTokenWithAuthCode($code);
@@ -49,6 +64,57 @@ class GoogleMeetService
         File::put($path, json_encode($token, JSON_PRETTY_PRINT));
     }
 
+    /**
+     * Cek apakah user sudah connect Google dan token valid (auto-refresh kalau expire).
+     * Return true jika siap dipakai untuk call API.
+     */
+    public function isConnected(?int $userId = null): bool
+    {
+        $userId = $userId ?? Auth::id();
+        if (!$userId)
+            return false;
+
+        $path = $this->tokenPath($userId);
+        if (!file_exists($path)) {
+            return false;
+        }
+
+        $token = json_decode(file_get_contents($path), true);
+        if (!is_array($token) || empty($token['access_token'])) {
+            return false;
+        }
+
+        $this->client->setAccessToken($token);
+
+        if (!$this->client->getRefreshToken() && !empty($token['refresh_token'])) {
+            $this->client->refreshToken($token['refresh_token']);
+            $this->client->setAccessToken(array_merge($token, $this->client->getAccessToken()));
+        }
+
+        if ($this->client->isAccessTokenExpired()) {
+            $refreshToken = $this->client->getRefreshToken() ?: ($token['refresh_token'] ?? null);
+            if (!$refreshToken) {
+
+                return false;
+            }
+            $new = $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
+            if (isset($new['error'])) {
+                return false;
+            }
+
+            $merged = array_merge($token, array_filter($new));
+            if (empty($merged['refresh_token'])) {
+                $merged['refresh_token'] = $refreshToken;
+            }
+
+            file_put_contents($path, json_encode($merged, JSON_PRETTY_PRINT));
+            $this->client->setAccessToken($merged);
+        }
+
+        return true;
+    }
+
+    //Boot client dengan token user tertentu (dipakai internal sebelum call API)
     private function bootWithTokensFor(int $userId): void
     {
         $path = $this->tokenPath($userId);
@@ -64,10 +130,7 @@ class GoogleMeetService
         $this->client->setAccessType('offline');
         $this->client->setAccessToken($token);
 
-        // Ensure the client knows the refresh token (not always present after setAccessToken)
         if (!$this->client->getRefreshToken() && !empty($token['refresh_token'])) {
-            // Older Google PHP lib uses setAccessToken; new ones read refresh_token from the array.
-            // This line just ensures it’s definitely in memory:
             $this->client->refreshToken($token['refresh_token']);
             $this->client->setAccessToken(array_merge($token, $this->client->getAccessToken()));
         }
@@ -83,7 +146,6 @@ class GoogleMeetService
                 throw new \RuntimeException('Failed refreshing token: ' . $new['error']);
             }
 
-            // merge but keep original refresh_token if Google didn’t return a new one
             $merged = array_merge($token, array_filter($new));
             if (empty($merged['refresh_token']))
                 $merged['refresh_token'] = $refreshToken;
@@ -93,10 +155,9 @@ class GoogleMeetService
         }
     }
 
-    /**
-     * Create an event with a Google Meet link.
-     * Optionally pass attendees' emails to auto-invite people.
-     */
+    //Create an event with a Google Meet link.
+    //Optionally pass attendees' emails to auto-invite people.
+
     public function createMeet(string $summary, Carbon $start, Carbon $end, ?string $description = null, array $attendeesEmails = []): array
     {
         $userId = Auth::id();
@@ -111,14 +172,14 @@ class GoogleMeetService
             'summary' => $summary,
             'description' => $description,
             'start' => [
-                'dateTime' => $start->copy()->timezone('Asia/Jakarta')->toRfc3339String(),
-                'timeZone' => 'Asia/Jakarta',
+                'dateTime' => $start->copy()->timezone(config('app.timezone', 'Asia/Jakarta'))->toRfc3339String(),
+                'timeZone' => config('app.timezone', 'Asia/Jakarta'),
             ],
             'end' => [
-                'dateTime' => $end->copy()->timezone('Asia/Jakarta')->toRfc3339String(),
-                'timeZone' => 'Asia/Jakarta',
+                'dateTime' => $end->copy()->timezone(config('app.timezone', 'Asia/Jakarta'))->toRfc3339String(),
+                'timeZone' => config('app.timezone', 'Asia/Jakarta'),
             ],
-            'attendees' => $attendees,              // optional
+            'attendees' => $attendees,
             'conferenceData' => [
                 'createRequest' => [
                     'conferenceSolutionKey' => ['type' => 'hangoutsMeet'],
@@ -129,7 +190,7 @@ class GoogleMeetService
 
         $created = $service->events->insert($calendarId, $event, [
             'conferenceDataVersion' => 1,
-            'sendUpdates' => empty($attendees) ? 'none' : 'all',  // email invites if attendees exist
+            'sendUpdates' => empty($attendees) ? 'none' : 'all',
         ]);
 
         return [

@@ -39,6 +39,13 @@
         </flux:sidebar.item>
 
         <flux:sidebar.item
+            icon="check-circle"
+            href="{{ route('receptionist.bookings') }}"
+            :current="request()->routeIs('receptionist.bookings')">
+            Online Meeting Approval
+        </flux:sidebar.item>
+
+        <flux:sidebar.item
             icon="inbox"
             href="{{ route('receptionist.guestbook') }}"
             :current="request()->routeIs('receptionist.guestbook*')">
