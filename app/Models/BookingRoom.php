@@ -35,9 +35,9 @@ class BookingRoom extends Model
     ];
 
     protected $casts = [
-        'date'       => 'date',
+        'date' => 'date',
         'start_time' => 'datetime',
-        'end_time'   => 'datetime',
+        'end_time' => 'datetime',
     ];
 
     public function room(): BelongsTo
@@ -62,7 +62,7 @@ class BookingRoom extends Model
             $code = rand(1000000000, 9999999999);
             return [
                 'url' => "https://zoom.us/j/{$code}",
-                'code' => (string)$code,
+                'code' => (string) $code,
                 'password' => strtoupper(substr(md5($code), 0, 6)),
             ];
         }
@@ -77,5 +77,15 @@ class BookingRoom extends Model
             'code' => strtoupper(substr(md5($link), 0, 6)),
             'password' => strtoupper(substr(md5($link . 'pwd'), 0, 8)),
         ];
+    }
+
+    public function requirements()
+    {
+        return $this->belongsToMany(
+            \App\Models\Requirement::class,
+            'booking_requirements',     // nama tabel pivot
+            'bookingroom_id',           // FK ke booking_rooms
+            'requirement_id'            // FK ke requirements
+        )->withTimestamps();
     }
 }

@@ -56,7 +56,7 @@ class DatabaseSeeder extends Seeder
                 $roles[$r] = Role::firstOrCreate(['name' => $r]);
             }
 
-            $deptNames = ['IT', 'Finance', 'HRD', 'Marketing', 'Operations', 'General Affairs'];
+            $deptNames = ['IT', 'Finance', 'HRD', 'Marketing', 'Operations', 'General Affairs', 'Executive'];
             $depts = [];
             foreach ($deptNames as $d) {
                 $depts[$d] = Department::firstOrCreate(['company_id' => $companyId, 'department_name' => $d]);
@@ -67,7 +67,7 @@ class DatabaseSeeder extends Seeder
 
             $superadmin = User::firstOrCreate(
                 ['email' => "superadmin@{$emailDomain}"],
-                ['company_id' => $companyId, 'department_id' => null, 'role_id' => $roles['Superadmin']->getKey(), 'full_name' => 'Superadmin User', 'phone_number' => '08000000000', 'password' => Hash::make('superpassword')]
+                ['company_id' => $companyId, 'department_id' => $depts['Executive']->getKey(), 'role_id' => $roles['Superadmin']->getKey(), 'full_name' => 'Superadmin User', 'phone_number' => '08000000000', 'password' => Hash::make('superpassword')]
             );
             $allUsers->push($superadmin);
 
