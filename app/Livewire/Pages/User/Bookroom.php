@@ -40,7 +40,6 @@ class Bookroom extends Component
     protected string $tz = 'Asia/Jakarta';
     public string $minStart = '00:00';
 
-    // Kalender compact (pagination rooms)
     public int $roomsPerPage = 6;
     public int $roomPage = 1;
 
@@ -51,7 +50,6 @@ class Bookroom extends Component
         $this->currentWeek  = $now->copy()->startOfWeek();
         $this->date         = $now->toDateString();
 
-        // default start = now + lead time, dibulatkan ke slot berikut
         $start = $now->copy()->addMinutes($this->leadMinutes);
         $this->start_time = $this->roundUpToSlot($start)->format('H:i');
         $this->end_time   = Carbon::createFromFormat('H:i', $this->start_time)
@@ -65,7 +63,6 @@ class Bookroom extends Component
         $this->recalculateAvailability();
     }
 
-    // --- Utilities ---
     protected function roundUpToSlot(Carbon $time): Carbon
     {
         $minute = (int)$time->minute;
@@ -81,24 +78,26 @@ class Bookroom extends Component
         if ($this->date === $now->toDateString()) {
             $this->minStart = $now->format('H:i');
 
-            // auto-bump kalau start_time sudah terlewat
             if ($this->start_time < $this->minStart) {
                 $bumped = $this->roundUpToSlot($now->copy()->addMinutes($this->leadMinutes));
                 $this->start_time = $bumped->format('H:i');
                 $this->end_time   = $bumped->copy()->addMinutes($this->slotMinutes)->format('H:i');
-                $this->dispatch('toast', type: 'info', message: "Start time diupdate ke {$this->start_time} karena waktu sebelumnya sudah terlewat.");
+                $this->dispatch('toast', [
+                    'type' => 'info',
+                    'message' => "Start time diupdate ke {$this->start_time} karena waktu sebelumnya sudah terlewat."
+                ]);
             }
         } else {
             $this->minStart = '00:00';
         }
     }
 
-    // --- Navigation (DAY view aware) ---
     public function switchView(string $view): void
     {
         $this->view = in_array($view, ['form','calendar'], true) ? $view : 'form';
     }
 
+    // week/month navigation
     public function previousWeek(): void
     {
         $this->selectedDate = Carbon::parse($this->date, $this->tz)->subWeek();
@@ -143,7 +142,6 @@ class Bookroom extends Component
         $this->recalculateAvailability();
     }
 
-    // Live update bindings (sinkronisasi Room Availability dengan input user)
     public function updatedStartTime($val): void
     {
         if ($val) {
@@ -159,36 +157,41 @@ class Bookroom extends Component
 
     public function updatedDate(): void
     {
-        // pastikan minStart ikut update & availability recalculated
         $this->selectDate($this->date);
     }
 
-    // ==== Pagination Rooms (kalender compact) ====
+    // pagination
     public function nextRoomPage(): void
     {
         if ($this->roomPage < $this->totalRoomPages()) $this->roomPage++;
     }
+
     public function prevRoomPage(): void
     {
         if ($this->roomPage > 1) $this->roomPage--;
     }
+
     protected function visibleRooms(): array
     {
         $offset = ($this->roomPage - 1) * $this->roomsPerPage;
         return array_slice($this->rooms, $offset, $this->roomsPerPage);
     }
+
     protected function totalRoomPages(): int
     {
         return max(1, (int) ceil(count($this->rooms) / $this->roomsPerPage));
     }
 
-    // ==== Quick book dari kalender (buka modal child via event) ====
+    // child modal trigger
     public function selectCalendarSlot(int $roomId, string $ymd, string $time): void
     {
-        $this->dispatch('open-quick-book', roomId: $roomId, ymd: $ymd, time: $time);
+        $this->dispatch('open-quick-book', [
+            'roomId' => $roomId,
+            'ymd' => $ymd,
+            'time' => $time,
+        ]);
     }
 
-    // Refresh data setelah modal sukses membuat booking
     #[On('booking-created')]
     public function refreshAfterBooking(): void
     {
@@ -196,7 +199,6 @@ class Bookroom extends Component
         $this->recalculateAvailability();
     }
 
-    // --- Submit (form utama) ---
     public function submitBooking(): void
     {
         $this->validate([
@@ -212,11 +214,11 @@ class Bookroom extends Component
 
         $now = Carbon::now($this->tz);
         if ($this->date < $now->toDateString()) {
-            $this->dispatch('toast', type: 'error', message: 'Tidak bisa booking ke tanggal yang sudah lewat.');
+            $this->dispatch('toast', ['type'=>'error','message'=>'Tidak bisa booking ke tanggal yang sudah lewat.']);
             return;
         }
         if ($this->date === $now->toDateString() && $this->start_time < $now->format('H:i')) {
-            $this->dispatch('toast', type: 'error', message: 'Start time tidak boleh di masa lalu.');
+            $this->dispatch('toast', ['type'=>'error','message'=>'Start time tidak boleh di masa lalu.']);
             return;
         }
 
@@ -226,12 +228,13 @@ class Bookroom extends Component
         $overlap = BookingRoom::query()
             ->where('room_id', $this->room_id)
             ->where('date', $this->date)
+            ->whereIn('status', ['pending', 'approved'])
             ->where('start_time', '<', $endDt)
             ->where('end_time',   '>', $startDt)
             ->exists();
 
         if ($overlap) {
-            $this->dispatch('toast', type: 'error', message: 'Slot waktu sudah terpakai.');
+            $this->dispatch('toast', ['type'=>'error','message'=>'Slot waktu sudah terpakai (pending/approved).']);
             return;
         }
 
@@ -247,6 +250,9 @@ class Bookroom extends Component
                 'start_time'           => $startDt,
                 'end_time'             => $endDt,
                 'special_notes'        => $this->special_notes,
+                'is_approve'           => 0,
+                'status'               => 'pending',
+                'approved_by'          => null,
             ]);
 
             if (!empty($this->requirements)) {
@@ -259,10 +265,9 @@ class Bookroom extends Component
         $this->resetForm(true);
         $this->recalculateAvailability();
 
-        $this->dispatch('toast', type: 'success', message: 'Booking berhasil dikonfirmasi.');
+        $this->dispatch('toast', ['type'=>'success','message'=>'Booking tersimpan (pending approval).']);
     }
 
-    // --- Loaders ---
     protected function loadRoomsFromDb(): void
     {
         $this->rooms = Room::query()
@@ -280,7 +285,7 @@ class Bookroom extends Component
         $this->bookings = BookingRoom::query()
             ->orderByDesc('created_at')
             ->limit(10)
-            ->get(['bookingroom_id','room_id','meeting_title','date','start_time','end_time'])
+            ->get(['bookingroom_id','room_id','meeting_title','date','start_time','end_time','status','is_approve'])
             ->map(fn($b) => [
                 'id'            => (int)$b->bookingroom_id,
                 'room_id'       => (int)$b->room_id,
@@ -288,6 +293,8 @@ class Bookroom extends Component
                 'date'          => (string)$b->date,
                 'start_time'    => (string)$b->start_time,
                 'end_time'      => (string)$b->end_time,
+                'status'        => (string)($b->status ?? 'pending'),
+                'is_approve'    => (bool)($b->is_approve ?? 0),
             ])->all();
     }
 
@@ -324,6 +331,7 @@ class Bookroom extends Component
                 $busyReq = BookingRoom::query()
                     ->where('room_id', $r['id'])
                     ->where('date', $reqStart->toDateString())
+                    ->whereIn('status', ['pending','approved'])
                     ->where('start_time', '<', $reqEnd)
                     ->where('end_time',   '>', $reqStart)
                     ->exists();
@@ -341,16 +349,18 @@ class Bookroom extends Component
         $b = BookingRoom::query()
             ->where('room_id', $roomId)
             ->where('date', $ymd)
+            ->whereIn('status', ['pending','approved'])
             ->where('start_time', '<', $slotEnd)
             ->where('end_time',   '>', $slotStart)
             ->orderBy('start_time')
-            ->first(['bookingroom_id','meeting_title','start_time','end_time']);
+            ->first(['bookingroom_id','meeting_title','start_time','end_time','status']);
 
         return $b ? [
             'id'            => (int)$b->bookingroom_id,
             'meeting_title' => (string)$b->meeting_title,
             'start_time'    => (string)$b->start_time,
             'end_time'      => (string)$b->end_time,
+            'status'        => (string)($b->status ?? 'pending'),
         ] : null;
     }
 

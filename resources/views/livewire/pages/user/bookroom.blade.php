@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto p-6">
+<div class="max-w-7xl mx-auto p-6"> {{-- ROOT tunggal untuk Livewire component --}}
     {{-- HEADER CARD --}}
     <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6 mb-8">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -34,6 +34,9 @@
         </div>
     </div>
 
+    {{-- TOAST CONTAINER (JS-driven) --}}
+    <div id="global-toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-2"></div>
+
     @if ($view === 'form')
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {{-- FORM --}}
@@ -55,11 +58,11 @@
                         </ul>
                     </div>
 
-                    <form wire:submit="submitBooking" class="space-y-6">
+                    <form wire:submit.prevent="submitBooking" class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Meeting Title</label>
-                                <input type="text" wire:model="meeting_title" placeholder="Enter meeting title"
+                                <input type="text" wire:model.defer="meeting_title" placeholder="Enter meeting title"
                                     class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 @error('meeting_title') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
@@ -87,7 +90,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Number of Attendees</label>
-                                <input type="number" wire:model="number_of_attendees" placeholder="0" min="1"
+                                <input type="number" wire:model.defer="number_of_attendees" placeholder="0" min="1"
                                     class="w-full px-3 text-gray-900 placeholder:text-gray-400 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 @error('number_of_attendees') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
@@ -175,8 +178,19 @@
                                 <div class="w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center flex-shrink-0">
                                     <div class="w-2 h-2 bg-gray-600 rounded-full"></div>
                                 </div>
-                                <div>
-                                    <h4 class="font-medium text-gray-900">{{ $booking['meeting_title'] }}</h4>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="font-medium text-gray-900">{{ $booking['meeting_title'] }}</h4>
+                                        @if(isset($booking['status']))
+                                            @if($booking['status'] === 'approved')
+                                                <span class="text-xs font-semibold text-green-800 bg-green-100 px-2 py-0.5 rounded">Approved</span>
+                                            @elseif($booking['status'] === 'pending')
+                                                <span class="text-xs font-semibold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded">Pending</span>
+                                            @else
+                                                <span class="text-xs font-semibold text-red-800 bg-red-100 px-2 py-0.5 rounded">Rejected</span>
+                                            @endif
+                                        @endif
+                                    </div>
                                     <p class="text-sm text-gray-600">
                                         {{ \Carbon\Carbon::parse($booking['date'])->format('M j') }},
                                         {{ \Carbon\Carbon::parse($booking['start_time'])->format('g:i A') }} •
@@ -217,7 +231,7 @@
                     </div>
                 </div>
 
-                {{-- Pagination Rooms (show N rooms per page) --}}
+                {{-- Pagination Rooms --}}
                 <div class="mt-4 flex items-center justify-between">
                     <div class="text-sm text-gray-600">
                         Showing rooms {{ ($roomsPage - 1) * $roomsPerPage + 1 }} –
@@ -235,7 +249,7 @@
                 </div>
             </div>
 
-            {{-- Grid: Time (left fixed) × Visible Rooms (scroll-x) --}}
+            {{-- Grid: Time × Visible Rooms --}}
             <div class="relative">
                 <div class="flex">
                     {{-- Left time rail --}}
@@ -270,17 +284,28 @@
 
                                         @if($slotBooking)
                                             <div class="h-7 md:h-8 relative border-r border-gray-100">
-                                                <div class="absolute inset-1 bg-red-100 border border-red-200 rounded px-2 flex items-center">
-                                                    <span class="text-[10px] md:text-xs text-red-800 truncate">
+                                                <div class="absolute inset-1 bg-red-100 border border-red-200 rounded px-2 flex items-center justify-between">
+                                                    <div class="truncate text-[10px] md:text-xs text-red-800">
                                                         {{ $slotBooking['meeting_title'] }}
                                                         ({{ \Carbon\Carbon::parse($slotBooking['start_time'])->format('H:i') }}–{{ \Carbon\Carbon::parse($slotBooking['end_time'])->format('H:i') }})
-                                                    </span>
+                                                    </div>
+                                                    {{-- status badge --}}
+                                                    <div class="ml-2 flex-shrink-0">
+                                                        @if(isset($slotBooking['status']) && $slotBooking['status'] === 'approved')
+                                                            <span class="text-xs font-semibold text-green-800 bg-green-100 px-2 py-0.5 rounded">Approved</span>
+                                                        @elseif(isset($slotBooking['status']) && $slotBooking['status'] === 'pending')
+                                                            <span class="text-xs font-semibold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded">Pending</span>
+                                                        @else
+                                                            <span class="text-xs font-semibold text-red-800 bg-red-100 px-2 py-0.5 rounded">Rejected</span>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </div>
                                         @else
                                             <button
                                                 wire:click="selectCalendarSlot({{ $room['id'] }}, '{{ $date }}', '{{ $t }}')"
-                                                class="h-7 md:h-8 w-full border-r border-gray-100 hover:bg-green-50 transition-colors">
+                                                class="h-7 md:h-8 w-full border-r border-gray-100 hover:bg-green-50 transition-colors"
+                                                title="Book {{ $room['name'] }} at {{ $t }}">
                                             </button>
                                         @endif
                                     @endforeach
@@ -311,3 +336,41 @@
     {{-- Child modal (quick book) --}}
     <livewire:booking.quick-book-modal />
 </div>
+
+    {{-- Tiny JS toast handler (listens for browser event 'toast') --}}
+    <script>
+        (function(){
+            const container = document.getElementById('global-toast-container');
+
+            function showToast(type, message) {
+                if (!message) return;
+                const el = document.createElement('div');
+                el.className = [
+                    'px-4','py-2','rounded','shadow','max-w-sm','text-sm','flex','items-center','justify-between',
+                    'border'
+                ].join(' ');
+                if (type === 'success') {
+                    el.classList.add('bg-green-50','text-green-800','border-green-200');
+                } else if (type === 'error') {
+                    el.classList.add('bg-red-50','text-red-800','border-red-200');
+                } else {
+                    el.classList.add('bg-blue-50','text-blue-800','border-blue-200');
+                }
+
+                el.innerHTML = `<div class="truncate pr-3">${message}</div>
+                                <button class="ml-3 text-sm font-semibold">OK</button>`;
+
+                el.querySelector('button').addEventListener('click', () => {
+                    el.remove();
+                });
+
+                container.appendChild(el);
+                setTimeout(()=> el.remove(), 5000);
+            }
+
+            window.addEventListener('toast', function(e){
+                const detail = e.detail || {};
+                showToast(detail.type || 'info', detail.message || '');
+            });
+        })();
+    </script>
