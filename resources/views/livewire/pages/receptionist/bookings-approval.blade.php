@@ -54,13 +54,25 @@
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <div>
                         <h3 class="text-base font-semibold text-gray-900">Filter</h3>
-                        <p class="text-sm text-gray-500">Cari judul & pilih tanggal.</p>
+                        <p class="text-sm text-gray-500">
+                            Pilih urutan (All Dates / Newest / Oldest). Ketik tanggal bila ingin filter per tanggal.
+                        </p>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full md:w-auto">
+                        {{-- Search title --}}
                         <input type="text" wire:model.live="q" placeholder="Search title…"
                             class="{{ $input }} w-full sm:w-64" />
-                        <input type="date" wire:model.live="selected_date" class="{{ $input }} w-full sm:w-48" />
+
+                        {{-- Date to  --}}
+                        <input type="date" wire:model.live="selected_date" class="{{ $input }} w-full" />
+
+                        {{-- Mode: All Dates (ignores date), or Newest/Oldest (uses date if filled) --}}
+                        <select wire:model.live="list_mode" class="{{ $input }} w-full">
+                            <option value="all">All Dates</option>
+                            <option value="newest">Newest first</option>
+                            <option value="oldest">Oldest first</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -106,9 +118,15 @@
                                         <span>{{ fmtDate($b->date) }}</span>
                                         <span>•</span>
                                         <span>{{ fmtTime($b->start_time) }}–{{ fmtTime($b->end_time) }}</span>
-                                        @if($isOnline && $b->online_provider)
-                                            <span>•</span><span>Provider:
-                                                {{ ucfirst(str_replace('_', ' ', $b->online_provider)) }}</span>
+
+                                        @if(!$isOnline)
+                                            <span>•</span>
+                                            <span>Room: {{ $b->room_name ?? ('Ruangan ' . ($b->room_id ?? '—')) }}</span>
+                                        @else
+                                            @if($b->online_provider)
+                                                <span>•</span>
+                                                <span>Platform: {{ ucfirst(str_replace('_', ' ', $b->online_provider)) }}</span>
+                                            @endif
                                         @endif
                                     </div>
 
@@ -128,14 +146,13 @@
                         <div class="text-center py-8 text-gray-500 text-sm">Tidak ada data pending.</div>
                     @endforelse
 
-                    {{-- Pagination for Pending --}}
                     <div class="mt-4">
                         {{ $pending->links() }}
                     </div>
                 </div>
             </section>
 
-            {{-- ON GOING (Approved) --}}
+            {{-- ON GOING --}}
             <section class="{{ $card }}">
                 <div class="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
                     <div class="w-2 h-2 bg-emerald-600 rounded-full"></div>
@@ -174,9 +191,15 @@
                                         <span>{{ fmtDate($b->date) }}</span>
                                         <span>•</span>
                                         <span>{{ fmtTime($b->start_time) }}–{{ fmtTime($b->end_time) }}</span>
-                                        @if($isOnline && $b->online_provider)
-                                            <span>•</span><span>Provider:
-                                                {{ ucfirst(str_replace('_', ' ', $b->online_provider)) }}</span>
+
+                                        @if(!$isOnline)
+                                            <span>•</span>
+                                            <span>Room: {{ $b->room_name ?? ('Ruangan ' . ($b->room_id ?? '—')) }}</span>
+                                        @else
+                                            @if($b->online_provider)
+                                                <span>•</span>
+                                                <span>Platform: {{ ucfirst(str_replace('_', ' ', $b->online_provider)) }}</span>
+                                            @endif
                                         @endif
                                     </div>
 
@@ -196,7 +219,6 @@
                         <div class="text-center py-8 text-gray-500 text-sm">Belum ada yang On Going.</div>
                     @endforelse
 
-                    {{-- Pagination for On Going --}}
                     <div class="mt-4">
                         {{ $onGoing->links() }}
                     </div>

@@ -21,12 +21,11 @@ class BookingsApproval extends Component
     private const STATUS_PENDING = 'pending';
     private const STATUS_APPROVED = 'approved';
     private const STATUS_COMPLETED = 'completed';
-
     public string $q = '';
-    public ?string $selected_date = null;
+    public ?string $selected_date = null;   
+    public string $list_mode = 'all';        
 
     private string $tz = 'Asia/Jakarta';
-
     private function toCarbon($value): ?Carbon
     {
         if ($value instanceof \DateTimeInterface) {
@@ -173,48 +172,67 @@ class BookingsApproval extends Component
             ]);
 
         $this->dispatch('toast', type: 'success', message: 'Sent back to Pending.');
-        $this->refreshPage(); // <<<<<< trigger hard reload
+        $this->refreshPage();
     }
 
     protected function baseQuery(string $status, ?int $isApprove = null)
     {
         $q = DB::table('booking_rooms')
+            ->leftJoin('rooms', 'rooms.room_id', '=', 'booking_rooms.room_id')
             ->select([
-                'bookingroom_id',
-                'meeting_title',
-                'booking_type',
-                'status',
-                'is_approve',
-                'date',
-                'start_time',
-                'end_time',
-                'room_id',
-                'online_provider',
-                'online_meeting_url',
-                'online_meeting_code',
+                'booking_rooms.bookingroom_id',
+                'booking_rooms.meeting_title',
+                'booking_rooms.booking_type',
+                'booking_rooms.status',
+                'booking_rooms.is_approve',
+                'booking_rooms.date',
+                'booking_rooms.start_time',
+                'booking_rooms.end_time',
+                'booking_rooms.room_id',
+                DB::raw('rooms.room_number as room_name'),
+                'booking_rooms.online_provider',
+                'booking_rooms.online_meeting_url',
+                'booking_rooms.online_meeting_code',
             ])
-            ->where('status', $status);
+            ->where('booking_rooms.status', $status);
 
         if (!is_null($isApprove)) {
-            $q->where('is_approve', $isApprove);
+            $q->where('booking_rooms.is_approve', $isApprove);
         }
 
         if ($this->q !== '') {
-            $q->where('meeting_title', 'like', '%' . $this->q . '%');
+            $q->where('booking_rooms.meeting_title', 'like', '%' . $this->q . '%');
         }
 
-        if ($this->selected_date) {
-            $q->whereDate('date', $this->selected_date);
+        // Date filter
+        if ($this->list_mode !== 'all' && $this->selected_date) {
+            $q->whereDate('booking_rooms.date', $this->selected_date);
         }
 
-        return $q->orderBy('date')->orderBy('start_time');
+        // Sorting
+        if ($this->list_mode === 'oldest') {
+            $q->orderBy('booking_rooms.date', 'asc')
+                ->orderBy('booking_rooms.start_time', 'asc');
+        } else {
+            $q->orderBy('booking_rooms.date', 'desc')
+                ->orderBy('booking_rooms.start_time', 'desc');
+        }
+
+        return $q;
+    }
+
+    public function updated($prop): void
+    {
+        if (in_array($prop, ['q', 'selected_date', 'list_mode'], true)) {
+            $this->resetPage('pendingPage');
+            $this->resetPage('ongoingPage');
+        }
     }
 
     public function render()
     {
         $this->autoProgressToDone();
 
-        // pagination for both boxes
         $pending = $this->baseQuery(self::STATUS_PENDING, 0)
             ->paginate($this->perPage, ['*'], 'pendingPage');
 
