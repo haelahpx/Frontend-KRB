@@ -17,12 +17,17 @@ class BookingRoom extends Model
     protected $keyType = 'int';
     public $timestamps = true;
 
-    /** Status constants (recommended for readability) */
-    // Match these to your DB tinyint mapping:
+    /** Numeric constants (keep for writes) */
     public const ST_PENDING = 0;
     public const ST_APPROVED = 1;
     public const ST_REJECTED = 2;
     public const ST_DONE = 3;
+
+    /** Tolerant sets (read both numeric & string rows) */
+    private const PENDING_SET = [0, '0', 'pending', 'PENDING'];
+    private const APPROVED_SET = [1, '1', 'approved', 'APPROVED'];
+    private const REJECTED_SET = [2, '2', 'rejected', 'REJECTED'];
+    private const DONE_SET = [3, '3', 'done', 'DONE'];
 
     protected $fillable = [
         'room_id',
@@ -30,16 +35,16 @@ class BookingRoom extends Model
         'user_id',
         'department_id',
         'meeting_title',
-        'date',
+        'date',                   // DATE
         'number_of_attendees',
-        'start_time',
-        'end_time',
+        'start_time',             // TIME (HH:MM:SS)
+        'end_time',               // TIME (HH:MM:SS)
         'special_notes',
         'status',
         'approved_by',
         'is_approve',
-        'booking_type',             // meeting | online_meeting | hybrid | etc
-        'online_provider',          // zoom | google_meet
+        'booking_type',           // meeting | online_meeting | hybrid | etc
+        'online_provider',        // zoom | google_meet
         'online_meeting_url',
         'online_meeting_code',
         'online_meeting_password',
@@ -47,14 +52,15 @@ class BookingRoom extends Model
 
     protected $casts = [
         'date' => 'date',
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
+        // Keep these as strings to avoid wrong datetime auto-casting
+        'start_time' => 'string',
+        'end_time' => 'string',
         'deleted_at' => 'datetime',
         'is_approve' => 'boolean',
     ];
 
     /* ==========================
-     | Relationships
+    | Relationships
      ========================== */
 
     public function room(): BelongsTo
@@ -81,39 +87,68 @@ class BookingRoom extends Model
     {
         return $this->belongsToMany(
             Requirement::class,
-            'booking_requirements',  // pivot table
-            'bookingroom_id',        // FK to booking_rooms
-            'requirement_id'         // FK to requirements
+            'booking_requirements',
+            'bookingroom_id',
+            'requirement_id'
         )->withTimestamps();
     }
 
     /* ==========================
-     | Scopes
+    | Scopes
      ========================== */
 
-    /**
-     * Filter by company_id
-     */
+    /** Filter by company (no-op if null) */
     public function scopeCompany($query, $companyId)
     {
         return $companyId ? $query->where('company_id', $companyId) : $query;
     }
 
-    /**
-     * Common status scopes
-     */
-    public function scopePending($query)
+    public function scopePending($q)
     {
-        return $query->where('status', self::ST_PENDING);
+        return $q->whereIn('status', self::PENDING_SET);
+    }
+    public function scopeApproved($q)
+    {
+        return $q->whereIn('status', self::APPROVED_SET);
+    }
+    public function scopeRejected($q)
+    {
+        return $q->whereIn('status', self::REJECTED_SET);
+    }
+    public function scopeDone($q)
+    {
+        return $q->whereIn('status', self::DONE_SET);
     }
 
-    public function scopeApproved($query)
+    /**
+     * Approved + now inside window (DATE + TIME).
+     * (Kept for reference; RoomApproval shows all approved regardless of time)
+     */
+    public function scopeOngoing($q, $now = null)
     {
-        return $query->where('status', self::ST_APPROVED);
+        $now = ($now ?? now(config('app.timezone')))->format('Y-m-d H:i:s');
+
+        return $q->approved()
+            ->whereRaw("CONCAT(date, ' ', start_time) <= ?", [$now])
+            ->whereRaw("CONCAT(date, ' ', end_time)   >= ?", [$now]);
+    }
+
+    /**
+     * Promote finished approved meetings to DONE.
+     */
+    public static function autoProgressToDone(?int $companyId = null, $now = null): void
+    {
+        $now = ($now ?? now(config('app.timezone')))->format('Y-m-d H:i:s');
+
+        static::query()
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->approved()
+            ->whereRaw("CONCAT(date, ' ', end_time) < ?", [$now])
+            ->update(['status' => self::ST_DONE]);
     }
 
     /* ==========================
-     | Helpers
+    | Helpers (optional)
      ========================== */
 
     public static function generateMeetingUrl(string $provider): array

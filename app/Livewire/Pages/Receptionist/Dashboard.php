@@ -3,7 +3,7 @@
 namespace App\Livewire\Pages\Receptionist;
 
 use App\Models\BookingRoom;
-use App\Models\Delivery; // ⬅️ ganti ke Delivery
+use App\Models\Delivery; // menggunakan Deliveries sebagai sumber "Dokumen"
 use App\Models\Guestbook;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -16,20 +16,57 @@ use Livewire\Component;
 class Dashboard extends Component
 {
     /**
-     * Determines the current status of a meeting.
+     * Normalize any nullable Carbon|string|\DateTimeInterface into Carbon.
      */
-    private function computeMeetingStatus(Carbon $startAt, Carbon $endAt): string
+    private function asCarbon(null|Carbon|\DateTimeInterface|string $value): ?Carbon
     {
+        if ($value === null) {
+            return null;
+        }
+        if ($value instanceof Carbon) {
+            return $value;
+        }
+        if ($value instanceof \DateTimeInterface) {
+            return Carbon::instance($value);
+        }
+        try {
+            return Carbon::parse($value);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Safe time formatter (returns '—' if not parseable).
+     */
+    private function fmtTime(null|Carbon|\DateTimeInterface|string $value): string
+    {
+        $c = $this->asCarbon($value);
+        return $c ? $c->format('H:i') : '—';
+    }
+
+    /**
+     * Determines the current status of a meeting.
+     * Accepts Carbon|string to avoid type errors.
+     */
+    private function computeMeetingStatus(null|Carbon|\DateTimeInterface|string $startAt, null|Carbon|\DateTimeInterface|string $endAt): string
+    {
+        $start = $this->asCarbon($startAt);
+        $end = $this->asCarbon($endAt);
         $now = now();
 
-        if ($now->lt($startAt)) {
-            if ($startAt->isToday() && $now->diffInMinutes($startAt) < 60) {
+        if (!$start || !$end) {
+            return 'Tidak diketahui';
+        }
+
+        if ($now->lt($start)) {
+            if ($start->isToday() && $now->diffInMinutes($start) < 60) {
                 return 'Berikutnya';
             }
             return 'Terjadwal';
         }
 
-        if ($now->between($startAt, $endAt)) {
+        if ($now->between($start, $end)) {
             return 'Berlangsung';
         }
 
@@ -55,7 +92,7 @@ class Dashboard extends Component
     public function render()
     {
         $companyId = optional(Auth::user())->company_id;
-        $today     = Carbon::today();
+        $today = Carbon::today();
 
         // 1) Kartu statistik utama
         $todayGuestsCount = Guestbook::where('company_id', $companyId)
@@ -67,10 +104,10 @@ class Dashboard extends Component
             ->get();
 
         $ongoingMeetingsCount = $todayMeetings
-            ->filter(fn ($m) => $this->computeMeetingStatus($m->start_time, $m->end_time) === 'Berlangsung')
+            ->filter(fn($m) => $this->computeMeetingStatus($m->start_time, $m->end_time) === 'Berlangsung')
             ->count();
 
-        // ⬇️ Ganti Documents -> Deliveries
+        // Ambil data "dokumen" dari tabel deliveries
         $newDocumentsCount = Delivery::where('company_id', $companyId)
             ->where('created_at', '>=', now()->subWeek())
             ->count();
@@ -80,22 +117,28 @@ class Dashboard extends Component
             ->count();
 
         $stats = [
-            ['label' => 'Tamu Hari Ini',   'value' => $todayGuestsCount,        'badge' => 'hari ini',   'badgeClass' => 'bg-green-100 text-green-700'],
-            ['label' => 'Jadwal Meeting',  'value' => $todayMeetings->count(),  'badge' => $ongoingMeetingsCount . ' berlangsung', 'badgeClass' => 'bg-blue-100 text-blue-700'],
-            // Label tetap "Dokumen" agar UI kamu nggak berubah—datanya dari deliveries
-            ['label' => 'Dokumen Baru',    'value' => $newDocumentsCount,       'badge' => 'minggu ini', 'badgeClass' => 'bg-purple-100 text-purple-700'],
-            ['label' => 'Dokumen Antri',   'value' => $pendingDocumentsCount,   'badge' => 'menunggu',   'badgeClass' => 'bg-amber-100 text-amber-700'],
+            ['label' => 'Tamu Hari Ini', 'value' => $todayGuestsCount, 'badge' => 'hari ini', 'badgeClass' => 'bg-green-100 text-green-700'],
+            ['label' => 'Jadwal Meeting', 'value' => $todayMeetings->count(), 'badge' => $ongoingMeetingsCount . ' berlangsung', 'badgeClass' => 'bg-blue-100 text-blue-700'],
+            ['label' => 'Dokumen Baru', 'value' => $newDocumentsCount, 'badge' => 'minggu ini', 'badgeClass' => 'bg-purple-100 text-purple-700'],
+            ['label' => 'Dokumen Antri', 'value' => $pendingDocumentsCount, 'badge' => 'menunggu', 'badgeClass' => 'bg-amber-100 text-amber-700'],
         ];
 
         // 2) List "Jadwal Meeting Hari Ini"
-        $meetings = $todayMeetings->map(function ($meeting) {
-            return [
-                'time'   => $meeting->start_time->format('H:i') . ' - ' . $meeting->end_time->format('H:i'),
-                'title'  => $meeting->meeting_title,
-                'room'   => $this->mapRoomName($meeting->room_id),
-                'status' => $this->computeMeetingStatus($meeting->start_time, $meeting->end_time),
-            ];
-        })->where('status', '!=', 'Selesai')->sortBy('time')->take(5);
+        $meetings = $todayMeetings
+            ->map(function ($meeting) {
+                $start = $this->asCarbon($meeting->start_time);
+                $end = $this->asCarbon($meeting->end_time);
+
+                return [
+                    'time' => $this->fmtTime($start) . ' - ' . $this->fmtTime($end),
+                    'title' => $meeting->meeting_title,
+                    'room' => $this->mapRoomName($meeting->room_id),
+                    'status' => $this->computeMeetingStatus($start, $end),
+                ];
+            })
+            ->where('status', '!=', 'Selesai')
+            ->sortBy('time')
+            ->take(5);
 
         // 3) List "Buku Tamu (Hari Ini)"
         $guests = Guestbook::where('company_id', $companyId)
@@ -105,9 +148,9 @@ class Dashboard extends Component
             ->get()
             ->map(function ($guest) {
                 return [
-                    'name'    => $guest->name,
+                    'name' => $guest->name,
                     'purpose' => $guest->keperluan,
-                    'time'    => Carbon::parse($guest->jam_in)->format('H:i'),
+                    'time' => $this->fmtTime($guest->jam_in),
                 ];
             });
 
@@ -118,16 +161,16 @@ class Dashboard extends Component
             ->get()
             ->map(function ($d) {
                 return [
-                    'name' => $d->item_name,                 // item_name pada deliveries
-                    'cat'  => ucfirst($d->type),             // 'document' | 'package'
-                    'date' => $d->created_at->format('Y-m-d'),
+                    'name' => $d->item_name,
+                    'cat' => ucfirst($d->type), // 'document' | 'package'
+                    'date' => $this->asCarbon($d->created_at)?->format('Y-m-d') ?? '—',
                 ];
             });
 
         return view('livewire.pages.receptionist.dashboard', [
-            'stats'     => $stats,
-            'meetings'  => $meetings,
-            'guests'    => $guests,
+            'stats' => $stats,
+            'meetings' => $meetings,
+            'guests' => $guests,
             'documents' => $documents,
         ]);
     }

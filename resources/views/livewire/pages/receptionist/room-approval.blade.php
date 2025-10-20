@@ -106,7 +106,6 @@
                                     <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100">{{ $m['room'] }}</span>
                                 </div>
                                 <div class="mt-1 text-[12px] text-gray-600">{{ $m['participants'] }} peserta</div>
-                                {{-- No "Mark as Done" button because "done" not in enum --}}
                             </div>
                             <div class="text-[10px] font-mono text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md">ID {{ $id }}</div>
                         </div>

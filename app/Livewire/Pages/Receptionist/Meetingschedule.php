@@ -3,10 +3,12 @@
 namespace App\Livewire\Pages\Receptionist;
 
 use App\Models\BookingRoom;
-use App\Models\Department;
 use App\Models\Requirement;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -16,251 +18,414 @@ use Livewire\Component;
 #[Title('Meeting Schedule')]
 class MeetingSchedule extends Component
 {
-    /** Example static rooms */
-    private const ROOMS = ['Ruangan 1'=>1,'Ruangan 2'=>2,'Ruangan 3'=>3];
+    private const INITIAL_STATUS = 'pending';
+
+    private string $tz = 'Asia/Jakarta';
 
     public ?int $editingId = null;
-    public bool $showModal = false;
-
     public array $form = [
-        'meeting_title'=>null,
-        'location'=>null,        // 'Ruangan 1|2|3'
-        'department_id'=>null,
-        'date'=>null,            // Y-m-d
-        'time'=>null,            // H:i
-        'time_end'=>null,        // H:i
-        'participant'=>null,
-        'notes'=>null,
-        'requirements'=>[],      // array<int> requirement_id
+        'meeting_title' => null,
+        'room_id' => null,
+        'department_id' => null,
+        'date' => null,
+        'time' => null,
+        'time_end' => null,
+        'participant' => null,
+        'notes' => null,
+        'requirements' => [],
     ];
 
+    public string $online_meeting_title = '';
+    public string $online_platform = 'google_meet';
+    public ?string $online_date = null;
+    public ?string $online_start_time = null;
+    public ?string $online_end_time = null;
+    public ?int $online_department_id = null;
+    public ?int $online_user_id = null;
+    public bool $googleConnected = false;
     public array $departments = [];
+    public array $usersByDept = [];
     public array $requirementOptions = [];
-    public array $done = [];
+    public array $rooms = [];
+
+    public string $deptQueryOffline = '';
+    public string $deptQueryOnline = '';
 
     private ?int $otherRequirementId = null;
 
     public function mount(): void
     {
-        if (Requirement::count() === 0) {
-            Requirement::upsertByName(['Video Conference','Projector','Whiteboard','Catering','Other']);
+        if (Requirement::count() === 0 && method_exists(Requirement::class, 'upsertByName')) {
+            Requirement::upsertByName(['Video Conference', 'Projector', 'Whiteboard', 'Catering', 'Other']);
         }
 
-        $dept = Department::query()
-            ->when(Auth::user()?->company_id, fn($q,$cid)=>$q->where('company_id',$cid))
-            ->orderBy('department_name')
-            ->get(['department_id','department_name']);
-
-        $this->departments = $dept->map(fn($d)=>[
-            'department_id'=>(int)$d->department_id,
-            'name'=>(string)$d->department_name,
-        ])->all();
-
-        $this->requirementOptions = Requirement::orderBy('name')
-            ->get(['requirement_id','name'])
-            ->map(fn($r)=>['id'=>(int)$r->requirement_id,'name'=>(string)$r->name])->all();
+        $this->loadDepartments();
+        $this->loadRooms();
+        $this->loadRequirements();
 
         $this->otherRequirementId = $this->findOtherRequirementId();
+        $this->googleConnected = $this->detectGoogleConnected();
 
-        $this->reloadDone();
+        if ($this->online_department_id) {
+            $this->loadUsersForDept((int) $this->online_department_id);
+        }
     }
+
+    protected function loadDepartments(): void
+    {
+        $nameCol = $this->pickColumn('departments', ['department_name', 'name'], 'department_name');
+        $pkCol = $this->pickColumn('departments', ['department_id', 'id'], 'department_id');
+
+        $dept = DB::table('departments')
+            ->selectRaw("$pkCol as id, $nameCol as label")
+            ->when(Auth::user()?->company_id, fn($q, $cid) => $q->where('company_id', $cid))
+            ->orderBy($nameCol)
+            ->get();
+
+        $this->departments = $dept->map(fn($d) => [
+            'id' => (int) $d->id,
+            'name' => (string) $d->label,
+        ])->all();
+    }
+
+    protected function loadRooms(): void
+    {
+        $pkCol = $this->pickColumn('rooms', ['room_id', 'id'], 'room_id');
+        $labelCol = $this->pickColumn('rooms', ['room_name', 'room_number', 'name'], 'room_number');
+
+        $rooms = DB::table('rooms')
+            ->selectRaw("$pkCol as id, $labelCol as label")
+            ->when(Auth::user()?->company_id, fn($q, $cid) => $q->where('company_id', $cid))
+            ->orderBy($labelCol)
+            ->get();
+
+        $this->rooms = $rooms->map(fn($r) => [
+            'id' => (int) $r->id,
+            'name' => (string) $r->label,
+        ])->all();
+    }
+
+    protected function loadRequirements(): void
+    {
+        $this->requirementOptions = Requirement::orderBy('name')
+            ->get(['requirement_id', 'name'])
+            ->map(fn($r) => ['id' => (int) $r->requirement_id, 'name' => (string) $r->name])
+            ->all();
+    }
+
+    protected function loadUsersForDept(?int $deptId): void
+    {
+        $this->usersByDept = [];
+        if (!$deptId)
+            return;
+
+        $pk = $this->pickColumn('users', ['user_id', 'id'], 'user_id');
+        $name = $this->pickColumn('users', ['name', 'full_name', 'fullname'], 'name');
+
+        $q = DB::table('users')
+            ->selectRaw("$pk as id, $name as label")
+            ->where('department_id', $deptId);
+
+        if ($cid = Auth::user()?->company_id) {
+            if (Schema::hasColumn('users', 'company_id')) {
+                $q->where('company_id', $cid);
+            }
+        }
+
+        $this->usersByDept = $q->orderBy($name)->get()
+            ->map(fn($u) => ['id' => (int) $u->id, 'name' => (string) $u->label])->all();
+    }
+
+    public function updatedOnlineDepartmentId($val): void
+    {
+        $this->loadUsersForDept((int) ($val ?: 0));
+        if ($this->online_user_id && !collect($this->usersByDept)->pluck('id')->contains((int) $this->online_user_id)) {
+            $this->online_user_id = null;
+        }
+    }
+
 
     protected function rules(): array
     {
+        $deptPk = $this->pickColumn('departments', ['department_id', 'id'], 'department_id');
+        $roomPk = $this->pickColumn('rooms', ['room_id', 'id'], 'room_id');
+
         return [
-            'form.meeting_title' => ['required','string','max:255'],
-            'form.location'      => ['required', Rule::in(array_keys(self::ROOMS))],
-            'form.department_id' => ['required','integer','exists:departments,department_id'],
-            'form.date'          => ['required','date_format:Y-m-d'],
-            'form.time'          => ['required','date_format:H:i'],
-            'form.time_end'      => ['required','date_format:H:i','after:form.time'],
-            'form.participant'   => ['required','integer','min:1'],
-            'form.notes'         => ['nullable','string','max:1000'],
-            'form.requirements'  => ['array'],
-            'form.requirements.*'=> ['integer','exists:requirements,requirement_id'],
+            'form.meeting_title' => ['required', 'string', 'max:255'],
+            'form.room_id' => ['required', "integer", "exists:rooms,{$roomPk}"],
+            'form.department_id' => ['required', 'integer', "exists:departments,{$deptPk}"],
+            'form.date' => ['required', 'date_format:Y-m-d'],
+            'form.time' => ['required', 'date_format:H:i'],
+            'form.time_end' => ['required', 'date_format:H:i', 'after:form.time'],
+            'form.participant' => ['required', 'integer', 'min:1'],
+            'form.notes' => ['nullable', 'string', 'max:1000'],
+            'form.requirements' => ['array'],
+            'form.requirements.*' => ['integer', 'exists:requirements,requirement_id'],
         ];
     }
 
-    public function save(): void
+    protected function hasRoomOverlap(int $roomId, string $ymd, string $startAt, string $endAt, ?int $excludeId = null): bool
+    {
+        $pendingApproved = ['pending', 'approved', 0, 1, '0', '1', 'PENDING', 'APPROVED'];
+
+        return BookingRoom::query()
+            ->where('room_id', $roomId)
+            ->where('date', $ymd)
+            ->whereIn('status', $pendingApproved)
+            ->when($excludeId, fn($q) => $q->where('bookingroom_id', '!=', $excludeId))
+            ->where('start_time', '<', $endAt)
+            ->where('end_time', '>', $startAt)
+            ->exists();
+    }
+
+    public function saveOffline(): void
     {
         $this->validate();
         $this->validateNotesIfOther();
 
         $uid = Auth::user()?->user_id ?? Auth::id();
         $cid = Auth::user()?->company_id;
+        $roomId = (int) $this->form['room_id'];
 
-        $roomId = self::ROOMS[$this->form['location']] ?? null;
-        if (!$roomId) {
-            $this->dispatch('toast', type:'error', title:'Gagal', message:'Ruangan tidak valid.');
+        try {
+            $startAt = Carbon::createFromFormat('Y-m-d H:i', "{$this->form['date']} {$this->form['time']}", $this->tz)
+                ->format('Y-m-d H:i:s');
+            $endAt = Carbon::createFromFormat('Y-m-d H:i', "{$this->form['date']} {$this->form['time_end']}", $this->tz)
+                ->format('Y-m-d H:i:s');
+        } catch (\Throwable $e) {
+            session()->flash('toast', ['type' => 'error', 'title' => 'Format waktu tidak valid', 'message' => 'Periksa tanggal/jam.']);
+            $this->js('window.location.reload()');
             return;
         }
 
-        $payload = [
-            'room_id'             => $roomId,
-            'company_id'          => $cid,
-            'user_id'             => $uid,
-            'department_id'       => (int)$this->form['department_id'],
-            'meeting_title'       => (string)$this->form['meeting_title'],
-            'date'                => (string)$this->form['date'],
-            'number_of_attendees' => (int)$this->form['participant'],
-            'start_time'          => "{$this->form['date']} {$this->form['time']}:00",
-            'end_time'            => "{$this->form['date']} {$this->form['time_end']}:00",
-            'special_notes'       => $this->composeSpecialNotes($this->form['requirements'], (string)($this->form['notes'] ?? '')),
-            'status'              => BookingRoom::ST_PENDING, // receptionist approves on RoomApproval
-        ];
-
-        if ($this->editingId) {
-            BookingRoom::whereKey($this->editingId)->update($payload);
-            $msg = 'Perubahan disimpan.';
-        } else {
-            $row = BookingRoom::create($payload);
-            if (!empty($this->form['requirements'])) {
-                $row->requirements()->sync($this->form['requirements']);
-            }
-            $msg = 'Booking dibuat (menunggu approval).';
+        if ($endAt <= $startAt) {
+            session()->flash('toast', ['type' => 'error', 'title' => 'Waktu salah', 'message' => 'Jam selesai harus setelah jam mulai.']);
+            $this->js('window.location.reload()');
+            return;
         }
 
-        $this->resetForm();
-        $this->reloadDone();
-        $this->dispatch('toast', type:'success', title:'Sukses', message:$msg, duration:2500);
+        if ($this->hasRoomOverlap($roomId, (string) $this->form['date'], $startAt, $endAt, $this->editingId)) {
+            $humanStart = Carbon::parse($startAt, $this->tz)->format('d M Y H:i');
+            $humanEnd = Carbon::parse($endAt, $this->tz)->format('H:i');
+            session()->flash('toast', [
+                'type' => 'warning',
+                'title' => 'Slot Sudah Terpakai',
+                'message' => "Waktu {$humanStart}–{$humanEnd} untuk ruangan yang dipilih sudah di-booking. Cek kalender dulu.",
+            ]);
+            $this->js('window.location.reload()');
+            return;
+        }
+
+        BookingRoom::create([
+            'room_id' => $roomId,
+            'company_id' => $cid,
+            'user_id' => $uid,
+            'department_id' => (int) $this->form['department_id'],
+            'meeting_title' => (string) $this->form['meeting_title'],
+            'date' => (string) $this->form['date'],
+            'number_of_attendees' => (int) $this->form['participant'],
+            'start_time' => $startAt,
+            'end_time' => $endAt,
+            'special_notes' => $this->composeSpecialNotes($this->form['requirements'], (string) ($this->form['notes'] ?? '')),
+            'booking_type' => 'meeting',
+            'status' => self::INITIAL_STATUS,
+            'is_approve' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->resetOfflineForm();
+
+        session()->flash('toast', [
+            'type' => 'success',
+            'title' => 'Sukses',
+            'message' => 'Booking disimpan (pending approval). Halaman diperbarui.',
+        ]);
+
+        $this->js('window.location.reload()');
     }
 
-    public function openEdit(int $id): void
+    public function saveOnline(): void
     {
-        $row = BookingRoom::find($id);
-        if (!$row) return;
+        $data = $this->validate([
+            'online_meeting_title' => ['required', 'string', 'max:255'],
+            'online_platform' => ['required', Rule::in(['google_meet', 'zoom'])],
+            'online_date' => ['required', 'date_format:Y-m-d'],
+            'online_start_time' => ['required', 'date_format:H:i'],
+            'online_end_time' => ['required', 'date_format:H:i', 'after:online_start_time'],
+            'online_department_id' => ['nullable', 'integer'],
+            'online_user_id' => ['nullable', 'integer'],
+        ], [], [
+            'online_meeting_title' => 'judul meeting',
+            'online_platform' => 'platform',
+            'online_date' => 'tanggal',
+            'online_start_time' => 'waktu mulai',
+            'online_end_time' => 'waktu selesai',
+        ]);
 
-        $meta = $this->parseSpecialNotes((string)$row->special_notes);
-
-        $this->editingId              = $row->getKey();
-        $this->form['meeting_title']  = $row->meeting_title;
-        $this->form['location']       = $this->roomLabelFromId($row->room_id);
-        $this->form['department_id']  = (int)$row->department_id;
-        $this->form['date']           = $this->fmtDate($row->date);
-        $this->form['time']           = $this->fmtTime($row->start_time);
-        $this->form['time_end']       = $this->fmtTime($row->end_time);
-        $this->form['notes']          = $meta['notes'] ?? null;
-        $this->form['requirements']   = $meta['requirement_ids'] ?? [];
-
-        $this->showModal = true;
-    }
-
-    public function closeEdit(): void
-    {
-        $this->showModal = false;
-        $this->editingId = null;
-    }
-
-    public function destroy(int $id): void
-    {
-        BookingRoom::whereKey($id)->delete();
-        $this->reloadDone();
-        $this->dispatch('toast', type:'success', title:'Dihapus', message:'Meeting dihapus.', duration:2500);
-    }
-
-    private function reloadDone(): void
-    {
         $cid = Auth::user()?->company_id;
-        $now = now(config('app.timezone'));
+        $uid = Auth::user()?->user_id ?? Auth::id();
 
-        // Auto-progress: approved & ended -> done
-        BookingRoom::company($cid)
-            ->where('status', BookingRoom::ST_APPROVED)
-            ->where('end_time', '<', $now)
-            ->update(['status' => BookingRoom::ST_DONE]);
+        try {
+            $startAt = Carbon::createFromFormat('Y-m-d H:i', "{$data['online_date']} {$data['online_start_time']}", $this->tz)
+                ->format('Y-m-d H:i:s');
+            $endAt = Carbon::createFromFormat('Y-m-d H:i', "{$data['online_date']} {$data['online_end_time']}", $this->tz)
+                ->format('Y-m-d H:i:s');
+        } catch (\Throwable $e) {
+            session()->flash('toast', ['type' => 'error', 'title' => 'Format waktu tidak valid', 'message' => 'Periksa tanggal/jam.']);
+            $this->js('window.location.reload()');
+            return;
+        }
 
-        $items = BookingRoom::company($cid)
-            ->where('status', BookingRoom::ST_DONE)
-            ->orderByDesc('date')->orderByDesc('end_time')
-            ->get();
+        if ($endAt <= $startAt) {
+            session()->flash('toast', ['type' => 'error', 'title' => 'Waktu salah', 'message' => 'Jam selesai harus setelah jam mulai.']);
+            $this->js('window.location.reload()');
+            return;
+        }
 
-        $this->done = [];
-        foreach ($items as $r) {
-            $meta = $this->parseSpecialNotes((string)($r->special_notes ?? ''));
-            $this->done[] = [
-                'id'            => $r->getKey(),
-                'meeting_title' => $r->meeting_title,
-                'location'      => $this->roomLabelFromId($r->room_id),
-                'date'          => $this->fmtDate($r->date),
-                'time'          => $this->fmtTime($r->start_time),
-                'time_end'      => $this->fmtTime($r->end_time),
-                'participant'   => (int)$r->number_of_attendees,
-                'requirements'  => $meta['requirement_ids'] ?? [],
-                'notes'         => $meta['notes'] ?? null,
-            ];
+        DB::table('booking_rooms')->insert([
+            'company_id' => $cid,
+            'user_id' => $uid,
+            'department_id' => $this->online_department_id,
+            'meeting_title' => $data['online_meeting_title'],
+            'booking_type' => 'online_meeting',
+            'status' => self::INITIAL_STATUS,
+            'is_approve' => 0,
+            'date' => $data['online_date'],
+            'start_time' => $startAt,
+            'end_time' => $endAt,
+            'online_provider' => $data['online_platform'],
+            'online_meeting_url' => null,
+            'online_meeting_code' => null,
+            'online_meeting_password' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->resetOnlineForm();
+
+        session()->flash('toast', [
+            'type' => 'success',
+            'title' => 'Sukses',
+            'message' => 'Online meeting disimpan. Halaman diperbarui.',
+        ]);
+
+        $this->js('window.location.reload()');
+    }
+
+    public function updated($name): void
+    {
+        if (in_array($name, ['form.room_id', 'form.date', 'form.time', 'form.time_end'], true)) {
+            try {
+                if ($this->form['room_id'] && $this->form['date'] && $this->form['time'] && $this->form['time_end']) {
+                    $startAt = Carbon::createFromFormat('Y-m-d H:i', "{$this->form['date']} {$this->form['time']}", $this->tz)->format('Y-m-d H:i:s');
+                    $endAt = Carbon::createFromFormat('Y-m-d H:i', "{$this->form['date']} {$this->form['time_end']}", $this->tz)->format('Y-m-d H:i:s');
+
+                    if ($endAt > $startAt && $this->hasRoomOverlap((int) $this->form['room_id'], (string) $this->form['date'], $startAt, $endAt, $this->editingId)) {
+                        $this->dispatch('toast', type: 'warning', title: 'Perhatian', message: 'Slot ini tampak bentrok. Cek kalender dulu ya.');
+                    }
+                }
+            } catch (\Throwable $e) {
+            }
         }
     }
 
-    // ===== helpers =====
-    private function roomLabelFromId(?int $id): ?string
+    protected function pickColumn(string $table, array $candidates, string $fallback): string
     {
-        $flip = array_flip(self::ROOMS);
-        return $id ? ($flip[$id] ?? null) : null;
+        foreach ($candidates as $col)
+            if (Schema::hasColumn($table, $col))
+                return $col;
+        return $fallback;
     }
-    private function fmtDate($v): ?string
+
+    protected function detectGoogleConnected(): bool
     {
-        if (!$v) return null;
-        try { return Carbon::parse($v)->format('Y-m-d'); } catch (\Throwable) { return is_string($v) ? substr($v,0,10) : null; }
-    }
-    private function fmtTime($v): ?string
-    {
-        if (!$v) return null;
-        try { return Carbon::parse($v)->format('H:i'); } catch (\Throwable) {
-            return (is_string($v) && preg_match('/^\d{2}:\d{2}/', $v)) ? substr($v,0,5) : null;
+        try {
+            if (App::bound('App\Services\GoogleMeetService')) {
+                $svc = App::make('App\Services\GoogleMeetService');
+                if (method_exists($svc, 'connected'))
+                    return (bool) $svc->connected();
+                if (method_exists($svc, 'isConnected'))
+                    return (bool) $svc->isConnected();
+            }
+        } catch (\Throwable $e) {
         }
+        return false;
     }
+
     private function composeSpecialNotes(array $ids, string $notes): string
     {
-        $clean = array_values(array_unique(array_map('intval', array_filter($ids, fn($v)=>$v!==null))));
-        $tag = $clean ? '[REQID='.implode(',',$clean).']' : '';
-        return trim($tag."\n".trim($notes));
+        $cleanIds = array_values(array_unique(array_map('intval', array_filter($ids, fn($v) => $v !== null))));
+        $tag = $cleanIds ? '[REQID=' . implode(',', $cleanIds) . ']' : '';
+        return trim($tag . "\n" . trim($notes));
     }
-    private function parseSpecialNotes(string $raw): array
+
+    private function findOtherRequirementId(): ?int
     {
-        $notes = $raw; $ids=[];
-        if (preg_match('/\[REQID=([\d,\s]+)\]/i', $notes, $m)) {
-            $ids = array_values(array_filter(array_map('intval', explode(',', $m[1]))));
-            $notes = str_replace($m[0], '', $notes);
-        }
-        return ['requirement_ids'=>$ids, 'notes'=>ltrim($notes)];
+        $id = Requirement::whereRaw('LOWER(name)=?', ['other'])->value('requirement_id');
+        return $id ? (int) $id : null;
     }
+
     private function validateNotesIfOther(): void
     {
         if ($this->otherRequirementId && in_array($this->otherRequirementId, $this->form['requirements'] ?? [], true)) {
             $this->validate(['form.notes' => 'required|string|min:2|max:1000']);
         }
     }
-    private function findOtherRequirementId(): ?int
+
+    private function resetOfflineForm(): void
     {
-        $id = Requirement::whereRaw('LOWER(name)=?',['other'])->value('requirement_id');
-        return $id ? (int)$id : null;
+        $this->editingId = null;
+        $this->form = [
+            'meeting_title' => null,
+            'room_id' => null,
+            'department_id' => null,
+            'date' => null,
+            'time' => null,
+            'time_end' => null,
+            'participant' => null,
+            'notes' => null,
+            'requirements' => [],
+        ];
+        $this->resetValidation();
     }
 
-    public function tick(): void
+    private function resetOnlineForm(): void
     {
-        try { $this->reloadDone(); } catch (\Throwable $e) {
-            \Log::error('[MeetingSchedule tick] '.$e->getMessage());
-        }
+        $this->online_meeting_title = '';
+        $this->online_platform = 'google_meet';
+        $this->online_date = null;
+        $this->online_start_time = null;
+        $this->online_end_time = null;
+        $this->online_department_id = null;
+        $this->online_user_id = null;
+        $this->usersByDept = [];
+        $this->resetValidation();
     }
 
     public function render()
     {
-        return view('livewire.pages.receptionist.meetingschedule', [
-            'done'               => $this->done,
-            'departments'        => $this->departments,
-            'requirementOptions' => $this->requirementOptions,
-            'otherId'            => $this->otherRequirementId,
-            'roomOptions'        => array_keys(self::ROOMS),
-        ]);
-    }
+        $filter = fn(array $items, string $query) =>
+            array_values(array_filter(
+                $items,
+                fn($d) =>
+                $query === '' || str_contains(strtolower($d['name']), strtolower($query))
+            ));
 
-    private function resetForm(): void
-    {
-        $this->reset(['editingId','showModal']);
-        $this->form = [
-            'meeting_title'=>null,'location'=>null,'department_id'=>null,'date'=>null,'time'=>null,'time_end'=>null,
-            'participant'=>null,'notes'=>null,'requirements'=>[],
-        ];
-        $this->resetValidation();
+        $departmentsOffline = $filter($this->departments, $this->deptQueryOffline);
+        $departmentsOnline = $filter($this->departments, $this->deptQueryOnline);
+
+        return view('livewire.pages.receptionist.meetingschedule', [
+            'departments' => $this->departments,
+            'departmentsOffline' => $departmentsOffline,
+            'departmentsOnline' => $departmentsOnline,
+            'requirementOptions' => $this->requirementOptions,
+            'rooms' => $this->rooms,
+            'usersByDept' => $this->usersByDept,
+            'googleConnected' => $this->googleConnected,
+            'editingId' => $this->editingId,
+            'form' => $this->form,
+            'online_platform' => $this->online_platform,
+        ]);
     }
 }

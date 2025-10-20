@@ -17,7 +17,7 @@ class RoomApproval extends Component
     public array $ongoing = [];
 
     public ?int $rejectId = null;
-    public string $reject_reason = ''; // kept for UI only; not saved (no column)
+    public string $reject_reason = ''; // UI only
 
     public function mount(): void
     {
@@ -29,6 +29,7 @@ class RoomApproval extends Component
         $row = BookingRoom::company(Auth::user()?->company_id)->find($id);
         if (!$row) return;
 
+        // processed already?
         if ($row->status !== BookingRoom::ST_PENDING) {
             $this->dispatch('toast', type: 'info', message: 'Booking sudah diproses.');
             $this->reloadBuckets();
@@ -36,7 +37,7 @@ class RoomApproval extends Component
         }
 
         $row->update([
-            'status'      => BookingRoom::ST_APPROVED,
+            'status'      => BookingRoom::ST_APPROVED, // string 'approved'
             'is_approve'  => true,
             'approved_by' => Auth::user()?->user_id ?? Auth::id(),
         ]);
@@ -58,7 +59,7 @@ class RoomApproval extends Component
         $row = BookingRoom::company(Auth::user()?->company_id)->find($this->rejectId);
         if ($row && $row->status === BookingRoom::ST_PENDING) {
             $row->update([
-                'status'      => BookingRoom::ST_REJECTED,
+                'status'      => BookingRoom::ST_REJECTED, // string 'rejected'
                 'is_approve'  => false,
                 'approved_by' => Auth::user()?->user_id ?? Auth::id(),
             ]);
@@ -70,33 +71,31 @@ class RoomApproval extends Component
         $this->reloadBuckets();
     }
 
-    // Poller
+    /** Poller */
     public function tick(): void
     {
-        try {
-            $this->reloadBuckets();
-        } catch (\Throwable $e) {
-            \Log::error('[RoomApproval tick] '.$e->getMessage());
-        }
+        try { $this->reloadBuckets(); }
+        catch (\Throwable $e) { \Log::error('[RoomApproval tick] '.$e->getMessage()); }
     }
 
     private function reloadBuckets(): void
     {
         $cid = Auth::user()?->company_id;
-        $now = now(config('app.timezone'));
 
         // Pending list
-        $pend = BookingRoom::company($cid)
+        $pend = BookingRoom::with('room')
+            ->company($cid)
             ->pending()
-            ->orderBy('date')->orderBy('start_time')
+            ->orderBy('date')
+            ->orderBy('start_time')
             ->get();
 
-        // Ongoing = approved and within current time window
-        $ongo = BookingRoom::company($cid)
+        // Ongoing: all approved (you can filter by time here if you want)
+        $ongo = BookingRoom::with('room')
+            ->company($cid)
             ->approved()
-            ->where('start_time', '<=', $now)
-            ->where('end_time', '>=', $now)
-            ->orderBy('date')->orderBy('start_time')
+            ->orderBy('date')
+            ->orderBy('start_time')
             ->get();
 
         $this->pending = $pend->map(fn($r) => $this->uiMap($r))->all();
@@ -109,10 +108,10 @@ class RoomApproval extends Component
             'id'            => $r->getKey(),
             'meeting_title' => $r->meeting_title,
             'room'          => (string)($r->room?->room_number ?? $r->room_id),
-            'date'          => Carbon::parse($r->date)->format('d M Y'),
-            'time'          => Carbon::parse($r->start_time)->format('H:i'),
-            'time_end'      => Carbon::parse($r->end_time)->format('H:i'),
-            'participants'  => (int) $r->number_of_attendees,
+            'date'          => $r->date ? Carbon::parse($r->date)->format('d M Y') : '—',
+            'time'          => $r->start_time ? Carbon::parse($r->start_time)->format('H:i') : '—',
+            'time_end'      => $r->end_time ? Carbon::parse($r->end_time)->format('H:i') : '—',
+            'participants'  => (int) ($r->number_of_attendees ?? 0),
             'status'        => $r->status,
         ];
     }

@@ -35,14 +35,14 @@
             icon="calendar-days"
             href="{{ route('receptionist.schedule') }}"
             :current="request()->routeIs('receptionist.schedule')">
-            Booking Room
+            Booking/Meeting Room
         </flux:sidebar.item>
 
         <flux:sidebar.item
             icon="check-circle"
             href="{{ route('receptionist.bookings') }}"
             :current="request()->routeIs('receptionist.bookings')">
-            Online Meeting Approval
+            Booking/Meeting Approval
         </flux:sidebar.item>
 
         <flux:sidebar.item
