@@ -20,27 +20,31 @@ class Department extends Component
     public int $company_id;
     public string $company_name = '-';
 
-    // Table filter
+    // Filters
     public string $search = '';
+    public bool $showDeleted = false;
 
     // Create form
     public string $department_name = '';
 
-    // Edit modal state
+    // Edit modal
     public bool $modalEdit = false;
     public ?int $edit_id = null;
     public string $edit_department_name = '';
 
+    protected $paginationTheme = 'tailwind';
+
     protected function rules(): array
     {
-        // Unique per company
         return [
             'department_name' => [
                 'required',
                 'string',
                 'max:255',
                 Rule::unique('departments', 'department_name')
-                    ->where(fn($q) => $q->where('company_id', $this->company_id))
+                    ->where(fn($q) => $q
+                        ->where('company_id', $this->company_id)
+                        ->whereNull('deleted_at')),
             ],
         ];
     }
@@ -53,8 +57,10 @@ class Department extends Component
                 'string',
                 'max:255',
                 Rule::unique('departments', 'department_name')
-                    ->where(fn($q) => $q->where('company_id', $this->company_id))
-                    ->ignore($this->edit_id, 'department_id'),
+                    ->ignore($this->edit_id, 'department_id')
+                    ->where(fn($q) => $q
+                        ->where('company_id', $this->company_id)
+                        ->whereNull('deleted_at')),
             ],
         ];
     }
@@ -63,13 +69,16 @@ class Department extends Component
     {
         $user = Auth::user();
         $this->company_id = (int) $user->company_id;
-        // kalau ada relasi company() di User:
         $this->company_name = method_exists($user, 'company') && $user->company
             ? ($user->company->company_name ?? '-')
             : '-';
     }
 
-    public function updatingSearch(): void
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatedShowDeleted()
     {
         $this->resetPage();
     }
@@ -80,20 +89,21 @@ class Department extends Component
         $this->validate();
 
         DepartmentModel::create([
-            'company_id'      => $this->company_id, // ambil dari Auth
+            'company_id' => $this->company_id,
             'department_name' => $this->department_name,
         ]);
 
         $this->reset('department_name');
-        $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'department berhasil dibuat.', duration: 3000);
+        $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'Department berhasil dibuat.', duration: 3000);
         $this->resetPage();
     }
 
     /** Open Edit Modal */
-    public function openEdit(int $departmentId): void
+    public function openEdit(int $id): void
     {
-        $row = DepartmentModel::where('company_id', $this->company_id)
-            ->where('department_id', $departmentId)
+        $row = DepartmentModel::withTrashed()
+            ->where('company_id', $this->company_id)
+            ->where('department_id', $id)
             ->firstOrFail();
 
         $this->edit_id = $row->department_id;
@@ -113,7 +123,8 @@ class Department extends Component
     {
         $this->validate($this->editRules());
 
-        DepartmentModel::where('company_id', $this->company_id)
+        DepartmentModel::withTrashed()
+            ->where('company_id', $this->company_id)
             ->where('department_id', $this->edit_id)
             ->update([
                 'department_name' => $this->edit_department_name,
@@ -123,20 +134,42 @@ class Department extends Component
         $this->dispatch('toast', type: 'success', title: 'Diperbarui', message: 'Perubahan disimpan.', duration: 3000);
     }
 
-    /** Delete (confirm native browser) */
-    public function delete(int $departmentId): void
+    /** Soft Delete */
+    public function delete(int $id): void
     {
-        DepartmentModel::where('company_id', $this->company_id)
-            ->where('department_id', $departmentId)
-            ->delete();
+        $dept = DepartmentModel::where('company_id', $this->company_id)
+            ->where('department_id', $id)
+            ->firstOrFail();
 
-        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Department dihapus.', duration: 3000);
+        $dept->delete(); // soft delete
+
+        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Department dihapus (soft delete).', duration: 3000);
+        $this->resetPage();
+    }
+
+    /** Restore */
+    public function restore(int $id): void
+    {
+        $dept = DepartmentModel::onlyTrashed()
+            ->where('company_id', $this->company_id)
+            ->where('department_id', $id)
+            ->firstOrFail();
+
+        $dept->restore();
+        $this->dispatch('toast', type: 'success', title: 'Dipulihkan', message: 'Department berhasil direstore.', duration: 3000);
         $this->resetPage();
     }
 
     public function render()
     {
-        $rows = DepartmentModel::where('company_id', $this->company_id)
+        $query = DepartmentModel::query()
+            ->where('company_id', $this->company_id);
+
+        if ($this->showDeleted) {
+            $query->onlyTrashed();
+        }
+
+        $rows = $query
             ->when(
                 $this->search !== '',
                 fn($q) =>

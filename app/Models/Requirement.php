@@ -4,16 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Requirement extends Model
 {
+    use SoftDeletes;
     protected $table = 'requirements';
     protected $primaryKey = 'requirement_id';
     public $incrementing = true;
     protected $keyType = 'int';
     public $timestamps = true;
 
-    protected $fillable = ['name'];
+    protected $fillable = [
+        'name',
+        'company_id',
+    ];
 
     public static function upsertByName(array $names): array
     {
@@ -32,7 +36,7 @@ class Requirement extends Model
         }
         return self::whereIn('name', $names)->pluck('requirement_id')->all();
     }
-    
+
     public function bookingRooms()
     {
         return $this->belongsToMany(
@@ -41,6 +45,11 @@ class Requirement extends Model
             'requirement_id',
             'bookingroom_id'
         )->withTimestamps();
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'company_id', 'company_id');
     }
 
 }

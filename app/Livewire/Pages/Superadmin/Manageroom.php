@@ -104,12 +104,17 @@ class Manageroom extends Component
         session()->flash('success', 'Room berhasil diupdate.');
     }
 
+    // Soft Delete
     public function roomDelete(int $id): void
     {
-        Room::where('company_id', $this->companyId)->findOrFail($id)->delete();
-        if ($this->room_edit_id === $id) $this->roomCloseEdit();
+        $room = Room::where('company_id', $this->companyId)->findOrFail($id);
+        $room->delete(); // soft delete only
 
-        session()->flash('success', 'Room berhasil dihapus.');
+        if ($this->room_edit_id === $id) {
+            $this->roomCloseEdit();
+        }
+
+        session()->flash('success', 'Room berhasil dipindahkan ke arsip (soft deleted).');
         $this->resetPage(pageName: 'roomsPage');
     }
 

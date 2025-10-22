@@ -83,4 +83,11 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Role::class, 'role_id', 'role_id');
     }
+
+    // app/Models/User.php
+    public function commentReads()
+    {
+        return $this->hasMany(TicketCommentRead::class, 'user_id', 'user_id');
+    }
+
 }

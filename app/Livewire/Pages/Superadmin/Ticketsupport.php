@@ -19,15 +19,16 @@ class Ticketsupport extends Component
     public $departmentFilter = '';
     public $priorityFilter = '';
     public $perPage = 10;
+    public bool $showDeleted = false;
 
-    // modal / edit props
+    // Modal / edit props
     public $modal = false;
     public $editingTicketId = null;
     public $subject, $description, $priority, $department_id, $status;
 
     public $deptLookup = [];
 
-    protected $queryString = ['search', 'departmentFilter', 'priorityFilter', 'perPage'];
+    protected $queryString = ['search', 'departmentFilter', 'priorityFilter', 'perPage', 'showDeleted'];
 
     protected $rules = [
         'subject' => 'required|string|max:255',
@@ -39,29 +40,36 @@ class Ticketsupport extends Component
 
     public function mount()
     {
-        // IMPORTANT: your departments table uses department_id and department_name
+        // departments table uses department_id and department_name
         $this->deptLookup = Department::pluck('department_name', 'department_id')->toArray();
     }
 
-    // reset pagination when filters change
+    // Reset pagination when filters change
     public function updatingSearch() { $this->resetPage(); }
     public function updatingDepartmentFilter() { $this->resetPage(); }
     public function updatingPriorityFilter() { $this->resetPage(); }
     public function updatingPerPage() { $this->resetPage(); }
+    public function updatedShowDeleted() { $this->resetPage(); }
 
     public function render()
     {
-        $query = Ticket::with(['user','attachments','department'])->orderBy('created_at', 'desc');
+        $query = Ticket::with(['user', 'attachments', 'department'])
+            ->orderBy('created_at', 'desc');
+
+        // If showDeleted = true, include soft-deleted tickets
+        if ($this->showDeleted) {
+            $query->onlyTrashed();
+        }
 
         if ($this->search) {
             $s = '%' . $this->search . '%';
-            $query->where(function($q) use ($s) {
+            $query->where(function ($q) use ($s) {
                 $q->where('subject', 'like', $s)
-                  ->orWhere('description', 'like', $s)
-                  ->orWhereHas('user', function($qu) use ($s) {
-                      $qu->where('full_name', 'like', $s)
-                         ->orWhere('email', 'like', $s);
-                  });
+                    ->orWhere('description', 'like', $s)
+                    ->orWhereHas('user', function ($qu) use ($s) {
+                        $qu->where('full_name', 'like', $s)
+                            ->orWhere('email', 'like', $s);
+                    });
             });
         }
 
@@ -81,10 +89,11 @@ class Ticketsupport extends Component
         ]);
     }
 
-    // open modal to edit ticket
+    // Open modal to edit ticket
     public function openEdit($id)
     {
-        $t = Ticket::findOrFail($id);
+        $t = Ticket::withTrashed()->findOrFail($id);
+
         $this->editingTicketId = $t->ticket_id;
         $this->subject = $t->subject;
         $this->description = $t->description;
@@ -104,7 +113,7 @@ class Ticketsupport extends Component
     {
         $this->validate();
 
-        $t = Ticket::findOrFail($this->editingTicketId);
+        $t = Ticket::withTrashed()->findOrFail($this->editingTicketId);
         $t->update([
             'subject' => $this->subject,
             'description' => $this->description,
@@ -117,10 +126,21 @@ class Ticketsupport extends Component
         $this->closeModal();
     }
 
+    // Soft delete ticket
     public function delete($id)
     {
-        Ticket::findOrFail($id)->delete();
-        session()->flash('success', 'Ticket deleted.');
+        $t = Ticket::findOrFail($id);
+        $t->delete(); // soft delete
+        session()->flash('success', 'Ticket moved to recycle bin (soft deleted).');
+        $this->resetPage();
+    }
+
+    // Restore ticket
+    public function restore($id)
+    {
+        $t = Ticket::onlyTrashed()->findOrFail($id);
+        $t->restore();
+        session()->flash('success', 'Ticket restored successfully.');
         $this->resetPage();
     }
 }

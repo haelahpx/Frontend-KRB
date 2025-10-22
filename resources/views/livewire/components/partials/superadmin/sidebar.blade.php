@@ -21,6 +21,11 @@
             Home
         </flux:sidebar.item>
 
+        <flux:sidebar.item icon="building-office" href="{{ route('superadmin.department') }}"
+            :current="request()->routeIs('superadmin.department')">
+            Department Management
+        </flux:sidebar.item>
+
         <flux:sidebar.item icon="inbox" href="{{ route('superadmin.announcement') }}"
             :current="request()->routeIs('superadmin.announcement')">
             Announcement
@@ -36,36 +41,47 @@
             User Management
         </flux:sidebar.item>
 
-        
-        <flux:sidebar.group expandable heading="Booking Room" class="grid">
-            <flux:sidebar.item icon="calendar" href="{{ route('superadmin.bookingroom') }}"
+        <flux:sidebar.item icon="chart-bar" href="{{ route('superadmin.reports') }}"
+            :current="request()->routeIs('superadmin.reports')">
+            Reports
+        </flux:sidebar.item>
+
+        <flux:sidebar.group expandable heading="Vehicle Management" class="grid">
+            <flux:sidebar.item icon="check-badge    " href="{{ route('superadmin.vehicle') }}"
+                :current="request()->routeIs('superadmin.vehicle')">
+                Vehicle
+            </flux:sidebar.item>
+            <flux:sidebar.item icon="users" href="{{ route('superadmin.bookingvehicle') }}"
+                :current="request()->routeIs('superadmin.bookingvehicle')">
+                Booking Vehicle
+            </flux:sidebar.item>
+        </flux:sidebar.group>
+
+        <flux:sidebar.group expandable heading="Room Management" class="grid">
+            <flux:sidebar.item icon="users" href="{{ route('superadmin.bookingroom') }}"
                 :current="request()->routeIs('superadmin.bookingroom')">
-                Booking Room
+                Booking Management
+            </flux:sidebar.item>
+            <flux:sidebar.item icon="calendar" href="{{ route('superadmin.storage') }}"
+                :current="request()->routeIs('superadmin.storage')">
+                Storage
             </flux:sidebar.item>
             <flux:sidebar.item icon="building-office" href="{{ route('superadmin.manageroom') }}"
                 :current="request()->routeIs('superadmin.manageroom')">
                 Manage Room
+            </flux:sidebar.item>
+        </flux:sidebar.group>
+
+        <flux:sidebar.group expandable heading="Ticketing System" class="grid">
+            <flux:sidebar.item icon="calendar" href="{{ route('superadmin.ticketsupport') }}"
+                :current="request()->routeIs('superadmin.ticketsupport')">
+                Ticket list
             </flux:sidebar.item>
             <flux:sidebar.item icon="check-badge" href="{{ route('superadmin.managerequirements') }}"
                 :current="request()->routeIs('superadmin.managerequirements')">
                 Manage Requirements
             </flux:sidebar.item>
         </flux:sidebar.group>
-
-        <flux:sidebar.group expandable heading="Booking Room" class="grid">
-            <flux:sidebar.item icon="calendar" href="{{ route('superadmin.ticketsupport') }}"
-                :current="request()->routeIs('superadmin.ticketsupport')">
-                Ticket list
-            </flux:sidebar.item>
-        </flux:sidebar.group>
-
-
-
-        <flux:sidebar.item icon="building-office" href="{{ route('superadmin.department') }}"
-            :current="request()->routeIs('superadmin.department')">
-            Department Management
-        </flux:sidebar.item>
-
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />

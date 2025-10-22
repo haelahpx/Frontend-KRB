@@ -1,183 +1,133 @@
-{{-- resources/views/livewire/pages/admin/dashboard.blade.php --}}
-<div class="bg-gray-50" wire:poll.4000ms="tick">
-    <main class="px-4 sm:px-6 py-6">
-        <div class="space-y-8">
+<div class="min-h-screen bg-gray-50" wire:poll.10000ms="tick">
+    <main class="px-4 sm:px-6 py-6 space-y-8">
 
-            {{-- HERO --}}
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
-                <div class="pointer-events-none absolute inset-0 opacity-10">
-                    <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
-                    <div class="absolute bottom-0 -left-4 w-16 h-16 bg-white rounded-full blur-lg"></div>
+        {{-- HERO --}}
+        <div class="rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white p-6 sm:p-8 shadow-2xl">
+            <h2 class="text-lg sm:text-xl font-semibold">Welcome, {{ $admin_name }}!</h2>
+            <p class="text-sm text-white/80">Here’s an overview of this year’s activity.</p>
+        </div>
+
+        {{-- STATS (No Company) --}}
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach($stats as $s)
+                <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-5 text-center">
+                    <p class="text-gray-500 text-sm">{{ $s['label'] }}</p>
+                    <h3 class="text-2xl font-semibold text-gray-900 mt-2">{{ number_format($s['value']) }}</h3>
                 </div>
-                <div class="relative z-10 p-6 sm:p-8">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M12 6V4m0 16v-2m0-10v2m0 6v2M6 12H4m16 0h-2m-10 0h2m6 0h2M9 17l-2 2M15 7l2-2M7 7l-2-2M17 17l2 2" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="text-lg sm:text-xl font-semibold">Welcome, {{ $admin_name }}!</h2>
-                            <p class="text-sm text-white/80">Here is the summary of tickets, comments, bookings, and users.</p>
-                        </div>
-                    </div>
+            @endforeach
+        </section>
+
+        {{-- MONTHLY LINE CHART --}}
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Monthly Statistics</h3>
+            <div wire:ignore>
+                <canvas id="bookingChart" class="w-full" style="max-height:380px"></canvas>
+            </div>
+        </section>
+
+        {{-- ===== TICKETING OVERVIEW (3 CHARTS) ===== --}}
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {{-- Priority Distribution (Bar) --}}
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-base font-semibold text-gray-900">Ticket Priority Distribution</h3>
+                    <span class="text-xs text-gray-500">Low=1, Med=2, High=3</span>
+                </div>
+                <div wire:ignore>
+                    <canvas id="ticketPriorityBar" style="max-height:320px"></canvas>
                 </div>
             </div>
 
-            {{-- STATS CARDS (4 kolom, mirip contoh) --}}
-            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                @foreach($stats as $s)
-                    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                        <p class="text-sm text-gray-500">{{ $s['label'] }}</p>
-                        <div class="mt-2 flex items-end gap-2">
-                            <h3 class="text-2xl font-semibold text-gray-900">{{ $s['value'] }}</h3>
-                            @if(!empty($s['suffix']))
-                                <span class="text-sm text-gray-500">{{ $s['suffix'] }}</span>
-                            @endif
-                        </div>
-                    </div>
-                @endforeach
-            </section>
-
-            {{-- WIDGETS BARIS 1: Recent Tickets + Notifications (Comments) --}}
-            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {{-- Recent Tickets (Ticketing Support) --}}
-                <div class="lg:col-span-2 rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div class="px-5 py-4 border-b border-gray-200">
-                        <h3 class="text-base font-semibold text-gray-900">Recent Tickets</h3>
-                        <p class="text-sm text-gray-500">Latest 6 tickets</p>
-                    </div>
-                    <ul class="divide-y divide-gray-200">
-                        @forelse($recentTickets as $t)
-                            <li class="px-5 py-4">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div class="min-w-0">
-                                        <p class="font-medium text-gray-900 truncate">
-                                            #{{ $t['id'] }} — {{ $t['subject'] }}
-                                        </p>
-                                        <p class="mt-1 text-xs text-gray-600">
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100">
-                                                <span class="text-gray-500">Pri:</span><span class="font-medium capitalize">{{ $t['priority'] }}</span>
-                                            </span>
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 ml-2">
-                                                <span class="text-gray-500">Status:</span><span class="font-medium capitalize">{{ str_replace('_',' ',$t['status']) }}</span>
-                                            </span>
-                                        </p>
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            {{ $t['user'] }} • {{ $t['dept'] }} • {{ $t['when'] }}
-                                        </p>
-                                    </div>
-                                    <div class="shrink-0">
-                                        <a href="{{ $t['url'] }}"
-                                           class="px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none">
-                                            Open
-                                        </a>
-                                    </div>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="px-5 py-8 text-center text-sm text-gray-500">No tickets found.</li>
-                        @endforelse
-                    </ul>
+            {{-- Status Distribution (Doughnut) --}}
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+                <h3 class="text-base font-semibold text-gray-900 mb-4">Ticket Status Distribution</h3>
+                <div wire:ignore>
+                    <canvas id="ticketStatusPie" style="max-height:320px"></canvas>
                 </div>
+            </div>
 
-                {{-- Notifications (Comments) --}}
-                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-                        <div>
-                            <h3 class="text-base font-semibold text-gray-900">Notifications</h3>
-                            <p class="text-sm text-gray-500">New ticket comments</p>
-                        </div>
-                        <button wire:click="markAllRead"
-                                class="px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none">
-                            Mark all read
-                        </button>
-                    </div>
-                    <ul class="divide-y divide-gray-200">
-                        @forelse($unreadComments as $n)
-                            <li class="px-5 py-4">
-                                <div class="text-[12px] text-gray-500 mb-1">{{ $n['when'] }}</div>
-                                <div class="text-sm">
-                                    <span class="font-semibold">{{ $n['by'] }}</span>
-                                    commented on
-                                    <span class="font-medium">#{{ $n['ticket_id'] }} — {{ $n['ticket_subject'] }}</span>
-                                </div>
-                                <p class="text-[12px] text-gray-600 mt-1">{{ $n['text'] }}</p>
-                                <div class="mt-2 flex items-center gap-2">
-                                    <a href="{{ $n['url'] }}"
-                                       class="px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none">
-                                        Open
-                                    </a>
-                                    <button wire:click="markReadUpTo({{ $n['id'] }})"
-                                            class="px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none">
-                                        Mark read
-                                    </button>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="px-5 py-8 text-center text-sm text-gray-500">No new comments.</li>
-                        @endforelse
-                    </ul>
+            {{-- Monthly Priority Average (Line) --}}
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+                <h3 class="text-base font-semibold text-gray-900 mb-4">Monthly Priority Average (This Year)</h3>
+                <div wire:ignore>
+                    <canvas id="ticketPriorityAvg" style="max-height:320px"></canvas>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            {{-- WIDGETS BARIS 2: Booking Room + Recent Users (User Management) --}}
-            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {{-- Recent Bookings --}}
-                <div class="lg:col-span-2 rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div class="px-5 py-4 border-b border-gray-200">
-                        <h3 class="text-base font-semibold text-gray-900">Recent Room Bookings</h3>
-                        <p class="text-sm text-gray-500">Latest 5 bookings</p>
-                    </div>
-                    <ul class="divide-y divide-gray-200">
-                        @forelse($recentBookings as $b)
-                            <li class="px-5 py-4">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div class="min-w-0">
-                                        <p class="font-medium text-gray-900 truncate">
-                                            {{ $b['meeting_title'] }} — {{ $b['room_label'] }}
-                                        </p>
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            {{ $b['by'] }} • {{ $b['when'] }}
-                                        </p>
-                                    </div>
-                                    <div class="shrink-0">
-                                        <a href="{{ $b['url'] }}"
-                                           class="px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none">
-                                            Open
-                                        </a>
-                                    </div>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="px-5 py-8 text-center text-sm text-gray-500">No recent bookings.</li>
-                        @endforelse
-                    </ul>
-                </div>
-
-                {{-- Recent Users --}}
-                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div class="px-5 py-4 border-b border-gray-200">
-                        <h3 class="text-base font-semibold text-gray-900">Recent User Signups</h3>
-                        <p class="text-sm text-gray-500">Latest 5 users</p>
-                    </div>
-                    <ul class="divide-y divide-gray-200">
-                        @forelse($recentUsers as $u)
-                            <li class="px-5 py-4 flex items-center justify-between">
-                                <div class="min-w-0">
-                                    <p class="font-medium text-gray-900 truncate">{{ $u['full_name'] }}</p>
-                                    <p class="text-sm text-gray-500 truncate">{{ $u['company_name'] ?? 'No Company' }}</p>
-                                </div>
-                                <span class="text-sm text-gray-500">{{ $u['when'] }}</span>
-                            </li>
-                        @empty
-                            <li class="px-5 py-8 text-center text-sm text-gray-500">No new users found.</li>
-                        @endforelse
-                    </ul>
-                </div>
-            </section>
-
-        </div>
     </main>
+
+    {{-- Chart.js --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script>
+        function buildMonthlyChart() {
+            const ctx = document.getElementById('bookingChart')?.getContext('2d');
+            if (!ctx) return;
+            if (window.__dashboardChart) window.__dashboardChart.destroy();
+
+            const labels = @json($chartData['labels']);
+            const room = @json($chartData['room']);
+            const vehicle = @json($chartData['vehicle']);
+            const ticket = @json($chartData['ticket']);
+
+            window.__dashboardChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Room Bookings', data: room, borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,.08)', tension: 0.35, pointRadius: 3 },
+                        { label: 'Vehicle Bookings', data: vehicle, borderColor: '#059669', backgroundColor: 'rgba(5,150,105,.08)', tension: 0.35, pointRadius: 3 },
+                        { label: 'Support Tickets', data: ticket, borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,.08)', tension: 0.35, pointRadius: 3 },
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function buildTicketCharts() {
+            if (window.__ticketPriorityBar) window.__ticketPriorityBar.destroy();
+            if (window.__ticketStatusPie) window.__ticketStatusPie.destroy();
+            if (window.__ticketPriorityAvg) window.__ticketPriorityAvg.destroy();
+
+            // Priority Bar
+            const bar = document.getElementById('ticketPriorityBar')?.getContext('2d');
+            if (bar) {
+                const data = @json(array_values($ticketCharts['priorityCounts']));
+                window.__ticketPriorityBar = new Chart(bar, {
+                    type: 'bar',
+                    data: { labels: ['Low', 'Medium', 'High'], datasets: [{ data, backgroundColor: ['#93c5fd', '#fbbf24', '#f87171'] }] },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+            }
+
+            // Status Pie
+            const pie = document.getElementById('ticketStatusPie')?.getContext('2d');
+            if (pie) {
+                const map = @json($ticketCharts['statusCounts']);
+                const data = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'].map(k => map[k] || 0);
+                window.__ticketStatusPie = new Chart(pie, {
+                    type: 'doughnut',
+                    data: { labels: ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'], datasets: [{ data, backgroundColor: ['#60a5fa', '#f59e0b', '#10b981', '#9ca3af'] }] },
+                    options: { plugins: { legend: { position: 'bottom' } }, cutout: '55%' }
+                });
+            }
+
+            // Avg Priority Line
+            const avg = document.getElementById('ticketPriorityAvg')?.getContext('2d');
+            if (avg) {
+                const data = @json($ticketCharts['avgPriority']);
+                const labels = @json($ticketCharts['labels']);
+                window.__ticketPriorityAvg = new Chart(avg, {
+                    type: 'line',
+                    data: { labels, datasets: [{ label: 'Avg Priority', data, borderColor: '#312e81', backgroundColor: 'rgba(49,46,129,.08)', tension: .35, pointRadius: 3 }] },
+                    options: { responsive: true, scales: { y: { min: 0, max: 3, ticks: { stepSize: 1, callback: (v) => ({ 0: '', 1: 'Low', 2: 'Med', 3: 'High' }[v] || v) } } } }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { buildMonthlyChart(); buildTicketCharts(); });
+        document.addEventListener('livewire:load', () => { buildMonthlyChart(); buildTicketCharts(); });
+        document.addEventListener('livewire:navigated', () => { buildMonthlyChart(); buildTicketCharts(); });
+    </script>
 </div>

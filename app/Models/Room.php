@@ -1,16 +1,20 @@
 <?php
 
 namespace App\Models;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
 {
+
+    use SoftDeletes;
     protected $table = 'rooms';
     protected $primaryKey = 'room_id';
     public $incrementing = true;
     protected $keyType = 'int';
     public $timestamps = true;
+
+    protected $dates = ['deleted_at'];
 
     protected $fillable = ['company_id', 'room_number'];
 

@@ -3,9 +3,11 @@
 namespace App\Livewire\Pages\Superadmin;
 
 use App\Models\Announcement;
-use App\Models\Company;
-use App\Models\Department;
+use App\Models\BookingRoom;
+use App\Models\VehicleBooking;
+use App\Models\Ticket;
 use App\Models\User;
+use App\Models\Department;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -19,54 +21,88 @@ class Dashboard extends Component
 
     public function mount(): void
     {
-        // Get the admin's name once on load
-        $this->admin_name = Auth::user()->full_name ?? 'Admin';
+        $this->admin_name = Auth::user()->full_name ?? 'Superadmin User';
+    }
+
+    public function tick(): void
+    {
     }
 
     public function render()
     {
-        // STAT CARDS
+        // ===== BASIC STATS (without Company) =====
         $stats = [
-            [
-                'label' => 'Total Companies',
-                'value' => number_format(Company::count()),
-            ],
-            [
-                'label' => 'Total Users',
-                'value' => number_format(User::count()),
-            ],
-            [
-                'label' => 'Total Departments',
-                'value' => number_format(Department::count()),
-            ],
-            [
-                'label' => 'Announcements (This Month)',
-                'value' => number_format(Announcement::whereMonth('created_at', now()->month)->count()),
-            ],
+            ['label' => 'Total Users', 'value' => User::count()],
+            ['label' => 'Total Departments', 'value' => Department::count()],
+            ['label' => 'Total Announcements', 'value' => Announcement::count()],
         ];
 
-        // WIDGETS
-        $recentUsers = User::with('company')
-            ->latest()
-            ->take(5)
-            ->get();
+        // ===== MONTHLY COUNTS =====
+        $roomBookings = BookingRoom::selectRaw('MONTH(created_at) as m, COUNT(*) as c')
+            ->whereYear('created_at', now()->year)
+            ->groupBy('m')->pluck('c', 'm')->toArray();
 
-        $companiesByUserCount = Company::withCount('users')
-            ->orderByDesc('users_count')
-            ->take(5)
-            ->get();
+        $vehicleBookings = VehicleBooking::selectRaw('MONTH(created_at) as m, COUNT(*) as c')
+            ->whereYear('created_at', now()->year)
+            ->groupBy('m')->pluck('c', 'm')->toArray();
 
-        $recentAnnouncements = Announcement::with('company')
-            ->latest()
-            ->take(5)
-            ->get();
+        $tickets = Ticket::selectRaw('MONTH(created_at) as m, COUNT(*) as c')
+            ->whereYear('created_at', now()->year)
+            ->groupBy('m')->pluck('c', 'm')->toArray();
 
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        $chartData = [
+            'labels' => $months,
+            'room' => array_map(fn($i) => (int) ($roomBookings[$i] ?? 0), range(1, 12)),
+            'vehicle' => array_map(fn($i) => (int) ($vehicleBookings[$i] ?? 0), range(1, 12)),
+            'ticket' => array_map(fn($i) => (int) ($tickets[$i] ?? 0), range(1, 12)),
+        ];
+
+        // ===== TICKETING CHARTS =====
+        $priorityCountsRaw = Ticket::selectRaw('priority, COUNT(*) as c')
+            ->groupBy('priority')->pluck('c', 'priority')->toArray();
+
+        $priorityCounts = [
+            'low' => (int) ($priorityCountsRaw['low'] ?? 0),
+            'medium' => (int) ($priorityCountsRaw['medium'] ?? 0),
+            'high' => (int) ($priorityCountsRaw['high'] ?? 0),
+        ];
+
+        $statusCountsRaw = Ticket::selectRaw('status, COUNT(*) as c')
+            ->groupBy('status')->pluck('c', 'status')->toArray();
+
+        $statusCounts = [
+            'OPEN' => (int) ($statusCountsRaw['OPEN'] ?? 0),
+            'IN_PROGRESS' => (int) ($statusCountsRaw['IN_PROGRESS'] ?? 0),
+            'RESOLVED' => (int) ($statusCountsRaw['RESOLVED'] ?? 0),
+            'CLOSED' => (int) ($statusCountsRaw['CLOSED'] ?? 0),
+        ];
+
+        $avgPriorityRaw = Ticket::whereYear('created_at', now()->year)
+            ->selectRaw("
+                MONTH(created_at) as m,
+                AVG(
+                    CASE priority
+                        WHEN 'low' THEN 1
+                        WHEN 'medium' THEN 2
+                        WHEN 'high' THEN 3
+                    END
+                ) as avgp
+            ")
+            ->groupBy('m')->pluck('avgp', 'm')->toArray();
+
+        $ticketCharts = [
+            'labels' => $months,
+            'priorityCounts' => $priorityCounts,
+            'statusCounts' => $statusCounts,
+            'avgPriority' => array_map(fn($i) => round((float) ($avgPriorityRaw[$i] ?? 0), 2), range(1, 12)),
+        ];
 
         return view('livewire.pages.superadmin.dashboard', [
+            'admin_name' => $this->admin_name,
             'stats' => $stats,
-            'recentUsers' => $recentUsers,
-            'companiesByUserCount' => $companiesByUserCount,
-            'recentAnnouncements' => $recentAnnouncements,
+            'chartData' => $chartData,
+            'ticketCharts' => $ticketCharts,
         ]);
     }
 }

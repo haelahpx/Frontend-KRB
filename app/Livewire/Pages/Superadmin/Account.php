@@ -52,7 +52,7 @@ class Account extends Component
     /** @var \Illuminate\Support\Collection */
     public $departments;
 
-    // Role & Department “locked” mapping targets (public so Blade can read them)
+    // Role & Department mapping targets
     public ?int $roleReceptionistId = null;
     public ?int $roleSuperadminId  = null;
     public ?int $deptAdministrationId = null;
@@ -91,14 +91,8 @@ class Account extends Component
             ->value('department_id');
     }
 
-    public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
-    public function updatingRoleFilter(): void
-    {
-        $this->resetPage();
-    }
+    public function updatingSearch(): void { $this->resetPage(); }
+    public function updatingRoleFilter(): void { $this->resetPage(); }
 
     private function loadDepartments(): void
     {
@@ -114,7 +108,11 @@ class Account extends Component
     {
         return [
             'full_name'     => ['required', 'string', 'max:255'],
-            'email'         => ['required', 'email', 'unique:users,email'],
+            'email'         => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')->whereNull('deleted_at'), // abaikan yang sudah soft-deleted
+            ],
             'phone_number'  => ['nullable', 'string', 'max:30'],
             'password'      => ['required', 'string', 'min:6'],
             'role_id'       => ['required', 'integer', Rule::exists('roles', 'role_id')],
@@ -128,10 +126,17 @@ class Account extends Component
 
     protected function editRules(): array
     {
-        $ignore = $this->editingId ? ",{$this->editingId},user_id" : '';
+        $ignoreId = $this->editingId ?? null;
+
         return [
             'edit_full_name'     => ['required', 'string', 'max:255'],
-            'edit_email'         => ['required', 'email', "unique:users,email{$ignore}"],
+            'edit_email'         => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')
+                    ->ignore($ignoreId, 'user_id')
+                    ->whereNull('deleted_at'),
+            ],
             'edit_phone_number'  => ['nullable', 'string', 'max:30'],
             'edit_role_id'       => ['required', 'integer', Rule::exists('roles', 'role_id')],
             'edit_department_id' => [
@@ -143,7 +148,7 @@ class Account extends Component
         ];
     }
 
-    /* ======================== Role → Department Mapping ======================== */
+    /* ======================== Helpers ======================== */
 
     private function mapDeptForRole(?int $roleId): ?int
     {
@@ -158,29 +163,31 @@ class Account extends Component
         return null; // role lain tidak dipaksa
     }
 
-    // Reactive hooks (create form)
+    private function isSuperadminRole(?int $roleId): bool
+    {
+        return $roleId !== null && $this->roleSuperadminId !== null && (int)$roleId === (int)$this->roleSuperadminId;
+    }
+
+    /* ======================== Reactive hooks ======================== */
+
+    // Create form
     public function updatedRoleId($value): void
     {
         $mapped = $this->mapDeptForRole((int) $value);
-        if ($mapped) {
-            $this->department_id = $mapped;
-        }
+        if ($mapped) $this->department_id = $mapped;
     }
 
-    // Reactive hooks (edit form)
+    // Edit form
     public function updatedEditRoleId($value): void
     {
         $mapped = $this->mapDeptForRole((int) $value);
-        if ($mapped) {
-            $this->edit_department_id = $mapped;
-        }
+        if ($mapped) $this->edit_department_id = $mapped;
     }
 
-    /* ======================== Create (inline) ======================== */
+    /* ======================== Create ======================== */
 
     public function store(): void
     {
-        // Paksa mapping sebelum validasi
         if ($this->role_id) {
             $forced = $this->mapDeptForRole((int) $this->role_id);
             if ($forced) $this->department_id = $forced;
@@ -188,7 +195,7 @@ class Account extends Component
 
         $data = $this->validate($this->createRules());
 
-        // Jaga-jaga lagi
+        // jaga-jaga
         $forced = $this->mapDeptForRole((int) $data['role_id']);
         if ($forced) $data['department_id'] = $forced;
 
@@ -218,7 +225,7 @@ class Account extends Component
         $this->resetValidation();
     }
 
-    /* ======================== Edit (modal) ======================== */
+    /* ======================== Edit ======================== */
 
     public function openEdit(int $id): void
     {
@@ -228,6 +235,12 @@ class Account extends Component
         $u = User::where('company_id', $this->company_id)
             ->where('user_id', $id)
             ->firstOrFail();
+
+        // 🔒 Superadmin tidak bisa edit Superadmin lain
+        if ($this->isSuperadminRole($u->role_id) && $u->user_id !== Auth::id()) {
+            $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Tidak boleh mengedit Superadmin lain.', duration: 3000);
+            return;
+        }
 
         $this->editingId          = $u->user_id;
         $this->edit_full_name     = (string) $u->full_name;
@@ -259,6 +272,16 @@ class Account extends Component
     {
         if (!$this->editingId) return;
 
+        $u = User::where('company_id', $this->company_id)
+            ->where('user_id', $this->editingId)
+            ->firstOrFail();
+
+        // 🔒 Superadmin tidak bisa edit Superadmin lain (kecuali dirinya)
+        if ($this->isSuperadminRole($u->role_id) && $u->user_id !== Auth::id()) {
+            $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Tidak boleh mengedit Superadmin lain.', duration: 3000);
+            return;
+        }
+
         // Paksa mapping sebelum validasi
         if ($this->edit_role_id) {
             $forced = $this->mapDeptForRole((int) $this->edit_role_id);
@@ -267,11 +290,7 @@ class Account extends Component
 
         $data = $this->validate($this->editRules());
 
-        $u = User::where('company_id', $this->company_id)
-            ->where('user_id', $this->editingId)
-            ->firstOrFail();
-
-        // Jaga-jaga lagi
+        // jaga-jaga lagi
         $forced = $this->mapDeptForRole((int) $data['edit_role_id']);
         if ($forced) $data['edit_department_id'] = $forced;
 
@@ -292,19 +311,29 @@ class Account extends Component
         $this->dispatch('toast', type: 'success', title: 'Diupdate', message: 'User diupdate.', duration: 3000);
     }
 
-    /* ======================== Delete ======================== */
+    /* ======================== Delete (Soft Delete only) ======================== */
 
     public function delete(int $id): void
     {
-        User::where('company_id', $this->company_id)
+        $u = User::where('company_id', $this->company_id)
             ->where('user_id', $id)
-            ->delete();
+            ->firstOrFail();
+
+        // 🔒 Superadmin tidak bisa menghapus Superadmin lain (kecuali dirinya sendiri, kalau mau boleh — tapi di sini juga kita larang demi aman)
+        if ($this->isSuperadminRole($u->role_id)) {
+            // blokir semua penghapusan akun superadmin (termasuk diri sendiri) — kalau ingin izinkan hapus dirinya sendiri, ganti kondisi ke: $u->user_id !== Auth::id()
+            $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Tidak boleh menghapus akun Superadmin.', duration: 3000);
+            return;
+        }
+
+        // Soft delete (model User menggunakan SoftDeletes)
+        $u->delete();
 
         if ($this->editingId === $id) {
             $this->closeEdit();
         }
 
-        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'User dihapus.', duration: 3000);
+        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'User dihapus (soft delete).', duration: 3000);
     }
 
     /* ======================== Render ======================== */
@@ -313,6 +342,7 @@ class Account extends Component
     {
         $users = User::with(['role', 'department'])
             ->where('company_id', $this->company_id)
+            // default Eloquent: tidak menampilkan yang sudah soft-deleted
             ->when($this->search, function ($q) {
                 $s = trim($this->search);
                 $q->where(function ($qq) use ($s) {

@@ -27,21 +27,21 @@ class Bookingroom extends Component
     // UI state
     public string $search = '';
     public string $departmentFilter = '';
-    public int    $perPage = 10;
-    public string $sortBy  = 'start_time';
+    public int $perPage = 10;
+    public string $sortBy = 'start_time';
     public string $sortDir = 'desc';
 
     protected $queryString = [
-        'search'           => ['except' => ''],
+        'search' => ['except' => ''],
         'departmentFilter' => ['except' => ''],
-        'perPage'          => ['except' => 10],
-        'sortBy'           => ['except' => 'start_time'],
-        'sortDir'          => ['except' => 'desc'],
+        'perPage' => ['except' => 10],
+        'sortBy' => ['except' => 'start_time'],
+        'sortDir' => ['except' => 'desc'],
     ];
 
     // Modal & edit state (EDIT ONLY)
-    public bool  $modal = false;
-    public ?int  $editingId = null;
+    public bool $modal = false;
+    public ?int $editingId = null;
 
     // Form fields
     public $room_id;
@@ -66,14 +66,14 @@ class Bookingroom extends Component
     protected function rules(): array
     {
         return [
-            'room_id'              => ['required', 'integer', Rule::exists('rooms', 'room_id')],
-            'department_id'        => ['required', 'integer', Rule::exists('departments', 'department_id')],
-            'meeting_title'        => ['required', 'string', 'max:255'],
-            'date'                 => ['required', 'date'],
-            'number_of_attendees'  => ['required', 'integer', 'min:1'],
-            'start_time'           => ['required', 'date'],
-            'end_time'             => ['required', 'date', 'after:start_time'],
-            'special_notes'        => ['nullable', 'string'],
+            'room_id' => ['required', 'integer', Rule::exists('rooms', 'room_id')],
+            'department_id' => ['required', 'integer', Rule::exists('departments', 'department_id')],
+            'meeting_title' => ['required', 'string', 'max:255'],
+            'date' => ['required', 'date'],
+            'number_of_attendees' => ['required', 'integer', 'min:1'],
+            'start_time' => ['required', 'date'],
+            'end_time' => ['required', 'date', 'after:start_time'],
+            'special_notes' => ['nullable', 'string'],
             'selectedRequirements' => ['array'],
         ];
     }
@@ -110,7 +110,8 @@ class Bookingroom extends Component
         // Load requirement master (global)
         $this->allRequirements = Requirement::orderBy('name')->get(['requirement_id', 'name']);
 
-        if (!in_array($this->sortBy, $this->sortable, true)) $this->sortBy = 'start_time';
+        if (!in_array($this->sortBy, $this->sortable, true))
+            $this->sortBy = 'start_time';
         $this->sortDir = $this->sortDir === 'asc' ? 'asc' : 'desc';
     }
 
@@ -130,7 +131,8 @@ class Bookingroom extends Component
 
     public function sort(string $field): void
     {
-        if (!in_array($field, $this->sortable, true)) return;
+        if (!in_array($field, $this->sortable, true))
+            return;
         if ($this->sortBy === $field) {
             $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
         } else {
@@ -148,14 +150,14 @@ class Bookingroom extends Component
 
         $this->editingId = $data->bookingroom_id;
 
-        $this->room_id             = $data->room_id;
-        $this->department_id       = $data->department_id;
-        $this->meeting_title       = $data->meeting_title;
-        $this->date                = $data->date;
+        $this->room_id = $data->room_id;
+        $this->department_id = $data->department_id;
+        $this->meeting_title = $data->meeting_title;
+        $this->date = $data->date;
         $this->number_of_attendees = $data->number_of_attendees;
-        $this->start_time          = Carbon::parse($data->start_time)->format('Y-m-d\TH:i');
-        $this->end_time            = Carbon::parse($data->end_time)->format('Y-m-d\TH:i');
-        $this->special_notes       = $data->special_notes;
+        $this->start_time = Carbon::parse($data->start_time)->format('Y-m-d\TH:i');
+        $this->end_time = Carbon::parse($data->end_time)->format('Y-m-d\TH:i');
+        $this->special_notes = $data->special_notes;
 
         // Load selected requirements (pivot)
         $this->selectedRequirements = DB::table('booking_requirements')
@@ -173,7 +175,7 @@ class Bookingroom extends Component
         $this->resetErrorBag();
     }
 
-    /* ---------- Update & Delete only ---------- */
+    /* ---------- Update & Delete (SoftDelete only) ---------- */
     public function update(): void
     {
         $this->validate();
@@ -183,17 +185,17 @@ class Bookingroom extends Component
 
         // Update booking data
         $row->update([
-            'room_id'             => $this->room_id,
-            'department_id'       => $this->department_id,
-            'meeting_title'       => $this->meeting_title,
-            'date'                => $this->date,
+            'room_id' => $this->room_id,
+            'department_id' => $this->department_id,
+            'meeting_title' => $this->meeting_title,
+            'date' => $this->date,
             'number_of_attendees' => $this->number_of_attendees,
-            'start_time'          => Carbon::parse($this->start_time)->toDateTimeString(),
-            'end_time'            => Carbon::parse($this->end_time)->toDateTimeString(),
-            'special_notes'       => $this->special_notes,
+            'start_time' => Carbon::parse($this->start_time)->toDateTimeString(),
+            'end_time' => Carbon::parse($this->end_time)->toDateTimeString(),
+            'special_notes' => $this->special_notes,
         ]);
 
-        // Sync requirements (pivot)
+        // Sync requirements (pivot) – tetap fisik karena pivot tidak pakai softdelete
         DB::table('booking_requirements')
             ->where('bookingroom_id', $row->bookingroom_id)
             ->delete();
@@ -203,8 +205,8 @@ class Bookingroom extends Component
             DB::table('booking_requirements')->insert([
                 'bookingroom_id' => $row->bookingroom_id,
                 'requirement_id' => $reqId,
-                'created_at'     => $now,
-                'updated_at'     => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
             ]);
         }
 
@@ -216,13 +218,15 @@ class Bookingroom extends Component
     public function delete(int $id): void
     {
         $companyId = Auth::user()->company_id;
+
+        // Soft delete booking (BUT do NOT touch pivot rows)
         $row = BR::where('company_id', $companyId)->findOrFail($id);
-        $row->delete();
+        $row->delete(); // requires SoftDeletes on BookingRoom model + deleted_at column
 
-        // clean pivot
-        DB::table('booking_requirements')->where('bookingroom_id', $id)->delete();
+        // ⚠️ Dihilangkan: penghapusan pivot. Biar histori requirement tetap ada.
+        // DB::table('booking_requirements')->where('bookingroom_id', $id)->delete();
 
-        session()->flash('success', 'Booking deleted.');
+        session()->flash('success', 'Booking moved to trash (soft deleted).');
         $this->resetPage();
     }
 
@@ -246,7 +250,7 @@ class Bookingroom extends Component
     {
         $companyId = Auth::user()->company_id;
 
-        // Base query
+        // Base query – otomatis exclude trashed (tanpa withTrashed())
         $bookings = BR::query()
             ->select([
                 'booking_rooms.*',
@@ -282,11 +286,11 @@ class Bookingroom extends Component
         }
 
         return view('livewire.pages.superadmin.bookingroom', [
-            'bookings'         => $bookings,
-            'roomLookup'       => $this->roomLookup,
-            'deptLookup'       => $this->deptLookup,
-            'requirementsMap'  => $requirementsMap, // bookingroom_id => [names...]
-            'allRequirements'  => $this->allRequirements, // for modal checklist
+            'bookings' => $bookings,
+            'roomLookup' => $this->roomLookup,
+            'deptLookup' => $this->deptLookup,
+            'requirementsMap' => $requirementsMap, // bookingroom_id => [names...]
+            'allRequirements' => $this->allRequirements, // for modal checklist
         ]);
     }
 }

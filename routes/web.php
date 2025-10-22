@@ -27,12 +27,16 @@ use App\Livewire\Pages\Admin\Ticketshow as AdminTicketshow;
 use App\Livewire\Pages\Superadmin\Dashboard as SuperadminDashboard;
 use App\Livewire\Pages\Superadmin\Announcement;
 use App\Livewire\Pages\Superadmin\Information;
+use App\Livewire\Pages\Superadmin\Report;
 use App\Livewire\Pages\Superadmin\Account as UserManagement;
 use App\Livewire\Pages\Superadmin\Department as DepartmentPage;
 use App\Livewire\Pages\Superadmin\Bookingroom as SuperadminBookingroom;
 use App\Livewire\Pages\Superadmin\Ticketsupport as SuperadminTicketsupport;
 use App\Livewire\pages\Superadmin\Manageroom as Manageroom;
 use App\Livewire\Pages\Superadmin\Managerequirement as Managerequirements;
+use App\Livewire\Pages\Superadmin\Storage as StoragePage;
+use App\Livewire\Pages\Superadmin\Vehicle as VehiclePage;
+use App\Livewire\Pages\Superadmin\Bookingvehicle as SuperadminBookingvehicle;
 use App\Livewire\Pages\Admin\RoomMonitoring as RoomMonitoringPage;
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
 use App\Livewire\Pages\Receptionist\Documents as Documents;
@@ -50,6 +54,8 @@ use App\Livewire\Pages\Auth\Register as RegisterPage;
 use App\Livewire\Pages\Errors\error404 as Error404;
 use App\Services\GoogleMeetService;
 
+
+use App\Http\Controllers\VehicleAttachmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -150,6 +156,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tickets/finalize-attachments', [AttachmentController::class, 'finalizeTemp'])
         ->name('attachments.finalizeTemp');
 
+
+    // Vehicle (signed)
+    Route::prefix('vehicle-attachments')->name('vehicle.attachments.')->group(function () {
+        Route::post('/signature-temp', [VehicleAttachmentController::class, 'signatureTemp'])->name('signatureTemp');
+        Route::delete('/temp', [VehicleAttachmentController::class, 'deleteTemp'])->name('deleteTemp');
+        Route::post('/finalize', [VehicleAttachmentController::class, 'finalize'])->name('finalize');
+    });
+
     // ---------- Admin routes ----------
     Route::middleware('is.admin')->group(function () {
         Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
@@ -170,6 +184,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/superadmin-ticketsupport', SuperadminTicketsupport::class)->name('superadmin.ticketsupport');
         Route::get('/superadmin-manageroom', Manageroom::class)->name('superadmin.manageroom');
         Route::get('/superadmin-managerequirements', Managerequirements::class)->name('superadmin.managerequirements');
+        Route::get('/superadmin-storage', StoragePage::class)->name('superadmin.storage');
+        Route::get('/superadmin-vehicle', VehiclePage::class)->name('superadmin.vehicle');
+        Route::get('/superadmin/reports', Report::class)->name('superadmin.reports');
+        Route::get('/superadmin-bookingvehicle', SuperadminBookingvehicle::class)->name('superadmin.bookingvehicle');
     });
 
     // ---------- Receptionist routes ----------

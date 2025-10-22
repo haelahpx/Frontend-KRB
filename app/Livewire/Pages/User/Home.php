@@ -211,35 +211,35 @@ class Home extends Component
 
     public function render()
     {
-        // data info/announcement
         $user = Auth::user();
         $companyId = (int) ($user->company_id ?? 0);
+        $deptId = $user->department_id ? (int) $user->department_id : null;
 
+        // Announcements: per company, (opsional) juga per department kalau kolomnya ada
         $announcements = Announcement::forCompany($companyId)
+            // ->forDepartment($deptId) // aktifkan jika tabel announcements ada department_id
             ->orderBy('event_at', 'asc')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
+        // Informations: per company + sesuai department user ATAU global (NULL)
         $informations = Information::forCompany($companyId)
+            ->forDepartment($deptId)
             ->orderBy('event_at', 'asc')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        // (opsional) refresh tiket setiap render biar selalu update
+        // (opsional) refresh ringkasan tiket
         $this->loadTicketSummary();
 
         return view('livewire.pages.user.home', [
             'announcements' => $announcements,
             'informations' => $informations,
-
-            // tickets mini summary
             'openTicketsCount' => $this->openTicketsCount,
             'inProgressTicketsCount' => $this->inProgressTicketsCount,
             'resolvedLast7d' => $this->resolvedLast7d,
-
-            // booking summary
             'upcomingBookings' => $this->upcomingBookings,
             'nextBooking' => $this->nextBooking,
             'historyUpcoming' => $this->historyUpcoming,
@@ -249,4 +249,5 @@ class Home extends Component
             'activeTab' => $this->activeTab,
         ]);
     }
+
 }

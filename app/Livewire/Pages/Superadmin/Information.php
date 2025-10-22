@@ -9,6 +9,7 @@ use Livewire\WithPagination;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Information as InformationModel;
+use App\Models\Department;
 
 #[Layout('layouts.superadmin')]
 #[Title('Information')]
@@ -23,45 +24,61 @@ class Information extends Component
     public string $search = '';
     public string $sortField = 'created_at';
     public string $sortDirection = 'desc';
+    public ?int $filter_department_id = null; // NEW: filter list by department
 
     // Create form fields
     public string $description = '';
     public ?string $event_at = null;
+    public ?int $department_id = null; // NEW: assign department when creating
 
     // Edit modal state & fields
     public bool $modalEdit = false;
     public ?int $edit_id = null;
     public string $edit_description = '';
     public ?string $edit_event_at = null;
+    public ?int $edit_department_id = null; // NEW
 
-    // Validation rules for the create form
+    /** Options */
+    public array $departmentOptions = []; // for selects
+
     protected function rules(): array
     {
         return [
-            'description' => 'required|string|max:255',
-            'event_at'    => 'nullable|date',
+            'description'   => 'required|string|max:255',
+            'event_at'      => 'nullable|date',
+            'department_id' => 'required|integer|exists:departments,department_id',
         ];
     }
 
-    // Validation rules for the edit modal
     protected function editRules(): array
     {
         return [
-            'edit_description' => 'required|string|max:255',
-            'edit_event_at'    => 'nullable|date',
+            'edit_description'   => 'required|string|max:255',
+            'edit_event_at'      => 'nullable|date',
+            'edit_department_id' => 'required|integer|exists:departments,department_id',
         ];
     }
 
     public function mount(): void
     {
-        // Set default company from the logged-in user
         $this->company_id = Auth::user()?->company_id;
+
+        // preload department options for this company
+        $this->departmentOptions = Department::query()
+            ->where('company_id', $this->company_id)
+            ->orderBy('department_name')
+            ->get(['department_id','department_name'])
+            ->map(fn($d) => ['id' => $d->department_id, 'name' => $d->department_name])
+            ->toArray();
+
+        // default create form to first department (optional)
+        if (!$this->department_id && !empty($this->departmentOptions)) {
+            $this->department_id = $this->departmentOptions[0]['id'];
+        }
     }
 
-    public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
+    public function updatingSearch(): void   { $this->resetPage(); }
+    public function updatingFilterDepartmentId(): void { $this->resetPage(); }
 
     /**
      * Create new information.
@@ -71,12 +88,18 @@ class Information extends Component
         $this->validate();
 
         InformationModel::create([
-            'company_id'  => $this->company_id, // Get company from authenticated user
-            'description' => $this->description,
-            'event_at'    => $this->event_at ? Carbon::parse($this->event_at) : null,
+            'company_id'    => $this->company_id,
+            'department_id' => $this->department_id,
+            'description'   => $this->description,
+            'event_at'      => $this->event_at ? Carbon::parse($this->event_at) : null,
         ]);
 
-        $this->reset('description', 'event_at');
+        $this->reset('description', 'event_at', 'department_id');
+        // set back default department to first option (optional)
+        if (!empty($this->departmentOptions)) {
+            $this->department_id = $this->departmentOptions[0]['id'];
+        }
+
         $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'Information berhasil dibuat.', duration: 3000);
         $this->resetPage();
     }
@@ -86,24 +109,21 @@ class Information extends Component
      */
     public function openEdit(int $id): void
     {
-        $info = InformationModel::where('company_id', $this->company_id)
-            ->findOrFail($id);
+        $info = InformationModel::where('company_id', $this->company_id)->findOrFail($id);
 
-        $this->edit_id = $info->getKey();
-        $this->edit_description = $info->description;
-        $this->edit_event_at = $info->event_at ? $info->event_at->format('Y-m-d\TH:i') : null;
+        $this->edit_id            = $info->getKey();
+        $this->edit_description   = $info->description;
+        $this->edit_event_at      = $info->event_at ? $info->event_at->format('Y-m-d\TH:i') : null;
+        $this->edit_department_id = $info->department_id;
 
         $this->modalEdit = true;
         $this->resetErrorBag();
     }
 
-    /**
-     * Close the edit modal and reset its state.
-     */
     public function closeEdit(): void
     {
         $this->modalEdit = false;
-        $this->reset('edit_id', 'edit_description', 'edit_event_at');
+        $this->reset('edit_id', 'edit_description', 'edit_event_at', 'edit_department_id');
     }
 
     /**
@@ -113,12 +133,12 @@ class Information extends Component
     {
         $this->validate($this->editRules());
 
-        $info = InformationModel::where('company_id', $this->company_id)
-            ->findOrFail($this->edit_id);
+        $info = InformationModel::where('company_id', $this->company_id)->findOrFail($this->edit_id);
 
         $info->update([
-            'description' => $this->edit_description,
-            'event_at'    => $this->edit_event_at ? Carbon::parse($this->edit_event_at) : null,
+            'description'   => $this->edit_description,
+            'event_at'      => $this->edit_event_at ? Carbon::parse($this->edit_event_at) : null,
+            'department_id' => $this->edit_department_id,
         ]);
 
         $this->closeEdit();
@@ -127,28 +147,32 @@ class Information extends Component
     }
 
     /**
-     * Delete an information entry.
+     * Soft delete an information entry.
      */
     public function delete(int $id): void
     {
         InformationModel::where('company_id', $this->company_id)
             ->findOrFail($id)
-            ->delete();
+            ->delete(); // soft delete (model must use SoftDeletes)
 
         $this->resetPage();
-        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Information berhasil dihapus.', duration: 3000);
+        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Information berhasil dihapus (soft delete).', duration: 3000);
     }
 
     public function render()
     {
         $information = InformationModel::query()
             ->where('company_id', $this->company_id)
+            ->when($this->filter_department_id, fn($q) => $q->where('department_id', $this->filter_department_id))
             ->when($this->search, function ($query) {
                 $query->where('description', 'like', "%{$this->search}%");
             })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate(10);
 
-        return view('livewire.pages.superadmin.information', compact('information'));
+        return view('livewire.pages.superadmin.information', [
+            'information'       => $information,
+            'departmentOptions' => $this->departmentOptions,
+        ]);
     }
 }
