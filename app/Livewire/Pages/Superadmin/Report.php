@@ -8,6 +8,7 @@ use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 use App\Models\BookingRoom;
@@ -16,6 +17,7 @@ use App\Models\Ticket;
 use App\Models\Guestbook;
 use App\Models\Delivery;
 use App\Models\Company;
+use App\Models\User;
 
 #[Layout('layouts.superadmin')]
 #[Title('Reports & Evaluation')]
@@ -29,8 +31,18 @@ class Report extends Component
     public array $summary = [];
     public array $analysis = [];
 
+    // Performa tiket (SLA)
+    public array $ticketPerf = [];
+
+    // Target SLA (jam)
+    public array $slaTargets = [
+        'high' => 24,
+        'medium' => 48,
+        'low' => 72,
+    ];
+
     public ?int $companyId = null;
-    public ?array $company = null; // ['company_name' => ..., 'image' => ...]
+    public ?array $company = null;
 
     public function mount(): void
     {
@@ -63,7 +75,7 @@ class Report extends Component
         $this->dispatch('report-data-updated', monthly: $this->monthly, yearly: $this->yearly);
     }
 
-    /** Scope queries by company_id if the table has that column */
+    /** Scope queries by company_id jika kolomnya ada */
     private function scoped($query)
     {
         if ($this->companyId) {
@@ -75,7 +87,7 @@ class Report extends Component
         return $query;
     }
 
-    /** -------- MAIN DATA BUILDER (this was missing) -------- */
+    /** -------- MAIN DATA BUILDER -------- */
     private function buildData(): void
     {
         $months = range(1, 12);
@@ -171,11 +183,7 @@ class Report extends Component
         $totAll = $totRoom + $totVeh + $totTick + $totGb + $totDel;
 
         $idx = range(0, 11);
-        $totalsPerMonth = array_map(
-            fn($i) => $roomArr[$i] + $vehArr[$i] + $tickArr[$i] + $gbArr[$i] + $delArr[$i],
-            $idx
-        );
-
+        $totalsPerMonth = array_map(fn($i) => $roomArr[$i] + $vehArr[$i] + $tickArr[$i] + $gbArr[$i] + $delArr[$i], $idx);
         $bestIndex = $this->maxIndex($totalsPerMonth);
         $worstIndex = $this->minIndex($totalsPerMonth);
 
@@ -241,28 +249,288 @@ class Report extends Component
             'moving_avg_3' => $this->movingAverage($totalsPerMonth, 3),
             'recommendations' => $this->buildRecs($growthYoY, $totalsPerMonth, $labels),
         ];
+
+        // -------- Performa tiket (SLA) --------
+        $this->ticketPerf = $this->buildTicketPerf();
+    }
+
+    /** Performa tiket: prioritas & admin (assignment terakhir via ticket_assignments) */
+    private function buildTicketPerf(): array
+    {
+        $ticketsTable = (new Ticket)->getTable();   // 'tickets'
+        $usersTable = (new User)->getTable();     // 'users'
+        $assignTable = 'ticket_assignments';
+
+        // Ambil tiket RESOLVED/CLOSED pada tahun terpilih
+        $ticketQuery = DB::table($ticketsTable)
+            ->select('ticket_id', 'priority', 'created_at', 'updated_at')
+            ->whereYear('created_at', $this->year)
+            ->whereIn('status', ['RESOLVED', 'CLOSED']);
+
+        if (Schema::hasColumn($ticketsTable, 'deleted_at')) {
+            $ticketQuery->whereNull("$ticketsTable.deleted_at");
+        }
+        if ($this->companyId && Schema::hasColumn($ticketsTable, 'company_id')) {
+            $ticketQuery->where("$ticketsTable.company_id", $this->companyId);
+        }
+
+        $tickets = $ticketQuery->get();
+
+        if ($tickets->isEmpty()) {
+            return ['by_priority' => [], 'by_admin' => [], 'verdicts' => []];
+        }
+
+        // Assignment terakhir per ticket (pakai assignment_id terbesar)
+        $ticketIds = $tickets->pluck('ticket_id')->unique()->values()->all();
+
+        $assignments = DB::table($assignTable)
+            ->select('assignment_id', 'ticket_id', 'user_id')
+            ->whereIn('ticket_id', $ticketIds)
+            ->orderByDesc('assignment_id');
+
+        if (Schema::hasColumn($assignTable, 'deleted_at')) {
+            $assignments->whereNull('deleted_at');
+        }
+
+        $assignments = $assignments->get();
+
+        $latestAssigneeByTicket = [];
+        foreach ($assignments as $a) {
+            if (!isset($latestAssigneeByTicket[$a->ticket_id])) {
+                $latestAssigneeByTicket[$a->ticket_id] = (int) $a->user_id;
+            }
+        }
+
+        // Map user
+        $assigneeIds = array_values(array_unique(array_filter($latestAssigneeByTicket)));
+        $userPk = Schema::hasColumn($usersTable, 'user_id') ? 'user_id' : 'id';
+
+        $userQ = DB::table($usersTable)->select($userPk . ' as id', 'full_name', 'email');
+        if (!empty($assigneeIds))
+            $userQ->whereIn($userPk, $assigneeIds);
+        else
+            $userQ->whereRaw('1=0');
+        if ($this->companyId && Schema::hasColumn($usersTable, 'company_id')) {
+            $userQ->where('company_id', $this->companyId);
+        }
+        $users = $userQ->get()->keyBy('id');
+
+        $nameOf = function (?int $id) use ($users) {
+            if (!$id)
+                return 'Tidak Ditugaskan';
+            $u = $users->get($id);
+            return $u->full_name ?? ('User #' . $id);
+        };
+
+        // helper durasi dalam jam
+        $hoursBetween = function ($a, $b) {
+            if (!$a || !$b)
+                return null;
+            $start = $a instanceof Carbon ? $a : Carbon::parse($a);
+            $end = $b instanceof Carbon ? $b : Carbon::parse($b);
+            if ($end->lessThan($start))
+                return null;
+            return round($start->diffInMinutes($end) / 60, 2);
+        };
+
+        // ----- Rekap PRIORITAS -----
+        $byPriority = [];
+        foreach ($tickets as $t) {
+            $p = strtolower($t->priority ?? 'unspecified'); // low|medium|high
+            $p = in_array($p, ['low', 'medium', 'high']) ? $p : 'unspecified';
+
+            $h = $hoursBetween($t->created_at, $t->updated_at);
+            if ($h === null)
+                continue;
+
+            $byPriority[$p]['samples'][] = $h;
+        }
+
+        $prioOut = [];
+        foreach ($byPriority as $p => $arr) {
+            $samples = $arr['samples'] ?? [];
+            sort($samples);
+            $count = count($samples);
+            $avg = $count ? round(array_sum($samples) / $count, 2) : null;
+            $med = $this->median($samples);
+            $p90 = $this->percentile($samples, 90);
+
+            $sla = $this->slaTargets[$p] ?? null;
+
+            // Hit rate SLA
+            $hit = null;
+            if ($sla && $count) {
+                $hits = count(array_filter($samples, fn($h) => $h <= $sla));
+                $hit = round(($hits / $count) * 100, 2);
+            }
+
+            // --- Grade: FIXED (tidak akan "—" saat ada data) ---
+            $grade = null;
+            if ($count) {
+                if (!is_null($hit)) {
+                    $grade = $hit >= 90 ? 'Cepat' : ($hit >= 70 ? 'Sedang' : 'Perlu Perbaikan');
+                } else {
+                    // fallback jika tidak ada target SLA (prioritas 'unspecified'):
+                    // gunakan rata-rata jam untuk menilai
+                    $thresholdFast = 48;  // <=48 jam cepat
+                    $thresholdOkay = 72;  // 49–72 jam sedang
+                    $grade = $avg <= $thresholdFast ? 'Cepat' : ($avg <= $thresholdOkay ? 'Sedang' : 'Perlu Perbaikan');
+                }
+            }
+
+            $prioOut[$p] = [
+                'count' => $count,
+                'avg_hours' => $avg,
+                'median_hours' => $med,
+                'p90_hours' => $p90,
+                'sla_hours' => $sla,
+                'sla_hit_rate' => $hit, // %
+                'grade' => $grade,
+            ];
+        }
+
+        // ----- Rekap ADMIN (agent) -----
+        $byAdmin = [];
+        foreach ($tickets as $t) {
+            $adminId = $latestAssigneeByTicket[$t->ticket_id] ?? 0;
+            $h = $hoursBetween($t->created_at, $t->updated_at);
+            if ($h === null)
+                continue;
+
+            $p = strtolower($t->priority ?? 'unspecified');
+            $p = in_array($p, ['low', 'medium', 'high']) ? $p : 'unspecified';
+
+            $byAdmin[$adminId]['name'] = $nameOf($adminId);
+            $byAdmin[$adminId]['samples'][] = $h;
+            $byAdmin[$adminId]['by_priority'][$p]['samples'][] = $h;
+        }
+
+        $adminOut = [];
+        foreach ($byAdmin as $adminId => $data) {
+            $samples = $data['samples'] ?? [];
+            sort($samples);
+            $count = count($samples);
+
+            $overall = [
+                'count' => $count,
+                'avg_hours' => $count ? round(array_sum($samples) / $count, 2) : null,
+                'median_hours' => $this->median($samples),
+                'p90_hours' => $this->percentile($samples, 90),
+            ];
+
+            $prioStats = [];
+            foreach (($data['by_priority'] ?? []) as $p => $arr) {
+                $s = $arr['samples'] ?? [];
+                sort($s);
+                $c = count($s);
+                $sla = $this->slaTargets[$p] ?? null;
+                $hit = ($sla && $c) ? round((count(array_filter($s, fn($h) => $h <= $sla)) / $c) * 100, 2) : null;
+
+                $prioStats[$p] = [
+                    'count' => $c,
+                    'avg_hours' => $c ? round(array_sum($s) / $c, 2) : null,
+                    'median_hours' => $this->median($s),
+                    'p90_hours' => $this->percentile($s, 90),
+                    'sla_hours' => $sla,
+                    'sla_hit_rate' => $hit,
+                ];
+            }
+
+            $adminOut[] = [
+                'admin_id' => $adminId,
+                'admin_name' => $data['name'] ?? ('User #' . $adminId),
+                'overall' => $overall,
+                'by_priority' => $prioStats,
+            ];
+        }
+
+        // Urutkan admin terbaik (rata-rata jam terendah)
+        usort($adminOut, function ($a, $b) {
+            $aa = $a['overall']['avg_hours'] ?? PHP_FLOAT_MAX;
+            $bb = $b['overall']['avg_hours'] ?? PHP_FLOAT_MAX;
+            return $aa <=> $bb;
+        });
+
+        // Verdict sederhana per prioritas
+        $verdicts = [];
+        foreach ($prioOut as $p => $st) {
+            $hit = $st['sla_hit_rate'] ?? null;
+            $g = $st['grade'] ?? null;
+            $label = strtoupper($p);
+            if ($g === 'Cepat')
+                $verdicts[] = "$label: ✅ Cepat (Tepat SLA " . number_format($hit ?? 0, 0) . "%)";
+            elseif ($g === 'Sedang')
+                $verdicts[] = "$label: ⚠️ Sedang (Tepat SLA " . number_format($hit ?? 0, 0) . "%)";
+            elseif ($g === 'Perlu Perbaikan')
+                $verdicts[] = "$label: ❌ Perlu Perbaikan (Tepat SLA " . number_format($hit ?? 0, 0) . "%)";
+        }
+
+        return [
+            'by_priority' => $prioOut,
+            'by_admin' => $adminOut,
+            'verdicts' => $verdicts,
+        ];
+    }
+
+    private function median(array $sorted): ?float
+    {
+        $n = count($sorted);
+        if (!$n)
+            return null;
+        $mid = intdiv($n, 2);
+        if ($n % 2)
+            return round($sorted[$mid], 2);
+        return round(($sorted[$mid - 1] + $sorted[$mid]) / 2, 2);
+    }
+
+    private function percentile(array $sorted, int $p): ?float
+    {
+        $n = count($sorted);
+        if (!$n)
+            return null;
+        if ($p <= 0)
+            return round($sorted[0], 2);
+        if ($p >= 100)
+            return round($sorted[$n - 1], 2);
+        $rank = ($p / 100) * ($n - 1);
+        $l = (int) floor($rank);
+        $u = (int) ceil($rank);
+        if ($l === $u)
+            return round($sorted[$l], 2);
+        $w = $rank - $l;
+        return round($sorted[$l] * (1 - $w) + $sorted[$u] * $w, 2);
     }
 
     private function buildRecs(array $growthYoY, array $totalsPerMonth, array $labels): array
     {
         $recs = [];
         if (($growthYoY['ticket'] ?? 0) > 10) {
-            $recs[] = 'Ticket volume grew >10% YoY — consider adding support capacity or triage automation.';
+            $recs[] = 'Volume tiket naik >10% YoY — pertimbangkan tambah kapasitas support atau otomasi triase.';
         }
         if (($growthYoY['delivery'] ?? 0) > 10) {
-            $recs[] = 'Deliveries trending up — verify storage capacity and handover SOPs.';
+            $recs[] = 'Delivery meningkat — periksa kapasitas storage dan SOP serah-terima.';
         }
         $bestIndex = $this->maxIndex($totalsPerMonth);
         if ($bestIndex !== null) {
-            $recs[] = 'Peak month ' . ($labels[$bestIndex] ?? '') . ' — plan staffing and asset availability ahead of this period.';
+            $recs[] = 'Bulan puncak ' . ($labels[$bestIndex] ?? '') . ' — rencanakan SDM & aset sejak awal periode.';
         }
+
+        // Insight dari SLA
+        $prio = $this->ticketPerf['by_priority'] ?? [];
+        foreach (['high', 'medium', 'low'] as $p) {
+            $hit = $prio[$p]['sla_hit_rate'] ?? null;
+            if (!is_null($hit) && $hit < 80) {
+                $recs[] = strtoupper($p) . ' tepat SLA <80% — cek eskalasi, antrian, dan jadwal shift.';
+            }
+        }
+
         if (empty($recs)) {
-            $recs[] = 'Utilization is relatively stable — maintain current capacity while monitoring monthly trends.';
+            $recs[] = 'Pemakaian stabil — pertahankan kapasitas saat ini sambil pantau tren bulanan.';
         }
         return $recs;
     }
 
-    // ---------- Helpers ----------
+    // ---------- Helpers umum ----------
     private function pct(int|float $cur, int|float $prev): ?float
     {
         if ($prev <= 0)
@@ -327,7 +595,7 @@ class Report extends Component
         return array_search($min, $values, true);
     }
 
-    // Turn a logo path/URL into data URI for Dompdf
+    // Image to data URI (logo) untuk Dompdf
     private function imageToDataUri(?string $pathOrUrl): ?string
     {
         if (!$pathOrUrl)
@@ -377,6 +645,7 @@ class Report extends Component
             'yearly' => $this->yearly,
             'summary' => $this->summary,
             'analysis' => $this->analysis,
+            'ticket_perf' => $this->ticketPerf,
             'company' => $this->company,
             'company_logo_datauri' => $this->imageToDataUri($this->company['image'] ?? null),
             'img' => ['monthly' => $monthlyImg, 'yearly' => $yearlyImg],
@@ -402,6 +671,7 @@ class Report extends Component
             'yearly' => $this->yearly,
             'summary' => $this->summary,
             'company' => $this->company,
+            'ticketPerf' => $this->ticketPerf, // used by web snapshot (colored + icons)
         ]);
     }
 }

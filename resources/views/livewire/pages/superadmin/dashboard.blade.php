@@ -1,16 +1,22 @@
+{{-- resources/views/livewire/pages/superadmin/dashboard.blade.php --}}
 <div class="min-h-screen bg-gray-50" wire:poll.10000ms="tick">
     <main class="px-4 sm:px-6 py-6 space-y-8">
 
         {{-- HERO --}}
-        <div class="rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white p-6 sm:p-8 shadow-2xl">
-            <h2 class="text-lg sm:text-xl font-semibold">Welcome, {{ $admin_name }}!</h2>
-            <p class="text-sm text-white/80">Here’s an overview of this year’s activity.</p>
+        <div
+            class="rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white p-6 sm:p-8 shadow-2xl flex items-center gap-3">
+            <x-heroicon-o-chart-bar class="w-8 h-8 text-white/80" />
+            <div>
+                <h2 class="text-lg sm:text-xl font-semibold">Welcome, {{ $admin_name }}!</h2>
+                <p class="text-sm text-white/80">Here’s an overview of this year’s activity.</p>
+            </div>
         </div>
 
         {{-- STATS (No Company) --}}
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             @foreach($stats as $s)
                 <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-5 text-center">
+                    <x-heroicon-o-chart-bar class="w-6 h-6 mx-auto mb-1 text-gray-600" />
                     <p class="text-gray-500 text-sm">{{ $s['label'] }}</p>
                     <h3 class="text-2xl font-semibold text-gray-900 mt-2">{{ number_format($s['value']) }}</h3>
                 </div>
@@ -19,7 +25,10 @@
 
         {{-- MONTHLY LINE CHART --}}
         <section class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Monthly Statistics</h3>
+            <h3 class="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+                <x-heroicon-o-calendar class="w-5 h-5 text-gray-700" />
+                Monthly Statistics
+            </h3>
             <div wire:ignore>
                 <canvas id="bookingChart" class="w-full" style="max-height:380px"></canvas>
             </div>
@@ -30,7 +39,10 @@
             {{-- Priority Distribution (Bar) --}}
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-base font-semibold text-gray-900">Ticket Priority Distribution</h3>
+                    <h3 class="flex items-center gap-2 text-base font-semibold text-gray-900">
+                        <x-heroicon-o-arrow-trending-up class="w-5 h-5 text-gray-700" />
+                        Ticket Priority Distribution
+                    </h3>
                     <span class="text-xs text-gray-500">Low=1, Med=2, High=3</span>
                 </div>
                 <div wire:ignore>
@@ -40,7 +52,10 @@
 
             {{-- Status Distribution (Doughnut) --}}
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-                <h3 class="text-base font-semibold text-gray-900 mb-4">Ticket Status Distribution</h3>
+                <h3 class="flex items-center gap-2 text-base font-semibold text-gray-900 mb-4">
+                    <x-heroicon-o-chart-pie class="w-5 h-5 text-gray-700" />
+                    Ticket Status Distribution
+                </h3>
                 <div wire:ignore>
                     <canvas id="ticketStatusPie" style="max-height:320px"></canvas>
                 </div>
@@ -48,7 +63,10 @@
 
             {{-- Monthly Priority Average (Line) --}}
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-                <h3 class="text-base font-semibold text-gray-900 mb-4">Monthly Priority Average (This Year)</h3>
+                <h3 class="flex items-center gap-2 text-base font-semibold text-gray-900 mb-4">
+                    <x-heroicon-o-presentation-chart-line class="w-5 h-5 text-gray-700" />
+                    Monthly Priority Average (This Year)
+                </h3>
                 <div wire:ignore>
                     <canvas id="ticketPriorityAvg" style="max-height:320px"></canvas>
                 </div>

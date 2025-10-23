@@ -111,19 +111,37 @@
                                 @error('end_time') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
                         </div>
-
                         <div>
                             <label class="block text-sm font-medium text-gray-900 mb-3">Additional Requirements</label>
+
                             <div class="grid grid-cols-2 gap-4">
-                                @foreach (['projector', 'whiteboard', 'video_conference', 'catering', 'other'] as $req)
+                                {{-- dari database (sudah filter by company) --}}
+                                @forelse ($requirementsMaster as $reqName)
                                     <label class="flex items-center space-x-2">
-                                        <input type="checkbox" wire:model.live="requirements" value="{{ $req }}"
+                                        <input type="checkbox"
+                                            wire:model.live="requirements"
+                                            value="{{ $reqName }}"
                                             class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                        <span class="text-sm text-gray-900">{{ ucwords(str_replace('_', ' ', $req)) }}</span>
+                                        <span class="text-sm text-gray-900">{{ $reqName }}</span>
                                     </label>
-                                @endforeach
+                                @empty
+                                    <p class="text-sm text-gray-500 col-span-2">
+                                        Belum ada requirements untuk perusahaan Anda.
+                                    </p>
+                                @endforelse
+
+                                {{-- selalu sediakan opsi "Other" agar fitur catatan khusus tetap ada --}}
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox"
+                                        wire:model.live="requirements"
+                                        value="other"
+                                        class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                    <span class="text-sm text-gray-900">Other</span>
+                                </label>
                             </div>
                         </div>
+
+
 
                         @if (in_array('other', $requirements ?? [], true))
                             <div class="mt-4">
@@ -374,4 +392,4 @@
                 showToast(detail.type || 'info', detail.message || '');
             });
         })();
-    </script>
+    </script> 
