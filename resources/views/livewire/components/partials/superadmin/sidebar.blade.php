@@ -46,6 +46,11 @@
             Reports
         </flux:sidebar.item>
 
+        <flux:sidebar.item icon="user" href="{{ route('superadmin.guestbookmanagement') }}"
+            :current="request()->routeIs('superadmin.guestbookmanagement')">
+            Guestbook Management
+        </flux:sidebar.item>
+
         <flux:sidebar.group expandable heading="Vehicle Management" class="grid">
             <flux:sidebar.item icon="check-badge    " href="{{ route('superadmin.vehicle') }}"
                 :current="request()->routeIs('superadmin.vehicle')">
@@ -80,6 +85,17 @@
             <flux:sidebar.item icon="check-badge" href="{{ route('superadmin.managerequirements') }}"
                 :current="request()->routeIs('superadmin.managerequirements')">
                 Manage Requirements
+            </flux:sidebar.item>
+        </flux:sidebar.group>
+
+        <flux:sidebar.group expandable heading="Deliveries" class="grid">
+            <flux:sidebar.item icon="calendar" href="{{ route('superadmin.documentsmanagement') }}"
+                :current="request()->routeIs('superadmin.documentsmanagement')">
+                Documents
+            </flux:sidebar.item>
+            <flux:sidebar.item icon="check-badge" href="{{ route('superadmin.packagemanagement') }}"
+                :current="request()->routeIs('superadmin.packagemanagement')">
+                Package
             </flux:sidebar.item>
         </flux:sidebar.group>
     </flux:sidebar.nav>

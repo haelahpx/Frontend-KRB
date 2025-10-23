@@ -36,6 +36,9 @@ use App\Livewire\pages\Superadmin\Manageroom as Manageroom;
 use App\Livewire\Pages\Superadmin\Managerequirement as Managerequirements;
 use App\Livewire\Pages\Superadmin\Storage as StoragePage;
 use App\Livewire\Pages\Superadmin\Vehicle as VehiclePage;
+use App\Livewire\Pages\Superadmin\Packagemanagement as Packagemanagement;
+use App\Livewire\Pages\Superadmin\Documentsmanagement as Documentsmanagement;
+use App\Livewire\Pages\Superadmin\Guestbookmanagement as Guestbookmanagement;
 use App\Livewire\Pages\Superadmin\Bookingvehicle as SuperadminBookingvehicle;
 use App\Livewire\Pages\Admin\RoomMonitoring as RoomMonitoringPage;
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
@@ -188,6 +191,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/superadmin-vehicle', VehiclePage::class)->name('superadmin.vehicle');
         Route::get('/superadmin/reports', Report::class)->name('superadmin.reports');
         Route::get('/superadmin-bookingvehicle', SuperadminBookingvehicle::class)->name('superadmin.bookingvehicle');
+        Route::get('/superadmin-packagemanagement', Packagemanagement::class)->name('superadmin.packagemanagement');
+        Route::get('/superadmin-documentsmanagement', Documentsmanagement::class)->name('superadmin.documentsmanagement');
+        Route::get('/superadmin-guestbookmanagement', Guestbookmanagement::class)->name('superadmin.guestbookmanagement');
     });
 
     // ---------- Receptionist routes ----------
