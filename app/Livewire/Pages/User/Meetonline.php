@@ -14,20 +14,21 @@ use Carbon\Carbon;
 #[Title('Online Meeting')]
 class Meetonline extends Component
 {
-
     public string $view = 'form';
     public string $meeting_title = '';
-    public string $online_provider = '';     public string $date = '';
+    public string $online_provider = '';
+    public string $date = '';
     public string $start_time = '';
     public string $end_time = '';
 
     public array $timeSlots = [];
     public array $providers = [
-        ['key' => 'zoom',         'label' => 'Zoom'],
-        ['key' => 'google_meet',  'label' => 'Google Meet'],
+        ['key' => 'zoom',        'label' => 'Zoom'],
+        ['key' => 'google_meet', 'label' => 'Google Meet'],
     ];
 
     protected string $tz = 'Asia/Jakarta';
+
     public function mount(): void
     {
         $now = Carbon::now($this->tz)->addMinutes(15);
@@ -83,8 +84,8 @@ class Meetonline extends Component
                 'department_id'   => Auth::user()->department_id ?? null,
                 'meeting_title'   => $this->meeting_title,
                 'date'            => $this->date,
-                'start_time'      => $startDt, 
-                'end_time'        => $endDt,   
+                'start_time'      => $startDt,
+                'end_time'        => $endDt,
                 'booking_type'    => 'online_meeting',
                 'status'          => 'pending',
                 'online_provider' => $this->online_provider,

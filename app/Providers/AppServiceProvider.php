@@ -11,8 +11,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton('zoom.service', fn() => new \App\Services\ZoomService());
+        $this->app->singleton('googlemeet.service', fn() => new \App\Services\GoogleMeetService());
     }
+
 
     /**
      * Bootstrap any application services.

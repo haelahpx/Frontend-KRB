@@ -44,6 +44,13 @@
             :current="request()->routeIs('receptionist.bookings')">
             Booking/Meeting Approval
         </flux:sidebar.item>
+        
+        <flux:sidebar.item
+            icon="clock"
+            href="{{ route('receptionist.bookinghistory') }}"
+            :current="request()->routeIs('receptionist.bookinghistory')">
+            Booking/Meeting History
+        </flux:sidebar.item>
 
         <flux:sidebar.item
             icon="inbox"

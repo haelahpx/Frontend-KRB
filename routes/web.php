@@ -48,6 +48,9 @@ use App\Livewire\Pages\Receptionist\Guestbook as Guestbook;
 use App\Livewire\Pages\Receptionist\MeetingSchedule as MeetingSchedule;
 use App\Livewire\Pages\Receptionist\BookingsApproval;
 use App\Livewire\Pages\Receptionist\RoomApproval;
+use App\Livewire\Pages\Receptionist\BookingHistory;
+
+
 
 // ========== Auth Pages ==========
 use App\Livewire\Pages\Auth\Login as LoginPage;
@@ -81,6 +84,40 @@ Route::get('/', function () {
         default => redirect()->route('user.home'),
     };
 })->name('home');
+
+
+
+// meeting online test
+
+Route::get('/google/oauth/init', function () {
+    $credPath  = base_path(env('GOOGLE_OAUTH_CREDENTIALS_JSON', 'storage/app/google_oauth/credentials.json'));
+    $tokenPath = base_path(env('GOOGLE_OAUTH_TOKENS_PATH', 'storage/app/google_oauth/tokens.json'));
+
+    $client = new Google\Client();
+    $client->setApplicationName('KRBS Meet Creator');
+    $client->setScopes([Google\Service\Calendar::CALENDAR, Google\Service\Calendar::CALENDAR_EVENTS]);
+    $client->setAccessType('offline');
+    $client->setAuthConfig($credPath);
+    $client->setRedirectUri(url('/google/oauth/callback'));
+
+    if (!request()->has('code')) {
+        return redirect()->away($client->createAuthUrl());
+    }
+
+    $token = $client->fetchAccessTokenWithAuthCode(request('code'));
+    if (!is_dir(dirname($tokenPath))) @mkdir(dirname($tokenPath), 0775, true);
+    file_put_contents($tokenPath, json_encode($token));
+    return 'Google OAuth tokens saved ✅';
+});
+
+Route::get('/google/oauth/callback', fn() => redirect('/google/oauth/init'));
+
+
+
+
+
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -206,6 +243,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/receptionist-package', ReceptPackage::class)->name('receptionist.package');
         Route::get('/receptionist-bookings', BookingsApproval::class)->name('receptionist.bookings');
         Route::get('/receptionist-roomapproval', RoomApproval::class)->name('receptionist.roomapproval');
+        Route::get('/receptionist-bookinghistory', BookingHistory::class)->name('receptionist.bookinghistory');
     });
 
     // ---------- Logout (BERSIHKAN intended + invalidate session) ----------

@@ -151,26 +151,31 @@ class BookingRoom extends Model
     | Helpers (optional)
      ========================== */
 
-    public static function generateMeetingUrl(string $provider): array
+    /**
+     * Fallback URL generator when Zoom/Google services aren’t bound or creds missing.
+     * @return array{url:string|null, code:string|null, password:string|null}
+     */
+    public static function generateMeetingUrl(string $provider = 'google_meet'): array
     {
+        $provider = strtolower($provider) === 'zoom' ? 'zoom' : 'google_meet';
+        $code = strtoupper(str()->random(10));
+        $pass = strtoupper(str()->random(6));
+
         if ($provider === 'zoom') {
-            $code = rand(1000000000, 9999999999);
             return [
-                'url' => "https://zoom.us/j/{$code}",
-                'code' => (string) $code,
-                'password' => strtoupper(substr(md5($code), 0, 6)),
+                'url' => 'https://zoom.us/j/' . random_int(10000000000, 99999999999) . '?pwd=' . $pass,
+                'code' => $code,
+                'password' => $pass,
             ];
         }
 
-        // google meet: xxx-xxxx-xxx pattern
-        $chars = 'abcdefghijklmnopqrstuvwxyz';
-        $seg = fn($n) => substr(str_shuffle(str_repeat($chars, $n)), 0, $n);
-        $link = "https://meet.google.com/{$seg(3)}-{$seg(4)}-{$seg(3)}";
-
         return [
-            'url' => $link,
-            'code' => strtoupper(substr(md5($link), 0, 6)),
-            'password' => strtoupper(substr(md5($link . 'pwd'), 0, 8)),
+            'url' => 'https://meet.google.com/'
+                . strtolower(str()->random(3)) . '-'
+                . strtolower(str()->random(4)) . '-'
+                . strtolower(str()->random(3)),
+            'code' => $code,
+            'password' => null,
         ];
     }
 }

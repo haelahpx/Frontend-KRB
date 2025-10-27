@@ -6,13 +6,13 @@
             <div class="flex items-center gap-3">
                 <div class="flex bg-gray-100 rounded-md p-1">
                     <a href="{{ route('book-room') }}"
-                    class="px-4 py-2 text-sm font-medium rounded transition-colors
-                            {{ request()->routeIs('book-room') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:text-gray-900' }}">
+                       class="px-4 py-2 text-sm font-medium rounded transition-colors
+                              {{ request()->routeIs('book-room') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:text-gray-900' }}">
                         Offline (Room)
                     </a>
                     <a href="{{ route('user.meetonline') }}"
-                    class="px-4 py-2 text-sm font-medium rounded transition-colors
-                            {{ request()->routeIs('user.meetonline') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:text-gray-900' }}">
+                       class="px-4 py-2 text-sm font-medium rounded transition-colors
+                              {{ request()->routeIs('user.meetonline') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:text-gray-900' }}">
                         Online Meeting
                     </a>
                 </div>
@@ -127,16 +127,32 @@
                                             {{ \Carbon\Carbon::parse($b->start_time)->timezone('Asia/Jakarta')->format('H:i') }}–{{ \Carbon\Carbon::parse($b->end_time)->timezone('Asia/Jakarta')->format('H:i') }}
                                             • {{ ucfirst(str_replace('_', ' ', $b->online_provider)) }}
                                         </p>
+
+                                        {{-- Visible link + copy button under details (approved only) --}}
                                         @if(($b->status ?? null) === 'approved' && ($b->online_meeting_url ?? null))
-                                            <a href="{{ $b->online_meeting_url }}" target="_blank" class="text-blue-600 underline text-sm mt-1 inline-block">
-                                                Join Meeting
-                                            </a>
+                                            <div x-data="{ copied:false }" class="mt-1 flex items-center gap-2">
+                                                <a href="{{ $b->online_meeting_url }}" target="_blank"
+                                                   class="text-blue-600 underline text-sm inline-block">
+                                                    Join Meeting
+                                                </a>
+                                                <button type="button"
+                                                        class="text-xs px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
+                                                        @click="navigator.clipboard.writeText('{{ $b->online_meeting_url }}'); copied=true; setTimeout(()=>copied=false,1500)">
+                                                    Copy link
+                                                </button>
+                                                <span x-show="copied" x-cloak class="text-xs text-green-600">Copied!</span>
+                                            </div>
                                         @endif
                                     </div>
+
+                                    {{-- Status pill with inline Join link when approved --}}
                                     <span class="px-3 py-1 text-xs md:text-sm font-medium rounded-full
                                         {{ ($b->status ?? '') === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                         (($b->status ?? '') === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') }}">
                                         {{ ucfirst($b->status ?? 'pending') }}
+                                        @if(($b->status ?? null) === 'approved' && ($b->online_meeting_url ?? null))
+                                            • <a href="{{ $b->online_meeting_url }}" target="_blank" class="underline">Join</a>
+                                        @endif
                                     </span>
                                 </div>
                             </div>
@@ -195,7 +211,7 @@
 
                             @foreach($timeSlots as $t)
                                 <div class="grid border-b border-gray-100"
-                                    style="grid-template-columns: repeat({{ count($providers) }}, minmax(200px,1fr));">
+                                     style="grid-template-columns: repeat({{ count($providers) }}, minmax(200px,1fr));">
                                     @foreach($providers as $p)
                                         @php $slotBooking = $this->getOnlineBookingForSlot($p['key'], $date, $t); @endphp
 
