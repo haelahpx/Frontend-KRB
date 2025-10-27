@@ -184,7 +184,6 @@ class RoomMonitoring extends Component
                        ->orWhere('special_notes', 'like', $like);
                 });
             })
-            // time-based status filter
             ->when($this->status === 'planned', fn($q) => $q->whereRaw("TIMESTAMP(`date`,`start_time`) > ?", [$now]))
             ->when($this->status === 'ongoing', fn($q) => $q->whereRaw("? BETWEEN TIMESTAMP(`date`,`start_time`) AND TIMESTAMP(`date`,`end_time`)", [$now]))
             ->when($this->status === 'done',    fn($q) => $q->whereRaw("TIMESTAMP(`date`,`end_time`) < ?", [$now]))
@@ -315,7 +314,6 @@ class RoomMonitoring extends Component
             'requirements'  => $reqs,
         ];
 
-        // Plain-text summary for manual copy
         $summary = [];
         $summary[] = 'Meeting: ' . ($detail['meeting_title'] ?: '-');
         $summary[] = 'Room: ' . ($detail['room'] ?: '-') . (!empty($detail['room_meta']) ? ' ('.$detail['room_meta'].')' : '');
@@ -343,6 +341,7 @@ class RoomMonitoring extends Component
     {
         $lockedDeptName = collect($this->departments)->firstWhere('id', $this->department_id)['name'] ?? '—';
 
+        // keep your existing blade path
         return view('livewire.pages.admin.roommonitoring', [
             'rows'           => $this->rows(),
             'rooms'          => $this->rooms,

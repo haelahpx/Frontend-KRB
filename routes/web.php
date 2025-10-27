@@ -12,18 +12,22 @@ use App\Livewire\Pages\User\Home as UserHome;
 use App\Livewire\Pages\User\CreateTicket;
 use App\Livewire\Pages\User\Bookroom;
 use App\Livewire\Pages\User\Profile;
-use App\Livewire\Pages\User\Package;
+use App\Livewire\Pages\User\Package as UserPackage;
 use App\Livewire\Pages\User\Ticketstatus;
 use App\Livewire\Pages\User\BookingStatus;
 use App\Livewire\Pages\User\Ticketshow;
 use App\Livewire\Pages\User\Bookvehicle;
 use App\Livewire\Pages\User\Meetonline;
 
-// ========== Livewire Pages (Admin / Superadmin / Receptionist) ==========
+// ========== Livewire Pages (Admin ==========
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Pages\Admin\Ticket as AdminTicket;
 use App\Livewire\Pages\Admin\Usermanagement as UserManagementAdmin;
 use App\Livewire\Pages\Admin\Ticketshow as AdminTicketshow;
+use App\Livewire\Pages\Admin\RoomMonitoring as RoomMonitoringPage;
+
+// ========== Livewire Pages (Superadmin ==========
+
 use App\Livewire\Pages\Superadmin\Dashboard as SuperadminDashboard;
 use App\Livewire\Pages\Superadmin\Announcement;
 use App\Livewire\Pages\Superadmin\Information;
@@ -32,7 +36,7 @@ use App\Livewire\Pages\Superadmin\Account as UserManagement;
 use App\Livewire\Pages\Superadmin\Department as DepartmentPage;
 use App\Livewire\Pages\Superadmin\Bookingroom as SuperadminBookingroom;
 use App\Livewire\Pages\Superadmin\Ticketsupport as SuperadminTicketsupport;
-use App\Livewire\pages\Superadmin\Manageroom as Manageroom;
+use App\Livewire\Pages\Superadmin\Manageroom as Manageroom;
 use App\Livewire\Pages\Superadmin\Managerequirement as Managerequirements;
 use App\Livewire\Pages\Superadmin\Storage as StoragePage;
 use App\Livewire\Pages\Superadmin\Vehicle as VehiclePage;
@@ -40,10 +44,12 @@ use App\Livewire\Pages\Superadmin\Packagemanagement as Packagemanagement;
 use App\Livewire\Pages\Superadmin\Documentsmanagement as Documentsmanagement;
 use App\Livewire\Pages\Superadmin\Guestbookmanagement as Guestbookmanagement;
 use App\Livewire\Pages\Superadmin\Bookingvehicle as SuperadminBookingvehicle;
-use App\Livewire\Pages\Admin\RoomMonitoring as RoomMonitoringPage;
+
+// ========== Livewire Pages (Receptionist) ==========
+
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
 use App\Livewire\Pages\Receptionist\Documents as Documents;
-use App\Livewire\Pages\Receptionist\package as ReceptPackage;
+use App\Livewire\Pages\Receptionist\Package as ReceptionistPackage;
 use App\Livewire\Pages\Receptionist\Guestbook as Guestbook;
 use App\Livewire\Pages\Receptionist\MeetingSchedule as MeetingSchedule;
 use App\Livewire\Pages\Receptionist\BookingsApproval;
@@ -167,7 +173,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Profile & others
     Route::get('/profile', Profile::class)->name('profile');
-    Route::get('/package', Package::class)->name('package');
+    Route::get('/package', UserPackage::class)->name('package');
     Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
     Route::get('/tickets/{ticket:ticket_id}', Ticketshow::class)->name('user.ticket.show');
 
@@ -239,8 +245,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/receptionist-guestbook', Guestbook::class)->name('receptionist.guestbook');
         Route::get('/receptionist-meetingschedule', MeetingSchedule::class)->name('receptionist.schedule');
         Route::get('/receptionist-document', Documents::class)->name('receptionist.documents');
-        Route::get('/receptionist-package', Package::class)->name('receptionist.package');
-        Route::get('/receptionist-package', ReceptPackage::class)->name('receptionist.package');
+        Route::get('/receptionist-package', ReceptionistPackage::class)->name('receptionist.package');
         Route::get('/receptionist-bookings', BookingsApproval::class)->name('receptionist.bookings');
         Route::get('/receptionist-roomapproval', RoomApproval::class)->name('receptionist.roomapproval');
         Route::get('/receptionist-bookinghistory', BookingHistory::class)->name('receptionist.bookinghistory');
@@ -266,4 +271,4 @@ Route::middleware(['auth'])->group(function () {
 | Fallback 404
 |--------------------------------------------------------------------------
 */
-Route::fallback(Error404::class);
+Route::fallback(function(){ abort(404); });

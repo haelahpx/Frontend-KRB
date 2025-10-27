@@ -83,7 +83,6 @@ class CreateTicket extends Component
                             'items'     => $items,
                         ]));
                 } catch (Throwable $e) {
-                    // Attachment error → warning toast (ticket still created)
                     $this->dispatch('toast', type: 'warning', title: 'Lampiran', message: 'Beberapa lampiran gagal diproses.', duration: 3000);
                 }
             }
@@ -91,10 +90,8 @@ class CreateTicket extends Component
             // Reset form
             $this->reset(['subject', 'priority', 'assigned_department_id', 'description', 'temp_items_json']);
 
-            // Success toast (instant)
+            // Success toast
             $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'Tiket berhasil dibuat.', duration: 3000);
-
-            // (Optional) Fallback for post-redirect toast. In your layout, read this session and dispatch the same toast on load.
             session()->flash('toast', [
                 'type'    => 'success',
                 'title'   => 'Berhasil',
@@ -105,18 +102,18 @@ class CreateTicket extends Component
             return redirect()->route('ticketstatus');
 
         } catch (ValidationException $e) {
-            // Grab first error message for concise toast
             $first = collect($e->validator->errors()->all())->first() ?? 'Periksa kembali input Anda.';
             $this->dispatch('toast', type: 'error', title: 'Validasi Gagal', message: $first, duration: 3000);
-            throw $e; // keep default invalid state highlighting
+            throw $e;
         } catch (Throwable $e) {
             $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Terjadi kesalahan tak terduga.', duration: 3000);
-            return; // don't rethrow to avoid generic error page
+            return;
         }
     }
 
     public function render()
     {
+        // keep your existing blade path
         return view('livewire.pages.user.createticket');
     }
 }

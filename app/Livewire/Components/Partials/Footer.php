@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Components\partials;
+namespace App\Livewire\Components\Partials;
 use Livewire\Component;
 
 class Footer extends Component

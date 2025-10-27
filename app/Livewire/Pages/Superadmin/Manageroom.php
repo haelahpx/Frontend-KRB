@@ -118,7 +118,7 @@ class Manageroom extends Component
         $this->resetPage(pageName: 'roomsPage');
     }
 
-    // Query
+    // Query (Livewire accessor: $this->rooms)
     public function getRoomsProperty()
     {
         return Room::query()

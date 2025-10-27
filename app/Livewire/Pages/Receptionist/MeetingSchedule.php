@@ -77,7 +77,6 @@ class MeetingSchedule extends Component
         $this->otherRequirementId = $this->findOtherRequirementId();
         $this->googleConnected    = $this->detectGoogleConnected();
 
-        // Initial users (if department already preselected)
         if ($this->online_department_id) {
             $this->loadUsersForDept((int) $this->online_department_id);
         }
@@ -137,22 +136,16 @@ class MeetingSchedule extends Component
 
     /* ===================== Users loading ===================== */
 
-    /** Base: full list for a department (no search) */
     protected function loadUsersForDept(?int $deptId): void
     {
         $this->usersByDept = $this->queryUsersForDropdown($deptId, null);
     }
 
-    /** Base: full list for a department (no search) */
     protected function loadUsersForDeptOffline(?int $deptId): void
     {
         $this->usersByDeptOffline = $this->queryUsersForDropdown($deptId, null);
     }
 
-    /**
-     * DB query for users with optional search (prefix-first).
-     * If $search is provided, results are ordered with prefix matches first.
-     */
     private function queryUsersForDropdown(?int $deptId, ?string $search, int $limit = 50): array
     {
         if (!$deptId) return [];
@@ -172,8 +165,6 @@ class MeetingSchedule extends Component
 
         if ($search !== null && $search !== '') {
             $needle = trim($search);
-
-            // Order prefix matches first, then contains, then alphabetically
             $q->where(function ($qq) use ($name, $needle) {
                 $qq->where($name, 'like', "%{$needle}%");
             })
@@ -194,14 +185,11 @@ class MeetingSchedule extends Component
     public function updatedOnlineDepartmentId($val): void
     {
         $deptId = (int) ($val ?: 0);
-
-        // If user is typing, fetch filtered from DB; otherwise full list
         if (trim($this->userQueryOnline) !== '') {
             $this->usersByDept = $this->queryUsersForDropdown($deptId, $this->userQueryOnline);
         } else {
             $this->loadUsersForDept($deptId);
         }
-
         if ($this->online_user_id && !collect($this->usersByDept)->pluck('id')->contains((int)$this->online_user_id)) {
             $this->online_user_id = null;
         }
@@ -210,34 +198,28 @@ class MeetingSchedule extends Component
     public function updatedFormDepartmentId($val): void
     {
         $deptId = (int) ($val ?: 0);
-
         if (trim($this->userQueryOffline) !== '') {
             $this->usersByDeptOffline = $this->queryUsersForDropdown($deptId, $this->userQueryOffline);
         } else {
             $this->loadUsersForDeptOffline($deptId);
         }
-
         if ($this->offline_user_id && !collect($this->usersByDeptOffline)->pluck('id')->contains((int)$this->offline_user_id)) {
             $this->offline_user_id = null;
         }
     }
 
-    /** Search-as-you-type (OFFLINE) */
     public function updatedUserQueryOffline($q): void
     {
         $deptId = (int) ($this->form['department_id'] ?: 0);
         if ($deptId === 0) { $this->usersByDeptOffline = []; return; }
 
         $this->usersByDeptOffline = $this->queryUsersForDropdown($deptId, $q);
-
-        // Optional auto-select when exact match is typed
         $first = $this->usersByDeptOffline[0] ?? null;
         if ($first && mb_strtolower($first['name']) === mb_strtolower(trim($q))) {
             $this->offline_user_id = $first['id'];
         }
     }
 
-    /** Search-as-you-type (ONLINE) */
     public function updatedUserQueryOnline($q): void
     {
         $deptId = (int) ($this->online_department_id ?: 0);
@@ -272,13 +254,8 @@ class MeetingSchedule extends Component
         ];
     }
 
-    protected function hasRoomOverlap(
-        int $roomId,
-        string $ymd,
-        string $startAt,
-        string $endAt,
-        ?int $excludeId = null
-    ): bool {
+    protected function hasRoomOverlap(int $roomId, string $ymd, string $startAt, string $endAt, ?int $excludeId = null): bool
+    {
         $pendingApproved = ['pending', 'approved', 0, 1, '0', '1', 'PENDING', 'APPROVED'];
 
         return DB::table('booking_rooms')
@@ -426,7 +403,6 @@ class MeetingSchedule extends Component
 
     public function updated($name): void
     {
-        // (Keep your overlap checker etc. if you had it here)
         if ($name === 'online_department_id') {
             $this->updatedOnlineDepartmentId($this->online_department_id);
         }
@@ -539,14 +515,13 @@ class MeetingSchedule extends Component
 
     public function render()
     {
-        // Departments are filtered on the client side (array filter)
         $departmentsOffline = $this->filterItemsByName($this->departments, $this->deptQueryOffline, 50);
         $departmentsOnline  = $this->filterItemsByName($this->departments, $this->deptQueryOnline, 50);
 
-        // Users are already DB-filtered as you type, so just pass through
         $usersOfflineFiltered = $this->usersByDeptOffline;
         $usersOnlineFiltered  = $this->usersByDept;
 
+        // keep your existing blade path
         return view('livewire.pages.receptionist.meetingschedule', [
             'departments'        => $this->departments,
             'departmentsOffline' => $departmentsOffline,
