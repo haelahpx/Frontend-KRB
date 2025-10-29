@@ -1,9 +1,8 @@
 {{-- resources/views/livewire/pages/user/bookvehicle.blade.php --}}
 <div class="max-w-7xl mx-auto py-6 grid grid-cols-1 lg:grid-cols-3 gap-6 px-4">
-    {{-- LEFT: main form (2/3 width) --}}
+    {{-- LEFT: main form (2/3) --}}
     <div class="lg:col-span-2">
         <div class="bg-white border-2 border-black/5 rounded-2xl shadow-sm overflow-hidden">
-            {{-- header --}}
             <div class="px-6 py-5 border-b border-black/5">
                 <h2 class="text-2xl font-semibold">
                     @if($isEdit)
@@ -23,7 +22,6 @@
             </div>
 
             <div class="p-6">
-                {{-- flash messages --}}
                 @if(session()->has('success'))
                     <div class="text-sm bg-green-50 border border-green-100 text-green-800 px-3 py-2 rounded-md mb-4">
                         {{ session('success') }}
@@ -35,7 +33,7 @@
                     </div>
                 @endif
 
-                {{-- EDIT MODE: upload photos --}}
+                {{-- EDIT MODE --}}
                 @if($isEdit && $editingBooking)
                     <div class="mb-4 space-y-3">
                         <div class="text-sm text-gray-700">Nama: <span
@@ -51,27 +49,6 @@
                                 {{ \Carbon\Carbon::parse($editingBooking->end_at)->format('H:i') }}</span></div>
                         <div class="text-sm text-gray-700">Tujuan: <span
                                 class="font-medium">{{ $editingBooking->destination ?? '-' }}</span></div>
-
-                        <div class="grid grid-cols-2 gap-3 mt-3">
-                            @php
-                                $before = $editingBooking->photos->firstWhere('type', 'before');
-                                $after = $editingBooking->photos->firstWhere('type', 'after');
-                            @endphp
-                            @if($before)
-                                <div>
-                                    <div class="text-xs text-gray-500 mb-1">Foto Sebelum</div>
-                                    <img src="{{ asset('storage/' . $before->path) }}" alt="before"
-                                        class="rounded w-full object-cover">
-                                </div>
-                            @endif
-                            @if($after)
-                                <div>
-                                    <div class="text-xs text-gray-500 mb-1">Foto Setelah</div>
-                                    <img src="{{ asset('storage/' . $after->path) }}" alt="after"
-                                        class="rounded w-full object-cover">
-                                </div>
-                            @endif
-                        </div>
                     </div>
 
                     <form wire:submit.prevent="submit" enctype="multipart/form-data" class="space-y-4">
@@ -188,8 +165,7 @@
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Tujuan Lokasi</label>
                                 <input wire:model.defer="destination" type="text"
-                                    placeholder="Contoh: Kantor Cabang Cibubur"
-                                    class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
+                                    placeholder="Contoh: Kantor Cabang Cibubur" class="w-full text-sm rounded-...">
                                 @error('destination') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                             </div>
 
@@ -284,9 +260,9 @@
         </div>
     </div>
 
-    {{-- RIGHT: sidebar (1/3 width) --}}
+    {{-- RIGHT: sidebar --}}
     <div class="space-y-6">
-        {{-- Availability card (polling 5s) --}}
+        {{-- Availability --}}
         <div class="bg-white border-2 border-black/5 rounded-2xl shadow-sm p-5">
             <h3 class="text-base font-medium">Vehicle Availability</h3>
             <div class="text-xs text-gray-500 mt-1 mb-3">For selected date: {{ $date_from ?? '—' }} —
@@ -311,7 +287,7 @@
             </div>
         </div>
 
-        {{-- Recent bookings (only current user) --}}
+        {{-- Recent bookings --}}
         <div class="bg-white border-2 border-black/5 rounded-2xl shadow-sm p-5">
             <h3 class="text-base font-medium">Recent Bookings</h3>
             <div class="mt-3 space-y-3 text-sm">
@@ -335,12 +311,12 @@
             </div>
 
             <div class="mt-3 text-xs text-gray-500">
-                Catatan: Setelah admin <span class="font-medium">approve</span>, buka kembali halaman ini dengan query
-                <code>?edit=&lt;booking_id&gt;</code> untuk upload foto sebelum/sesudah.
+                Catatan: Setelah admin <span class="font-medium">approve</span>, buka halaman ini dengan query
+                <code>?edit=&lt;booking_id&gt;</code> untuk upload foto.
             </div>
         </div>
 
-        {{-- small helper --}}
+        {{-- helper --}}
         <div class="bg-white border-2 border-black/5 rounded-2xl shadow-sm p-4 text-sm text-gray-600">
             Tip: Pastikan mengisi tanggal & jam dengan benar. Jika kendaraan belum tersedia, hubungi FM Ops.
         </div>

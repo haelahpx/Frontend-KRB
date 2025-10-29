@@ -11,14 +11,13 @@ use App\Models\VehicleBookingPhoto;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class Bookvehicle extends Component
 {
     use WithFileUploads;
 
-    /* -------------------------
-       Form properties
-       ------------------------- */
+    // form props
     public $name;
     public $department_id;
     public $start_time;
@@ -27,64 +26,51 @@ class Bookvehicle extends Component
     public $date_to;
     public $purpose;
     public $destination;
-    public $odd_even_area = 'tidak';
+    public $odd_even_area = 'tidak'; // 'ganjil','genap','tidak'
     public $jenis_keperluan = '';
     public $vehicle_id = null;
     public $has_sim_a = false;
     public $agree_terms = false;
 
-    /* -------------------------
-       File uploads
-       ------------------------- */
+    // files
     public $photo_before;
     public $photo_after;
 
-    /* -------------------------
-       Helpers / UI data
-       ------------------------- */
+    // helpers / ui data
     public $departments;
     public $vehicles;
     public $hasVehicles = false;
     public $availability = [];
     public $recentBookings = [];
 
-    /* -------------------------
-       Edit / upload mode (after approved)
-       ------------------------- */
+    // edit mode
     public $isEdit = false;
     public $editingBookingId = null;
     public $editingBooking = null;
 
-    /* -------------------------
-       Mount - load masters + initial data
-       ------------------------- */
     public function mount()
     {
         $user = Auth::user();
 
-        // prefill name & department if available in user profile
+        // prefill from user profile if available
         $this->name = $user->full_name ?? $user->name ?? null;
         $this->department_id = $user->department_id ?? null;
 
-        // load static/master data
         $this->departments = Department::orderBy('department_name')->get();
         $this->vehicles = Vehicle::where('company_id', $user->company_id ?? 1)->get();
         $this->hasVehicles = $this->vehicles->count() > 0;
 
-        // initial load (safe lightweight)
+        // initial loads (lightweight)
         $this->loadAvailability();
         $this->loadRecentBookings();
 
-        // if ?edit=id present, enter edit mode
+        // check query param ?edit=
         $editId = request()->query('edit');
         if ($editId) {
             $this->enterEditMode($editId);
         }
     }
 
-    /* -------------------------
-       Validation rules
-       ------------------------- */
     protected function rules()
     {
         if ($this->isEdit) {
@@ -113,9 +99,6 @@ class Bookvehicle extends Component
         ];
     }
 
-    /* -------------------------
-       Livewire file validation hooks
-       ------------------------- */
     public function updatedPhotoBefore()
     {
         $this->validateOnly('photo_before');
@@ -126,13 +109,12 @@ class Bookvehicle extends Component
         $this->validateOnly('photo_after');
     }
 
-    /* -------------------------
-       Enter edit mode (public because Blade may call via ?edit or user flow)
-       - only allowed when booking status is 'approved'
-       ------------------------- */
+    /**
+     * Enter edit mode: user uploads photos after booking is approved.
+     */
     public function enterEditMode($id)
     {
-        $booking = VehicleBooking::where('vehicle_booking_id', $id)
+        $booking = VehicleBooking::where('vehiclebooking_id', $id)
             ->where('company_id', Auth::user()->company_id ?? 1)
             ->first();
 
@@ -147,13 +129,12 @@ class Bookvehicle extends Component
         }
 
         $this->isEdit = true;
-        $this->editingBookingId = $booking->vehicle_booking_id;
+        $this->editingBookingId = $booking->vehiclebooking_id;
         $this->editingBooking = $booking;
 
-        // fill small preview info
+        // preview
         $this->name = $booking->borrower_name ?? $this->name;
         $this->department_id = $booking->department_id ?? $this->department_id;
-
         if ($booking->start_at) {
             $this->date_from = Carbon::parse($booking->start_at)->toDateString();
             $this->start_time = Carbon::parse($booking->start_at)->format('H:i');
@@ -162,42 +143,27 @@ class Bookvehicle extends Component
             $this->date_to = Carbon::parse($booking->end_at)->toDateString();
             $this->end_time = Carbon::parse($booking->end_at)->format('H:i');
         }
-
         $this->destination = $booking->destination;
         $this->purpose = $booking->purpose;
     }
 
-    /* -------------------------
-       Submit handler (create OR upload mode)
-       ------------------------- */
+    /**
+     * Submit: create booking (pending) OR upload photos (edit -> draft)
+     */
     public function submit()
     {
         if ($this->isEdit) {
-            // upload photos flow (after approved)
             $this->validate();
 
-            $beforePath = $this->photo_before->store('vehicle_bookings', 'public');
-            $afterPath = $this->photo_after->store('vehicle_bookings', 'public');
+            if ($this->photo_before) {
+                $this->uploadToCloudinaryAndSave($this->photo_before, 'before', $this->editingBookingId);
+            }
 
-            VehicleBookingPhoto::create([
-                'vehicle_booking_id' => $this->editingBookingId,
-                'uploaded_by' => Auth::id(),
-                'type' => 'before',
-                'path' => $beforePath,
-                'mime' => $this->photo_before->getClientMimeType(),
-                'size' => $this->photo_before->getSize(),
-            ]);
+            if ($this->photo_after) {
+                $this->uploadToCloudinaryAndSave($this->photo_after, 'after', $this->editingBookingId);
+            }
 
-            VehicleBookingPhoto::create([
-                'vehicle_booking_id' => $this->editingBookingId,
-                'uploaded_by' => Auth::id(),
-                'type' => 'after',
-                'path' => $afterPath,
-                'mime' => $this->photo_after->getClientMimeType(),
-                'size' => $this->photo_after->getSize(),
-            ]);
-
-            // set to draft per permintaan
+            // set booking to draft so admin can review --> then admin can set completed
             $booking = VehicleBooking::find($this->editingBookingId);
             if ($booking) {
                 $booking->status = 'draft';
@@ -211,14 +177,25 @@ class Bookvehicle extends Component
         // create new booking -> status pending
         $this->validate();
 
+        // map jenis_keperluan (UI) -> purpose_type (DB enum)
+        switch ($this->jenis_keperluan) {
+            case 'visitasi':
+                $purposeType = 'dinas';
+                break;
+            case 'logistik barang':
+                $purposeType = 'operasional';
+                break;
+            default:
+                $purposeType = 'lainnya';
+        }
+
         $startAt = $this->combineDateTime($this->date_from, $this->start_time);
         $endAt = $this->combineDateTime($this->date_to, $this->end_time ?? $this->start_time);
 
-        $purposeType = $this->jenis_keperluan === 'visitasi' ? 'visitasi' : 'logistik barang';
-
         $booking = VehicleBooking::create([
             'company_id' => Auth::user()->company_id ?? 1,
-            'user_id' => Auth::id(),
+            // project DB uses user_id (user_id bigint) — try to use Auth user primary key name
+            'user_id' => Auth::id() ?? Auth::user()->user_id ?? null,
             'vehicle_id' => $this->vehicle_id ?: null,
             'borrower_name' => $this->name,
             'department_id' => $this->department_id,
@@ -233,55 +210,64 @@ class Bookvehicle extends Component
             'status' => 'pending',
         ]);
 
-        // optional: store photos at creation time if provided
+        // optional: upload photos now if provided
         if ($this->photo_before) {
-            $path = $this->photo_before->store('vehicle_bookings', 'public');
-            VehicleBookingPhoto::create([
-                'vehicle_booking_id' => $booking->vehicle_booking_id,
-                'uploaded_by' => Auth::id(),
-                'type' => 'before',
-                'path' => $path,
-                'mime' => $this->photo_before->getClientMimeType(),
-                'size' => $this->photo_before->getSize(),
-            ]);
+            $this->uploadToCloudinaryAndSave($this->photo_before, 'before', $booking->vehiclebooking_id);
         }
-
         if ($this->photo_after) {
-            $path = $this->photo_after->store('vehicle_bookings', 'public');
-            VehicleBookingPhoto::create([
-                'vehicle_booking_id' => $booking->vehicle_booking_id,
-                'uploaded_by' => Auth::id(),
-                'type' => 'after',
-                'path' => $path,
-                'mime' => $this->photo_after->getClientMimeType(),
-                'size' => $this->photo_after->getSize(),
-            ]);
+            $this->uploadToCloudinaryAndSave($this->photo_after, 'after', $booking->vehiclebooking_id);
         }
 
         session()->flash('success', 'Booking dikirim — status: PENDING.');
         return redirect()->route('bookingstatus');
     }
 
-    /* -------------------------
-       Helper: combine date + time
-       ------------------------- */
     private function combineDateTime($date, $time)
     {
         $t = $time ?: '00:00';
         return Carbon::parse("{$date} {$t}")->toDateTimeString();
     }
 
-    /* -------------------------
-       PUBLIC: loadAvailability
-       - Must be public because Blade calls via wire:poll
-       - Checks each vehicle for overlapping bookings in selected window
-       ------------------------- */
+    /**
+     * Upload file to Cloudinary and save record
+     * returns [public_id, secure_url]
+     */
+    private function uploadToCloudinaryAndSave($file, $type, $bookingId)
+    {
+        $folder = trim(env('CLOUDINARY_BASE_FOLDER', 'krbs'), '/') . '/vehicle_photos';
+
+        $upload = Cloudinary::upload($file->getRealPath(), [
+            'folder' => $folder,
+            'resource_type' => 'image',
+            'upload_preset' => env('CLOUDINARY_UPLOAD_PRESET', null),
+            'use_filename' => true,
+            'unique_filename' => false,
+        ]);
+
+        $publicId = method_exists($upload, 'getPublicId') ? $upload->getPublicId() : ($upload['public_id'] ?? null);
+        $secureUrl = method_exists($upload, 'getSecurePath') ? $upload->getSecurePath() : ($upload['secure_url'] ?? ($upload['url'] ?? null));
+
+        VehicleBookingPhoto::create([
+            'vehiclebooking_id' => $bookingId,
+            'user_id' => Auth::user()->user_id ?? Auth::id(),
+            'photo_type' => $type,
+            'photo_url' => $secureUrl,
+            'cloudinary_public_id' => $publicId,
+        ]);
+
+        return [$publicId, $secureUrl];
+    }
+
+    /**
+     * PUBLIC: load availability, called by wire:poll
+     */
     public function loadAvailability()
     {
         $vehicles = $this->vehicles;
 
         if ($this->date_from && $this->start_time) {
             $desiredStart = Carbon::parse("{$this->date_from} {$this->start_time}");
+            $desiredEnd = null;
             if ($this->date_to && $this->end_time) {
                 $desiredEnd = Carbon::parse("{$this->date_to} {$this->end_time}");
             } else {
@@ -309,23 +295,20 @@ class Bookvehicle extends Component
         })->toArray();
     }
 
-    /* -------------------------
-       PUBLIC: loadRecentBookings
-       - Must be public if you want to poll it; otherwise Blade does not call it directly.
-       - Filters to only current logged-in user's bookings.
-       ------------------------- */
+    /**
+     * PUBLIC: load recent bookings for current user
+     */
     public function loadRecentBookings()
     {
+        $userId = Auth::id() ?? Auth::user()->user_id ?? null;
+
         $this->recentBookings = VehicleBooking::where('company_id', Auth::user()->company_id ?? 1)
-            ->where('user_id', Auth::id())
+            ->where('user_id', $userId)
             ->orderByDesc('created_at')
             ->limit(6)
             ->get();
     }
 
-    /* -------------------------
-       Reset form convenience
-       ------------------------- */
     public function resetForm()
     {
         $this->start_time = null;
@@ -341,13 +324,11 @@ class Bookvehicle extends Component
         $this->photo_after = null;
         $this->has_sim_a = false;
         $this->agree_terms = false;
+        $this->isEdit = false;
+        $this->editingBookingId = null;
+        $this->editingBooking = null;
     }
 
-    /* -------------------------
-       Render
-       - We no longer call loadAvailability/loadRecentBookings repeatedly here,
-         Blade will poll loadAvailability; we only ensure initial data in mount.
-       ------------------------- */
     public function render()
     {
         return view('livewire.pages.user.bookvehicle', [
