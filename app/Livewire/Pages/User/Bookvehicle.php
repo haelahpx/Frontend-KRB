@@ -4,15 +4,21 @@ namespace App\Livewire\Pages\User;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
+use App\Models\Vehicle;
+use App\Models\Department;
+use App\Models\VehicleBooking;
+use App\Models\VehicleBookingPhoto;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class Bookvehicle extends Component
 {
     use WithFileUploads;
 
-    // form fields
+    /* -------------------------
+       Form properties
+       ------------------------- */
     public $name;
     public $department_id;
     public $start_time;
@@ -21,57 +27,73 @@ class Bookvehicle extends Component
     public $date_to;
     public $purpose;
     public $destination;
-    public $odd_even_area = 'no';
-    public $jenis_keperluan = null;
-    public $agree_terms = false;
+    public $odd_even_area = 'tidak';
+    public $jenis_keperluan = '';
+    public $vehicle_id = null;
     public $has_sim_a = false;
+    public $agree_terms = false;
 
-    // optional vehicle
-    public $vehicle_id;
-    public $vehicles;
-    public $hasVehicles = false;
-
-    // uploads
+    /* -------------------------
+       File uploads
+       ------------------------- */
     public $photo_before;
     public $photo_after;
 
-    // collections
+    /* -------------------------
+       Helpers / UI data
+       ------------------------- */
     public $departments;
-
-    // sidebar data
+    public $vehicles;
+    public $hasVehicles = false;
     public $availability = [];
     public $recentBookings = [];
 
+    /* -------------------------
+       Edit / upload mode (after approved)
+       ------------------------- */
+    public $isEdit = false;
+    public $editingBookingId = null;
+    public $editingBooking = null;
+
+    /* -------------------------
+       Mount - load masters + initial data
+       ------------------------- */
     public function mount()
     {
-        // load vehicles if exists
-        if (Schema::hasTable('vehicles')) {
-            $this->hasVehicles = true;
-            $this->vehicles = DB::table('vehicles')
-                ->where('company_id', auth()->user()->company_id ?? 1)
-                ->get();
-        } else {
-            $this->hasVehicles = false;
-            $this->vehicles = collect();
-        }
+        $user = Auth::user();
 
-        // load departments if exists
-        if (Schema::hasTable('departments')) {
-            $this->departments = DB::table('departments')
-                ->where('company_id', auth()->user()->company_id ?? 1)
-                ->get();
-        } else {
-            $this->departments = collect();
-        }
+        // prefill name & department if available in user profile
+        $this->name = $user->full_name ?? $user->name ?? null;
+        $this->department_id = $user->department_id ?? null;
 
-        // prepare sidebar
+        // load static/master data
+        $this->departments = Department::orderBy('department_name')->get();
+        $this->vehicles = Vehicle::where('company_id', $user->company_id ?? 1)->get();
+        $this->hasVehicles = $this->vehicles->count() > 0;
+
+        // initial load (safe lightweight)
         $this->loadAvailability();
         $this->loadRecentBookings();
+
+        // if ?edit=id present, enter edit mode
+        $editId = request()->query('edit');
+        if ($editId) {
+            $this->enterEditMode($editId);
+        }
     }
 
-    // Avoid constant-expression problems by using a method
-    protected function rules(): array
+    /* -------------------------
+       Validation rules
+       ------------------------- */
+    protected function rules()
     {
+        if ($this->isEdit) {
+            return [
+                'photo_before' => 'required|image|max:5120',
+                'photo_after' => 'required|image|max:5120',
+            ];
+        }
+
         return [
             'name' => 'required|string|max:255',
             'department_id' => 'required|integer',
@@ -79,18 +101,21 @@ class Bookvehicle extends Component
             'date_to' => 'required|date|after_or_equal:date_from',
             'start_time' => 'required',
             'end_time' => 'nullable',
-            'destination' => 'required|string|max:255',
             'purpose' => 'required|string|max:500',
-            'jenis_keperluan' => ['nullable', 'string', 'max:100'],
-            'odd_even_area' => ['nullable', Rule::in(['no','odd','even'])],
-            'agree_terms' => 'accepted',
+            'destination' => 'nullable|string|max:255',
+            'odd_even_area' => ['required', Rule::in(['ganjil', 'genap', 'tidak'])],
+            'jenis_keperluan' => ['required', Rule::in(['visitasi', 'logistik barang'])],
             'has_sim_a' => 'accepted',
+            'agree_terms' => 'accepted',
             'vehicle_id' => 'nullable|integer',
             'photo_before' => 'nullable|image|max:5120',
             'photo_after' => 'nullable|image|max:5120',
         ];
     }
 
+    /* -------------------------
+       Livewire file validation hooks
+       ------------------------- */
     public function updatedPhotoBefore()
     {
         $this->validateOnly('photo_before');
@@ -101,113 +126,228 @@ class Bookvehicle extends Component
         $this->validateOnly('photo_after');
     }
 
+    /* -------------------------
+       Enter edit mode (public because Blade may call via ?edit or user flow)
+       - only allowed when booking status is 'approved'
+       ------------------------- */
+    public function enterEditMode($id)
+    {
+        $booking = VehicleBooking::where('vehicle_booking_id', $id)
+            ->where('company_id', Auth::user()->company_id ?? 1)
+            ->first();
+
+        if (!$booking) {
+            session()->flash('error', 'Booking tidak ditemukan.');
+            return;
+        }
+
+        if (($booking->status ?? '') !== 'approved') {
+            session()->flash('error', 'Booking belum disetujui sehingga tidak bisa upload foto.');
+            return;
+        }
+
+        $this->isEdit = true;
+        $this->editingBookingId = $booking->vehicle_booking_id;
+        $this->editingBooking = $booking;
+
+        // fill small preview info
+        $this->name = $booking->borrower_name ?? $this->name;
+        $this->department_id = $booking->department_id ?? $this->department_id;
+
+        if ($booking->start_at) {
+            $this->date_from = Carbon::parse($booking->start_at)->toDateString();
+            $this->start_time = Carbon::parse($booking->start_at)->format('H:i');
+        }
+        if ($booking->end_at) {
+            $this->date_to = Carbon::parse($booking->end_at)->toDateString();
+            $this->end_time = Carbon::parse($booking->end_at)->format('H:i');
+        }
+
+        $this->destination = $booking->destination;
+        $this->purpose = $booking->purpose;
+    }
+
+    /* -------------------------
+       Submit handler (create OR upload mode)
+       ------------------------- */
     public function submit()
     {
+        if ($this->isEdit) {
+            // upload photos flow (after approved)
+            $this->validate();
+
+            $beforePath = $this->photo_before->store('vehicle_bookings', 'public');
+            $afterPath = $this->photo_after->store('vehicle_bookings', 'public');
+
+            VehicleBookingPhoto::create([
+                'vehicle_booking_id' => $this->editingBookingId,
+                'uploaded_by' => Auth::id(),
+                'type' => 'before',
+                'path' => $beforePath,
+                'mime' => $this->photo_before->getClientMimeType(),
+                'size' => $this->photo_before->getSize(),
+            ]);
+
+            VehicleBookingPhoto::create([
+                'vehicle_booking_id' => $this->editingBookingId,
+                'uploaded_by' => Auth::id(),
+                'type' => 'after',
+                'path' => $afterPath,
+                'mime' => $this->photo_after->getClientMimeType(),
+                'size' => $this->photo_after->getSize(),
+            ]);
+
+            // set to draft per permintaan
+            $booking = VehicleBooking::find($this->editingBookingId);
+            if ($booking) {
+                $booking->status = 'draft';
+                $booking->save();
+            }
+
+            session()->flash('success', 'Foto berhasil diunggah. Booking diset ke DRAFT.');
+            return redirect()->route('bookingstatus');
+        }
+
+        // create new booking -> status pending
         $this->validate();
 
-        $beforePath = null;
-        $afterPath = null;
+        $startAt = $this->combineDateTime($this->date_from, $this->start_time);
+        $endAt = $this->combineDateTime($this->date_to, $this->end_time ?? $this->start_time);
 
-        if ($this->photo_before) {
-            $beforePath = $this->photo_before->store('bookings/photos', 'public');
-        }
-        if ($this->photo_after) {
-            $afterPath = $this->photo_after->store('bookings/photos', 'public');
-        }
+        $purposeType = $this->jenis_keperluan === 'visitasi' ? 'visitasi' : 'logistik barang';
 
-        // Insert to DB (adjust column names if your schema differs)
-        DB::table('vehicle_bookings')->insert([
-            'company_id' => auth()->user()->company_id ?? 1,
-            'user_id' => auth()->id(),
+        $booking = VehicleBooking::create([
+            'company_id' => Auth::user()->company_id ?? 1,
+            'user_id' => Auth::id(),
             'vehicle_id' => $this->vehicle_id ?: null,
-            'name' => $this->name,
+            'borrower_name' => $this->name,
             'department_id' => $this->department_id,
-            'date_from' => $this->date_from,
-            'date_to' => $this->date_to,
-            'start_time' => $this->start_time,
-            'end_time' => $this->end_time,
-            'destination' => $this->destination,
+            'start_at' => $startAt,
+            'end_at' => $endAt,
             'purpose' => $this->purpose,
-            'jenis_keperluan' => $this->jenis_keperluan,
-            'odd_even_area' => $this->odd_even_area,
-            'photo_before' => $beforePath,
-            'photo_after' => $afterPath,
+            'destination' => $this->destination,
+            'odd_even_area' => in_array($this->odd_even_area, ['ganjil', 'genap']) ? 'ya' : 'tidak',
+            'purpose_type' => $purposeType,
+            'terms_agreed' => $this->agree_terms ? 1 : 0,
+            'is_approve' => 0,
             'status' => 'pending',
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
-        session()->flash('success', 'Booking kendaraan berhasil dikirim dan berstatus PENDING.');
+        // optional: store photos at creation time if provided
+        if ($this->photo_before) {
+            $path = $this->photo_before->store('vehicle_bookings', 'public');
+            VehicleBookingPhoto::create([
+                'vehicle_booking_id' => $booking->vehicle_booking_id,
+                'uploaded_by' => Auth::id(),
+                'type' => 'before',
+                'path' => $path,
+                'mime' => $this->photo_before->getClientMimeType(),
+                'size' => $this->photo_before->getSize(),
+            ]);
+        }
 
-        // refresh sidebar recent bookings
-        $this->loadRecentBookings();
+        if ($this->photo_after) {
+            $path = $this->photo_after->store('vehicle_bookings', 'public');
+            VehicleBookingPhoto::create([
+                'vehicle_booking_id' => $booking->vehicle_booking_id,
+                'uploaded_by' => Auth::id(),
+                'type' => 'after',
+                'path' => $path,
+                'mime' => $this->photo_after->getClientMimeType(),
+                'size' => $this->photo_after->getSize(),
+            ]);
+        }
 
+        session()->flash('success', 'Booking dikirim — status: PENDING.');
         return redirect()->route('bookingstatus');
     }
 
+    /* -------------------------
+       Helper: combine date + time
+       ------------------------- */
+    private function combineDateTime($date, $time)
+    {
+        $t = $time ?: '00:00';
+        return Carbon::parse("{$date} {$t}")->toDateTimeString();
+    }
+
+    /* -------------------------
+       PUBLIC: loadAvailability
+       - Must be public because Blade calls via wire:poll
+       - Checks each vehicle for overlapping bookings in selected window
+       ------------------------- */
+    public function loadAvailability()
+    {
+        $vehicles = $this->vehicles;
+
+        if ($this->date_from && $this->start_time) {
+            $desiredStart = Carbon::parse("{$this->date_from} {$this->start_time}");
+            if ($this->date_to && $this->end_time) {
+                $desiredEnd = Carbon::parse("{$this->date_to} {$this->end_time}");
+            } else {
+                $desiredEnd = (clone $desiredStart)->addHour();
+            }
+        } else {
+            $desiredStart = Carbon::now();
+            $desiredEnd = (clone $desiredStart)->addHour();
+        }
+
+        $this->availability = $vehicles->map(function ($v) use ($desiredStart, $desiredEnd) {
+            $overlaps = VehicleBooking::where('vehicle_id', $v->vehicle_id)
+                ->whereIn('status', ['pending', 'approved', 'in_use'])
+                ->where(function ($q) use ($desiredStart, $desiredEnd) {
+                    $q->where('start_at', '<=', $desiredEnd)
+                        ->where('end_at', '>=', $desiredStart);
+                })
+                ->exists();
+
+            return [
+                'label' => ($v->vehicle_name ?? ($v->name ?? 'Kendaraan')) . (($v->plate_number ?? $v->license_plate) ? " — " . ($v->plate_number ?? $v->license_plate) : ''),
+                'status' => $overlaps ? 'unavailable' : 'available',
+                'vehicle_id' => $v->vehicle_id,
+            ];
+        })->toArray();
+    }
+
+    /* -------------------------
+       PUBLIC: loadRecentBookings
+       - Must be public if you want to poll it; otherwise Blade does not call it directly.
+       - Filters to only current logged-in user's bookings.
+       ------------------------- */
+    public function loadRecentBookings()
+    {
+        $this->recentBookings = VehicleBooking::where('company_id', Auth::user()->company_id ?? 1)
+            ->where('user_id', Auth::id())
+            ->orderByDesc('created_at')
+            ->limit(6)
+            ->get();
+    }
+
+    /* -------------------------
+       Reset form convenience
+       ------------------------- */
     public function resetForm()
     {
-        $this->name = null;
-        $this->department_id = null;
         $this->start_time = null;
         $this->end_time = null;
         $this->date_from = null;
         $this->date_to = null;
         $this->purpose = null;
         $this->destination = null;
-        $this->jenis_keperluan = null;
-        $this->odd_even_area = 'no';
-        $this->agree_terms = false;
-        $this->has_sim_a = false;
+        $this->odd_even_area = 'tidak';
+        $this->jenis_keperluan = '';
         $this->vehicle_id = null;
         $this->photo_before = null;
         $this->photo_after = null;
+        $this->has_sim_a = false;
+        $this->agree_terms = false;
     }
 
-    protected function loadAvailability()
-    {
-        if (Schema::hasTable('vehicles')) {
-            $vehicles = DB::table('vehicles')
-                ->where('company_id', auth()->user()->company_id ?? 1)
-                ->get();
-
-            $this->availability = $vehicles->map(function ($v) {
-                $status = $v->status ?? 'available';
-                // safe fallback for plate column (your DB uses plate_number)
-                $plate = $v->plate_number ?? ($v->license_plate ?? '');
-                $label = ($v->vehicle_name ?? ($v->name ?? 'Kendaraan')) . ($plate ? " — {$plate}" : '');
-                return [
-                    'id' => $v->vehicle_id ?? $v->id,
-                    'label' => $label,
-                    'status' => $status,
-                ];
-            })->toArray();
-        } else {
-            // fallback placeholders
-            $this->availability = [
-                ['id' => 1, 'label' => 'Mobil Operasional A', 'status' => 'available'],
-                ['id' => 2, 'label' => 'Avanza Operasional', 'status' => 'available'],
-                ['id' => 3, 'label' => 'Motor Operasional', 'status' => 'maintenance'],
-            ];
-        }
-    }
-
-    protected function loadRecentBookings()
-    {
-        if (Schema::hasTable('vehicle_bookings')) {
-            $this->recentBookings = DB::table('vehicle_bookings')
-                ->where('company_id', auth()->user()->company_id ?? 1)
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get();
-        } else {
-            $this->recentBookings = collect([
-                (object)['name' => 'Rapat Tim A', 'date_from' => now()->addDay()->toDateString(), 'start_time' => '13:00', 'status' => 'pending'],
-                (object)['name' => 'Survey Lokasi', 'date_from' => now()->addDays(2)->toDateString(), 'start_time' => '09:00', 'status' => 'pending'],
-            ]);
-        }
-    }
-
+    /* -------------------------
+       Render
+       - We no longer call loadAvailability/loadRecentBookings repeatedly here,
+         Blade will poll loadAvailability; we only ensure initial data in mount.
+       ------------------------- */
     public function render()
     {
         return view('livewire.pages.user.bookvehicle', [
@@ -215,6 +355,6 @@ class Bookvehicle extends Component
             'vehicles' => $this->vehicles,
             'availability' => $this->availability,
             'recentBookings' => $this->recentBookings,
-        ])->layout('layouts.app', ['title' => 'Book Vehicle']);
+        ])->layout('layouts.app', ['title' => $this->isEdit ? 'Upload Foto Booking' : 'Book Vehicle']);
     }
 }
