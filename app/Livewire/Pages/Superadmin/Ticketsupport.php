@@ -8,6 +8,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use App\Models\Ticket;
 use App\Models\Department;
+use Illuminate\Support\Facades\Auth;
 
 #[Layout('layouts.superadmin')]
 #[Title('Ticket Support')]
@@ -40,8 +41,10 @@ class Ticketsupport extends Component
 
     public function mount()
     {
-        // departments table uses department_id and department_name
-        $this->deptLookup = Department::pluck('department_name', 'department_id')->toArray();
+        $companyId = Auth::user()->company_id;
+        $this->deptLookup = Department::where('company_id', $companyId)
+            ->pluck('department_name', 'department_id')
+            ->toArray();
     }
 
     // Reset pagination when filters change
@@ -53,14 +56,18 @@ class Ticketsupport extends Component
 
     public function render()
     {
+        $companyId = Auth::user()->company_id;
+
         $query = Ticket::with(['user', 'attachments', 'department'])
+            ->where('company_id', $companyId)
             ->orderBy('created_at', 'desc');
 
-        // If showDeleted = true, include soft-deleted tickets
+        // Show only deleted if requested
         if ($this->showDeleted) {
             $query->onlyTrashed();
         }
 
+        // Search filter
         if ($this->search) {
             $s = '%' . $this->search . '%';
             $query->where(function ($q) use ($s) {
@@ -73,10 +80,12 @@ class Ticketsupport extends Component
             });
         }
 
+        // Department filter
         if ($this->departmentFilter) {
             $query->where('department_id', $this->departmentFilter);
         }
 
+        // Priority filter
         if ($this->priorityFilter) {
             $query->where('priority', $this->priorityFilter);
         }
@@ -130,7 +139,7 @@ class Ticketsupport extends Component
     public function delete($id)
     {
         $t = Ticket::findOrFail($id);
-        $t->delete(); // soft delete
+        $t->delete();
         session()->flash('success', 'Ticket moved to recycle bin (soft deleted).');
         $this->resetPage();
     }

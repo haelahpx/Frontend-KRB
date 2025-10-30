@@ -45,7 +45,6 @@ class Bookroom extends Component
 
     public array $requirementsMaster = [];
 
-
     public function mount(): void
     {
         $now = Carbon::now($this->tz);
@@ -102,7 +101,7 @@ class Bookroom extends Component
         $this->view = in_array($view, ['form', 'calendar'], true) ? $view : 'form';
     }
 
-    // week/month navigation
+    // Week/month navigation
     public function previousWeek(): void
     {
         $this->selectedDate = Carbon::parse($this->date, $this->tz)->subWeek();
@@ -165,7 +164,7 @@ class Bookroom extends Component
         $this->selectDate($this->date);
     }
 
-    // pagination
+    // Pagination for room cards
     public function nextRoomPage(): void
     {
         if ($this->roomPage < $this->totalRoomPages())
@@ -189,16 +188,6 @@ class Bookroom extends Component
         return max(1, (int) ceil(count($this->rooms) / $this->roomsPerPage));
     }
 
-    // child modal trigger
-    public function selectCalendarSlot(int $roomId, string $ymd, string $time): void
-    {
-        $this->dispatch('open-quick-book', [
-            'roomId' => $roomId,
-            'ymd' => $ymd,
-            'time' => $time,
-        ]);
-    }
-
     #[On('booking-created')]
     public function refreshAfterBooking(): void
     {
@@ -219,7 +208,9 @@ class Bookroom extends Component
             'requirements' => 'array',
         ]);
 
+        $companyId = Auth::user()->company_id;
         $now = Carbon::now($this->tz);
+
         if ($this->date < $now->toDateString()) {
             $this->dispatch('toast', ['type' => 'error', 'message' => 'Tidak bisa booking ke tanggal yang sudah lewat.']);
             return;
@@ -233,6 +224,7 @@ class Bookroom extends Component
         $endDt = Carbon::createFromFormat('Y-m-d H:i', "{$this->date} {$this->end_time}", $this->tz);
 
         $overlap = BookingRoom::query()
+            ->where('company_id', $companyId)
             ->where('room_id', $this->room_id)
             ->where('date', $this->date)
             ->whereIn('status', ['pending', 'approved'])
@@ -245,11 +237,11 @@ class Bookroom extends Component
             return;
         }
 
-        DB::transaction(function () use ($startDt, $endDt) {
+        DB::transaction(function () use ($startDt, $endDt, $companyId) {
             $booking = BookingRoom::create([
                 'room_id' => (int) $this->room_id,
-                'company_id' => Auth::user()->company_id ?? 1,
-                'user_id' => Auth::id() ?? 1,
+                'company_id' => $companyId,
+                'user_id' => Auth::id(),
                 'department_id' => Auth::user()->department_id ?? null,
                 'meeting_title' => $this->meeting_title,
                 'date' => $this->date,
@@ -263,7 +255,11 @@ class Bookroom extends Component
             ]);
 
             if (!empty($this->requirements)) {
-                $ids = Requirement::upsertByName($this->requirements);
+                $ids = Requirement::where('company_id', $companyId)
+                    ->whereIn('name', $this->requirements)
+                    ->pluck('requirement_id')
+                    ->toArray();
+
                 $booking->requirements()->sync($ids);
             }
         });
@@ -277,7 +273,10 @@ class Bookroom extends Component
 
     protected function loadRoomsFromDb(): void
     {
+        $companyId = Auth::user()->company_id;
+
         $this->rooms = Room::query()
+            ->where('company_id', $companyId)
             ->orderBy('room_number')
             ->get(['room_id', 'room_number'])
             ->map(fn($r) => [
@@ -294,7 +293,7 @@ class Bookroom extends Component
         $this->requirementsMaster = Requirement::query()
             ->where('company_id', $companyId)
             ->orderBy('name')
-            ->pluck('name')           // hasil: ["Projector & Screen", "Whiteboard & Markers", ...]
+            ->pluck('name')
             ->map(fn($n) => (string) $n)
             ->values()
             ->all();
@@ -302,7 +301,10 @@ class Bookroom extends Component
 
     protected function loadRecentBookings(): void
     {
+        $companyId = Auth::user()->company_id;
+
         $this->bookings = BookingRoom::query()
+            ->where('company_id', $companyId)
             ->orderByDesc('created_at')
             ->limit(10)
             ->get(['bookingroom_id', 'room_id', 'meeting_title', 'date', 'start_time', 'end_time', 'status', 'is_approve'])
@@ -318,15 +320,17 @@ class Bookroom extends Component
             ])->all();
     }
 
+    // ✅ RESTORED METHOD — this was missing
     protected function buildTimeSlots(): void
     {
         $start = Carbon::createFromTime(8, 0, 0, $this->tz);
-        $end = Carbon::createFromTime(18, 0, 0, $this->tz);
+        $end   = Carbon::createFromTime(18, 0, 0, $this->tz);
 
         $slots = [];
         for ($t = $start->copy(); $t->lt($end); $t->addMinutes($this->slotMinutes)) {
             $slots[] = $t->format('H:i');
         }
+
         $this->timeSlots = $slots;
     }
 
@@ -340,15 +344,17 @@ class Bookroom extends Component
 
     protected function recalculateAvailability(): void
     {
+        $companyId = Auth::user()->company_id;
         $reqStart = ($this->date && $this->start_time)
             ? Carbon::createFromFormat('Y-m-d H:i', "{$this->date} {$this->start_time}", $this->tz) : null;
         $reqEnd = ($this->date && $this->end_time)
             ? Carbon::createFromFormat('Y-m-d H:i', "{$this->date} {$this->end_time}", $this->tz) : null;
 
-        $this->rooms = collect($this->rooms)->map(function ($r) use ($reqStart, $reqEnd) {
+        $this->rooms = collect($this->rooms)->map(function ($r) use ($reqStart, $reqEnd, $companyId) {
             $busyReq = false;
             if ($reqStart && $reqEnd) {
                 $busyReq = BookingRoom::query()
+                    ->where('company_id', $companyId)
                     ->where('room_id', $r['id'])
                     ->where('date', $reqStart->toDateString())
                     ->whereIn('status', ['pending', 'approved'])
@@ -363,10 +369,12 @@ class Bookroom extends Component
 
     public function getBookingForSlot(int $roomId, string $ymd, string $timeSlot): ?array
     {
+        $companyId = Auth::user()->company_id;
         $slotStart = Carbon::createFromFormat('Y-m-d H:i', "{$ymd} {$timeSlot}", $this->tz);
         $slotEnd = $slotStart->copy()->addMinutes($this->slotMinutes);
 
         $b = BookingRoom::query()
+            ->where('company_id', $companyId)
             ->where('room_id', $roomId)
             ->where('date', $ymd)
             ->whereIn('status', ['pending', 'approved'])

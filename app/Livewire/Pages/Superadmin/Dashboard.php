@@ -26,27 +26,33 @@ class Dashboard extends Component
 
     public function tick(): void
     {
+        //
     }
 
     public function render()
     {
-        // ===== BASIC STATS (without Company) =====
+        $companyId = Auth::user()->company_id;
+
+        // ===== BASIC STATS (Filtered by Company) =====
         $stats = [
-            ['label' => 'Total Users', 'value' => User::count()],
-            ['label' => 'Total Departments', 'value' => Department::count()],
-            ['label' => 'Total Announcements', 'value' => Announcement::count()],
+            ['label' => 'Total Users', 'value' => User::where('company_id', $companyId)->count()],
+            ['label' => 'Total Departments', 'value' => Department::where('company_id', $companyId)->count()],
+            ['label' => 'Total Announcements', 'value' => Announcement::where('company_id', $companyId)->count()],
         ];
 
-        // ===== MONTHLY COUNTS =====
-        $roomBookings = BookingRoom::selectRaw('MONTH(created_at) as m, COUNT(*) as c')
+        // ===== MONTHLY COUNTS (Filtered by Company) =====
+        $roomBookings = BookingRoom::where('company_id', $companyId)
+            ->selectRaw('MONTH(created_at) as m, COUNT(*) as c')
             ->whereYear('created_at', now()->year)
             ->groupBy('m')->pluck('c', 'm')->toArray();
 
-        $vehicleBookings = VehicleBooking::selectRaw('MONTH(created_at) as m, COUNT(*) as c')
+        $vehicleBookings = VehicleBooking::where('company_id', $companyId)
+            ->selectRaw('MONTH(created_at) as m, COUNT(*) as c')
             ->whereYear('created_at', now()->year)
             ->groupBy('m')->pluck('c', 'm')->toArray();
 
-        $tickets = Ticket::selectRaw('MONTH(created_at) as m, COUNT(*) as c')
+        $tickets = Ticket::where('company_id', $companyId)
+            ->selectRaw('MONTH(created_at) as m, COUNT(*) as c')
             ->whereYear('created_at', now()->year)
             ->groupBy('m')->pluck('c', 'm')->toArray();
 
@@ -58,8 +64,9 @@ class Dashboard extends Component
             'ticket' => array_map(fn($i) => (int) ($tickets[$i] ?? 0), range(1, 12)),
         ];
 
-        // ===== TICKETING CHARTS =====
-        $priorityCountsRaw = Ticket::selectRaw('priority, COUNT(*) as c')
+        // ===== TICKETING CHARTS (Filtered by Company) =====
+        $priorityCountsRaw = Ticket::where('company_id', $companyId)
+            ->selectRaw('priority, COUNT(*) as c')
             ->groupBy('priority')->pluck('c', 'priority')->toArray();
 
         $priorityCounts = [
@@ -68,7 +75,8 @@ class Dashboard extends Component
             'high' => (int) ($priorityCountsRaw['high'] ?? 0),
         ];
 
-        $statusCountsRaw = Ticket::selectRaw('status, COUNT(*) as c')
+        $statusCountsRaw = Ticket::where('company_id', $companyId)
+            ->selectRaw('status, COUNT(*) as c')
             ->groupBy('status')->pluck('c', 'status')->toArray();
 
         $statusCounts = [
@@ -78,7 +86,8 @@ class Dashboard extends Component
             'CLOSED' => (int) ($statusCountsRaw['CLOSED'] ?? 0),
         ];
 
-        $avgPriorityRaw = Ticket::whereYear('created_at', now()->year)
+        $avgPriorityRaw = Ticket::where('company_id', $companyId)
+            ->whereYear('created_at', now()->year)
             ->selectRaw("
                 MONTH(created_at) as m,
                 AVG(

@@ -36,7 +36,7 @@
             </div>
         </div>
 
-        {{-- FORM CREATE (inline) --}}
+        {{-- FORM CREATE --}}
         <section class="{{ $card }}">
             <div class="px-5 py-4 border-b border-gray-200">
                 <h3 class="text-base font-semibold text-gray-900">Tambah User</h3>
@@ -47,39 +47,34 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="{{ $label }}">Full Name</label>
-                        <input type="text" class="{{ $input }}" wire:model.defer="full_name"
-                            placeholder="e.g. John Doe">
-                        @error('full_name') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
-                        @enderror
+                        <input type="text" class="{{ $input }}" wire:model.defer="full_name" placeholder="e.g. John Doe">
+                        @error('full_name') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                     </div>
+
                     <div>
                         <label class="{{ $label }}">Email Address</label>
-                        <input type="email" class="{{ $input }}" wire:model.defer="email"
-                            placeholder="e.g. john@company.com">
+                        <input type="email" class="{{ $input }}" wire:model.defer="email" placeholder="e.g. john@company.com">
                         @error('email') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                     </div>
+
                     <div>
                         <label class="{{ $label }}">Phone Number</label>
-                        <input type="text" class="{{ $input }}" wire:model.defer="phone_number"
-                            placeholder="08123456789">
-                        @error('phone_number') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
-                        @enderror
+                        <input type="text" class="{{ $input }}" wire:model.defer="phone_number" placeholder="08123456789">
+                        @error('phone_number') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                     </div>
+
                     <div>
                         <label class="{{ $label }}">Password</label>
-                        <input type="password" class="{{ $input }}" wire:model.defer="password"
-                            autocomplete="new-password">
-                        @error('password') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
-                        @enderror
+                        <input type="password" class="{{ $input }}" wire:model.defer="password" autocomplete="new-password">
+                        @error('password') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                     </div>
+
                     <div>
                         <label class="{{ $label }}">Company</label>
                         <input type="text" class="{{ $input }}" value="{{ $company_name }}" readonly>
-                        @error('company_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
-                        @enderror
                     </div>
 
-                    {{-- ROLE (live model to trigger mapping) --}}
+                    {{-- ROLE --}}
                     <div>
                         <label class="{{ $label }}">Role</label>
                         <select class="{{ $input }}" wire:model.live="role_id">
@@ -97,14 +92,20 @@
                     {{-- DEPARTMENT --}}
                     <div class="md:col-span-2">
                         <label class="{{ $label }}">Department</label>
-                        <select class="{{ $input }}" wire:model.defer="department_id" required>
-                            <option value="">Pilih department</option>
-                            @foreach ($departments as $d)
-                                <option value="{{ $d->department_id }}">{{ $d->department_name }}</option>
-                            @endforeach
-                        </select>
-                        @error('department_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
-                        @enderror
+                        @if($role_id == $roleReceptionistId || $role_id == $roleSuperadminId)
+                            <input type="text" value="Tidak diperlukan untuk peran ini" disabled
+                                class="{{ $input }} bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed">
+                            <input type="hidden" wire:model="department_id">
+                            <p class="mt-1 text-xs text-gray-500">Department tidak diperlukan untuk role ini.</p>
+                        @else
+                            <select class="{{ $input }}" wire:model.defer="department_id">
+                                <option value="">Pilih department</option>
+                                @foreach ($departments as $d)
+                                    <option value="{{ $d->department_id }}">{{ $d->department_name }}</option>
+                                @endforeach
+                            </select>
+                            @error('department_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
+                        @endif
                     </div>
                 </div>
 
@@ -146,6 +147,7 @@
                                 d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
                         </svg>
                     </div>
+
                     <div class="relative">
                         <select wire:model.live="roleFilter" class="{{ $input }} pl-10 w-full lg:w-60">
                             <option value="">Semua Role</option>
@@ -164,9 +166,7 @@
 
             <div class="divide-y divide-gray-200">
                 @forelse ($users as $u)
-                    @php
-                        $rowNo = (($users->firstItem() ?? 1) - 0) + $loop->index;
-                    @endphp
+                    @php $rowNo = (($users->firstItem() ?? 1) - 0) + $loop->index; @endphp
                     <div class="px-5 py-5 hover:bg-gray-50 transition-colors" wire:key="user-{{ $u->user_id }}">
                         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                             <div class="flex items-start gap-3 flex-1">
@@ -181,8 +181,7 @@
                                         </span>
                                         <span class="{{ $chip }}">
                                             <span class="text-gray-500">Dept:</span>
-                                            <span
-                                                class="font-medium text-gray-700">{{ $u->department->department_name ?? 'N/A' }}</span>
+                                            <span class="font-medium text-gray-700">{{ $u->department->department_name ?? 'N/A' }}</span>
                                         </span>
                                     </div>
                                     <p class="text-[12px] text-gray-500 truncate">{{ $u->email }}</p>
@@ -194,20 +193,13 @@
                             <div class="text-right shrink-0 space-y-2">
                                 <div class="{{ $mono }}">No. {{ $rowNo }}</div>
                                 <div class="flex flex-wrap gap-2 justify-end pt-1">
-                                    <button class="{{ $btnBlk }}" wire:click="openEdit({{ $u->user_id }})"
-                                        wire:loading.attr="disabled" wire:target="openEdit({{ $u->user_id }})"
-                                        wire:key="btn-edit-{{ $u->user_id }}">
-                                        <span wire:loading.remove wire:target="openEdit({{ $u->user_id }})">Edit</span>
-                                        <span wire:loading wire:target="openEdit({{ $u->user_id }})">Loading…</span>
+                                    <button class="{{ $btnBlk }}" wire:click="openEdit({{ $u->user_id }})">
+                                        Edit
                                     </button>
-
                                     <button class="{{ $btnRed }}" wire:click="delete({{ $u->user_id }})"
-                                        onclick="return confirm('Hapus user ini?')" wire:loading.attr="disabled"
-                                        wire:target="delete({{ $u->user_id }})" wire:key="btn-del-{{ $u->user_id }}">
-                                        <span wire:loading.remove wire:target="delete({{ $u->user_id }})">Hapus</span>
-                                        <span wire:loading wire:target="delete({{ $u->user_id }})">Menghapus…</span>
+                                        onclick="return confirm('Hapus user ini?')">
+                                        Hapus
                                     </button>
-
                                 </div>
                             </div>
                         </div>
@@ -226,21 +218,14 @@
             @endif
         </div>
 
-        {{-- MODAL EDIT (Tanpa AlpineJS, murni Livewire) --}}
+        {{-- MODAL EDIT --}}
         @if($modalEdit)
-            <div class="fixed inset-0 z-[60] flex items-center justify-center" role="dialog" aria-modal="true"
-                wire:key="modal-edit" wire:keydown.escape.window="closeEdit">
-                {{-- Overlay --}}
-                <button type="button" class="absolute inset-0 bg-black/50" aria-label="Close overlay"
-                    wire:click="closeEdit">
-                </button>
-
-                {{-- Dialog --}}
-                <div class="relative w-full max-w-2xl mx-4 {{ $card }} focus:outline-none" tabindex="-1">
+            <div class="fixed inset-0 z-[60] flex items-center justify-center" wire:keydown.escape.window="closeEdit">
+                <button type="button" class="absolute inset-0 bg-black/50" wire:click="closeEdit"></button>
+                <div class="relative w-full max-w-2xl mx-4 {{ $card }}">
                     <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                         <h3 class="text-base font-semibold text-gray-900">Edit User</h3>
-                        <button class="text-gray-500 hover:text-gray-700" type="button" wire:click="closeEdit"
-                            aria-label="Close">
+                        <button class="text-gray-500 hover:text-gray-700" wire:click="closeEdit">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6 18L18 6M6 6l12 12" />
@@ -252,29 +237,28 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label class="{{ $label }}">Full Name</label>
-                                <input type="text" class="{{ $input }}" wire:model.defer="edit_full_name" autofocus>
-                                @error('edit_full_name') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}
-                                </p> @enderror
+                                <input type="text" class="{{ $input }}" wire:model.defer="edit_full_name">
+                                @error('edit_full_name') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                             </div>
+
                             <div>
                                 <label class="{{ $label }}">Email Address</label>
                                 <input type="email" class="{{ $input }}" wire:model.defer="edit_email">
-                                @error('edit_email') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
-                                @enderror
+                                @error('edit_email') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                             </div>
+
                             <div>
                                 <label class="{{ $label }}">Phone Number</label>
                                 <input type="text" class="{{ $input }}" wire:model.defer="edit_phone_number">
-                                @error('edit_phone_number') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}
-                                </p> @enderror
-                            </div>
-                            <div>
-                                <label class="{{ $label }}">Password (kosongkan jika tidak diubah)</label>
-                                <input type="password" class="{{ $input }}" wire:model.defer="edit_password"
-                                    autocomplete="new-password">
+                                @error('edit_phone_number') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                             </div>
 
-                            {{-- ROLE (live model to trigger mapping) --}}
+                            <div>
+                                <label class="{{ $label }}">Password (kosongkan jika tidak diubah)</label>
+                                <input type="password" class="{{ $input }}" wire:model.defer="edit_password" autocomplete="new-password">
+                            </div>
+
+                            {{-- ROLE --}}
                             <div>
                                 <label class="{{ $label }}">Role</label>
                                 <select class="{{ $input }}" wire:model.live="edit_role_id">
@@ -286,48 +270,35 @@
                                 @if($edit_role_id == $roleReceptionistId || $edit_role_id == $roleSuperadminId)
                                     <p class="mt-1 text-xs text-gray-500">Department akan diisi otomatis.</p>
                                 @endif
-                                @error('edit_role_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
-                                @enderror
                             </div>
 
                             {{-- DEPARTMENT --}}
                             <div>
                                 <label class="{{ $label }}">Department</label>
-                                <select class="{{ $input }}" wire:model.defer="edit_department_id">
-                                    <option value="">Pilih department</option>
-                                    @foreach ($departments as $d)
-                                        <option value="{{ $d->department_id }}">{{ $d->department_name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('edit_department_id') <p class="mt-1 text-xs text-rose-600 font-medium">
-                                {{ $message }}</p> @enderror
+                                @if($edit_role_id == $roleReceptionistId || $edit_role_id == $roleSuperadminId)
+                                    <input type="text" value="Tidak diperlukan untuk peran ini" disabled
+                                        class="{{ $input }} bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed">
+                                    <input type="hidden" wire:model="edit_department_id">
+                                    <p class="mt-1 text-xs text-gray-500">Department tidak diperlukan untuk role ini.</p>
+                                @else
+                                    <select class="{{ $input }}" wire:model.defer="edit_department_id">
+                                        <option value="">Pilih department</option>
+                                        @foreach ($departments as $d)
+                                            <option value="{{ $d->department_id }}">{{ $d->department_name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('edit_department_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
+                                @endif
                             </div>
                         </div>
 
                         <div class="mt-6 flex items-center justify-end gap-3 border-t border-gray-200 pt-4">
-                            <button type="button"
-                                class="px-4 h-10 rounded-xl border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 hover:border-gray-400 transition"
-                                wire:click="closeEdit">
+                            <button type="button" class="px-4 h-10 rounded-xl border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100" wire:click="closeEdit">
                                 Batal
                             </button>
                             <button type="submit" wire:loading.attr="disabled" wire:target="update"
-                                class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition active:scale-95 hover:bg-black disabled:opacity-60">
-                                <span class="flex items-center gap-2" wire:loading.remove wire:target="update">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    Simpan Perubahan
-                                </span>
-                                <span class="flex items-center gap-2" wire:loading wire:target="update">
-                                    <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                            stroke-width="4" />
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                                    </svg>
-                                    Menyimpan…
-                                </span>
+                                class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-black disabled:opacity-60">
+                                Simpan Perubahan
                             </button>
                         </div>
                     </form>
