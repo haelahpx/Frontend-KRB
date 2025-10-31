@@ -13,7 +13,7 @@ use App\Models\Room;
 
 #[Layout('layouts.app')]
 #[Title('Booking History')]
-class Bookingstatus extends Component
+class BookingStatus extends Component
 {
     use WithPagination;
 

@@ -55,6 +55,10 @@ use App\Livewire\Pages\Receptionist\MeetingSchedule as MeetingSchedule;
 use App\Livewire\Pages\Receptionist\BookingsApproval;
 use App\Livewire\Pages\Receptionist\RoomApproval;
 use App\Livewire\Pages\Receptionist\BookingHistory;
+use App\Livewire\Pages\Receptionist\GuestbookHistory;
+use App\Livewire\Pages\Receptionist\DocPackHistory;
+use App\Livewire\Pages\Receptionist\DocPackStatus;
+use App\Livewire\Pages\Receptionist\DocPackForm;
 
 
 
@@ -249,6 +253,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/receptionist-bookings', BookingsApproval::class)->name('receptionist.bookings');
         Route::get('/receptionist-roomapproval', RoomApproval::class)->name('receptionist.roomapproval');
         Route::get('/receptionist-bookinghistory', BookingHistory::class)->name('receptionist.bookinghistory');
+        route::get('/receptionist-guestbookhistory', GuestbookHistory::class)->name('receptionist.guestbookhistory');
+        route::get('/receptionist-docpackhistory', DocPackHistory::class)->name('receptionist.docpackhistory');
+        route::get('/receptionist-docpackstatus', DocPackStatus::class)->name('receptionist.docpackstatus');
+        route::get('/receptionist-docpackform', DocPackForm::class)->name('receptionist.docpackform');        
     });
 
     // ---------- Logout (BERSIHKAN intended + invalidate session) ----------

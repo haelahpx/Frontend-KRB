@@ -8,6 +8,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use App\Models\BookingRoom;
 use App\Services\GoogleMeetService;
 use App\Services\ZoomService;
@@ -23,7 +24,7 @@ class BookingsApproval extends Component
 
     // UI filters
     public string $q = '';
-    public ?string $selectedDate = null;   // manual date (YYYY-MM-DD)
+    public ?string $selectedDate = null;   // YYYY-MM-DD
     public string $dateMode = 'semua';     // semua | terbaru | terlama
 
     // Pagination per box
@@ -37,21 +38,46 @@ class BookingsApproval extends Component
 
     private string $tz = 'Asia/Jakarta';
 
-    // ─────────────────────────────────────────────────────────────────────
-    // NEW: Auto-progress approved → completed when due time has passed
-    // ─────────────────────────────────────────────────────────────────────
+    /** Build a Carbon datetime safely whether columns are DATE+TIME or already DATETIME. */
+    private function buildDt(null|string $dateVal, null|string $timeVal): Carbon
+    {
+        if (!$dateVal && !$timeVal) {
+            throw new \RuntimeException('Tanggal/waktu tidak lengkap.');
+        }
+
+        if (is_string($timeVal) && preg_match('/^\d{4}-\d{2}-\d{2}/', $timeVal)) {
+            return Carbon::parse($timeVal, $this->tz);
+        }
+
+        if (is_string($dateVal) && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:/', $dateVal)) {
+            $dt = Carbon::parse($dateVal, $this->tz);
+            if (is_string($timeVal) && preg_match('/^\d{2}:\d{2}/', $timeVal)) {
+                return $dt->setTimeFromTimeString($timeVal);
+            }
+            return $dt;
+        }
+
+        $dateStr = (string) $dateVal;
+        $timeStr = (string) ($timeVal === '' ? '00:00:00' : $timeVal);
+
+        return Carbon::parse(trim($dateStr . ' ' . $timeStr), $this->tz);
+    }
+
+    // Auto-progress approved → completed when due time has passed
     private function autoProgressToDone(): int
     {
-        $now = Carbon::now($this->tz)->format('Y-m-d H:i:s');
+        $now = Carbon::now($this->tz)->toDateTimeString();
 
-        return DB::transaction(function () use ($now) {
-            // Move all approved rows whose end datetime is <= now to 'completed'
+        $endExpr = "COALESCE(
+            CASE WHEN `end_time` REGEXP '^[0-9]{4}-' THEN `end_time` ELSE NULL END,
+            CONCAT(`date`, ' ', `end_time`)
+        )";
+
+        return DB::transaction(function () use ($now, $endExpr) {
             return BookingRoom::query()
                 ->where('status', 'approved')
-                ->whereNotNull('date')
                 ->whereNotNull('end_time')
-                // MySQL: TIMESTAMP(date, time) treats 'HH:MM' as 'HH:MM:00' – perfect for us
-                ->whereRaw("TIMESTAMP(`date`, `end_time`) <= ?", [$now])
+                ->whereRaw("$endExpr <= ?", [$now])
                 ->update(['status' => 'completed']);
         });
     }
@@ -82,10 +108,9 @@ class BookingsApproval extends Component
     // Helpers
     private function selectedDateValue(): ?string
     {
-        if (is_string($this->selectedDate) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->selectedDate)) {
-            return $this->selectedDate;
-        }
-        return null;
+        return (is_string($this->selectedDate) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->selectedDate))
+            ? $this->selectedDate
+            : null;
     }
 
     private function sortingDirection(): string
@@ -96,20 +121,29 @@ class BookingsApproval extends Component
     private function applyDateTimeOrdering($query)
     {
         $dir = $this->sortingDirection();
-        $invalidFirstExpr = "CASE WHEN (`date` IS NULL OR `start_time` IS NULL) THEN 1 ELSE 0 END";
-        $dtExpr = "CONCAT(`date`, ' ', `start_time`)";
+
+        $invalidFirstExpr = "CASE
+            WHEN (`date` IS NULL OR `start_time` IS NULL) THEN 1
+            ELSE 0
+        END";
+
+        $dtExpr = "COALESCE(
+            CASE WHEN `start_time` REGEXP '^[0-9]{4}-' THEN `start_time` ELSE NULL END,
+            CONCAT(`date`, ' ', `start_time`)
+        )";
 
         return $query->orderByRaw("$invalidFirstExpr ASC")
             ->orderByRaw("$dtExpr $dir")
             ->orderByDesc('created_at');
     }
 
-    // Actions
+    // ── Actions ──────────────────────────────────────────────────────────
+
     public function openReject(int $id): void
     {
         $this->rejectId = $id;
         $this->rejectReason = '';
-        $this->showRejectModal = true;
+               $this->showRejectModal = true;
     }
 
     public function confirmReject(): void
@@ -149,27 +183,34 @@ class BookingsApproval extends Component
                 $b = BookingRoom::lockForUpdate()->findOrFail($id);
 
                 // OFFLINE checks
-                if ($b->booking_type !== 'online_meeting') {
+                if (!in_array($b->booking_type, ['online_meeting', 'onlinemeeting'])) {
                     if (!$b->room_id || !$b->date || !$b->start_time || !$b->end_time) {
                         throw new \RuntimeException('Data ruangan/tanggal/waktu tidak lengkap.');
                     }
 
-                    $start = Carbon::parse($b->date . ' ' . $b->start_time, $this->tz);
-                    $end = Carbon::parse($b->date . ' ' . $b->end_time, $this->tz);
+                    $start = $this->buildDt($b->date, $b->start_time);
+                    $end   = $this->buildDt($b->date, $b->end_time);
                     if ($end->lte($start)) {
                         throw new \RuntimeException('Waktu tidak valid (end <= start).');
                     }
 
+                    $startExpr = "COALESCE(
+                        CASE WHEN `start_time` REGEXP '^[0-9]{4}-' THEN `start_time` ELSE NULL END,
+                        CONCAT(`date`, ' ', `start_time`)
+                    )";
+                    $endExpr = "COALESCE(
+                        CASE WHEN `end_time`   REGEXP '^[0-9]{4}-' THEN `end_time`   ELSE NULL END,
+                        CONCAT(`date`, ' ', `end_time`)
+                    )";
+
                     $overlapExists = BookingRoom::query()
                         ->where('bookingroom_id', '!=', $b->bookingroom_id)
                         ->where('status', 'approved')
-                        ->where('booking_type', '!=', 'online_meeting')
+                        ->whereNotIn('booking_type', ['online_meeting', 'onlinemeeting'])
                         ->where('room_id', $b->room_id)
                         ->whereDate('date', $b->date)
-                        ->where(function ($q) use ($b) {
-                            $q->whereRaw('TIME(start_time) < TIME(?)', [$b->end_time])
-                                ->whereRaw('TIME(end_time) > TIME(?)', [$b->start_time]);
-                        })
+                        ->whereRaw("$startExpr < ?", [$end->toDateTimeString()])
+                        ->whereRaw("$endExpr > ?", [$start->toDateTimeString()])
                         ->exists();
 
                     if ($overlapExists) {
@@ -178,9 +219,9 @@ class BookingsApproval extends Component
                 }
 
                 // ONLINE: create link on approval
-                if ($b->booking_type === 'online_meeting' && empty($b->online_meeting_url)) {
-                    $start = Carbon::parse($b->date . ' ' . $b->start_time, $this->tz);
-                    $end = Carbon::parse($b->date . ' ' . $b->end_time, $this->tz);
+                if (in_array($b->booking_type, ['online_meeting','onlinemeeting']) && empty($b->online_meeting_url)) {
+                    $start = $this->buildDt($b->date, $b->start_time);
+                    $end   = $this->buildDt($b->date, $b->end_time);
 
                     $provider = strtolower((string) $b->online_provider);
                     $provider = str_replace([' ', '-'], '_', $provider);
@@ -236,52 +277,45 @@ class BookingsApproval extends Component
         $this->openReject($id);
     }
 
+    // ── Data building ────────────────────────────────────────────────────
+
+    private function applyCommonFilters($q)
+    {
+        if ($this->q !== '') {
+            $q->where('meeting_title', 'like', '%' . $this->q . '%');
+        }
+
+        $selected = $this->selectedDateValue();
+        if ($this->dateMode !== 'semua' && $selected) {
+            $q->whereDate('date', $selected);
+        }
+
+        $this->applyDateTimeOrdering($q);
+    }
+
     public function render()
     {
-        // Ensure any past-due approvals are moved before listing
+        // Move past-due approved → completed
         $this->autoProgressToDone();
 
-        $baseCols = [
-            'bookingroom_id',
-            'meeting_title',
-            'booking_type',
-            'online_provider',
-            'online_meeting_url',
-            'online_meeting_code',
-            'online_meeting_password',
-            'status',
-            'date',
-            'start_time',
-            'end_time',
-            'room_id',
-            'user_id',
-            'approved_by',
-            'book_reject',
+        $cols = [
+            'bookingroom_id', 'meeting_title', 'booking_type', 'online_provider',
+            'online_meeting_url', 'online_meeting_code', 'online_meeting_password',
+            'status', 'date', 'start_time', 'end_time', 'room_id',
+            'user_id', 'approved_by', 'book_reject', 'created_at', 'updated_at'
         ];
 
-        // Common filter/sort (applied to both lists)
-        $common = function ($q) {
-            if ($this->q !== '') {
-                $q->where('meeting_title', 'like', '%' . $this->q . '%');
-            }
-
-            $selected = $this->selectedDateValue();
-            if ($this->dateMode !== 'semua' && $selected) {
-                $q->whereDate('date', $selected);
-            }
-
-            $this->applyDateTimeOrdering($q);
-        };
-
         $pending = BookingRoom::query()
+            ->with('room')
             ->where('status', 'pending')
-            ->tap($common)
-            ->paginate($this->perPending, $baseCols, 'pendingPage');
+            ->tap(fn($q) => $this->applyCommonFilters($q))
+            ->paginate($this->perPending, $cols, 'pendingPage');
 
         $ongoing = BookingRoom::query()
+            ->with('room')
             ->where('status', 'approved')
-            ->tap($common)
-            ->paginate($this->perOngoing, $baseCols, 'ongoingPage');
+            ->tap(fn($q) => $this->applyCommonFilters($q))
+            ->paginate($this->perOngoing, $cols, 'ongoingPage');
 
         return view('livewire.pages.receptionist.bookings-approval', compact('pending', 'ongoing'));
     }

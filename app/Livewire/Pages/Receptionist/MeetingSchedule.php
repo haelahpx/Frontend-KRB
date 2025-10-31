@@ -285,13 +285,13 @@ class MeetingSchedule extends Component
             $startAt = $this->toDateTime((string)$this->form['date'], (string)$this->form['time']);
             $endAt   = $this->toDateTime((string)$this->form['date'], (string)$this->form['time_end']);
         } catch (\Throwable) {
-            session()->flash('toast', ['type' => 'error', 'title' => 'Format waktu tidak valid', 'message' => 'Periksa tanggal/jam.']);
+                $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'Information berhasil dibuat.', duration: 3000);
             $this->js('window.location.reload()');
             return;
         }
 
         if ($endAt <= $startAt) {
-            session()->flash('toast', ['type' => 'error', 'title' => 'Waktu salah', 'message' => 'Jam selesai harus setelah jam mulai.']);
+                $this->dispatch('toast', type: 'error', title: 'Waktu salah', message: 'Jam selesai harus setelah jam mulai.', duration: 3000);
             $this->js('window.location.reload()');
             return;
         }
@@ -299,11 +299,7 @@ class MeetingSchedule extends Component
         if ($this->hasRoomOverlap((int)$this->form['room_id'], (string)$this->form['date'], $startAt, $endAt, $this->editingId)) {
             $humanStart = Carbon::parse($startAt, $this->tz)->format('d M Y H:i');
             $humanEnd   = Carbon::parse($endAt,   $this->tz)->format('H:i');
-            session()->flash('toast', [
-                'type' => 'warning',
-                'title' => 'Slot Sudah Terpakai',
-                'message' => "Waktu {$humanStart}–{$humanEnd} untuk ruangan yang dipilih sudah di-booking. Cek kalender dulu.",
-            ]);
+            $this->dispatch('toast', type: 'error', title: 'Jadwal bentrok', message: "Ruangan sudah dibooking pada waktu {$humanStart} - {$humanEnd}. Silakan pilih waktu lain.", duration: 5000);
             $this->js('window.location.reload()');
             return;
         }
@@ -338,7 +334,7 @@ class MeetingSchedule extends Component
 
         $this->resetOfflineForm();
 
-        session()->flash('toast', ['type' => 'success', 'title' => 'Sukses', 'message' => 'Booking disimpan (pending approval).']);
+        $this->dispatch('toast', type: 'success', title: 'Sukses', message: 'Meeting offline disimpan.', duration: 3000);
         $this->js('window.location.reload()');
     }
 
@@ -361,13 +357,13 @@ class MeetingSchedule extends Component
             $startAt = $this->toDateTime($data['online_date'], $data['online_start_time']);
             $endAt   = $this->toDateTime($data['online_date'], $data['online_end_time']);
         } catch (\Throwable) {
-            session()->flash('toast', ['type' => 'error', 'title' => 'Format waktu tidak valid', 'message' => 'Periksa tanggal/jam.']);
+            $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'Information berhasil dibuat.', duration: 3000);
             $this->js('window.location.reload()');
             return;
         }
 
         if ($endAt <= $startAt) {
-            session()->flash('toast', ['type' => 'error', 'title' => 'Waktu salah', 'message' => 'Jam selesai harus setelah jam mulai.']);
+            $this->dispatch('toast', type: 'error', title: 'Waktu salah', message: 'Jam selesai harus setelah jam mulai.', duration: 3000);
             $this->js('window.location.reload()');
             return;
         }
@@ -397,7 +393,7 @@ class MeetingSchedule extends Component
 
         $this->resetOnlineForm();
 
-        session()->flash('toast', ['type' => 'success', 'title' => 'Sukses', 'message' => 'Online meeting disimpan.']);
+        $this->dispatch('toast', type: 'success', title: 'Sukses', message: 'Meeting online disimpan.', duration: 3000);
         $this->js('window.location.reload()');
     }
 

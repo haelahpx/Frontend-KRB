@@ -135,7 +135,6 @@ class Documents extends Component
         Delivery::create($payload);
 
         $this->resetForm();
-        session()->flash('saved', true);
 
         $msg = match ($statusInput) {
             'delivered' => 'Item langsung masuk Riwayat (Delivered).',
@@ -144,10 +143,7 @@ class Documents extends Component
             default     => 'Item disimpan ke kotak Pending.',
         };
 
-        $this->dispatch('notify', type: 'success', message: $msg);
-        $this->dispatch('toast', type: 'success', message: $msg);
-        $this->dispatch('page-reload');
-        $this->dispatch('$refresh');
+        $this->dispatch('notify', type: 'success', message: 'Item berhasil ditambahkan. ' . $msg);
     }
 
     public function openEdit(int $id): void
@@ -207,8 +203,7 @@ class Documents extends Component
         $this->showEdit = false;
 
         $msg = 'Perubahan disimpan. Posisi kartu diperbarui sesuai status.';
-        $this->dispatch('notify', type: 'success', message: $msg);
-        $this->dispatch('toast', type: 'success', message: $msg);
+        $this->dispatch('notify', type: 'success', message: 'Item berhasil diperbarui. ' . $msg);
         $this->dispatch('$refresh');
     }
 
