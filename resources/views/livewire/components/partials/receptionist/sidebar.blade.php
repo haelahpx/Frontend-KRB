@@ -60,17 +60,31 @@
         </flux:sidebar.item>
 
         <flux:sidebar.item
-            icon="document-text"
-            href="{{ route('receptionist.documents') }}"
-            :current="request()->routeIs('receptionist.documents')">
-            Documents
+            icon="clock"
+            href="{{ route('receptionist.guestbookhistory') }}"
+            :current="request()->routeIs('receptionist.guestbookhistory*')">
+            GuestBook History
         </flux:sidebar.item>
 
         <flux:sidebar.item
             icon="gift"
-            href="{{ route('receptionist.package') }}"
-            :current="request()->routeIs('receptionist.package')">
-            Package
+            href="{{ route('receptionist.docpackform') }}"
+            :current="request()->routeIs('receptionist.docpackform')">
+            Document/Package Form
+        </flux:sidebar.item>
+
+        <flux:sidebar.item
+            icon="clock"
+            href="{{ route('receptionist.docpackstatus') }}"
+            :current="request()->routeIs('receptionist.docpackstatus')">
+            Document/Package Status
+        </flux:sidebar.item>
+
+        <flux:sidebar.item
+            icon="clock"
+            href="{{ route('receptionist.docpackhistory') }}"
+            :current="request()->routeIs('receptionist.docpackhistory')">
+            Document/Package History
         </flux:sidebar.item>
     </flux:sidebar.nav>
 
