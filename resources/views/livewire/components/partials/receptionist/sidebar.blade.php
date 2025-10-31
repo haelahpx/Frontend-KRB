@@ -30,62 +30,68 @@
             :current="request()->routeIs('receptionist.dashboard')">
             Home
         </flux:sidebar.item>
+        <flux:sidebar.group expandable heading="Room Management" class="grid">
+            <flux:sidebar.item
+                icon="calendar-days"
+                href="{{ route('receptionist.schedule') }}"
+                :current="request()->routeIs('receptionist.schedule')">
+                Booking/Meeting Room
+            </flux:sidebar.item>
 
-        <flux:sidebar.item
-            icon="calendar-days"
-            href="{{ route('receptionist.schedule') }}"
-            :current="request()->routeIs('receptionist.schedule')">
-            Booking/Meeting Room
-        </flux:sidebar.item>
+            <flux:sidebar.item
+                icon="check-circle"
+                href="{{ route('receptionist.bookings') }}"
+                :current="request()->routeIs('receptionist.bookings')">
+                Booking/Meeting Approval
+            </flux:sidebar.item>
 
-        <flux:sidebar.item
-            icon="check-circle"
-            href="{{ route('receptionist.bookings') }}"
-            :current="request()->routeIs('receptionist.bookings')">
-            Booking/Meeting Approval
-        </flux:sidebar.item>
-        
-        <flux:sidebar.item
-            icon="clock"
-            href="{{ route('receptionist.bookinghistory') }}"
-            :current="request()->routeIs('receptionist.bookinghistory')">
-            Booking/Meeting History
-        </flux:sidebar.item>
+            <flux:sidebar.item
+                icon="clock"
+                href="{{ route('receptionist.bookinghistory') }}"
+                :current="request()->routeIs('receptionist.bookinghistory')">
+                Booking/Meeting History
+            </flux:sidebar.item>
+        </flux:sidebar.group>
 
-        <flux:sidebar.item
-            icon="inbox"
-            href="{{ route('receptionist.guestbook') }}"
-            :current="request()->routeIs('receptionist.guestbook*')">
-            GuestBook
-        </flux:sidebar.item>
 
-        <flux:sidebar.item
-            icon="clock"
-            href="{{ route('receptionist.guestbookhistory') }}"
-            :current="request()->routeIs('receptionist.guestbookhistory*')">
-            GuestBook History
-        </flux:sidebar.item>
+        <flxux:sidebar.group expandable heading="Guest Management" class="grid">
+            <flux:sidebar.item
+                icon="inbox"
+                href="{{ route('receptionist.guestbook') }}"
+                :current="request()->routeIs('receptionist.guestbook*')">
+                GuestBook
+            </flux:sidebar.item>
 
-        <flux:sidebar.item
-            icon="gift"
-            href="{{ route('receptionist.docpackform') }}"
-            :current="request()->routeIs('receptionist.docpackform')">
-            Document/Package Form
-        </flux:sidebar.item>
+            <flux:sidebar.item
+                icon="clock"
+                href="{{ route('receptionist.guestbookhistory') }}"
+                :current="request()->routeIs('receptionist.guestbookhistory*')">
+                GuestBook History
+            </flux:sidebar.item>
+            </flux:sidebar.group>
 
-        <flux:sidebar.item
-            icon="clock"
-            href="{{ route('receptionist.docpackstatus') }}"
-            :current="request()->routeIs('receptionist.docpackstatus')">
-            Document/Package Status
-        </flux:sidebar.item>
+            <flux:sidebar.group expandable heading="Document/Package Management" class="grid">
+                <flux:sidebar.item
+                    icon="gift"
+                    href="{{ route('receptionist.docpackform') }}"
+                    :current="request()->routeIs('receptionist.docpackform')">
+                    Document/Package Form
+                </flux:sidebar.item>
 
-        <flux:sidebar.item
-            icon="clock"
-            href="{{ route('receptionist.docpackhistory') }}"
-            :current="request()->routeIs('receptionist.docpackhistory')">
-            Document/Package History
-        </flux:sidebar.item>
+                <flux:sidebar.item
+                    icon="clock"
+                    href="{{ route('receptionist.docpackstatus') }}"
+                    :current="request()->routeIs('receptionist.docpackstatus')">
+                    Document/Package Status
+                </flux:sidebar.item>
+
+                <flux:sidebar.item
+                    icon="clock"
+                    href="{{ route('receptionist.docpackhistory') }}"
+                    :current="request()->routeIs('receptionist.docpackhistory')">
+                    Document/Package History
+                </flux:sidebar.item>
+            </flux:sidebar.group>
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />
