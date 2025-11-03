@@ -18,6 +18,7 @@ use App\Livewire\Pages\User\BookingStatus;
 use App\Livewire\Pages\User\Ticketshow;
 use App\Livewire\Pages\User\Bookvehicle;
 use App\Livewire\Pages\User\Meetonline;
+use App\Livewire\Pages\User\Ticketqueue as Ticketqueue;
 
 // ========== Livewire Pages (Admin ==========
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
@@ -163,24 +164,6 @@ Route::middleware(['auth'])->group(function () {
         return $svc->getAuthUrl(); // open it and inspect the query param redirect_uri=
     })->middleware('auth');
 
-    // ---------- User routes ----------
-    Route::get('/dashboard', UserHome::class)->name('user.home');
-    Route::get('/create-ticket', CreateTicket::class)->name('create-ticket');
-
-    // Booking room (User)
-    Route::get('/book-room', Bookroom::class)->name('book-room');
-    Route::get('/bookingstatus', BookingStatus::class)->name('bookingstatus');
-    Route::get('/book-online', Meetonline::class)->name('user.meetonline');
-
-    // Booking vehicle (User)
-    Route::get('/book-vehicle', Bookvehicle::class)->name('book-vehicle');
-
-    // Profile & others
-    Route::get('/profile', Profile::class)->name('profile');
-    Route::get('/package', UserPackage::class)->name('package');
-    Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
-    Route::get('/tickets/{ticket:ticket_id}', Ticketshow::class)->name('user.ticket.show');
-
     // ---------- Attachments API ----------
     Route::post('/attachments/signature', [AttachmentController::class, 'signature'])
         ->name('attachments.signature');
@@ -213,6 +196,19 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/temp', [VehicleAttachmentController::class, 'deleteTemp'])->name('deleteTemp');
         Route::post('/finalize', [VehicleAttachmentController::class, 'finalize'])->name('finalize');
     });
+
+    // ---------- User routes ----------
+    Route::get('/dashboard', UserHome::class)->name('user.home');
+    Route::get('/create-ticket', CreateTicket::class)->name('create-ticket');
+    Route::get('/book-room', Bookroom::class)->name('book-room');
+    Route::get('/bookingstatus', BookingStatus::class)->name('bookingstatus');
+    Route::get('/book-online', Meetonline::class)->name('user.meetonline');
+    Route::get('/book-vehicle', Bookvehicle::class)->name('book-vehicle');
+    Route::get('/profile', Profile::class)->name('profile');
+    Route::get('/package', UserPackage::class)->name('package');
+    Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
+    Route::get('/tickets/{ticket:ticket_id}', Ticketshow::class)->name('user.ticket.show');
+    Route::get('/ticket-queue', Ticketqueue::class)->name('user.ticket.queue');
 
     // ---------- Admin routes ----------
     Route::middleware('is.admin')->group(function () {
