@@ -219,7 +219,7 @@ class Bookvehicle extends Component
         }
 
         session()->flash('success', 'Booking dikirim — status: PENDING.');
-        return redirect()->route('bookingstatus');
+        return redirect()->route('vehiclestatus');
     }
 
     private function combineDateTime($date, $time)

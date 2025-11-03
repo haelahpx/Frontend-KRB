@@ -1,11 +1,11 @@
 <?php
 
 namespace App\Livewire\Pages\User;
-
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Models\Department;
 use App\Models\Ticket;
 use Illuminate\Validation\ValidationException;
@@ -15,19 +15,13 @@ use Throwable;
 #[Title('Create Ticket')]
 class CreateTicket extends Component
 {
-    // Form fields
     public string $subject = '';
-    public string $priority = 'low'; // must be: low|medium|high
+    public string $priority = 'low';
     public ?int $assigned_department_id = null;
     public string $description = '';
 
-    // Display-only
     public string $requester_department = '-';
-
-    // Dropdown data
     public array $departments = [];
-
-    // TMP files (JSON from blade)
     public string $temp_items_json = '[]';
 
     public function mount(): void
@@ -61,21 +55,27 @@ class CreateTicket extends Component
 
             $user = Auth::user()->loadMissing(['department', 'company']);
 
-            // Create ticket
             $ticket = Ticket::create([
                 'company_id'     => $user->company_id,
-                'requestdept_id' => $user->department_id,
+                'requestdept_id' => $user->department_id,   // pastikan kolom ini ada
                 'department_id'  => $this->assigned_department_id,
                 'user_id'        => $user->getKey(),
                 'subject'        => $this->subject,
                 'description'    => $this->description,
                 'priority'       => $this->priority,
-                'status'         => 'OPEN',
+                'status'         => 'OPEN',                 // pastikan enum/status valid
             ]);
 
-            // Finalize temp attachments (best-effort)
-            $items = json_decode($this->temp_items_json ?? '[]', true) ?? [];
-            if (!empty($items)) {
+            // finalize lampiran (best-effort)
+            $items = [];
+            try {
+                $decoded = json_decode($this->temp_items_json ?? '[]', true, 512, JSON_THROW_ON_ERROR);
+                $items = is_array($decoded) ? $decoded : [];
+            } catch (\JsonException $je) {
+                $items = [];
+            }
+
+            if ($items) {
                 try {
                     app(\App\Http\Controllers\AttachmentController::class)
                         ->finalizeTemp(new \Illuminate\Http\Request([
@@ -83,14 +83,21 @@ class CreateTicket extends Component
                             'items'     => $items,
                         ]));
                 } catch (Throwable $e) {
+                    Log::warning('Attachment finalizeTemp failed', [
+                        'ticket_id' => $ticket->getKey(),
+                        'err' => $e->getMessage()
+                    ]);
                     $this->dispatch('toast', type: 'warning', title: 'Lampiran', message: 'Beberapa lampiran gagal diproses.', duration: 3000);
                 }
             }
 
-            // Reset form
+            // reset (kembalikan dept assignment ke dept user)
+            $userDeptId = $user->department_id;
             $this->reset(['subject', 'priority', 'assigned_department_id', 'description', 'temp_items_json']);
+            $this->priority = 'low';
+            $this->assigned_department_id = $userDeptId;
+            $this->temp_items_json = '[]';
 
-            // Success toast
             $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'Tiket berhasil dibuat.', duration: 3000);
             session()->flash('toast', [
                 'type'    => 'success',
@@ -99,6 +106,7 @@ class CreateTicket extends Component
                 'duration'=> 3000,
             ]);
 
+            // TETAP: redirect ke route 'ticketstatus'
             return redirect()->route('ticketstatus');
 
         } catch (ValidationException $e) {
@@ -106,14 +114,18 @@ class CreateTicket extends Component
             $this->dispatch('toast', type: 'error', title: 'Validasi Gagal', message: $first, duration: 3000);
             throw $e;
         } catch (Throwable $e) {
-            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Terjadi kesalahan tak terduga.', duration: 3000);
+            Log::error('CreateTicket.save failed', [
+                'err' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            $msg = app()->environment('local') ? $e->getMessage() : 'Terjadi kesalahan tak terduga.';
+            $this->dispatch('toast', type: 'error', title: 'Gagal', message: $msg, duration: 3500);
             return;
         }
     }
 
     public function render()
     {
-        // keep your existing blade path
         return view('livewire.pages.user.createticket');
     }
 }

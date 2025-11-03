@@ -86,10 +86,8 @@ class Bookroom extends Component
                 $bumped = $this->roundUpToSlot($now->copy()->addMinutes($this->leadMinutes));
                 $this->start_time = $bumped->format('H:i');
                 $this->end_time = $bumped->copy()->addMinutes($this->slotMinutes)->format('H:i');
-                $this->dispatch('toast', [
-                    'type' => 'info',
-                    'message' => "Start time diupdate ke {$this->start_time} karena waktu sebelumnya sudah terlewat."
-                ]);
+                // 🔔 kirim 'duration' agar cocok dengan toast UI kamu
+                $this->dispatch('toast', type: 'info', title: 'Info', message: "Start time diupdate ke {$this->start_time} karena waktu sebelumnya sudah terlewat.", duration: 4000);
             }
         } else {
             $this->minStart = '00:00';
@@ -212,11 +210,11 @@ class Bookroom extends Component
         $now = Carbon::now($this->tz);
 
         if ($this->date < $now->toDateString()) {
-            $this->dispatch('toast', ['type' => 'error', 'message' => 'Tidak bisa booking ke tanggal yang sudah lewat.']);
+            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Tidak bisa booking ke tanggal yang sudah lewat.', duration: 4500);
             return;
         }
         if ($this->date === $now->toDateString() && $this->start_time < $now->format('H:i')) {
-            $this->dispatch('toast', ['type' => 'error', 'message' => 'Start time tidak boleh di masa lalu.']);
+            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Start time tidak boleh di masa lalu.', duration: 4500);
             return;
         }
 
@@ -233,7 +231,7 @@ class Bookroom extends Component
             ->exists();
 
         if ($overlap) {
-            $this->dispatch('toast', ['type' => 'error', 'message' => 'Slot waktu sudah terpakai (pending/approved).']);
+            $this->dispatch('toast', type: 'error', title: 'Bentrok', message: 'Slot waktu sudah terpakai (pending/approved).', duration: 5000);
             return;
         }
 
@@ -255,7 +253,7 @@ class Bookroom extends Component
             ]);
 
             if (!empty($this->requirements)) {
-                $ids = Requirement::where('company_id', $companyId)
+                $ids = Requirement::where('company_id', $this->companyId ?? $companyId)
                     ->whereIn('name', $this->requirements)
                     ->pluck('requirement_id')
                     ->toArray();
@@ -268,7 +266,7 @@ class Bookroom extends Component
         $this->resetForm(true);
         $this->recalculateAvailability();
 
-        $this->dispatch('toast', ['type' => 'success', 'message' => 'Booking tersimpan (pending approval).']);
+        $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'Booking tersimpan (pending approval).', duration: 4000);
     }
 
     protected function loadRoomsFromDb(): void
@@ -277,11 +275,11 @@ class Bookroom extends Component
 
         $this->rooms = Room::query()
             ->where('company_id', $companyId)
-            ->orderBy('room_number')
-            ->get(['room_id', 'room_number'])
+            ->orderBy('room_name')
+            ->get(['room_id', 'room_name'])
             ->map(fn($r) => [
                 'id' => (int) $r->room_id,
-                'name' => (string) $r->room_number,
+                'name' => (string) $r->room_name,
                 'available_req' => true,
             ])->values()->all();
     }

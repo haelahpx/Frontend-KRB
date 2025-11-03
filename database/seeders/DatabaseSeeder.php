@@ -163,7 +163,7 @@ class DatabaseSeeder extends Seeder
 
         // ===== ROOMS =====
         $rooms = collect(['Garuda','Merak','Cendrawasih','Aula','Elang'])
-            ->map(fn($r) => Room::firstOrCreate(['company_id'=>$companyId,'room_number'=>"Ruang {$r}"]));
+            ->map(fn($r) => Room::firstOrCreate(['company_id'=>$companyId,'room_name'=>"Ruang {$r}"]));
 
         // ===== REQUIREMENTS =====
         foreach (['Projector & Screen','Whiteboard','Coffee Break','Lunch Set','Sound System'] as $req) {

@@ -108,7 +108,7 @@ class Home extends Component
         $today = $now->toDateString();
         $nowH = $now->format('H:i');
 
-        $roomMap = Room::pluck('room_number', 'room_id')->toArray();
+        $roomMap = Room::pluck('room_name', 'room_id')->toArray();
 
         $upcoming = BookingRoom::query()
             ->where('user_id', $userId)

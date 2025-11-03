@@ -2,8 +2,6 @@
 <div class="bg-gray-50">
     @php
         $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
-        $head = 'bg-gradient-to-r from-black to-gray-800';
-        $hpad = 'px-8 py-6';
         $label = 'block text-sm font-semibold text-gray-700 mb-2';
         $input = 'w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-700 focus:border-black focus:ring-4 focus:ring-black/10 bg-gray-50 focus:bg-white transition';
         $btnBlk = 'px-4 py-2 text-sm rounded-xl bg-black text-white hover:bg-gray-800 disabled:opacity-60 font-semibold shadow-lg hover:shadow-xl transition';
@@ -15,6 +13,7 @@
     @endphp
 
     <main class="px-4 sm:px-6 py-6 space-y-8">
+        {{-- Header --}}
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
             <div class="pointer-events-none absolute inset-0 opacity-10">
                 <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
@@ -22,18 +21,16 @@
             </div>
             <div class="relative z-10 p-6 sm:p-8">
                 <div class="flex items-center gap-4">
-                    <div
-                        class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+                    <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 12h10M4 18h7" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h7" />
                         </svg>
                     </div>
                     <div class="flex-1">
                         <h2 class="text-lg sm:text-xl font-semibold">Manage Rooms</h2>
                         <p class="text-sm text-white/80">
-                            Company: <span
-                                class="font-semibold">{{ optional(Auth::user()->company)->company_name ?? '-' }}</span>
+                            Company:
+                            <span class="font-semibold">{{ optional(Auth::user()->company)->company_name ?? '-' }}</span>
                         </p>
                     </div>
                     <a href="{{ route('superadmin.managerequirements') }}" class="{{ $btnLite }}">Go to Requirements</a>
@@ -41,38 +38,63 @@
             </div>
         </div>
 
+        {{-- Card --}}
         <section class="{{ $card }}">
+            {{-- Top bar --}}
             <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between gap-3">
                 <h3 class="text-base font-semibold text-gray-900">Add New Room</h3>
                 <div class="w-72">
-                    <input type="text" wire:model.live="search" class="{{ $input }} h-10" placeholder="Cari room…">
+                    <input
+                        type="text"
+                        wire:model.debounce.400ms="search"
+                        class="{{ $input }} h-10"
+                        placeholder="Cari room…">
                 </div>
             </div>
 
+            {{-- Create form --}}
             <form class="p-5" wire:submit.prevent="roomStore">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
                     <div class="md:col-span-1">
                         <label class="{{ $label }}">Company</label>
                         <input type="text" class="{{ $input }}"
-                            value="{{ optional(Auth::user()->company)->company_name ?? '-' }}" readonly>
+                               value="{{ optional(Auth::user()->company)->company_name ?? '-' }}" readonly>
                     </div>
+
                     <div class="md:col-span-2">
-                        <label class="{{ $label }}">Room Number</label>
-                        <input type="text" wire:model.defer="room_number" class="{{ $input }}" placeholder="e.g. B-203">
-                        @error('room_number') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
+                        <label class="{{ $label }}">Room Name</label>
+                        <input
+                            type="text"
+                            wire:model.defer="room_name"
+                            class="{{ $input }}"
+                            placeholder="e.g. B-203">
+                        @error('room_name')
+                            <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="{{ $label }}">Capacity (people)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            wire:model.defer="capacity"
+                            class="{{ $input }}"
+                            placeholder="e.g. 12">
+                        @error('capacity')
+                            <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
+
                 <div class="pt-5">
                     <button type="submit" wire:loading.attr="disabled" wire:target="roomStore"
-                        class="{{ $btnBlk }} relative overflow-hidden">
+                            class="{{ $btnBlk }} relative overflow-hidden">
                         <span wire:loading.remove wire:target="roomStore">Save Room</span>
                         <span class="inline-flex items-center gap-2" wire:loading wire:target="roomStore">
                             <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4" />
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z"/>
                             </svg>
                             Saving...
                         </span>
@@ -80,6 +102,7 @@
                 </div>
             </form>
 
+            {{-- List --}}
             <div class="divide-y divide-gray-200">
                 @forelse ($rooms as $room)
                     @php
@@ -89,35 +112,49 @@
                         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                             <div class="flex items-start gap-3 flex-1">
                                 <div class="{{ $ico }}">
-                                    {{ substr(optional(Auth::user()->company)->company_name ?? 'C', 0, 1) }}</div>
+                                    {{ substr(optional(Auth::user()->company)->company_name ?? 'C', 0, 1) }}
+                                </div>
                                 <div class="min-w-0 flex-1">
-                                    <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Room
-                                        {{ $room->room_number }}</h4>
+                                    <h4 class="font-semibold text-gray-900 text-sm sm:text-base">
+                                        Room {{ $room->room_name }}
+                                    </h4>
                                     <div class="flex flex-wrap items-center gap-2 mt-2">
-                                        <span class="{{ $chip }}"><span class="text-gray-500">Created:</span><span
-                                                class="font-medium text-gray-700">{{ $room->created_at?->format('d M Y, H:i') }}</span></span>
-                                        <span class="{{ $chip }}"><span class="text-gray-500">Updated:</span><span
-                                                class="font-medium text-gray-700">{{ $room->updated_at?->format('d M Y, H:i') }}</span></span>
+                                        <span class="{{ $chip }}">
+                                            <span class="text-gray-500">Created:</span>
+                                            <span class="font-medium text-gray-700">{{ $room->created_at?->format('d M Y, H:i') }}</span>
+                                        </span>
+                                        <span class="{{ $chip }}">
+                                            <span class="text-gray-500">Updated:</span>
+                                            <span class="font-medium text-gray-700">{{ $room->updated_at?->format('d M Y, H:i') }}</span>
+                                        </span>
+                                        <span class="{{ $chip }}">
+                                            <span class="text-gray-500">Capacity:</span>
+                                            <span class="font-medium text-gray-700">{{ $room->capacity ?? '—' }}</span>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                             <div class="text-right shrink-0 space-y-2">
                                 <div class="{{ $mono }}">No. {{ $rowNo }}</div>
                                 <div class="flex flex-wrap gap-2 justify-end pt-1">
-                                    <button wire:click="roomOpenEdit({{ $room->room_id }})" class="{{ $btnBlk }}"
-                                        wire:loading.attr="disabled" wire:target="roomOpenEdit({{ $room->room_id }})"
+                                    <button
+                                        wire:click="roomOpenEdit({{ $room->room_id }})"
+                                        class="{{ $btnBlk }}"
+                                        wire:loading.attr="disabled"
+                                        wire:target="roomOpenEdit({{ $room->room_id }})"
                                         wire:key="btn-edit-room-{{ $room->room_id }}">
-                                        <span wire:loading.remove
-                                            wire:target="roomOpenEdit({{ $room->room_id }})">Edit</span>
+                                        <span wire:loading.remove wire:target="roomOpenEdit({{ $room->room_id }})">Edit</span>
                                         <span wire:loading wire:target="roomOpenEdit({{ $room->room_id }})">Loading…</span>
                                     </button>
 
-                                    <button wire:click="roomDelete({{ $room->room_id }})"
-                                        onclick="return confirm('Hapus room ini?')" class="{{ $btnRed }}"
-                                        wire:loading.attr="disabled" wire:target="roomDelete({{ $room->room_id }})"
+                                    <button
+                                        wire:click="roomDelete({{ $room->room_id }})"
+                                        onclick="return confirm('Hapus room ini?')"
+                                        class="{{ $btnRed }}"
+                                        wire:loading.attr="disabled"
+                                        wire:target="roomDelete({{ $room->room_id }})"
                                         wire:key="btn-del-room-{{ $room->room_id }}">
-                                        <span wire:loading.remove
-                                            wire:target="roomDelete({{ $room->room_id }})">Delete</span>
+                                        <span wire:loading.remove wire:target="roomDelete({{ $room->room_id }})">Delete</span>
                                         <span wire:loading wire:target="roomDelete({{ $room->room_id }})">Deleting…</span>
                                     </button>
                                 </div>
@@ -141,40 +178,47 @@
         {{-- Edit Modal --}}
         @if($roomModal)
             <div class="fixed inset-0 z-[60] flex items-center justify-center" role="dialog" aria-modal="true"
-                wire:key="modal-edit-room" wire:keydown.escape.window="roomCloseEdit">
+                 wire:key="modal-edit-room" wire:keydown.escape.window="roomCloseEdit">
                 <button type="button" class="absolute inset-0 bg-black/50" aria-label="Close overlay"
-                    wire:click="roomCloseEdit"></button>
+                        wire:click="roomCloseEdit"></button>
+
                 <div class="relative w-full max-w-xl mx-4 {{ $card }} focus:outline-none" tabindex="-1">
                     <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                         <h3 class="text-base font-semibold text-gray-900">Edit Room</h3>
-                        <button class="text-gray-500 hover:text-gray-700" type="button" wire:click="roomCloseEdit"
-                            aria-label="Close">
+                        <button class="text-gray-500 hover:text-gray-700" type="button" wire:click="roomCloseEdit" aria-label="Close">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
+
                     <form class="p-5" wire:submit.prevent="roomUpdate">
                         <div class="space-y-5">
                             <div>
-                                <label class="{{ $label }}">Room Number</label>
-                                <input type="text" class="{{ $input }}" wire:model.defer="room_edit_number" autofocus>
-                                @error('room_edit_number') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}
-                                </p> @enderror
+                                <label class="{{ $label }}">Room Name</label>
+                                <input type="text" class="{{ $input }}" wire:model.defer="room_edit_name" autofocus>
+                                @error('room_edit_name')
+                                    <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="{{ $label }}">Capacity (people)</label>
+                                <input type="number" min="0" class="{{ $input }}" wire:model.defer="room_edit_capacity">
+                                @error('room_edit_capacity')
+                                    <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
+
                         <div class="mt-6 flex items-center justify-end gap-3 border-t border-gray-200 pt-4">
                             <button type="button" class="{{ $btnLite }}" wire:click="roomCloseEdit">Cancel</button>
-                            <button type="submit" wire:loading.attr="disabled" wire:target="roomUpdate"
-                                class="{{ $btnBlk }}">
+                            <button type="submit" wire:loading.attr="disabled" wire:target="roomUpdate" class="{{ $btnBlk }}">
                                 <span wire:loading.remove wire:target="roomUpdate">Save Changes</span>
                                 <span class="inline-flex items-center gap-2" wire:loading wire:target="roomUpdate">
                                     <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                            stroke-width="4" />
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a 8 8 0 018-8V0A12 12 0 000 12h4z"/>
                                     </svg>
                                     Saving...
                                 </span>

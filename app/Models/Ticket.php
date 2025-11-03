@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models;
-
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +17,7 @@ class Ticket extends Model
     protected $table = 'tickets';
     protected $primaryKey = 'ticket_id';
     public $timestamps = true;
-
+    protected $keyType = 'int';
     protected $dates = ['deleted_at'];
 
     protected $fillable = [
@@ -30,6 +30,19 @@ class Ticket extends Model
         'priority',
         'status',
     ];
+    protected static function booted(): void
+    {
+        static::creating(function ($ticket) {
+            if (empty($ticket->ulid)) {
+                $ticket->ulid = (string) Str::ulid();
+            }
+        });
+    }
+    
+    public function getRouteKeyName(): string
+    {
+        return 'ulid';
+    }
 
     public function user(): BelongsTo
     {
@@ -87,6 +100,16 @@ class Ticket extends Model
         return $this->ticket_id;
     }
 
+    public function requester()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function assignments()
+{
+    return $this->hasMany(\App\Models\TicketAssignment::class, 'ticket_id', 'ticket_id');
+}
+
     protected function loadRecentComments(): void
     {
         $since = \Carbon\Carbon::now($this->tz)->subDays(7);
@@ -105,5 +128,4 @@ class Ticket extends Model
             ->take(8)
             ->get(['ticket_id', 'user_id', 'comment_text', 'created_at']);
     }
-
 }

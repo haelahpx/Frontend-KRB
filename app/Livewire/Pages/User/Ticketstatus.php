@@ -8,33 +8,30 @@ use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Ticket;
 use App\Models\Department;
+use App\Models\TicketAssignment;
 
 #[Layout('layouts.app')]
 #[Title('Ticket Status')]
 class Ticketstatus extends Component
 {
-    // accepts lowercase (UI) but maps to UPPERCASE (DB)
-    public string $statusFilter      = '';       // '', open|assigned|in_progress|resolved|closed
-    public string $priorityFilter    = '';       // '', low|medium|high
-    public string $departmentFilter  = '';       // '' or department_id
-    public string $sortFilter        = 'recent'; // recent|oldest|due
-
+    public string $statusFilter = '';
+    public string $priorityFilter = '';
+    public string $departmentFilter = '';
+    public string $sortFilter = 'recent';
     public $departments;
 
-    private const DB_ALLOWED_STATUSES = ['OPEN','ASSIGNED','IN_PROGRESS','RESOLVED','CLOSED'];
+    private const DB_ALLOWED_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
 
     private const UI_TO_DB_STATUS_MAP = [
         'open'        => 'OPEN',
-        'assigned'    => 'ASSIGNED',
         'in_progress' => 'IN_PROGRESS',
         'resolved'    => 'RESOLVED',
         'closed'      => 'CLOSED',
-        // accept legacy uppercase from querystring too
         'OPEN'        => 'OPEN',
-        'ASSIGNED'    => 'ASSIGNED',
         'IN_PROGRESS' => 'IN_PROGRESS',
         'RESOLVED'    => 'RESOLVED',
         'CLOSED'      => 'CLOSED',
+        'assigned'    => 'ASSIGNED',
     ];
 
     private const UI_TO_DB_PRIORITY_MAP = [
@@ -58,7 +55,7 @@ class Ticketstatus extends Component
         $user = Auth::user();
 
         $this->departments = Department::query()
-            ->when($user->company_id, fn ($q) => $q->where('company_id', $user->company_id))
+            ->when($user->company_id, fn($q) => $q->where('company_id', $user->company_id))
             ->orderBy('department_name')
             ->get(['department_id', 'department_name']);
     }
@@ -71,6 +68,12 @@ class Ticketstatus extends Component
             ->with([
                 'department:department_id,department_name',
                 'user:user_id,full_name',
+                'assignments' => fn($q) => $q->whereNull('deleted_at')->with([
+                    'user:user_id,full_name'
+                ]),
+            ])
+            ->withCount([
+                'assignments as agent_count' => fn($q) => $q->whereNull('deleted_at')
             ])
             ->where('user_id', $user->getKey());
     }
@@ -81,10 +84,14 @@ class Ticketstatus extends Component
 
         if ($this->statusFilter !== '') {
             $mapped = self::UI_TO_DB_STATUS_MAP[$this->statusFilter] ?? '';
-            if ($mapped && \in_array($mapped, self::DB_ALLOWED_STATUSES, true)) {
+            if ($mapped === 'ASSIGNED') {
+                $q->whereIn('ticket_id', TicketAssignment::query()
+                    ->whereNull('deleted_at')
+                    ->select('ticket_id'));
+            } elseif ($mapped && \in_array($mapped, self::DB_ALLOWED_STATUSES, true)) {
                 $q->where('status', $mapped);
             } else {
-                $q->whereRaw('1=0'); // invalid status -> no results
+                $q->whereRaw('1=0');
             }
         }
 
@@ -115,18 +122,42 @@ class Ticketstatus extends Component
         ]);
     }
 
-    /** Requester marks their ticket complete → RESOLVED (or CLOSED if you prefer) */
     public function markComplete(int $ticketId): void
     {
         $ticket = Ticket::whereKey($ticketId)
             ->where('user_id', Auth::id())
             ->first();
 
-        if (!$ticket) return;
+        if (!$ticket) {
+            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Ticket tidak ditemukan.', duration: 3000);
+            return;
+        }
 
-        if ($ticket->status !== 'RESOLVED') {
-            $ticket->update(['status' => 'RESOLVED']);
-            session()->flash('message', 'Ticket marked as resolved.');
+        $hasAgent = TicketAssignment::query()
+            ->where('ticket_id', $ticket->ticket_id)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if (!$hasAgent) {
+            $this->dispatch('toast', type: 'warning', title: 'Tidak bisa', message: 'Ticket belum memiliki agent.', duration: 3500);
+            return;
+        }
+
+        switch ($ticket->status) {
+            case 'OPEN':
+            case 'IN_PROGRESS':
+                $ticket->update(['status' => 'RESOLVED']);
+                $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'Ticket ditandai Resolved.', duration: 3000);
+                break;
+
+            case 'RESOLVED':
+                $ticket->update(['status' => 'CLOSED']);
+                $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'Ticket ditutup.', duration: 3000);
+                break;
+
+            case 'CLOSED':
+                $this->dispatch('toast', type: 'info', title: 'Info', message: 'Ticket sudah Closed.', duration: 2500);
+                break;
         }
     }
 }

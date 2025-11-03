@@ -15,10 +15,10 @@ use App\Livewire\Pages\User\Profile;
 use App\Livewire\Pages\User\Package as UserPackage;
 use App\Livewire\Pages\User\Ticketstatus;
 use App\Livewire\Pages\User\BookingStatus;
-use App\Livewire\Pages\User\Ticketshow;
 use App\Livewire\Pages\User\Bookvehicle;
 use App\Livewire\Pages\User\Meetonline;
 use App\Livewire\Pages\User\Ticketqueue as Ticketqueue;
+use App\Livewire\Pages\User\Vehiclestatus as Vehiclestatus;
 
 // ========== Livewire Pages (Admin ==========
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
@@ -147,7 +147,7 @@ Route::middleware('guest')->group(function () {
 */
 Route::middleware(['auth'])->group(function () {
     Route::get('/google/connect', fn(GoogleMeetService $svc)
-        => redirect($svc->getAuthUrl()))->name('google.connect');
+    => redirect($svc->getAuthUrl()))->name('google.connect');
 
     // match the URL Google is calling:
     Route::get('/oauth2callback', function (Illuminate\Http\Request $request) {
@@ -207,7 +207,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', Profile::class)->name('profile');
     Route::get('/package', UserPackage::class)->name('package');
     Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
-    Route::get('/tickets/{ticket:ticket_id}', Ticketshow::class)->name('user.ticket.show');
+    Route::get('/vehiclestatus', Vehiclestatus::class)->name('vehiclestatus');
+    Route::get('/tickets/{ticket}', \App\Livewire\Pages\User\Ticketshow::class)
+        ->name('user.ticket.show');
     Route::get('/ticket-queue', Ticketqueue::class)->name('user.ticket.queue');
 
     // ---------- Admin routes ----------
@@ -215,7 +217,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
         Route::get('/admin-ticket', AdminTicket::class)->name('admin.ticket');
         Route::get('/admin-roommonitoring', RoomMonitoringPage::class)->name('admin.room.monitoring');
-        Route::get('/admin-ticket/{ticket}', AdminTicketshow::class)->name('admin.ticketshow');
+        Route::get('/admin-ticket/{ticket:ulid}', AdminTicketshow::class)
+            ->name('admin.ticketshow');
         Route::get('/admin-usermanagement', UserManagementAdmin::class)->name('admin.usermanagement');
     });
 
@@ -252,7 +255,7 @@ Route::middleware(['auth'])->group(function () {
         route::get('/receptionist-guestbookhistory', GuestbookHistory::class)->name('receptionist.guestbookhistory');
         route::get('/receptionist-docpackhistory', DocPackHistory::class)->name('receptionist.docpackhistory');
         route::get('/receptionist-docpackstatus', DocPackStatus::class)->name('receptionist.docpackstatus');
-        route::get('/receptionist-docpackform', DocPackForm::class)->name('receptionist.docpackform');        
+        route::get('/receptionist-docpackform', DocPackForm::class)->name('receptionist.docpackform');
     });
 
     // ---------- Logout (BERSIHKAN intended + invalidate session) ----------
@@ -275,4 +278,6 @@ Route::middleware(['auth'])->group(function () {
 | Fallback 404
 |--------------------------------------------------------------------------
 */
-Route::fallback(function(){ abort(404); });
+Route::fallback(function () {
+    abort(404);
+});

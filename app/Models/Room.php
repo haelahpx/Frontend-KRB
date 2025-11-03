@@ -16,13 +16,16 @@ class Room extends Model
 
     protected $dates = ['deleted_at'];
 
-    protected $fillable = ['company_id', 'room_number'];
+    protected $fillable = ['company_id', 'room_name', 'capacity'];
+
+    protected $casts = [
+        'capacity' => 'integer',
+    ];
 
     public function getNameAttribute()
     {
         return $this->attributes['name']
             ?? $this->attributes['room_name']
-            ?? $this->attributes['room_number']
             ?? null;
     }
     public function bookings()
