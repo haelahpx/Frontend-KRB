@@ -40,9 +40,7 @@ class Ticket extends Component
     protected function currentAdmin()
     {
         $user = Auth::user();
-        if ($user && !$user->relationLoaded('role')) {
-            $user->load('role');
-        }
+        if ($user && !$user->relationLoaded('role')) $user->load('role');
         return $user;
     }
 
@@ -60,48 +58,28 @@ class Ticket extends Component
 
     public function resetFilters(): void
     {
-        $this->search = null;
-        $this->priority = null;
-        $this->status = null;
+        $this->search = $this->priority = $this->status = null;
         $this->resetPage();
     }
 
-    /**
-     * Soft delete Ticket (set deleted_at).
-     */
     public function deleteTicket(int $ticketId): void
     {
-        if (!$this->ensureAdmin()) {
-            session()->flash('error', 'Unauthorized.');
-            return;
-        }
+        if (!$this->ensureAdmin()) { session()->flash('error','Unauthorized.'); return; }
 
         $ticket = TicketModel::where('ticket_id', $ticketId)->first();
-        if (!$ticket) {
-            session()->flash('error', 'Ticket not found.');
-            return;
-        }
+        if (!$ticket) { session()->flash('error','Ticket not found.'); return; }
 
-
-        $ticket->delete(); // <-- soft delete
-
+        $ticket->delete();
         $this->resetPage();
         session()->flash('message', "Ticket #{$ticketId} moved to Trash.");
     }
 
-
     public function restoreTicket(int $ticketId): void
     {
-        if (!$this->ensureAdmin()) {
-            session()->flash('error', 'Unauthorized.');
-            return;
-        }
+        if (!$this->ensureAdmin()) { session()->flash('error','Unauthorized.'); return; }
 
         $ticket = TicketModel::onlyTrashed()->where('ticket_id', $ticketId)->first();
-        if (!$ticket) {
-            session()->flash('error', 'Trashed ticket not found.');
-            return;
-        }
+        if (!$ticket) { session()->flash('error','Trashed ticket not found.'); return; }
 
         $ticket->restore();
         session()->flash('message', "Ticket #{$ticketId} restored.");
@@ -109,19 +87,12 @@ class Ticket extends Component
 
     public function forceDeleteTicket(int $ticketId): void
     {
-        if (!$this->isSuperadmin()) {
-            session()->flash('error', 'Only Superadmin can permanently delete.');
-            return;
-        }
+        if (!$this->isSuperadmin()) { session()->flash('error','Only Superadmin can permanently delete.'); return; }
 
         $ticket = TicketModel::onlyTrashed()->where('ticket_id', $ticketId)->first();
-        if (!$ticket) {
-            session()->flash('error', 'Trashed ticket not found.');
-            return;
-        }
+        if (!$ticket) { session()->flash('error','Trashed ticket not found.'); return; }
 
         $ticket->forceDelete();
-
         session()->flash('message', "Ticket #{$ticketId} permanently deleted.");
     }
 
@@ -150,27 +121,18 @@ class Ticket extends Component
 
         if ($this->search) {
             $s = '%' . $this->search . '%';
-            $query->where(function ($q) use ($s) {
-                $q->where('subject', 'like', $s)
-                  ->orWhere('description', 'like', $s);
-            });
+            $query->where(fn ($q) => $q->where('subject','like',$s)->orWhere('description','like',$s));
         }
 
-        if ($this->priority) {
-            $query->where('priority', $this->priority);
-        }
+        if ($this->priority) $query->where('priority', $this->priority);
 
         if ($this->status) {
             $dbStatus = self::UI_TO_DB_STATUS_MAP[$this->status] ?? null;
-            if ($dbStatus) {
-                $query->where('status', $dbStatus);
-            }
+            if ($dbStatus) $query->where('status', $dbStatus);
         }
 
         $tickets = $query->paginate(30);
 
-        return view('livewire.pages.admin.ticket', [
-            'tickets' => $tickets,
-        ]);
+        return view('livewire.pages.admin.ticket', compact('tickets'));
     }
 }

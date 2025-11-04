@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Ticket as TicketModel;
 use App\Models\User as UserModel;
 use App\Models\TicketAssignment as TicketAssignmentModel;
-use App\Models\TicketComment; // <— pastikan model ini ada
 
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -25,8 +24,6 @@ class Ticketshow extends Component
     public ?int $agent_id = null;
 
     public ?string $previewUrl = null; // modal image preview
-
-    // NEW: composer komentar
     public string $newComment = '';
 
     private const ADMIN_ROLE_NAMES = ['Superadmin', 'Admin'];
@@ -48,6 +45,9 @@ class Ticketshow extends Component
         'deleted'     => 'DELETED',
     ];
 
+    /** ------------------------------
+     *  Helpers
+     *  ------------------------------*/
     protected function currentAdmin()
     {
         $user = Auth::user();
@@ -87,94 +87,155 @@ class Ticketshow extends Component
         return $q;
     }
 
+    /** Simple toast dispatcher (Livewire v3) */
+    protected function toast(string $type, string $title, string $message, int $duration = 2500): void
+    {
+        // type: success | error | info | warning
+        $this->dispatch('toast', type: $type, title: $title, message: $message, duration: $duration);
+    }
+
+    /** ------------------------------
+     *  Lifecycle
+     *  ------------------------------*/
     public function mount(TicketModel $ticket)
     {
-        if (!$this->ensureAdmin()) abort(403);
+        if (!$this->ensureAdmin()) {
+            $this->toast('error', 'Unauthorized', 'Anda tidak memiliki hak akses.');
+            abort(403);
+        }
 
         $admin = $this->currentAdmin();
         if (!$this->isSuperadmin()) {
-            if (isset($ticket->company_id) && isset($admin->company_id) && $ticket->company_id !== $admin->company_id) abort(403);
-            if (isset($ticket->department_id) && !empty($admin->department_id) && $ticket->department_id !== $admin->department_id) abort(403);
+            if (isset($ticket->company_id) && isset($admin->company_id) && $ticket->company_id !== $admin->company_id) {
+                $this->toast('error', 'Unauthorized', 'Ticket tidak dalam cakupan perusahaan Anda.');
+                abort(403);
+            }
+            if (isset($ticket->department_id) && !empty($admin->department_id) && $ticket->department_id !== $admin->department_id) {
+                $this->toast('error', 'Unauthorized', 'Ticket tidak dalam cakupan departemen Anda.');
+                abort(403);
+            }
         }
 
         $this->ticket = $ticket->load([
-            'user:user_id,full_name',
+            'user:user_id,full_name,department_id',
+            'user.department:department_id,department_name',
             'department:department_id,department_name',
             'assignment.agent:user_id,full_name',
             'attachments:attachment_id,ticket_id,file_url,file_type,original_filename,bytes',
-            // NEW: eager load comments + user
             'comments' => fn ($q) => $q->orderBy('created_at', 'asc'),
             'comments.user:user_id,full_name',
         ]);
 
         $this->status   = self::DB_TO_UI_STATUS_MAP[$ticket->status] ?? 'open';
         $this->agent_id = optional($ticket->assignment)->user_id;
+
+        // Info toast saat berhasil memuat
+        $this->toast('info', 'Loaded', "Ticket #{$ticket->ticket_id} dimuat.", 1800);
     }
 
+    /** ------------------------------
+     *  Actions
+     *  ------------------------------*/
     public function save()
     {
         if (!$this->ensureAdmin()) {
-            session()->flash('error', 'Unauthorized.');
+            $this->toast('error', 'Unauthorized', 'Anda tidak boleh mengubah ticket.');
             return;
         }
 
-        $this->validate([
-            'status'   => 'required|in:open,in_progress,resolved,closed,deleted',
-            'agent_id' => 'nullable|integer',
-        ]);
+        try {
+            $this->validate([
+                'status'   => 'required|in:open,in_progress,resolved,closed,deleted',
+                'agent_id' => 'nullable|integer',
+            ]);
 
-        $ticket = $this->ticket->fresh(['assignment']);
+            $ticket = $this->ticket->fresh(['assignment']);
 
-        if ($ticket->status === 'CLOSED') {
-            session()->flash('error', 'Ticket is closed and cannot be edited.');
-            return;
-        }
-
-        if ($this->agent_id) {
-            $isAllowed = $this->allowedAgentsQuery()
-                ->where('user_id', $this->agent_id)
-                ->exists();
-            if (!$isAllowed) {
-                $this->addError('agent_id', 'Agent is not in your scope.');
+            if ($ticket->status === 'CLOSED') {
+                $this->toast('warning', 'Terkunci', 'Ticket sudah CLOSED, tidak dapat diubah.');
                 return;
             }
-            TicketAssignmentModel::updateOrCreate(
-                ['ticket_id' => $ticket->ticket_id],
-                ['user_id'   => $this->agent_id]
-            );
-        } else {
-            if ($ticket->assignment) $ticket->assignment()->delete();
+
+            // Assignment
+            $assignmentChanged = false;
+            if ($this->agent_id) {
+                $isAllowed = $this->allowedAgentsQuery()
+                    ->where('user_id', $this->agent_id)
+                    ->exists();
+                if (!$isAllowed) {
+                    $this->addError('agent_id', 'Agent tidak dalam cakupan Anda.');
+                    $this->toast('error', 'Validasi', 'Agent tidak dalam cakupan Anda.');
+                    return;
+                }
+
+                TicketAssignmentModel::updateOrCreate(
+                    ['ticket_id' => $ticket->ticket_id],
+                    ['user_id'   => $this->agent_id]
+                );
+                $assignmentChanged = true;
+            } else {
+                if ($ticket->assignment) {
+                    $ticket->assignment()->delete();
+                    $assignmentChanged = true;
+                }
+            }
+
+            // Status
+            $oldStatus = $ticket->status;
+            $ticket->status = self::UI_TO_DB_STATUS_MAP[$this->status] ?? 'OPEN';
+            $statusChanged = $oldStatus !== $ticket->status;
+
+            $ticket->save();
+
+            $this->ticket = $ticket->fresh([
+                'user',
+                'assignment.agent',
+                'attachments',
+                'comments' => fn ($q) => $q->orderBy('created_at', 'asc'),
+                'comments.user:user_id,full_name',
+            ]);
+
+            // Toaster ringkas per perubahan
+            if ($assignmentChanged && $statusChanged) {
+                $this->toast('success', 'Tersimpan', "Assignment & status Ticket #{$ticket->ticket_id} diperbarui.");
+            } elseif ($assignmentChanged) {
+                $this->toast('success', 'Tersimpan', "Assignment Ticket #{$ticket->ticket_id} diperbarui.");
+            } elseif ($statusChanged) {
+                $this->toast('success', 'Tersimpan', "Status Ticket #{$ticket->ticket_id} diperbarui.");
+            } else {
+                $this->toast('info', 'Tidak Ada Perubahan', 'Tidak ada perubahan yang disimpan.');
+            }
+        } catch (ValidationException $e) {
+            $first = collect($e->validator->errors()->all())->first() ?? 'Periksa input Anda.';
+            $this->toast('error', 'Validasi', $first, 3000);
+            throw $e;
+        } catch (Throwable $e) {
+            $this->toast('error', 'Gagal', 'Terjadi kesalahan saat menyimpan perubahan.', 3000);
+            // optional: log($e)
         }
-
-        $ticket->status = self::UI_TO_DB_STATUS_MAP[$this->status] ?? 'OPEN';
-        $ticket->save();
-
-        $this->ticket = $ticket->fresh([
-            'user',
-            'assignment.agent',
-            'attachments',
-            'comments' => fn ($q) => $q->orderBy('created_at', 'asc'),
-            'comments.user:user_id,full_name',
-        ]);
-
-        session()->flash('message', "Ticket #{$ticket->ticket_id} updated.");
     }
 
-    // ===== Image preview modal =====
-    public function openPreview(string $url) { $this->previewUrl = $url; }
-    public function closePreview() { $this->previewUrl = null; }
+    public function openPreview(string $url)
+    {
+        $this->previewUrl = $url;
+        $this->toast('info', 'Preview', 'Membuka pratinjau lampiran.', 1500);
+    }
 
-    // ===== NEW: Add comment =====
+    public function closePreview()
+    {
+        $this->previewUrl = null;
+        $this->toast('info', 'Preview', 'Menutup pratinjau lampiran.', 1200);
+    }
+
     public function addComment()
     {
         if (!$this->ensureAdmin()) {
-            $this->dispatch('toast', type: 'error', title: 'Unauthorized', message: 'Anda tidak boleh berkomentar.', duration: 3000);
+            $this->toast('error', 'Unauthorized', 'Anda tidak boleh berkomentar.', 3000);
             return;
         }
 
-        // Optional: cegah komentar di tiket CLOSED (boleh dihapus kalau mau tetap izinkan)
         if ($this->ticket->status === 'CLOSED') {
-            $this->dispatch('toast', type: 'error', title: 'Ditolak', message: 'Ticket sudah CLOSED.', duration: 3000);
+            $this->toast('error', 'Ditolak', 'Ticket sudah CLOSED.', 3000);
             return;
         }
 
@@ -193,27 +254,28 @@ class Ticketshow extends Component
 
             $this->reset('newComment');
 
-            // refresh urutan komentar
             $this->ticket->load([
                 'comments' => fn ($q) => $q->orderBy('created_at', 'asc'),
                 'comments.user:user_id,full_name',
             ]);
 
-            $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'Komentar ditambahkan.', duration: 2500);
-
+            $this->toast('success', 'Berhasil', 'Komentar ditambahkan.', 2500);
         } catch (ValidationException $e) {
             $first = collect($e->validator->errors()->all())->first() ?? 'Periksa input Anda.';
-            $this->dispatch('toast', type: 'error', title: 'Validasi', message: $first, duration: 3000);
+            $this->toast('error', 'Validasi', $first, 3000);
             throw $e;
         } catch (Throwable $e) {
-            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Terjadi kesalahan saat menambah komentar.', duration: 3000);
+            $this->toast('error', 'Gagal', 'Terjadi kesalahan saat menambah komentar.', 3000);
+            // optional: log($e)
         }
     }
 
+    /** ------------------------------
+     *  Render
+     *  ------------------------------*/
     public function render()
     {
         $agents = $this->allowedAgentsQuery()->orderBy('full_name')->get(['user_id','full_name']);
-
         return view('livewire.pages.admin.ticketshow', [
             'agents' => $agents,
             't'      => $this->ticket,

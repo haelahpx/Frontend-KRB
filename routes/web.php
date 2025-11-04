@@ -26,6 +26,7 @@ use App\Livewire\Pages\Admin\Ticket as AdminTicket;
 use App\Livewire\Pages\Admin\Usermanagement as UserManagementAdmin;
 use App\Livewire\Pages\Admin\Ticketshow as AdminTicketshow;
 use App\Livewire\Pages\Admin\RoomMonitoring as RoomMonitoringPage;
+use App\Livewire\Pages\Admin\Information as InformationPage;
 
 // ========== Livewire Pages (Superadmin ==========
 
@@ -217,9 +218,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
         Route::get('/admin-ticket', AdminTicket::class)->name('admin.ticket');
         Route::get('/admin-roommonitoring', RoomMonitoringPage::class)->name('admin.room.monitoring');
-        Route::get('/admin-ticket/{ticket:ulid}', AdminTicketshow::class)
-            ->name('admin.ticketshow');
+        Route::get('/tickets/{ticket:ulid}', AdminTicketShow::class)->name('admin.ticket.show');
         Route::get('/admin-usermanagement', UserManagementAdmin::class)->name('admin.usermanagement');
+        Route::get('/admin/information', InformationPage::class)->name('admin.information');
     });
 
     // ---------- Superadmin routes ----------

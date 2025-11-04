@@ -11,13 +11,13 @@ use App\Models\BookingRoom;
 use App\Models\Room;
 use App\Models\Announcement;
 use App\Models\Information;
-use App\Models\Ticket; // <-- pastikan ada model ini
+use App\Models\Ticket;
 
 #[Layout('layouts.app')]
 #[Title('HomePage')]
 class Home extends Component
 {
-    // --- Booking History summary (untuk card di Home) ---
+    // Booking History summary (untuk card di Home)
     public string $activeTab = 'upcoming'; // upcoming|ongoing|past|all
     public array $nextBooking = [];
     public array $historyUpcoming = [];
@@ -26,7 +26,7 @@ class Home extends Component
     public array $historyAll = [];
     public int $limit = 10;
 
-    // --- Tickets mini summary (real dari DB) ---
+    // Tickets mini summary
     public int $openTicketsCount = 0;
     public int $inProgressTicketsCount = 0;
     public int $resolvedLast7d = 0;
@@ -40,15 +40,14 @@ class Home extends Component
         $this->loadTicketSummary();
     }
 
-    public function openQuickTicket(): void
-    {
-        $this->dispatch('open-quick-ticket');
-    }
-
-
     public function setTab(string $tab): void
     {
         $this->activeTab = in_array($tab, ['upcoming', 'ongoing', 'past', 'all'], true) ? $tab : 'upcoming';
+    }
+
+    public function openQuickTicket(): void
+    {
+        $this->dispatch('open-quick-ticket');
     }
 
     public function openQuickBook(): void
@@ -114,9 +113,9 @@ class Home extends Component
             ->where('user_id', $userId)
             ->where(function ($q) use ($today, $nowH) {
                 $q->where('date', '>', $today)
-                    ->orWhere(function ($qq) use ($today, $nowH) {
-                        $qq->where('date', $today)->where('start_time', '>=', $nowH);
-                    });
+                  ->orWhere(function ($qq) use ($today, $nowH) {
+                      $qq->where('date', $today)->where('start_time', '>=', $nowH);
+                  });
             })
             ->orderBy('date')->orderBy('start_time')
             ->limit($this->limit)
@@ -135,9 +134,9 @@ class Home extends Component
             ->where('user_id', $userId)
             ->where(function ($q) use ($today, $nowH) {
                 $q->where('date', '<', $today)
-                    ->orWhere(function ($qq) use ($today, $nowH) {
-                        $qq->where('date', $today)->where('end_time', '<', $nowH);
-                    });
+                  ->orWhere(function ($qq) use ($today, $nowH) {
+                      $qq->where('date', $today)->where('end_time', '<', $nowH);
+                  });
             })
             ->orderByDesc('date')->orderByDesc('end_time')
             ->limit($this->limit)
@@ -151,27 +150,27 @@ class Home extends Component
 
         $mapFn = function ($b) use ($roomMap) {
             return [
-                'id' => (int) $b->bookingroom_id,
-                'room_id' => (int) $b->room_id,
-                'room_name' => (string) ($roomMap[$b->room_id] ?? 'Unknown'),
-                'date' => (string) $b->date,
-                'start_time' => (string) $b->start_time,
-                'end_time' => (string) $b->end_time,
+                'id'            => (int) $b->bookingroom_id,
+                'room_id'       => (int) $b->room_id,
+                'room_name'     => (string) ($roomMap[$b->room_id] ?? 'Unknown'),
+                'date'          => (string) $b->date,
+                'start_time'    => (string) $b->start_time,
+                'end_time'      => (string) $b->end_time,
                 'meeting_title' => (string) $b->meeting_title,
             ];
         };
 
         $this->historyUpcoming = $upcoming->map($mapFn)->values()->all();
-        $this->historyOngoing = $ongoing->map($mapFn)->values()->all();
-        $this->historyPast = $past->map($mapFn)->values()->all();
-        $this->historyAll = $all->map($mapFn)->values()->all();
+        $this->historyOngoing  = $ongoing->map($mapFn)->values()->all();
+        $this->historyPast     = $past->map($mapFn)->values()->all();
+        $this->historyAll      = $all->map($mapFn)->values()->all();
 
         $next = $upcoming->first();
         $this->nextBooking = $next ? $mapFn($next) : [];
 
         // angka “Minggu ini”
         $startWeek = $now->copy()->startOfWeek()->toDateString();
-        $endWeek = $now->copy()->endOfWeek()->toDateString();
+        $endWeek   = $now->copy()->endOfWeek()->toDateString();
 
         $this->upcomingBookings = BookingRoom::query()
             ->where('user_id', $userId)
@@ -183,15 +182,14 @@ class Home extends Component
     {
         $userId = Auth::id();
 
-        // Kelompok status (edit sesuai enum/status di sistemmu)
-        $openStatuses = ['OPEN', 'NEW', 'PENDING'];
+        // Sesuaikan dengan enum/status real di tabel tickets
+        $openStatuses       = ['OPEN', 'NEW', 'PENDING'];
         $inProgressStatuses = ['IN_PROGRESS', 'ASSIGNED', 'ON_GOING'];
-        $resolvedStatuses = ['RESOLVED', 'CLOSED', 'DONE'];
+        $resolvedStatuses   = ['RESOLVED', 'CLOSED', 'DONE'];
 
-        // Base query: tiket milik user ini
         $base = Ticket::query()->where('user_id', $userId);
 
-        $this->openTicketsCount = (clone $base)->whereIn('status', $openStatuses)->count();
+        $this->openTicketsCount       = (clone $base)->whereIn('status', $openStatuses)->count();
         $this->inProgressTicketsCount = (clone $base)->whereIn('status', $inProgressStatuses)->count();
 
         $sevenDaysAgo = Carbon::now($this->tz)->subDays(7);
@@ -204,50 +202,62 @@ class Home extends Component
     protected function roundUpToSlot(Carbon $time, int $slotMinutes = 30): Carbon
     {
         $extra = $slotMinutes - ($time->minute % $slotMinutes);
-        if ($extra === $slotMinutes)
-            $extra = 0;
+        if ($extra === $slotMinutes) $extra = 0;
         return $time->copy()->addMinutes($extra)->setSecond(0);
     }
 
     public function render()
     {
-        $user = Auth::user();
+        $user      = Auth::user();
         $companyId = (int) ($user->company_id ?? 0);
-        $deptId = $user->department_id ? (int) $user->department_id : null;
+        $deptId    = $user->department_id ? (int) $user->department_id : null;
 
-        // Announcements: per company, (opsional) juga per department kalau kolomnya ada
-        $announcements = Announcement::forCompany($companyId)
-            // ->forDepartment($deptId) // aktifkan jika tabel announcements ada department_id
-            ->orderBy('event_at', 'asc')
+        // Announcements (pakai scope forCompany kalau ada)
+        $annBase = Announcement::query();
+        if (method_exists(Announcement::class, 'scopeForCompany')) {
+            $annBase = $annBase->forCompany($companyId);
+        } else {
+            $annBase = $annBase->where('company_id', $companyId);
+        }
+        $announcements = $annBase
+            ->orderBy('event_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        // Informations: per company + sesuai department user ATAU global (NULL)
+        // Informations: coba (global + user dept) dulu
         $informations = Information::forCompany($companyId)
             ->forDepartment($deptId)
-            ->orderBy('event_at', 'asc')
+            ->orderBy('event_at', 'desc')
             ->orderBy('created_at', 'desc')
-            ->limit(5)
+            ->limit(10)
             ->get();
 
-        // (opsional) refresh ringkasan tiket
+        // Fallback: kalau tidak ada untuk dept user, tampilkan semua informasi perusahaan
+        if ($informations->isEmpty()) {
+            $informations = Information::forCompany($companyId)
+                ->orderBy('event_at', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+        }
+
+        // optional: refresh ringkasan tiket
         $this->loadTicketSummary();
 
         return view('livewire.pages.user.home', [
-            'announcements' => $announcements,
-            'informations' => $informations,
-            'openTicketsCount' => $this->openTicketsCount,
-            'inProgressTicketsCount' => $this->inProgressTicketsCount,
-            'resolvedLast7d' => $this->resolvedLast7d,
-            'upcomingBookings' => $this->upcomingBookings,
-            'nextBooking' => $this->nextBooking,
-            'historyUpcoming' => $this->historyUpcoming,
-            'historyOngoing' => $this->historyOngoing,
-            'historyPast' => $this->historyPast,
-            'historyAll' => $this->historyAll,
-            'activeTab' => $this->activeTab,
+            'announcements'           => $announcements,
+            'informations'            => $informations,
+            'openTicketsCount'        => $this->openTicketsCount,
+            'inProgressTicketsCount'  => $this->inProgressTicketsCount,
+            'resolvedLast7d'          => $this->resolvedLast7d,
+            'upcomingBookings'        => $this->upcomingBookings,
+            'nextBooking'             => $this->nextBooking,
+            'historyUpcoming'         => $this->historyUpcoming,
+            'historyOngoing'          => $this->historyOngoing,
+            'historyPast'             => $this->historyPast,
+            'historyAll'              => $this->historyAll,
+            'activeTab'               => $this->activeTab,
         ]);
     }
-
 }

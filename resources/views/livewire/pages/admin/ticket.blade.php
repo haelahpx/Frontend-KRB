@@ -10,19 +10,12 @@
 
     <main class="px-4 sm:px-6 py-6 space-y-8">
         <div class="space-y-6">
-
-            {{-- Header --}}
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
-                <div class="pointer-events-none absolute inset-0 opacity-10">
-                    <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
-                    <div class="absolute bottom-0 -left-4 w-16 h-16 bg-white rounded-full blur-lg"></div>
-                </div>
                 <div class="relative z-10 p-6 sm:p-8">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-9 4h6M7 8h10M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-9 4h6M7 8h10M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
                         </div>
                         <div class="flex-1">
@@ -32,13 +25,10 @@
                 </div>
             </div>
 
-            {{-- Messages --}}
             @if (session()->has('message'))
                 <div class="p-4 rounded-lg bg-emerald-600 text-white shadow-sm">
                     <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                         {{ session('message') }}
                     </div>
                 </div>
@@ -47,25 +37,19 @@
             @if (session()->has('error'))
                 <div class="p-4 rounded-lg bg-rose-600 text-white shadow-sm">
                     <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         {{ session('error') }}
                     </div>
                 </div>
             @endif
 
-            {{-- One container: Filters + Tickets --}}
             <section class="{{ $card }}">
-                {{-- Header + Filters --}}
                 <div class="px-5 py-4 border-b border-gray-200">
                     <div class="flex flex-col gap-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div class="md:col-span-2">
                                 <label class="{{ $label }}">Search</label>
-                                <input type="text" wire:model.debounce.500ms="search" class="{{ $input }}"
-                                    placeholder="Subject / description">
+                                <input type="text" wire:model.debounce.500ms="search" class="{{ $input }}" placeholder="Subject / description">
                             </div>
                             <div>
                                 <label class="{{ $label }}">Priority</label>
@@ -88,43 +72,29 @@
                             </div>
                         </div>
 
-                        {{-- chips summary --}}
                         <div class="flex flex-wrap items-center gap-2 pt-1">
                             @if($search)
-                                <span class="{{ $chip }}">
-                                    <span class="text-gray-600">Search:</span>
-                                    <span class="font-medium text-gray-900">{{ $search }}</span>
-                                </span>
+                                <span class="{{ $chip }}"><span class="text-gray-600">Search:</span><span class="font-medium text-gray-900">{{ $search }}</span></span>
                             @endif
                             @if($priority)
-                                <span class="{{ $chip }}">
-                                    <span class="text-gray-600">Priority:</span>
-                                    <span class="font-medium text-gray-900 capitalize">{{ $priority }}</span>
-                                </span>
+                                <span class="{{ $chip }}"><span class="text-gray-600">Priority:</span><span class="font-medium text-gray-900 capitalize">{{ $priority }}</span></span>
                             @endif
                             @if($status)
-                                <span class="{{ $chip }}">
-                                    <span class="text-gray-600">Status:</span>
-                                    <span class="font-medium text-gray-900 capitalize">{{ str_replace('_', ' ', $status) }}</span>
-                                </span>
+                                <span class="{{ $chip }}"><span class="text-gray-600">Status:</span><span class="font-medium text-gray-900 capitalize">{{ str_replace('_',' ',$status) }}</span></span>
                             @endif
-
                             @if($search || $priority || $status)
-                                <button wire:click="resetFilters" type="button"
-                                    class="text-xs underline text-gray-600 hover:text-gray-900 ml-1">Reset filters</button>
+                                <button wire:click="resetFilters" type="button" class="text-xs underline text-gray-600 hover:text-gray-900 ml-1">Reset filters</button>
                             @endif
                         </div>
                     </div>
                 </div>
 
-                {{-- Body: Cards --}}
                 <div class="p-5">
                     @if($tickets->count())
                         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             @foreach ($tickets as $t)
                                 @php
                                     $initial = strtoupper(substr(($t->subject ?? "T"), 0, 1));
-                                    $showUrl = route('admin.ticketshow', ['ticket' => $t->ticket_id]);
                                 @endphp
 
                                 <div class="p-4 rounded-xl bg-gray-50 border border-gray-200 hover:border-gray-300 transition"
@@ -133,7 +103,6 @@
                                         <div class="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0">
                                             {{ $initial }}
                                         </div>
-
                                         <div class="min-w-0 flex-1">
                                             <div class="flex flex-wrap items-center gap-2 mb-2">
                                                 <h4 class="font-semibold text-gray-900 text-sm truncate">
@@ -149,40 +118,16 @@
                                                     <span class="text-gray-600">Status:</span>
                                                     <span class="text-gray-900">{{ strtolower($t->status) }}</span>
                                                 </span>
-
-                                                @if(($t->attachments_count ?? 0) > 0)
-                                                    <span class="{{ $chip }} font-medium">
-                                                        Attachments
-                                                        <span class="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-md bg-gray-900 text-white text-[10px]">
-                                                            {{ $t->attachments_count }}
-                                                        </span>
-                                                    </span>
-                                                @endif
-
-                                                <span class="{{ $chip }}">
-                                                    <span class="text-gray-600">By:</span>
-                                                    <span class="font-medium text-gray-900">
-                                                        {{ $t->user->full_name ?? 'Unknown User' }}
-                                                    </span>
-                                                </span>
-
-                                                <span class="{{ $chip }}">
-                                                    <span class="text-gray-600">Dept:</span>
-                                                    <span class="font-medium text-gray-900">
-                                                        {{ $t->department->department_name ?? '-' }}
-                                                    </span>
-                                                </span>
-
-                                                
                                             </div>
 
                                             <p class="text-sm text-gray-600 line-clamp-2">{{ $t->description }}</p>
                                         </div>
                                     </div>
 
-                                    {{-- Action buttons --}}
                                     <div class="mt-4 flex justify-end gap-2">
-                                        <a href="{{ $showUrl }}" class="{{ $btnBlk }}">Open</a>
+                                        {{-- IMPORTANT: pass the MODEL -> URL becomes /tickets/{ulid} --}}
+                                        <a href="{{ route('admin.ticket.show', $t) }}" class="{{ $btnBlk }}">Open</a>
+
                                         <button wire:click.stop="deleteTicket({{ $t->ticket_id }})" class="{{ $btnRed }}" title="Move to Trash">
                                             Delete
                                         </button>
@@ -195,7 +140,6 @@
                     @endif
                 </div>
 
-                {{-- Footer: Pagination --}}
                 <div class="px-5 py-4 border-t border-gray-200">
                     <div class="flex justify-center">
                         {{ $tickets->links() }}

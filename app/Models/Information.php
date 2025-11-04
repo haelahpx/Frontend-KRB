@@ -67,4 +67,17 @@ class Information extends Model
             }
         });
     }
+
+    protected function descriptionHtml(): Attribute
+    {
+        return Attribute::get(function () {
+            $text = e((string) $this->description);
+            $text = preg_replace(
+                '~(https?://[^\s<]+)~i',
+                '<a href="$1" target="_blank" rel="noopener" class="text-blue-700 underline">$1</a>',
+                $text
+            );
+            return nl2br($text);
+        });
+    }
 }

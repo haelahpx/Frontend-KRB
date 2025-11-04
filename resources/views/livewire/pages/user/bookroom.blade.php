@@ -1,11 +1,9 @@
-<div class="max-w-7xl mx-auto p-6"> {{-- ROOT tunggal untuk Livewire component --}}
-    {{-- HEADER CARD --}}
+<div class="max-w-7xl mx-auto p-6">
     <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6 mb-8">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <h1 class="text-3xl font-bold text-gray-900">Room Booking System</h1>
 
             <div class="flex items-center gap-3">
-                {{-- SWITCH: Offline / Online --}}
                 <div class="flex bg-gray-100 rounded-md p-1">
                     <a href="{{ route('book-room') }}"
                        class="px-4 py-2 text-sm font-medium rounded transition-colors
@@ -19,7 +17,6 @@
                     </a>
                 </div>
 
-                {{-- EXISTING: Form / Calendar toggle --}}
                 <div class="flex bg-gray-100 rounded-md p-1">
                     <button wire:click="switchView('form')"
                         class="px-4 py-2 text-sm font-medium rounded transition-colors {{ $view === 'form' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900' }}">
@@ -34,28 +31,23 @@
         </div>
     </div>
 
-    {{-- TOAST CONTAINER (JS-driven) --}}
     <div id="global-toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-2"></div>
 
     @if ($view === 'form')
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {{-- FORM --}}
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
                     <h2 class="text-2xl font-semibold text-gray-900 mb-2">Book a Meeting Room</h2>
                     <p class="text-gray-600 mb-6">Fill out the form below to request a room booking</p>
 
-                    {{-- Booking Rules --}}
                     <div class="bg-blue-50 mb-2 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
                         <h4 class="font-semibold mb-2">⏰ Booking Rules</h4>
                         <ul class="list-disc pl-5 space-y-1">
-                            <li>Waktu dibagi dalam <strong>slot 30 menit</strong> (misalnya 09:00–09:30, 09:30–10:00).</li>
-                            <li>Isi <strong>judul meeting </strong>yang jelas.</li>
-                            <li>Booking harus dimulai minimal <strong>15 menit dari sekarang</strong> (lead time).</li>
-                            <li>Jika waktu yang kamu pilih terlewat saat mengisi form, sistem akan otomatis
-                                <strong>menggeser ke slot berikutnya</strong> dan menampilkan pesan pemberitahuan.</li>
-                            <li>Kamu tidak bisa booking ke jam yang sudah lewat.</li>
-                            <li>Untuk tanggal di masa depan, kamu bebas memilih jam berapapun.</li>
+                            <li>Slot 30 menit.</li>
+                            <li>Judul meeting jelas.</li>
+                            <li>Minimal mulai 15 menit dari sekarang.</li>
+                            <li>Jam yang lewat otomatis digeser ke slot berikutnya.</li>
+                            <li>Tidak bisa pesan ke jam yang sudah lewat.</li>
                         </ul>
                     </div>
 
@@ -111,37 +103,27 @@
                                 @error('end_time') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
                         </div>
+
                         <div>
                             <label class="block text-sm font-medium text-gray-900 mb-3">Additional Requirements</label>
-
                             <div class="grid grid-cols-2 gap-4">
-                                {{-- dari database (sudah filter by company) --}}
                                 @forelse ($requirementsMaster as $reqName)
                                     <label class="flex items-center space-x-2">
-                                        <input type="checkbox"
-                                            wire:model.live="requirements"
-                                            value="{{ $reqName }}"
+                                        <input type="checkbox" wire:model.live="requirements" value="{{ $reqName }}"
                                             class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
                                         <span class="text-sm text-gray-900">{{ $reqName }}</span>
                                     </label>
                                 @empty
-                                    <p class="text-sm text-gray-500 col-span-2">
-                                        Belum ada requirements untuk perusahaan Anda.
-                                    </p>
+                                    <p class="text-sm text-gray-500 col-span-2">Belum ada requirements untuk perusahaan Anda.</p>
                                 @endforelse
 
-                                {{-- selalu sediakan opsi "Other" agar fitur catatan khusus tetap ada --}}
                                 <label class="flex items-center space-x-2">
-                                    <input type="checkbox"
-                                        wire:model.live="requirements"
-                                        value="other"
+                                    <input type="checkbox" wire:model.live="requirements" value="other"
                                         class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
                                     <span class="text-sm text-gray-900">Other</span>
                                 </label>
                             </div>
                         </div>
-
-
 
                         @if (in_array('other', $requirements ?? [], true))
                             <div class="mt-4">
@@ -151,6 +133,17 @@
                                 @error('special_notes') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
                         @endif
+
+                        {{-- NEW: Satu checkbox untuk inform ke Information Dept (simpan 'request' jika dicentang) --}}
+                        <div class="pt-2">
+                            <label class="inline-flex items-center gap-3">
+                                <input type="checkbox" wire:model.live="informInfo"
+                                       class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                <span class="text-sm text-gray-900">
+                                    Minta Information Dept menginformasikan meeting ini (akan disimpan sebagai <span class="font-semibold">request</span>)
+                                </span>
+                            </label>
+                        </div>
 
                         <div class="flex space-x-4 pt-4">
                             <button type="button" wire:click="$refresh"
@@ -166,7 +159,6 @@
                 </div>
             </div>
 
-            {{-- SIDEBAR --}}
             <div class="space-y-6">
                 <div wire:poll.60s class="bg-white rounded-lg shadow-sm border-2 border-black p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-1">Room Availability</h3>
@@ -214,6 +206,9 @@
                                         {{ \Carbon\Carbon::parse($booking['date'])->format('M j') }},
                                         {{ \Carbon\Carbon::parse($booking['start_time'])->format('g:i A') }} •
                                         {{ collect($rooms)->firstWhere('id', $booking['room_id'])['name'] ?? 'Unknown Room' }}
+                                        @if(!empty($booking['requestinformation']))
+                                            <span class="ml-2 text-xs text-gray-500">• Info: {{ ucfirst($booking['requestinformation']) }}</span>
+                                        @endif
                                     </p>
                                 </div>
                             </div>
@@ -224,7 +219,6 @@
         </div>
 
     @else
-        {{-- CALENDAR (Compact Day View) --}}
         <div wire:poll.60s class="bg-white rounded-lg shadow-sm border-2 border-black overflow-hidden">
             <div class="bg-gray-50 border-b-2 border-black p-4 md:p-6">
                 <div class="flex items-center justify-between">
@@ -233,24 +227,14 @@
                         <p class="text-gray-600 mt-1">{{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        {{-- Week / Month nav --}}
-                        <button wire:click="previousMonth"
-                            class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">« Month</button>
-                        <button wire:click="previousWeek"
-                            class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">‹ Week</button>
-
-                        {{-- Day picker --}}
-                        <input type="date" wire:model.live="date" wire:change="selectDate($event.target.value)"
-                            class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
-
-                        <button wire:click="nextWeek"
-                            class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">Week ›</button>
-                        <button wire:click="nextMonth"
-                            class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">Month »</button>
+                        <button wire:click="previousMonth" class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">« Month</button>
+                        <button wire:click="previousWeek" class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">‹ Week</button>
+                        <input type="date" wire:model.live="date" wire:change="selectDate($event.target.value)" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                        <button wire:click="nextWeek" class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">Week ›</button>
+                        <button wire:click="nextMonth" class="hidden md:inline px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">Month »</button>
                     </div>
                 </div>
 
-                {{-- Pagination Rooms --}}
                 <div class="mt-4 flex items-center justify-between">
                     <div class="text-sm text-gray-600">
                         Showing rooms {{ ($roomsPage - 1) * $roomsPerPage + 1 }} –
@@ -258,33 +242,23 @@
                         of {{ count($rooms) }}
                     </div>
                     <div class="flex gap-2">
-                        <button wire:click="prevRoomPage"
-                            class="px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50"
-                            {{ $roomsPage <= 1 ? 'disabled' : '' }}>‹ Rooms</button>
-                        <button wire:click="nextRoomPage"
-                            class="px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50"
-                            {{ $roomsPage >= $roomsTotalPages ? 'disabled' : '' }}>Rooms ›</button>
+                        <button wire:click="prevRoomPage" class="px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50" {{ $roomsPage <= 1 ? 'disabled' : '' }}>‹ Rooms</button>
+                        <button wire:click="nextRoomPage" class="px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50" {{ $roomsPage >= $roomsTotalPages ? 'disabled' : '' }}>Rooms ›</button>
                     </div>
                 </div>
             </div>
 
-            {{-- Grid: Time × Visible Rooms --}}
             <div class="relative">
                 <div class="flex">
-                    {{-- Left time rail --}}
                     <div class="w-20 shrink-0 border-r border-gray-200 bg-gray-50 sticky left-0 z-10">
                         <div class="h-10 border-b border-gray-200"></div>
                         @foreach($timeSlots as $t)
-                            <div class="h-7 md:h-8 text-[10px] md:text-xs text-gray-600 flex items-center justify-center border-b border-gray-100">
-                                {{ $t }}
-                            </div>
+                            <div class="h-7 md:h-8 text-[10px] md:text-xs text-gray-600 flex items-center justify-center border-b border-gray-100">{{ $t }}</div>
                         @endforeach
                     </div>
 
-                    {{-- Rooms scroller --}}
                     <div class="overflow-x-auto">
                         <div class="min-w-[640px]">
-                            {{-- Header: room names --}}
                             <div class="grid" style="grid-template-columns: repeat({{ count($visibleRooms) }}, minmax(160px,1fr));">
                                 @foreach($visibleRooms as $room)
                                     <div class="h-10 bg-gray-50 border-b border-r border-gray-200 px-3 flex items-center">
@@ -294,13 +268,10 @@
                                 @endforeach
                             </div>
 
-                            {{-- Body: time rows × room columns --}}
                             @foreach($timeSlots as $t)
-                                <div class="grid border-b border-gray-100"
-                                    style="grid-template-columns: repeat({{ count($visibleRooms) }}, minmax(160px,1fr));">
+                                <div class="grid border-b border-gray-100" style="grid-template-columns: repeat({{ count($visibleRooms) }}, minmax(160px,1fr));">
                                     @foreach($visibleRooms as $room)
                                         @php $slotBooking = $this->getBookingForSlot($room['id'], $date, $t); @endphp
-
                                         @if($slotBooking)
                                             <div class="h-7 md:h-8 relative border-r border-gray-100">
                                                 <div class="absolute inset-1 bg-red-100 border border-red-200 rounded px-2 flex items-center justify-between">
@@ -308,7 +279,6 @@
                                                         {{ $slotBooking['meeting_title'] }}
                                                         ({{ \Carbon\Carbon::parse($slotBooking['start_time'])->format('H:i') }}–{{ \Carbon\Carbon::parse($slotBooking['end_time'])->format('H:i') }})
                                                     </div>
-                                                    {{-- status badge --}}
                                                     <div class="ml-2 flex-shrink-0">
                                                         @if(isset($slotBooking['status']) && $slotBooking['status'] === 'approved')
                                                             <span class="text-xs font-semibold text-green-800 bg-green-100 px-2 py-0.5 rounded">Approved</span>
@@ -335,61 +305,37 @@
                 </div>
             </div>
 
-            {{-- Legend --}}
             <div class="bg-gray-50 border-t border-gray-200 p-3 md:p-4">
                 <div class="flex items-center gap-4 text-xs md:text-sm">
-                    <span class="inline-flex items-center gap-2">
-                        <span class="w-3 h-3 bg-red-100 border border-red-200 rounded inline-block"></span> Booked
-                    </span>
-                    <span class="inline-flex items-center gap-2">
-                        <span class="w-3 h-3 bg-white border border-gray-200 rounded inline-block"></span> Available
-                    </span>
-                    <span class="inline-flex items-center gap-2">
-                        <span class="w-3 h-3 bg-green-50 border border-green-200 rounded inline-block"></span> Hover to book
-                    </span>
+                    <span class="inline-flex items-center gap-2"><span class="w-3 h-3 bg-red-100 border border-red-200 rounded inline-block"></span> Booked</span>
+                    <span class="inline-flex items-center gap-2"><span class="w-3 h-3 bg-white border border-gray-200 rounded inline-block"></span> Available</span>
+                    <span class="inline-flex items-center gap-2"><span class="w-3 h-3 bg-green-50 border border-green-200 rounded inline-block"></span> Hover to book</span>
                 </div>
             </div>
         </div>
     @endif
 
-    {{-- Child modal (quick book) --}}
     <livewire:booking.quick-book-modal />
 </div>
 
-    {{-- Tiny JS toast handler (listens for browser event 'toast') --}}
-    <script>
-        (function(){
-            const container = document.getElementById('global-toast-container');
-
-            function showToast(type, message) {
-                if (!message) return;
-                const el = document.createElement('div');
-                el.className = [
-                    'px-4','py-2','rounded','shadow','max-w-sm','text-sm','flex','items-center','justify-between',
-                    'border'
-                ].join(' ');
-                if (type === 'success') {
-                    el.classList.add('bg-green-50','text-green-800','border-green-200');
-                } else if (type === 'error') {
-                    el.classList.add('bg-red-50','text-red-800','border-red-200');
-                } else {
-                    el.classList.add('bg-blue-50','text-blue-800','border-blue-200');
-                }
-
-                el.innerHTML = `<div class="truncate pr-3">${message}</div>
-                                <button class="ml-3 text-sm font-semibold">OK</button>`;
-
-                el.querySelector('button').addEventListener('click', () => {
-                    el.remove();
-                });
-
-                container.appendChild(el);
-                setTimeout(()=> el.remove(), 5000);
-            }
-
-            window.addEventListener('toast', function(e){
-                const detail = e.detail || {};
-                showToast(detail.type || 'info', detail.message || '');
-            });
-        })();
-    </script> 
+<script>
+    (function(){
+        const container = document.getElementById('global-toast-container');
+        function showToast(type, message) {
+            if (!message) return;
+            const el = document.createElement('div');
+            el.className = ['px-4','py-2','rounded','shadow','max-w-sm','text-sm','flex','items-center','justify-between','border'].join(' ');
+            if (type === 'success') { el.classList.add('bg-green-50','text-green-800','border-green-200'); }
+            else if (type === 'error') { el.classList.add('bg-red-50','text-red-800','border-red-200'); }
+            else { el.classList.add('bg-blue-50','text-blue-800','border-blue-200'); }
+            el.innerHTML = `<div class="truncate pr-3">${message}</div><button class="ml-3 text-sm font-semibold">OK</button>`;
+            el.querySelector('button').addEventListener('click', () => el.remove());
+            container.appendChild(el);
+            setTimeout(()=> el.remove(), 5000);
+        }
+        window.addEventListener('toast', e => {
+            const d = e.detail || {};
+            showToast(d.type || 'info', d.message || '');
+        });
+    })();
+</script>

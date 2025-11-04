@@ -30,6 +30,9 @@ class Bookroom extends Component
     public array $requirements = [];
     public string $special_notes = '';
 
+    // NEW: satu checkbox → true = simpan 'request', false = null
+    public bool $informInfo = false;
+
     public array $rooms = [];
     public array $bookings = [];
     public array $timeSlots = [];
@@ -45,7 +48,6 @@ class Bookroom extends Component
 
     public array $requirementsMaster = [];
 
-    // === Capacity confirm flag (konfirmasi 2x submit) ===
     public bool $confirmCapacityOverride = false;
 
     public function mount(): void
@@ -57,8 +59,7 @@ class Bookroom extends Component
 
         $start = $now->copy()->addMinutes($this->leadMinutes);
         $this->start_time = $this->roundUpToSlot($start)->format('H:i');
-        $this->end_time = Carbon::createFromFormat('H:i', $this->start_time)
-            ->addMinutes($this->slotMinutes)->format('H:i');
+        $this->end_time = Carbon::createFromFormat('H:i', $this->start_time)->addMinutes($this->slotMinutes)->format('H:i');
 
         $this->loadRoomsFromDb();
         $this->loadRecentBookings();
@@ -80,10 +81,8 @@ class Bookroom extends Component
     protected function updateMinStart(): void
     {
         $now = Carbon::now($this->tz);
-
         if ($this->date === $now->toDateString()) {
             $this->minStart = $now->format('H:i');
-
             if ($this->start_time < $this->minStart) {
                 $bumped = $this->roundUpToSlot($now->copy()->addMinutes($this->leadMinutes));
                 $this->start_time = $bumped->format('H:i');
@@ -162,7 +161,6 @@ class Bookroom extends Component
         $this->selectDate($this->date);
     }
 
-    // Reset flag konfirmasi saat input terkait berubah
     public function updatedRoomId(): void
     {
         $this->confirmCapacityOverride = false;
@@ -225,7 +223,6 @@ class Bookroom extends Component
             return;
         }
 
-        // === Capacity check & 2-tap confirm ===
         $maxCap = Room::query()
             ->where('company_id', $companyId)
             ->where('room_id', (int) $this->room_id)
@@ -233,16 +230,9 @@ class Bookroom extends Component
 
         if ($maxCap && (int)$this->number_of_attendees > (int)$maxCap && !$this->confirmCapacityOverride) {
             $this->confirmCapacityOverride = true;
-            $this->dispatch(
-                'toast',
-                type: 'warning',
-                title: 'Capacity mismatch',
-                message: "Are you sure? Attendees ({$this->number_of_attendees}) exceed room max capacity ({$maxCap}). Click Submit again to proceed.",
-                duration: 7000
-            );
+            $this->dispatch('toast', type: 'warning', title: 'Capacity mismatch', message: "Are you sure? Attendees ({$this->number_of_attendees}) exceed room max capacity ({$maxCap}). Click Submit again to proceed.", duration: 7000);
             return;
         }
-        // ======================================
 
         $startDt = Carbon::createFromFormat('Y-m-d H:i', "{$this->date} {$this->start_time}", $this->tz);
         $endDt = Carbon::createFromFormat('Y-m-d H:i', "{$this->date} {$this->end_time}", $this->tz);
@@ -262,7 +252,7 @@ class Bookroom extends Component
         }
 
         DB::transaction(function () use ($startDt, $endDt, $companyId) {
-            $booking = BookingRoom::create([
+            BookingRoom::create([
                 'room_id' => (int) $this->room_id,
                 'company_id' => $companyId,
                 'user_id' => Auth::id(),
@@ -273,6 +263,7 @@ class Bookroom extends Component
                 'start_time' => $startDt,
                 'end_time' => $endDt,
                 'special_notes' => $this->special_notes,
+                'requestinformation' => $this->informInfo ? 'request' : null,
                 'is_approve' => 0,
                 'status' => 'pending',
                 'approved_by' => null,
@@ -284,7 +275,8 @@ class Bookroom extends Component
                     ->pluck('requirement_id')
                     ->toArray();
 
-                $booking->requirements()->sync($ids);
+                // relasi pivot optional, sesuaikan dengan modelmu
+                // $booking->requirements()->sync($ids);
             }
         });
 
@@ -332,7 +324,7 @@ class Bookroom extends Component
             ->where('company_id', $companyId)
             ->orderByDesc('created_at')
             ->limit(10)
-            ->get(['bookingroom_id', 'room_id', 'meeting_title', 'date', 'start_time', 'end_time', 'status', 'is_approve'])
+            ->get(['bookingroom_id', 'room_id', 'meeting_title', 'date', 'start_time', 'end_time', 'status', 'is_approve', 'requestinformation'])
             ->map(fn($b) => [
                 'id' => (int) $b->bookingroom_id,
                 'room_id' => (int) $b->room_id,
@@ -342,6 +334,7 @@ class Bookroom extends Component
                 'end_time' => (string) $b->end_time,
                 'status' => (string) ($b->status ?? 'pending'),
                 'is_approve' => (bool) ($b->is_approve ?? 0),
+                'requestinformation' => $b->requestinformation,
             ])->all();
     }
 
@@ -441,13 +434,13 @@ class Bookroom extends Component
         $this->number_of_attendees = '';
         $this->requirements = [];
         $this->special_notes = '';
+        $this->informInfo = false;
         $this->confirmCapacityOverride = false;
 
         $now = Carbon::now($this->tz);
         $start = $now->copy()->addMinutes($this->leadMinutes);
         $this->start_time = $this->roundUpToSlot($start)->format('H:i');
-        $this->end_time = Carbon::createFromFormat('H:i', $this->start_time)
-            ->addMinutes($this->slotMinutes)->format('H:i');
+        $this->end_time = Carbon::createFromFormat('H:i', $this->start_time)->addMinutes($this->slotMinutes)->format('H:i');
 
         if ($keepDate) $this->date = $d;
     }

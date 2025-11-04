@@ -48,6 +48,7 @@ class BookingRoom extends Model
         'online_meeting_url',
         'online_meeting_code',
         'online_meeting_password',
+        'requestinformation'
     ];
 
     protected $casts = [

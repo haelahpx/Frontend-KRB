@@ -42,6 +42,14 @@
         </flux:sidebar.item>
 
         <flux:sidebar.item
+            icon="calendar-days"
+            href="{{ route('admin.information') }}"
+            :current="request()->routeIs('admin.information')" 
+        >
+            Information
+        </flux:sidebar.item>
+
+        <flux:sidebar.item
             icon="inbox"
             href="{{ route('admin.ticket') }}"
             :current="request()->routeIs('admin.ticket')"
