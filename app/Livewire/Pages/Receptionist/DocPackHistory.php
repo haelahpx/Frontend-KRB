@@ -20,7 +20,7 @@ class DocPackHistory extends Component
 
     protected string $paginationTheme = 'tailwind';
 
-    // Filters (unchanged)
+    // Filters
     public string $q = '';
     public ?string $selectedDate = null;
     public string $dateMode = 'semua';
@@ -31,23 +31,23 @@ class DocPackHistory extends Component
     public string $userQ = '';
 
     // Only one box now: Done
-    public int $perDone = 8;
+    public int $perDone = 5;
 
     // Edit & Delete (soft)
     public bool $showEdit = false;
     public ?int $editId = null;
     public array $edit = [
-        'item_name' => null,
+        'item_name'     => null,
         'nama_pengirim' => null,
         'nama_penerima' => null,
-        'catatan' => null,
+        'catatan'       => null,
     ];
 
     protected $rules = [
-        'edit.item_name' => 'nullable|string|max:255',
+        'edit.item_name'     => 'nullable|string|max:255',
         'edit.nama_pengirim' => 'nullable|string|max:255',
         'edit.nama_penerima' => 'nullable|string|max:255',
-        'edit.catatan' => 'nullable|string|max:5000',
+        'edit.catatan'       => 'nullable|string|max:5000',
     ];
 
     public function updated($name): void
@@ -173,27 +173,28 @@ class DocPackHistory extends Component
         $row = $this->base()->findOrFail($id);
         $this->editId = $row->delivery_id ?? $row->id ?? $id;
         $this->edit = [
-            'item_name' => $row->item_name,
+            'item_name'     => $row->item_name,
             'nama_pengirim' => $row->nama_pengirim,
             'nama_penerima' => $row->nama_penerima,
-            'catatan' => $row->catatan,
+            'catatan'       => $row->catatan,
         ];
         $this->showEdit = true;
     }
 
     public function saveEdit(): void
     {
-        if (!$this->editId)
+        if (!$this->editId) {
             return;
+        }
 
         $this->validate();
 
         $row = $this->base()->findOrFail($this->editId);
         $row->fill([
-            'item_name' => $this->edit['item_name'],
+            'item_name'     => $this->edit['item_name'],
             'nama_pengirim' => $this->edit['nama_pengirim'],
             'nama_penerima' => $this->edit['nama_penerima'],
-            'catatan' => $this->edit['catatan'],
+            'catatan'       => $this->edit['catatan'],
         ]);
         $row->save();
 
@@ -235,9 +236,9 @@ class DocPackHistory extends Component
             ->get(['user_id', 'full_name']);
 
         return view('livewire.pages.receptionist.docpackhistory', [
-            'done' => $this->done,
+            'done'        => $this->done,
             'departments' => $departments,
-            'users' => $users,
+            'users'       => $users,
         ]);
     }
 }

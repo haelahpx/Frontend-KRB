@@ -8,8 +8,9 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Schema;
 use App\Models\BookingRoom;
+use App\Models\Room;
 use App\Services\GoogleMeetService;
 use App\Services\ZoomService;
 use Carbon\Carbon;
@@ -22,33 +23,80 @@ class BookingsApproval extends Component
 
     protected string $paginationTheme = 'tailwind';
 
-    // UI filters
+    // Filters
     public string $q = '';
     public ?string $selectedDate = null;   // YYYY-MM-DD
     public string $dateMode = 'semua';     // semua | terbaru | terlama
 
-    // Pagination per box
+    // Pagination
     public int $perPending = 5;
     public int $perOngoing = 5;
 
-    // Reject modal state
+    // Reject modal
     public bool $showRejectModal = false;
     public ?int $rejectId = null;
     public string $rejectReason = '';
 
+    // Reschedule (cancel) modal
+    public bool $showRescheduleModal = false;
+    public ?int $rescheduleId = null;
+    public string $rescheduleDate = '';
+    public string $rescheduleStart = '';
+    public string $rescheduleEnd = '';
+    public string $rescheduleReason = '';
+
+    // Room select in reschedule modal
+    public array $roomsOptions = [];          // [ ['id'=>1,'label'=>'Ruang Garuda'], ... ]
+    public bool $rescheduleRoomEnabled = false;
+    public ?int $rescheduleRoomId = null;
+
     private string $tz = 'Asia/Jakarta';
 
-    /** Build a Carbon datetime safely whether columns are DATE+TIME or already DATETIME. */
+    public function mount(): void
+    {
+        $companyId = Auth::user()->company_id ?? null;
+
+        // Pick label column safely: prefer room_number, then room_name, else room_id
+        $labelCol = Schema::hasColumn('rooms', 'room_number')
+            ? 'room_number'
+            : (Schema::hasColumn('rooms', 'room_name') ? 'room_name' : 'room_id');
+
+        $query = Room::query()
+            ->selectRaw("room_id, {$labelCol} as label");
+
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        }
+
+        $this->roomsOptions = $query
+            ->orderBy($labelCol)
+            ->get()
+            ->map(function ($r) {
+                $label = $r->label ?? ('Room ' . $r->room_id);
+                return [
+                    'id'    => (int) $r->room_id,
+                    'label' => (string) $label,
+                ];
+            })
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Build a Carbon datetime whether columns are DATE+TIME or already DATETIME.
+     */
     private function buildDt(null|string $dateVal, null|string $timeVal): Carbon
     {
         if (!$dateVal && !$timeVal) {
             throw new \RuntimeException('Tanggal/waktu tidak lengkap.');
         }
 
+        // If time looks like full datetime
         if (is_string($timeVal) && preg_match('/^\d{4}-\d{2}-\d{2}/', $timeVal)) {
             return Carbon::parse($timeVal, $this->tz);
         }
 
+        // If date already datetime
         if (is_string($dateVal) && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:/', $dateVal)) {
             $dt = Carbon::parse($dateVal, $this->tz);
             if (is_string($timeVal) && preg_match('/^\d{2}:\d{2}/', $timeVal)) {
@@ -63,49 +111,57 @@ class BookingsApproval extends Component
         return Carbon::parse(trim($dateStr . ' ' . $timeStr), $this->tz);
     }
 
-    // Auto-progress approved → completed when due time has passed
-    private function autoProgressToDone(): int
+    /**
+     * Auto-progress approved → completed when end datetime has passed.
+     */
+    private function autoProgressToCompleted(): int
     {
         $now = Carbon::now($this->tz)->toDateTimeString();
 
         $endExpr = "COALESCE(
-            CASE WHEN `end_time` REGEXP '^[0-9]{4}-' THEN `end_time` ELSE NULL END,
-            CONCAT(`date`, ' ', `end_time`)
+            CASE WHEN end_time REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2} ' THEN end_time END,
+            CASE WHEN date REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2} ' THEN date END,
+            CONCAT(date, ' ', end_time)
         )";
 
         return DB::transaction(function () use ($now, $endExpr) {
             return BookingRoom::query()
                 ->where('status', 'approved')
+                ->whereNotNull('date')
                 ->whereNotNull('end_time')
+                ->whereRaw("$endExpr IS NOT NULL")
                 ->whereRaw("$endExpr <= ?", [$now])
-                ->update(['status' => 'completed']);
+                ->update([
+                    'status'     => 'completed',
+                    'updated_at' => Carbon::now($this->tz)->toDateTimeString(),
+                ]);
         });
     }
 
-    // Reset pages when filters change
+    // Livewire filters reset pagination
     public function updatingQ(): void
     {
         $this->resetPage('pendingPage');
         $this->resetPage('ongoingPage');
     }
+
     public function updatingSelectedDate(): void
     {
         $this->resetPage('pendingPage');
         $this->resetPage('ongoingPage');
     }
+
     public function updatingDateMode(): void
     {
         $this->resetPage('pendingPage');
         $this->resetPage('ongoingPage');
     }
 
-    // Computed: Google connected
     public function getGoogleConnectedProperty(): bool
     {
         return app(GoogleMeetService::class)->isConnected(Auth::id());
     }
 
-    // Helpers
     private function selectedDateValue(): ?string
     {
         return (is_string($this->selectedDate) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->selectedDate))
@@ -123,13 +179,14 @@ class BookingsApproval extends Component
         $dir = $this->sortingDirection();
 
         $invalidFirstExpr = "CASE
-            WHEN (`date` IS NULL OR `start_time` IS NULL) THEN 1
+            WHEN (date IS NULL OR start_time IS NULL) THEN 1
             ELSE 0
         END";
 
         $dtExpr = "COALESCE(
-            CASE WHEN `start_time` REGEXP '^[0-9]{4}-' THEN `start_time` ELSE NULL END,
-            CONCAT(`date`, ' ', `start_time`)
+            CASE WHEN start_time REGEXP '^[0-9]{4}-' THEN start_time END,
+            CASE WHEN date       REGEXP '^[0-9]{4}-' THEN date END,
+            CONCAT(date, ' ', start_time)
         )";
 
         return $query->orderByRaw("$invalidFirstExpr ASC")
@@ -137,19 +194,19 @@ class BookingsApproval extends Component
             ->orderByDesc('created_at');
     }
 
-    // ── Actions ──────────────────────────────────────────────────────────
+    // ─────────────────── Reject ────────────────────
 
     public function openReject(int $id): void
     {
         $this->rejectId = $id;
         $this->rejectReason = '';
-               $this->showRejectModal = true;
+        $this->showRejectModal = true;
     }
 
     public function confirmReject(): void
     {
         $this->validate([
-            'rejectId' => 'required|integer|exists:booking_rooms,bookingroom_id',
+            'rejectId'     => 'required|integer|exists:booking_rooms,bookingroom_id',
             'rejectReason' => 'required|string|min:3|max:500',
         ]);
 
@@ -158,8 +215,8 @@ class BookingsApproval extends Component
                 /** @var BookingRoom $b */
                 $b = BookingRoom::lockForUpdate()->findOrFail($this->rejectId);
 
-                $b->status = 'rejected';
-                $b->is_approve = 0;
+                $b->status      = 'rejected';
+                $b->is_approve  = 0;
                 $b->approved_by = Auth::id();
                 $b->book_reject = $this->rejectReason;
                 $b->save();
@@ -174,6 +231,13 @@ class BookingsApproval extends Component
             $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal menolak: ' . $e->getMessage());
         }
     }
+
+    public function reject(int $id): void
+    {
+        $this->openReject($id);
+    }
+
+    // ─────────────────── Approve ────────────────────
 
     public function approve(int $id): void
     {
@@ -195,12 +259,14 @@ class BookingsApproval extends Component
                     }
 
                     $startExpr = "COALESCE(
-                        CASE WHEN `start_time` REGEXP '^[0-9]{4}-' THEN `start_time` ELSE NULL END,
-                        CONCAT(`date`, ' ', `start_time`)
+                        CASE WHEN start_time REGEXP '^[0-9]{4}-' THEN start_time END,
+                        CASE WHEN date       REGEXP '^[0-9]{4}-' THEN date END,
+                        CONCAT(date, ' ', start_time)
                     )";
                     $endExpr = "COALESCE(
-                        CASE WHEN `end_time`   REGEXP '^[0-9]{4}-' THEN `end_time`   ELSE NULL END,
-                        CONCAT(`date`, ' ', `end_time`)
+                        CASE WHEN end_time   REGEXP '^[0-9]{4}-' THEN end_time END,
+                        CASE WHEN date       REGEXP '^[0-9]{4}-' THEN date END,
+                        CONCAT(date, ' ', end_time)
                     )";
 
                     $overlapExists = BookingRoom::query()
@@ -218,7 +284,7 @@ class BookingsApproval extends Component
                     }
                 }
 
-                // ONLINE: create link on approval
+                // ONLINE: create link on approval if missing
                 if (in_array($b->booking_type, ['online_meeting','onlinemeeting']) && empty($b->online_meeting_url)) {
                     $start = $this->buildDt($b->date, $b->start_time);
                     $end   = $this->buildDt($b->date, $b->end_time);
@@ -248,14 +314,14 @@ class BookingsApproval extends Component
                         $b->online_provider = 'zoom';
                     }
 
-                    $b->online_meeting_url = $meet['url'] ?? null;
-                    $b->online_meeting_code = $meet['code'] ?? null;
+                    $b->online_meeting_url      = $meet['url'] ?? null;
+                    $b->online_meeting_code     = $meet['code'] ?? null;
                     $b->online_meeting_password = $meet['password'] ?? null;
                 }
 
                 // Approve
-                $b->status = 'approved';
-                $b->is_approve = 1;
+                $b->status      = 'approved';
+                $b->is_approve  = 1;
                 $b->approved_by = Auth::id();
                 $b->book_reject = null;
                 $b->save();
@@ -272,12 +338,128 @@ class BookingsApproval extends Component
         }
     }
 
-    public function reject(int $id): void
+    // ─────────────── Cancel / Reschedule ───────────────
+
+    public function openReschedule(int $id): void
     {
-        $this->openReject($id);
+        /** @var BookingRoom $b */
+        $b = BookingRoom::findOrFail($id);
+
+        if ($b->status !== 'approved') {
+            $this->dispatch('toast', type: 'warning', title: 'Tidak Bisa', message: 'Hanya booking yang sudah disetujui yang bisa di-reschedule.');
+            return;
+        }
+
+        $start = $this->buildDt($b->date, $b->start_time);
+        $end   = $this->buildDt($b->date, $b->end_time);
+
+        $this->rescheduleId      = $b->bookingroom_id;
+        $this->rescheduleDate    = $start->format('Y-m-d');
+        $this->rescheduleStart   = $start->format('H:i');
+        $this->rescheduleEnd     = $end->format('H:i');
+        $this->rescheduleReason  = '';
+
+        // Allow room change for offline bookings
+        $this->rescheduleRoomEnabled = !in_array($b->booking_type, ['online_meeting', 'onlinemeeting']);
+        $this->rescheduleRoomId      = $b->room_id ?: null;
+
+        $this->showRescheduleModal = true;
+
+        $this->dispatch(
+            'toast',
+            type: 'warning',
+            title: 'Reschedule',
+            message: 'Do you really want to cancel this request? Please set the new schedule.'
+        );
     }
 
-    // ── Data building ────────────────────────────────────────────────────
+    public function closeReschedule(): void
+    {
+        $this->showRescheduleModal   = false;
+        $this->rescheduleId          = null;
+        $this->rescheduleDate        = '';
+        $this->rescheduleStart       = '';
+        $this->rescheduleEnd         = '';
+        $this->rescheduleReason      = '';
+        $this->rescheduleRoomId      = null;
+        $this->rescheduleRoomEnabled = false;
+    }
+
+    public function submitReschedule(): void
+    {
+        $rules = [
+            'rescheduleId'     => 'required|integer|exists:booking_rooms,bookingroom_id',
+            'rescheduleDate'   => 'required|date',
+            'rescheduleStart'  => 'required|date_format:H:i',
+            'rescheduleEnd'    => 'required|date_format:H:i|after:rescheduleStart',
+            'rescheduleReason' => 'required|string|min:3|max:500',
+        ];
+
+        if ($this->rescheduleRoomEnabled) {
+            $rules['rescheduleRoomId'] = 'required|integer|exists:rooms,room_id';
+        }
+
+        $this->validate($rules);
+
+        try {
+            DB::transaction(function () {
+                /** @var BookingRoom $b */
+                $b = BookingRoom::lockForUpdate()->findOrFail($this->rescheduleId);
+
+                $start = Carbon::createFromFormat('Y-m-d H:i', "{$this->rescheduleDate} {$this->rescheduleStart}", $this->tz);
+                $end   = Carbon::createFromFormat('Y-m-d H:i', "{$this->rescheduleDate} {$this->rescheduleEnd}", $this->tz);
+
+                if ($end->lte($start)) {
+                    throw new \RuntimeException('Waktu tidak valid (end <= start).');
+                }
+
+                $roomId = $this->rescheduleRoomEnabled
+                    ? $this->rescheduleRoomId
+                    : $b->room_id;
+
+                // Overlap check for offline bookings
+                if (!in_array($b->booking_type, ['online_meeting', 'onlinemeeting']) && $roomId) {
+                    $overlap = BookingRoom::query()
+                        ->where('bookingroom_id', '!=', $b->bookingroom_id)
+                        ->where('company_id', $b->company_id)
+                        ->where('room_id', $roomId)
+                        ->where('date', $this->rescheduleDate)
+                        ->whereIn('status', ['pending', 'approved'])
+                        ->where('start_time', '<', $end)
+                        ->where('end_time', '>', $start)
+                        ->exists();
+
+                    if ($overlap) {
+                        throw new \RuntimeException('Jadwal baru bentrok dengan booking lain di ruangan & tanggal yang sama.');
+                    }
+                }
+
+                if ($roomId) {
+                    $b->room_id = $roomId;
+                }
+
+                $b->date        = $this->rescheduleDate;
+                $b->start_time  = $start;
+                $b->end_time    = $end;
+                // Note for cancel/reschedule goes into book_reject as requested
+                $b->book_reject = $this->rescheduleReason;
+                $b->updated_at  = Carbon::now($this->tz)->toDateTimeString();
+                $b->save();
+            });
+
+            $this->showRescheduleModal = false;
+            $this->dispatch('toast', type: 'success', title: 'Updated', message: 'Jadwal booking berhasil diubah.');
+            $this->resetPage('pendingPage');
+            $this->resetPage('ongoingPage');
+        } catch (\RuntimeException $e) {
+            $this->dispatch('toast', type: 'warning', title: 'Tidak Bisa Diubah', message: $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal mengubah jadwal: ' . $e->getMessage());
+        }
+    }
+
+    // ─────────────── Data & render ───────────────
 
     private function applyCommonFilters($q)
     {
@@ -295,8 +477,8 @@ class BookingsApproval extends Component
 
     public function render()
     {
-        // Move past-due approved → completed
-        $this->autoProgressToDone();
+        // auto move approved → completed
+        $this->autoProgressToCompleted();
 
         $cols = [
             'bookingroom_id', 'meeting_title', 'booking_type', 'online_provider',

@@ -31,8 +31,8 @@ class DocPackStatus extends Component
     public string $userQ = '';
 
     // Pagination per box
-    public int $perPending = 8;
-    public int $perStored  = 8;
+    public int $perPending = 5;
+    public int $perStored = 5;
 
     // Edit modal (optional)
     public bool $showEdit = false;
@@ -57,9 +57,18 @@ class DocPackStatus extends Component
             $this->userId = null;
         }
 
-        if (in_array($name, [
-            'q','selectedDate','dateMode','type','departmentId','userId','departmentQ','userQ',
-        ], true)) {
+        if (
+            in_array($name, [
+                'q',
+                'selectedDate',
+                'dateMode',
+                'type',
+                'departmentId',
+                'userId',
+                'departmentQ',
+                'userQ',
+            ], true)
+        ) {
             $this->resetPage('pending');
             $this->resetPage('stored');
         }
@@ -88,7 +97,7 @@ class DocPackStatus extends Component
             $deptIds = Department::query()
                 ->where('company_id', Auth::user()->company_id ?? null)
                 ->whereNull('deleted_at')
-                ->where('department_name', 'like', '%'.trim($this->departmentQ).'%')
+                ->where('department_name', 'like', '%' . trim($this->departmentQ) . '%')
                 ->pluck('department_id');
 
             $deptIds->isNotEmpty() ? $q->whereIn('department_id', $deptIds) : $q->whereRaw('0=1');
@@ -102,27 +111,29 @@ class DocPackStatus extends Component
             $userIds = UserModel::query()
                 ->where('company_id', Auth::user()->company_id ?? null)
                 ->whereNull('deleted_at')
-                ->when($this->departmentId, fn($qq)=> $qq->where('department_id', $this->departmentId))
-                ->where('full_name', 'like', '%'.trim($this->userQ).'%')
+                ->when($this->departmentId, fn($qq) => $qq->where('department_id', $this->departmentId))
+                ->where('full_name', 'like', '%' . trim($this->userQ) . '%')
                 ->pluck('user_id');
 
             $userIds->isNotEmpty() ? $q->whereIn('receptionist_id', $userIds) : $q->whereRaw('0=1');
         }
 
         if (trim($this->q) !== '') {
-            $term = '%'.trim($this->q).'%';
+            $term = '%' . trim($this->q) . '%';
             $q->where(function ($qq) use ($term) {
                 $qq->where('item_name', 'like', $term)
-                   ->orWhere('nama_pengirim', 'like', $term)
-                   ->orWhere('nama_penerima', 'like', $term)
-                   ->orWhereHas('receptionist', function ($u) use ($term) {
-                       $u->where('full_name', 'like', $term);
-                   });
+                    ->orWhere('nama_pengirim', 'like', $term)
+                    ->orWhere('nama_penerima', 'like', $term)
+                    ->orWhereHas('receptionist', function ($u) use ($term) {
+                        $u->where('full_name', 'like', $term);
+                    });
             });
         }
 
-        if ($this->dateMode === 'terbaru')   $q->latest('created_at');
-        elseif ($this->dateMode === 'terlama') $q->oldest('created_at');
+        if ($this->dateMode === 'terbaru')
+            $q->latest('created_at');
+        elseif ($this->dateMode === 'terlama')
+            $q->oldest('created_at');
 
         return $q;
     }
@@ -162,7 +173,8 @@ class DocPackStatus extends Component
 
     public function saveEdit(): void
     {
-        if (!$this->editId) return;
+        if (!$this->editId)
+            return;
 
         $this->validate();
 
@@ -193,10 +205,6 @@ class DocPackStatus extends Component
 
     /* ===== Direction helpers & Stored actions ===== */
 
-    /**
-     * Prefer DB column deliveries.direction ('deliver' | 'taken').
-     * If column missing/empty/invalid, fall back to inference for safety.
-     */
     private function getDirectionFor(Delivery $row): string
     {
         if (Schema::hasColumn('deliveries', 'direction')) {
@@ -208,9 +216,6 @@ class DocPackStatus extends Component
         return $this->inferDirection($row);
     }
 
-    /**
-     * Back-compat inference (used only when direction is unavailable).
-     */
     private function inferDirection(Delivery $row): string
     {
         $companyId = Auth::user()->company_id ?? null;
@@ -218,8 +223,8 @@ class DocPackStatus extends Component
         $pengirim = trim((string) $row->nama_pengirim);
         $penerima = trim((string) $row->nama_penerima);
 
-        $isPengirimUser = false;
-        $isPenerimaUser = false;
+        $isPengirimUser  = false;
+        $isPenerimaUser  = false;
 
         if ($pengirim !== '') {
             $isPengirimUser = UserModel::query()
@@ -234,8 +239,10 @@ class DocPackStatus extends Component
                 ->exists();
         }
 
-        if ($isPenerimaUser && !$isPengirimUser) return 'taken';
-        if ($isPengirimUser && !$isPenerimaUser) return 'deliver';
+        if ($isPenerimaUser && !$isPengirimUser)
+            return 'taken';
+        if ($isPengirimUser && !$isPenerimaUser)
+            return 'deliver';
 
         return ($row->type === 'document') ? 'deliver' : 'taken';
     }
@@ -275,20 +282,19 @@ class DocPackStatus extends Component
             ->where('company_id', $companyId)
             ->whereNull('deleted_at')
             ->when(trim($this->departmentQ) !== '', fn($q) =>
-                $q->where('department_name', 'like', '%'.trim($this->departmentQ).'%'))
+                $q->where('department_name', 'like', '%' . trim($this->departmentQ) . '%'))
             ->orderBy('department_name')
-            ->get(['department_id','department_name']);
+            ->get(['department_id', 'department_name']);
 
         $users = UserModel::query()
             ->where('company_id', $companyId)
             ->when($this->departmentId, fn($q) => $q->where('department_id', $this->departmentId))
             ->when(trim($this->userQ) !== '', fn($q) =>
-                $q->where('full_name', 'like', '%'.trim($this->userQ).'%'))
+                $q->where('full_name', 'like', '%' . trim($this->userQ) . '%'))
             ->whereNull('deleted_at')
             ->orderBy('full_name')
-            ->get(['user_id','full_name']);
+            ->get(['user_id', 'full_name']);
 
-        // For the current Stored page, decide button labels from DB direction (fallback to inference if needed).
         $storedDirections = collect($this->stored->items())
             ->mapWithKeys(function ($row) {
                 $dir = $this->getDirectionFor($row); // 'deliver' | 'taken'
@@ -297,11 +303,11 @@ class DocPackStatus extends Component
             ->toArray();
 
         return view('livewire.pages.receptionist.docpackstatus', [
-            'pending'          => $this->pending,
-            'stored'           => $this->stored,
-            'storedDirections' => $storedDirections,
-            'departments'      => $departments,
-            'users'            => $users,
+            'pending'         => $this->pending,
+            'stored'          => $this->stored,
+            'storedDirections'=> $storedDirections,
+            'departments'     => $departments,
+            'users'           => $users,
         ]);
     }
 }

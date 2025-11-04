@@ -27,7 +27,8 @@ class RoomApproval extends Component
     public function approve(int $id): void
     {
         $row = BookingRoom::company(Auth::user()?->company_id)->find($id);
-        if (!$row) return;
+        if (!$row)
+            return;
 
         // processed already?
         if ($row->status !== BookingRoom::ST_PENDING) {
@@ -37,8 +38,8 @@ class RoomApproval extends Component
         }
 
         $row->update([
-            'status'      => BookingRoom::ST_APPROVED, // string 'approved'
-            'is_approve'  => true,
+            'status' => BookingRoom::ST_APPROVED, // string 'approved'
+            'is_approve' => true,
             'approved_by' => Auth::user()?->user_id ?? Auth::id(),
         ]);
 
@@ -54,13 +55,14 @@ class RoomApproval extends Component
 
     public function reject(): void
     {
-        if (!$this->rejectId) return;
+        if (!$this->rejectId)
+            return;
 
         $row = BookingRoom::company(Auth::user()?->company_id)->find($this->rejectId);
         if ($row && $row->status === BookingRoom::ST_PENDING) {
             $row->update([
-                'status'      => BookingRoom::ST_REJECTED, // string 'rejected'
-                'is_approve'  => false,
+                'status' => BookingRoom::ST_REJECTED, // string 'rejected'
+                'is_approve' => false,
                 'approved_by' => Auth::user()?->user_id ?? Auth::id(),
             ]);
             $this->dispatch('toast', type: 'success', message: 'Booking ditolak.');
@@ -74,8 +76,11 @@ class RoomApproval extends Component
     /** Poller */
     public function tick(): void
     {
-        try { $this->reloadBuckets(); }
-        catch (\Throwable $e) { \Log::error('[RoomApproval tick] '.$e->getMessage()); }
+        try {
+            $this->reloadBuckets();
+        } catch (\Throwable $e) {
+            \Log::error('[RoomApproval tick] ' . $e->getMessage());
+        }
     }
 
     private function reloadBuckets(): void
@@ -105,14 +110,14 @@ class RoomApproval extends Component
     private function uiMap(BookingRoom $r): array
     {
         return [
-            'id'            => $r->getKey(),
+            'id' => $r->getKey(),
             'meeting_title' => $r->meeting_title,
-            'room'          => (string)($r->room?->room_number ?? $r->room_id),
-            'date'          => $r->date ? Carbon::parse($r->date)->format('d M Y') : '—',
-            'time'          => $r->start_time ? Carbon::parse($r->start_time)->format('H:i') : '—',
-            'time_end'      => $r->end_time ? Carbon::parse($r->end_time)->format('H:i') : '—',
-            'participants'  => (int) ($r->number_of_attendees ?? 0),
-            'status'        => $r->status,
+            'room' => (string) ($r->room?->room_number ?? $r->room_id),
+            'date' => $r->date ? Carbon::parse($r->date)->format('d M Y') : '—',
+            'time' => $r->start_time ? Carbon::parse($r->start_time)->format('H:i') : '—',
+            'time_end' => $r->end_time ? Carbon::parse($r->end_time)->format('H:i') : '—',
+            'participants' => (int) ($r->number_of_attendees ?? 0),
+            'status' => $r->status,
         ];
     }
 

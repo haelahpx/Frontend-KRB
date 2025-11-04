@@ -40,7 +40,7 @@
                 href="{{ route('receptionist.schedule') }}"
                 :current="request()->routeIs('receptionist.schedule')"
             >
-                Booking/Meeting Room
+                Booking Room
             </flux:sidebar.item>
 
             <flux:sidebar.item
@@ -48,7 +48,7 @@
                 href="{{ route('receptionist.bookings') }}"
                 :current="request()->routeIs('receptionist.bookings')"
             >
-                Booking/Meeting Approval
+                Booking Approval
             </flux:sidebar.item>
 
             <flux:sidebar.item
@@ -56,7 +56,7 @@
                 href="{{ route('receptionist.bookinghistory') }}"
                 :current="request()->routeIs('receptionist.bookinghistory')"
             >
-                Booking/Meeting History
+                Booking History
             </flux:sidebar.item>
         </flux:sidebar.group>
 
@@ -78,13 +78,13 @@
             </flux:sidebar.item>
         </flux:sidebar.group>
 
-        <flux:sidebar.group expandable heading="Document/Package Management" class="grid">
+        <flux:sidebar.group expandable heading="DocPac Management" class="grid">
             <flux:sidebar.item
                 icon="gift"
                 href="{{ route('receptionist.docpackform') }}"
                 :current="request()->routeIs('receptionist.docpackform')"
             >
-                Document/Package Form
+                DocPac Form
             </flux:sidebar.item>
 
             <flux:sidebar.item
@@ -92,7 +92,7 @@
                 href="{{ route('receptionist.docpackstatus') }}"
                 :current="request()->routeIs('receptionist.docpackstatus')"
             >
-                Document/Package Status
+                DocPac Status
             </flux:sidebar.item>
 
             <flux:sidebar.item
@@ -100,7 +100,7 @@
                 href="{{ route('receptionist.docpackhistory') }}"
                 :current="request()->routeIs('receptionist.docpackhistory')"
             >
-                Document/Package History
+                DocPac History
             </flux:sidebar.item>
         </flux:sidebar.group>
     </flux:sidebar.nav>

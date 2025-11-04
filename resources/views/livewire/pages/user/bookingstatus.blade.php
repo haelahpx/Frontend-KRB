@@ -68,7 +68,7 @@
                         class="w-full h-10 px-3 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/20">
                         <option value="">All rooms</option>
                         @foreach($rooms as $r)
-                            <option value="{{ $r->room_id }}">{{ $r->room_name }}</option>
+                            <option value="{{ $r->room_id }}">{{ $r->room_number }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -172,9 +172,17 @@
                         <div class="mt-3 rounded-lg border-2 border-rose-400 bg-rose-50 p-3">
                             <div class="text-xs font-semibold text-rose-700 inline-flex items-center gap-1">
                                 <x-heroicon-o-no-symbol class="w-4 h-4"/>
-                                Reject Reason
+                                Reject / Cancel Reason
                             </div>
                             <div class="mt-1 text-sm text-rose-800">{{ $b->book_reject }}</div>
+                        </div>
+                    @elseif(!empty($b->book_reject))
+                        <div class="mt-3 rounded-lg border-2 border-amber-400 bg-amber-50 p-3">
+                            <div class="text-xs font-semibold text-amber-700 inline-flex items-center gap-1">
+                                <x-heroicon-o-information-circle class="w-4 h-4"/>
+                                Note
+                            </div>
+                            <div class="mt-1 text-sm text-amber-800">{{ $b->book_reject }}</div>
                         </div>
                     @endif
 

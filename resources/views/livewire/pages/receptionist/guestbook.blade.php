@@ -17,6 +17,7 @@
     @endphp
 
     <div class="px-4 sm:px-6 py-6 space-y-8">
+        {{-- HERO --}}
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
             <div class="pointer-events-none absolute inset-0 opacity-10">
                 <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
@@ -24,10 +25,11 @@
             </div>
             <div class="relative z-10 p-6 sm:p-8">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+                    <div
+                        class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197" />
                         </svg>
                     </div>
                     <div>
@@ -51,81 +53,92 @@
             </div>
 
             <form wire:submit.prevent="save" class="p-6 space-y-5">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                        <label class="{{ $label }}">Hari / Tanggal</label>
-                        <input type="date" wire:model.defer="date" class="{{ $input }}">
-                        @error('date') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                {{-- INFO: Tanggal, Jam, & Petugas otomatis --}}
+                <div class="p-4 rounded-xl bg-gray-50 border border-dashed border-gray-300 text-sm text-gray-600 flex items-start gap-3">
+                    <div class="mt-0.5">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                        </svg>
                     </div>
                     <div>
-                        <label class="{{ $label }}">Jam Masuk</label>
-                        <input type="time" wire:model.defer="jam_in" class="{{ $input }}">
-                        @error('jam_in') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        <p class="font-medium text-gray-800">Tanggal, jam, dan petugas dicatat otomatis.</p>
+                        <p class="mt-1">
+                            Hari/tanggal &amp; jam masuk akan otomatis sesuai waktu saat tombol
+                            <span class="font-semibold text-gray-900">"Simpan Data"</span> ditekan.
+                        </p>
+                        <p class="mt-1">
+                            Petugas penjaga akan tercatat sebagai
+                            <span class="font-semibold text-gray-900">
+                                {{ auth()->user()->full_name ?? auth()->user()->name ?? 'Petugas Receptionist' }}
+                            </span>.
+                        </p>
                     </div>
                 </div>
 
+                {{-- Data Tamu --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="{{ $label }}">Nama Lengkap</label>
-                        <input type="text" wire:model.defer="name" placeholder="Masukkan nama lengkap" class="{{ $input }}">
+                        <input type="text" wire:model.defer="name" placeholder="Masukkan nama lengkap"
+                               class="{{ $input }}">
                         @error('name') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="{{ $label }}">Nomor HP</label>
-                        <input type="text" wire:model.defer="phone_number" placeholder="08xxxxxxxxxx" class="{{ $input }}">
-                        @error('phone_number') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                        <input type="text" wire:model.defer="phone_number" placeholder="08xxxxxxxxxx"
+                               class="{{ $input }}">
+                        @error('phone_number') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="{{ $label }}">Nama Instansi</label>
-                        <input type="text" wire:model.defer="instansi" placeholder="Nama instansi/perusahaan" class="{{ $input }}">
+                        <input type="text" wire:model.defer="instansi" placeholder="Nama instansi/perusahaan"
+                               class="{{ $input }}">
                         @error('instansi') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="{{ $label }}">Keperluan</label>
-                        <input type="text" wire:model.defer="keperluan" placeholder="Tujuan kunjungan" class="{{ $input }}">
+                        <input type="text" wire:model.defer="keperluan" placeholder="Tujuan kunjungan"
+                               class="{{ $input }}">
                         @error('keperluan') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
-                <div>
-                    <label class="{{ $label }}">Nama Petugas Penjaga</label>
-                    <input type="text" wire:model.defer="petugas_penjaga" placeholder="Nama petugas yang bertugas" class="{{ $input }}">
-                    @error('petugas_penjaga') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
-                </div>
+                {{-- Tidak ada lagi input petugas_penjaga --}}
 
                 <div class="pt-2 flex items-center gap-3">
-                    <button
-                        type="submit"
-                        wire:loading.attr="disabled"
-                        wire:target="save"
-                        aria-busy="true"
-                        class="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-gray-900 text-white text-sm font-medium
-                            shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20
-                            transition active:scale-95 hover:bg-black disabled:opacity-60 relative overflow-hidden">
+                    <button type="submit" wire:loading.attr="disabled" wire:target="save" aria-busy="true"
+                            class="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-gray-900 text-white text-sm font-medium
+                                   shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20
+                                   transition active:scale-95 hover:bg-black disabled:opacity-60 relative overflow-hidden">
                         <span class="flex items-center gap-2" wire:loading.remove wire:target="save">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M5 13l4 4L19 7" />
                             </svg>
                             Simpan Data
                         </span>
 
                         <span class="flex items-center gap-2" wire:loading wire:target="save">
                             <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4" />
                                 <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z"/>
+                                      d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
                             </svg>
                             Menyimpan…
                         </span>
                     </button>
 
                     @if (session('saved'))
-                        <span class="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-medium">
+                        <span
+                            class="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-medium">
                             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M5 13l4 4L19 7" />
                             </svg>
                             Tersimpan!
                         </span>

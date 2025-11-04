@@ -5,6 +5,7 @@ namespace App\Livewire\Pages\Receptionist;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Department;
@@ -16,6 +17,8 @@ use Carbon\Carbon;
 #[Title('Doc/Pack Form')]
 class DocPackForm extends Component
 {
+    use WithFileUploads;
+
     public string $direction = 'taken'; // taken | deliver
     public string $itemType = 'package'; // package | document
 
@@ -25,6 +28,9 @@ class DocPackForm extends Component
     public string $receiverText = '';
     public ?int $storageId = null;
     public string $itemName = '';
+
+    /** Bukti foto (upload / kamera) */
+    public $photo = null;
 
     /** Dropdown Data */
     public array $departments = [];
@@ -40,6 +46,7 @@ class DocPackForm extends Component
             'itemName'     => ['required', 'string', 'max:255'],
             'departmentId' => ['required', 'integer'],
             'userId'       => ['required', 'integer'],
+            'photo'        => ['nullable', 'image', 'max:2048'], // 2MB
         ];
 
         if ($this->direction === 'taken') {
@@ -91,10 +98,10 @@ class DocPackForm extends Component
     public function updatedDirection(): void
     {
         $this->departmentId = null;
-        $this->userId = null;
-        $this->senderText = '';
+        $this->userId       = null;
+        $this->senderText   = '';
         $this->receiverText = '';
-        $this->users = [];
+        $this->users        = [];
     }
 
     public function save(): void
@@ -111,6 +118,32 @@ class DocPackForm extends Component
             $receiver = $this->receiverText;
         }
 
+        /*
+         * SIMPAN FOTO KE FOLDER PUBLIC
+         * - Folder fisik: public/images/deliveries
+         * - Path di DB (kolom image): "images/deliveries/nama_file.ext"
+         */
+        $imagePath = null;
+
+        if ($this->photo) {
+            $ext = strtolower($this->photo->getClientOriginalExtension() ?: 'png');
+            $filename = 'delivery_' . $now->format('Ymd_His') . '_' . uniqid() . '.' . $ext;
+
+            // path folder di dalam public
+            $publicDir = public_path('images/deliveries');
+
+            if (!is_dir($publicDir)) {
+                mkdir($publicDir, 0755, true);
+            }
+
+            // pindahkan file upload dari tmp Livewire ke public/images/deliveries
+            // hasil fisik: public/images/deliveries/{filename}
+            $this->photo->move($publicDir, $filename);
+
+            // path yang disimpan di database (relative dari public)
+            $imagePath = 'images/deliveries/' . $filename;
+        }
+
         Delivery::create([
             'company_id'      => Auth::user()->company_id,
             'receptionist_id' => Auth::id(),
@@ -120,19 +153,32 @@ class DocPackForm extends Component
             'nama_pengirim'   => $sender,
             'nama_penerima'   => $receiver,
             'status'          => 'pending',
-            'direction'       => $this->direction, // ✅ Always included now
+            'direction'       => $this->direction,
             'pengambilan'     => null,
             'pengiriman'      => null,
+            'image'           => $imagePath, // <-- simpan path di kolom image
             'created_at'      => $now,
             'updated_at'      => $now,
         ]);
 
         $this->reset([
-            'departmentId', 'userId', 'senderText', 'receiverText', 'storageId', 'itemName'
+            'departmentId',
+            'userId',
+            'senderText',
+            'receiverText',
+            'storageId',
+            'itemName',
+            'photo',
         ]);
         $this->users = [];
 
-        $this->dispatch('toast', type: 'success', title: 'Tersimpan', message: 'Data berhasil disimpan.', duration: 3000);
+        $this->dispatch(
+            'toast',
+            type: 'success',
+            title: 'Tersimpan',
+            message: 'Data berhasil disimpan.',
+            duration: 3000
+        );
     }
 
     public function render()

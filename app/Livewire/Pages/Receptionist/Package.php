@@ -27,21 +27,21 @@ class Package extends Component
      * - pengambilan   -> deliveries.pengambilan (datetime)
      */
     public array $form = [
-        'package_name'  => '',
+        'package_name' => '',
         'nama_pengirim' => '',
         'nama_penerima' => '',
-        'penyimpanan'   => null,  // storage_id (nullable)
-        'pengambilan'   => null,  // Y-m-d\TH:i (nullable)
+        'penyimpanan' => null,  // storage_id (nullable)
+        'pengambilan' => null,  // Y-m-d\TH:i (nullable)
     ];
 
     protected function rules(): array
     {
         return [
-            'form.package_name'  => ['required', 'string', 'max:255'],
+            'form.package_name' => ['required', 'string', 'max:255'],
             'form.nama_pengirim' => ['required', 'string', 'max:255'],
             'form.nama_penerima' => ['required', 'string', 'max:255'],
-            'form.penyimpanan'   => ['nullable', 'integer', 'exists:storages,storage_id'],
-            'form.pengambilan'   => ['nullable', 'date_format:Y-m-d\TH:i'],
+            'form.penyimpanan' => ['nullable', 'integer', 'exists:storages,storage_id'],
+            'form.pengambilan' => ['nullable', 'date_format:Y-m-d\TH:i'],
         ];
     }
 
@@ -64,22 +64,22 @@ class Package extends Component
         $this->editId = $pkg->delivery_id;
 
         $this->form = [
-            'package_name'  => $pkg->item_name,
+            'package_name' => $pkg->item_name,
             'nama_pengirim' => $pkg->nama_pengirim,
             'nama_penerima' => $pkg->nama_penerima,
-            'penyimpanan'   => $pkg->storage_id,
+            'penyimpanan' => $pkg->storage_id,
             // jika model belum di-cast datetime, fallback handle string
-            'pengambilan'   => $pkg->pengambilan
-                ? ( $pkg->pengambilan instanceof Carbon
-                        ? $pkg->pengambilan->format('Y-m-d\TH:i')
-                        : Carbon::parse($pkg->pengambilan)->format('Y-m-d\TH:i') )
+            'pengambilan' => $pkg->pengambilan
+                ? ($pkg->pengambilan instanceof Carbon
+                    ? $pkg->pengambilan->format('Y-m-d\TH:i')
+                    : Carbon::parse($pkg->pengambilan)->format('Y-m-d\TH:i'))
                 : null,
         ];
 
         $this->createdAtDisplay = $pkg->created_at
-            ? ( $pkg->created_at instanceof Carbon
-                    ? $pkg->created_at->format('d M Y, H:i')
-                    : Carbon::parse($pkg->created_at)->format('d M Y, H:i') )
+            ? ($pkg->created_at instanceof Carbon
+                ? $pkg->created_at->format('d M Y, H:i')
+                : Carbon::parse($pkg->created_at)->format('d M Y, H:i'))
             : null;
 
         $this->showModal = true;
@@ -97,16 +97,16 @@ class Package extends Component
         $status = $pengambilan ? 'taken' : 'stored';
 
         $payload = [
-            'company_id'      => Auth::user()->company_id,
+            'company_id' => Auth::user()->company_id,
             'receptionist_id' => Auth::id(),
-            'item_name'       => $this->form['package_name'],
-            'nama_pengirim'   => $this->form['nama_pengirim'],
-            'nama_penerima'   => $this->form['nama_penerima'],
-            'storage_id'      => $this->form['penyimpanan'] ?: null,
-            'pengambilan'     => $pengambilan,
-            'pengiriman'      => null,       // tidak dipakai di halaman ini
-            'status'          => $status,    // 'stored' | 'taken'
-            'type'            => 'package',  // paksa type package (default tabel = document)
+            'item_name' => $this->form['package_name'],
+            'nama_pengirim' => $this->form['nama_pengirim'],
+            'nama_penerima' => $this->form['nama_penerima'],
+            'storage_id' => $this->form['penyimpanan'] ?: null,
+            'pengambilan' => $pengambilan,
+            'pengiriman' => null,       // tidak dipakai di halaman ini
+            'status' => $status,    // 'stored' | 'taken'
+            'type' => 'package',  // paksa type package (default tabel = document)
         ];
 
         if ($this->editId) {
@@ -147,7 +147,7 @@ class Package extends Component
             ->where('type', 'package')
             ->where('delivery_id', $id)
             ->update([
-                'status'      => 'taken',
+                'status' => 'taken',
                 'pengambilan' => now(config('app.timezone', 'Asia/Jakarta')),
             ]);
 
@@ -161,7 +161,7 @@ class Package extends Component
             ->where('type', 'package')
             ->where('delivery_id', $id)
             ->update([
-                'status'      => 'stored',
+                'status' => 'stored',
                 'pengambilan' => null,
             ]);
 
@@ -176,11 +176,11 @@ class Package extends Component
     private function resetForm(): void
     {
         $this->form = [
-            'package_name'  => '',
+            'package_name' => '',
             'nama_pengirim' => '',
             'nama_penerima' => '',
-            'penyimpanan'   => null,
-            'pengambilan'   => null,
+            'penyimpanan' => null,
+            'pengambilan' => null,
         ];
         $this->createdAtDisplay = null;
     }

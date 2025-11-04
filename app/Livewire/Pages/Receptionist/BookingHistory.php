@@ -50,30 +50,57 @@ class BookingHistory extends Component
         'status'          => 'completed',
     ];
 
-    private const DONE_SET     = [3, '3', 'done', 'DONE', 'Done', 'completed', 'COMPLETED', 'Completed'];
-    private const REJECTED_SET = [2, '2', 'rejected', 'REJECTED', 'Rejected'];
+    // Safer sets (normalized)
+    private const DONE_SET     = ['done', 'completed', '3'];
+    private const REJECTED_SET = ['rejected', '2'];
 
     protected string $tz = 'Asia/Jakarta';
 
     public function mount(): void
     {
-        $this->rooms = Room::select('room_id', 'room_number')
-            ->orderBy('room_number')
+        $this->rooms = Room::select('room_id', 'room_name')
+            ->orderBy('room_name')
             ->get()
-            ->map(fn ($r) => ['id' => (int) $r->room_id, 'name' => (string) $r->room_number])
+            ->map(fn ($r) => ['id' => (int) $r->room_id, 'name' => (string) $r->room_name])
             ->toArray();
+    }
+
+    private function normStatus(mixed $v): string
+    {
+        return strtolower(trim((string) $v));
     }
 
     private function autoProgressToDone(): int
     {
         $now = Carbon::now($this->tz)->toDateTimeString();
 
-        return DB::transaction(function () use ($now) {
+        // Build a comparable end datetime expression that works for DATE+TIME or DATETIME
+        $endExpr = "COALESCE(
+            CASE WHEN `end_time` REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2} ' THEN `end_time` END,
+            CASE WHEN `date`     REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2} ' THEN `date` END,
+            CONCAT(`date`, ' ', `end_time`)
+        )";
+
+        return DB::transaction(function () use ($now, $endExpr) {
             return BookingRoom::query()
-                ->where('status', 'approved')
-                ->whereNotNull('end_time')
-                ->where('end_time', '<=', $now)
-                ->update(['status' => 'completed']);
+                ->whereRaw("$endExpr IS NOT NULL")
+                ->whereRaw("$endExpr <= ?", [$now])
+
+                // Only auto-complete items that are APPROVED
+                ->where(function ($q) {
+                    $q->whereRaw("LOWER(TRIM(`status`)) = 'approved'");
+                })
+
+                // Extra guard: if someone wrote a reject reason, do NOT move to done
+                ->where(function ($q) {
+                    $q->whereNull('book_reject')
+                      ->orWhere('book_reject', '');
+                })
+
+                ->update([
+                    'status'     => 'completed',
+                    'updated_at' => Carbon::now($this->tz)->toDateTimeString(),
+                ]);
         });
     }
 
@@ -184,7 +211,6 @@ class BookingHistory extends Component
         $row->delete();
         $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Booking dihapus.', duration: 3000);
         $this->fixEmptyPageAfterChange();
-
     }
 
     public function restore(int $id): void
@@ -224,9 +250,11 @@ class BookingHistory extends Component
 
     private function normalizeDbStatus($status): string
     {
-        if (in_array($status, self::DONE_SET, true))     return 'completed';
-        if (in_array($status, self::REJECTED_SET, true)) return 'rejected';
-        return 'completed';
+        $s = $this->normStatus($status);
+        if (in_array($s, self::DONE_SET, true))     return 'completed';
+        if (in_array($s, self::REJECTED_SET, true)) return 'rejected';
+        // default: keep normalized as-is; fallback to completed if empty
+        return $s ?: 'completed';
     }
 
     private function validateForm(): array
@@ -258,13 +286,25 @@ class BookingHistory extends Component
     {
         $q = $this->baseQuery()
             ->when(!$this->withTrashed, fn ($qq) => $qq->whereNull('deleted_at'))
-            ->when($this->withTrashed, fn ($qq) => $qq->withTrashed())
-            ->whereIn('status', self::DONE_SET)
-            ->when($this->q !== '', fn ($qq) => $qq->where('meeting_title', 'like', '%' . $this->q . '%'))
-            ->when($this->selectedDate, fn ($qq) => $qq->whereDate('date', $this->selectedDate))
+            ->when($this->withTrashed,  fn ($qq) => $qq->withTrashed())
+
+            // Only rows whose normalized status is in DONE_SET
+            ->where(function ($qq) {
+                $qq->whereIn(DB::raw("LOWER(TRIM(`status`))"), self::DONE_SET);
+            })
+
+            // Never show anything that carries a rejection reason
+            ->where(function ($qq) {
+                $qq->whereNull('book_reject')
+                   ->orWhere('book_reject', '');
+            })
+
+            ->when($this->q !== '',               fn ($qq) => $qq->where('meeting_title', 'like', '%' . $this->q . '%'))
+            ->when($this->selectedDate,           fn ($qq) => $qq->whereDate('date', $this->selectedDate))
             ->when($this->dateMode === 'terbaru', fn ($qq) => $qq->orderByDesc('date')->orderByDesc('start_time'))
             ->when($this->dateMode === 'terlama', fn ($qq) => $qq->orderBy('date')->orderBy('start_time'))
-            ->when($this->dateMode === 'semua', fn ($qq) => $qq->orderByRaw("COALESCE(`date`, '0000-01-01') DESC")->orderByRaw("COALESCE(`start_time`, '00:00:00') DESC"));
+            ->when($this->dateMode === 'semua',   fn ($qq) => $qq->orderByRaw("COALESCE(`date`, '0000-01-01') DESC")
+                                                                 ->orderByRaw("COALESCE(`start_time`, '00:00:00') DESC"));
 
         return $q->paginate($this->perDone, ['*'], 'pageDone');
     }
@@ -273,13 +313,16 @@ class BookingHistory extends Component
     {
         $q = $this->baseQuery()
             ->when(!$this->withTrashed, fn ($qq) => $qq->whereNull('deleted_at'))
-            ->when($this->withTrashed, fn ($qq) => $qq->withTrashed())
-            ->whereIn('status', ['rejected'])
-            ->when($this->q !== '', fn ($qq) => $qq->where('meeting_title', 'like', '%' . $this->q . '%'))
-            ->when($this->selectedDate, fn ($qq) => $qq->whereDate('date', $this->selectedDate))
+            ->when($this->withTrashed,  fn ($qq) => $qq->withTrashed())
+
+            // Normalized check for "rejected"
+            ->whereRaw("LOWER(TRIM(`status`)) = 'rejected'")
+
+            ->when($this->q !== '',               fn ($qq) => $qq->where('meeting_title', 'like', '%' . $this->q . '%'))
+            ->when($this->selectedDate,           fn ($qq) => $qq->whereDate('date', $this->selectedDate))
             ->when($this->dateMode === 'terbaru', fn ($qq) => $qq->orderByDesc('date')->orderByDesc('start_time'))
             ->when($this->dateMode === 'terlama', fn ($qq) => $qq->orderBy('date')->orderBy('start_time'))
-            ->when($this->dateMode === 'semua', fn ($qq) => $qq->orderByDesc('date')->orderByDesc('start_time'));
+            ->when($this->dateMode === 'semua',   fn ($qq) => $qq->orderByDesc('date')->orderByDesc('start_time'));
 
         return $q->paginate($this->perRejected, ['*'], 'pageRejected');
     }

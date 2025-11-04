@@ -107,7 +107,8 @@ class MeetingSchedule extends Component
     protected function loadRooms(): void
     {
         $pkCol    = $this->pickColumn('rooms', ['room_id', 'id'], 'room_id');
-        $labelCol = $this->pickColumn('rooms', ['room_name', 'room_number', 'name'], 'room_number');
+        // your table has room_name, not room_number
+        $labelCol = $this->pickColumn('rooms', ['room_name', 'room_number', 'name'], 'room_name');
 
         $rooms = DB::table('rooms')
             ->selectRaw("$pkCol as id, $labelCol as label")
@@ -278,20 +279,24 @@ class MeetingSchedule extends Component
         $this->validate();
         $this->validateNotesIfOther();
 
-        $cid    = Auth::user()?->company_id;
-        $authId = Auth::user()?->user_id ?? Auth::id();
+        $cid = Auth::user()?->company_id;
+
+        // 👇 use selected user as owner of booking (shown in BookingStatus)
+        $targetUserId = $this->offline_user_id
+            ? (int) $this->offline_user_id
+            : (Auth::user()?->user_id ?? Auth::id());
 
         try {
             $startAt = $this->toDateTime((string)$this->form['date'], (string)$this->form['time']);
             $endAt   = $this->toDateTime((string)$this->form['date'], (string)$this->form['time_end']);
         } catch (\Throwable) {
-                $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'Information berhasil dibuat.', duration: 3000);
+            $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'Information berhasil dibuat.', duration: 3000);
             $this->js('window.location.reload()');
             return;
         }
 
         if ($endAt <= $startAt) {
-                $this->dispatch('toast', type: 'error', title: 'Waktu salah', message: 'Jam selesai harus setelah jam mulai.', duration: 3000);
+            $this->dispatch('toast', type: 'error', title: 'Waktu salah', message: 'Jam selesai harus setelah jam mulai.', duration: 3000);
             $this->js('window.location.reload()');
             return;
         }
@@ -307,7 +312,7 @@ class MeetingSchedule extends Component
         DB::table('booking_rooms')->insert([
             'room_id'              => (int)$this->form['room_id'],
             'company_id'           => $cid,
-            'user_id'              => $authId,
+            'user_id'              => $targetUserId,   // 👈 owner of booking
             'department_id'        => (int)$this->form['department_id'],
             'meeting_title'        => (string)$this->form['meeting_title'],
             'date'                 => (string)$this->form['date'],
@@ -315,7 +320,7 @@ class MeetingSchedule extends Component
             'end_time'             => $endAt,
             ...(Schema::hasColumn('booking_rooms', 'number_of_attendees')
                 ? ['number_of_attendees' => (int)$this->form['participant']]
-                : (Schema::hasColumn('booking_rooms', 'participant') ? ['participant' => (int)$this->form['participant']] : [])
+                : (Schema::hasColumn('booking_rooms', 'number_of_attendees') ? ['participant' => (int)$this->form['participant']] : [])
             ),
             ...(Schema::hasColumn('booking_rooms', 'special_notes')
                 ? ['special_notes' => $this->composeSpecialNotes($this->form['requirements'], (string)($this->form['notes'] ?? ''))]
@@ -326,16 +331,12 @@ class MeetingSchedule extends Component
             ...(Schema::hasColumn('booking_rooms', 'is_approve') ? ['is_approve' => 0] : []),
             'created_at'           => now(),
             'updated_at'           => now(),
-            ...(Schema::hasColumn('booking_rooms', 'assigned_user_id') && $this->offline_user_id
-                ? ['assigned_user_id' => (int)$this->offline_user_id]
-                : []
-            ),
         ]);
 
         $this->resetOfflineForm();
 
         $this->dispatch('toast', type: 'success', title: 'Sukses', message: 'Meeting offline disimpan.', duration: 3000);
-        $this->js('window.location.reload()');
+        $this->js('window.location.reload();');
     }
 
     public function saveOnline(): void
@@ -351,7 +352,11 @@ class MeetingSchedule extends Component
         ]);
 
         $cid = Auth::user()?->company_id;
-        $uid = Auth::user()?->user_id ?? Auth::id();
+
+        // 👇 owner is selected user if any
+        $targetUserId = $this->online_user_id
+            ? (int) $this->online_user_id
+            : (Auth::user()?->user_id ?? Auth::id());
 
         try {
             $startAt = $this->toDateTime($data['online_date'], $data['online_start_time']);
@@ -370,7 +375,7 @@ class MeetingSchedule extends Component
 
         DB::table('booking_rooms')->insert([
             'company_id'             => $cid,
-            'user_id'                => $uid,
+            'user_id'                => $targetUserId,   // 👈 owner of booking
             'department_id'          => $this->online_department_id,
             'meeting_title'          => $data['online_meeting_title'],
             'booking_type'           => 'online_meeting',
@@ -385,10 +390,6 @@ class MeetingSchedule extends Component
             'online_meeting_password'=> null,
             'created_at'             => now(),
             'updated_at'             => now(),
-            ...(Schema::hasColumn('booking_rooms', 'assigned_user_id') && $this->online_user_id
-                ? ['assigned_user_id' => (int)$this->online_user_id]
-                : []
-            ),
         ]);
 
         $this->resetOnlineForm();
@@ -490,8 +491,6 @@ class MeetingSchedule extends Component
         $this->resetValidation();
     }
 
-    /* ===================== Render ===================== */
-
     private function filterItemsByName(array $items, string $q, int $max = 50): array
     {
         $q = trim((string)$q);
@@ -517,7 +516,6 @@ class MeetingSchedule extends Component
         $usersOfflineFiltered = $this->usersByDeptOffline;
         $usersOnlineFiltered  = $this->usersByDept;
 
-        // keep your existing blade path
         return view('livewire.pages.receptionist.meetingschedule', [
             'departments'        => $this->departments,
             'departmentsOffline' => $departmentsOffline,

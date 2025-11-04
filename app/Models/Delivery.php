@@ -9,7 +9,7 @@ class Delivery extends Model
 {
     use SoftDeletes;
 
-    protected $table      = 'deliveries';
+    protected $table = 'deliveries';
     protected $primaryKey = 'delivery_id'; // adjust if your PK is "id"
 
     protected $fillable = [
@@ -25,14 +25,15 @@ class Delivery extends Model
         'direction',        // 'deliver' | 'taken'   <-- NEW flow uses this
         'pengiriman',       // datetime when delivered
         'pengambilan',      // datetime when taken
+        'image', 
     ];
 
     protected $casts = [
-        'pengiriman'  => 'datetime',
+        'pengiriman' => 'datetime',
         'pengambilan' => 'datetime',
-        'created_at'  => 'datetime',
-        'updated_at'  => 'datetime',
-        'deleted_at'  => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     /* ------------ Relationships ------------- */
@@ -49,7 +50,8 @@ class Delivery extends Model
     /* --------------- Scopes ----------------- */
     public function scopeByCompany($q, ?int $companyId)
     {
-        if ($companyId) $q->where('company_id', $companyId);
+        if ($companyId)
+            $q->where('company_id', $companyId);
         return $q;
     }
 
@@ -69,8 +71,8 @@ class Delivery extends Model
 
         return match ($this->direction) {
             'deliver' => 'delivered',
-            'taken'   => 'taken',
-            default   => 'done',
+            'taken' => 'taken',
+            default => 'done',
         };
     }
 
@@ -84,8 +86,8 @@ class Delivery extends Model
     {
         return match ($this->direction) {
             'deliver' => $this->pengiriman,
-            'taken'   => $this->pengambilan,
-            default   => $this->created_at,
+            'taken' => $this->pengambilan,
+            default => $this->created_at,
         };
     }
 }
