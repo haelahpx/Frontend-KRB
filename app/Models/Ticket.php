@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -8,12 +9,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 
 
 class Ticket extends Model
 {
     use HasFactory;
     use SoftDeletes;
+    use HasUlids;
     protected $table = 'tickets';
     protected $primaryKey = 'ticket_id';
     public $timestamps = true;
@@ -38,7 +41,7 @@ class Ticket extends Model
             }
         });
     }
-    
+
     public function getRouteKeyName(): string
     {
         return 'ulid';
@@ -106,9 +109,9 @@ class Ticket extends Model
     }
 
     public function assignments()
-{
-    return $this->hasMany(\App\Models\TicketAssignment::class, 'ticket_id', 'ticket_id');
-}
+    {
+        return $this->hasMany(\App\Models\TicketAssignment::class, 'ticket_id', 'ticket_id');
+    }
 
     protected function loadRecentComments(): void
     {
