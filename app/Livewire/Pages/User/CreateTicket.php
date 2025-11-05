@@ -114,7 +114,7 @@ class CreateTicket extends Component
                         'err' => $e->getMessage(),
                     ]);
                     // you may choose to delete ticket on critical failure. For now we keep ticket and notify user.
-                    $this->dispatchBrowserEvent('toast', ['type' => 'warning', 'message' => 'Beberapa lampiran gagal diproses.']);
+                    $this->dispatch('toast', ['type' => 'warning', 'message' => 'Beberapa lampiran gagal diproses.']);
                 }
             }
 
@@ -131,7 +131,7 @@ class CreateTicket extends Component
 
         } catch (ValidationException $e) {
             $first = collect($e->validator->errors()->all())->first() ?? 'Periksa kembali input Anda.';
-            $this->dispatchBrowserEvent('toast', ['type' => 'error', 'message' => $first]);
+            $this->dispatch('toast', ['type' => 'error', 'message' => $first]);
             throw $e;
         } catch (Throwable $e) {
             Log::error('CreateTicket.save failed', [
@@ -139,7 +139,7 @@ class CreateTicket extends Component
                 'trace' => $e->getTraceAsString(),
             ]);
             $msg = app()->environment('local') ? $e->getMessage() : 'Terjadi kesalahan tak terduga.';
-            $this->dispatchBrowserEvent('toast', ['type' => 'error', 'message' => $msg]);
+            $this->dispatch('toast', ['type' => 'error', 'message' => $msg]);
             return;
         }
     }

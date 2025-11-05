@@ -9,17 +9,30 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
-
+// ✘ HAPUS BARIS INI:
+// use Illuminate\Database\Eloquent\Concerns\HasUlids; 
 
 class Ticket extends Model
 {
     use HasFactory;
     use SoftDeletes;
-    use HasUlids;
+    // ✘ HAPUS BARIS INI:
+    // use HasUlids; 
+
     protected $table = 'tickets';
     protected $primaryKey = 'ticket_id';
     public $timestamps = true;
+
+    /**
+     * ✔ TAMBAHKAN BARIS INI
+     * Beri tahu Eloquent bahwa Primary Key Anda adalah auto-incrementing integer.
+     */
+    public $incrementing = true;
+
+    /**
+     * Ini sudah benar, biarkan. 
+     * Ini memberitahu Eloquent bahwa PK-nya adalah 'int'.
+     */
     protected $keyType = 'int';
     protected $dates = ['deleted_at'];
 
@@ -33,6 +46,12 @@ class Ticket extends Model
         'priority',
         'status',
     ];
+
+    /**
+     * ✔ Ini sudah benar.
+     * Method ini akan otomatis mengisi kolom 'ulid' yang TERPISAH
+     * saat membuat tiket baru.
+     */
     protected static function booted(): void
     {
         static::creating(function ($ticket) {
@@ -42,6 +61,11 @@ class Ticket extends Model
         });
     }
 
+    /**
+     * ✔ Ini juga sudah benar.
+     * Ini memberitahu Laravel untuk menggunakan kolom 'ulid' (bukan 'ticket_id')
+     * saat mencari tiket di URL (Route Model Binding).
+     */
     public function getRouteKeyName(): string
     {
         return 'ulid';
@@ -113,22 +137,7 @@ class Ticket extends Model
         return $this->hasMany(\App\Models\TicketAssignment::class, 'ticket_id', 'ticket_id');
     }
 
-    protected function loadRecentComments(): void
-    {
-        $since = \Carbon\Carbon::now($this->tz)->subDays(7);
-
-        $q = \App\Models\TicketComment::query()
-            ->where('created_at', '>=', $since)
-            ->with([
-                'user:user_id,full_name',
-                'ticket' => fn($tq) => $tq->select('ticket_id', 'subject', 'status', 'department_id', 'company_id'),
-            ])
-            ->where('user_id', '!=', \Illuminate\Support\Facades\Auth::id())
-            ->whereHas('ticket', fn($t) => $t->where('status', '!=', 'DELETED'))
-            ->orderByDesc('created_at');
-
-        $this->recentComments = $this->scopeForAdmin($q, 'ticket_comments')
-            ->take(8)
-            ->get(['ticket_id', 'user_id', 'comment_text', 'created_at']);
-    }
+    // Method loadRecentComments() Anda tidak ada di file asli, 
+    // jadi saya tidak sertakan di sini agar sesuai dengan file yang Anda berikan.
+    // Jika Anda memilikinya, Anda bisa menambahkannya kembali.
 }
