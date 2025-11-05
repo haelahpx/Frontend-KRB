@@ -1,3 +1,0 @@
-<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5-3.9 19.5m-2.1-19.5-3.9 19.5"/>
-</svg><?php /**PATH C:\Users\Ochie\OneDrive\Documents\GitHub\Frontend-KRB\storage\framework\views/e173b96cfb5a99a59786f08ca8de1b48.blade.php ENDPATH**/ ?>

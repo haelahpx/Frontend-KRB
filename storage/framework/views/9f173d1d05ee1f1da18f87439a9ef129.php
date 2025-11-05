@@ -4,15 +4,15 @@
       <h1 class="text-3xl font-bold text-gray-900">Support Ticket System</h1>
       <div class="inline-flex rounded-md overflow-hidden bg-gray-100 border border-gray-200">
         <span class="px-4 py-2 text-sm font-medium bg-gray-900 text-white select-none">Create Ticket</span>
-        <a href="{{ route('ticketstatus') }}"
+        <a href="<?php echo e(route('ticketstatus')); ?>"
           class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Ticket Status</a>
       </div>
     </div>
   </div>
 
-  @if (session('success'))
-    <div class="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-green-800">{{ session('success') }}</div>
-  @endif
+  <!--[if BLOCK]><![endif]--><?php if(session('success')): ?>
+    <div class="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-green-800"><?php echo e(session('success')); ?></div>
+  <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
   <div class="bg-white rounded-xl border-2 border-black/80 shadow-md p-4">
     <div class="flex flex-col lg:flex-row gap-6">
@@ -21,17 +21,23 @@
           <h2 class="text-2xl font-semibold text-gray-900 mb-2">Create Support Ticket</h2>
           <p class="text-gray-600 mb-6">Fill out the form below to submit a new support ticket</p>
 
-          {{-- layout must include:
-          <meta name="csrf-token" content="{{ csrf_token() }}"> --}}
+          
           <form class="space-y-6" wire:submit.prevent="save" onsubmit="return beforeSubmitAttachSync()">
-            @csrf
+            <?php echo csrf_field(); ?>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-900 mb-2">Subject</label>
                 <input type="text" wire:model.defer="subject" placeholder="Enter ticket subject"
                   class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900" />
-                @error('subject') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['subject'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-sm mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
               </div>
 
               <div>
@@ -41,14 +47,21 @@
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
                 </select>
-                @error('priority') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['priority'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-sm mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
               </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-900 mb-2">Department (your dept)</label>
-                <input type="text" value="{{ $this->requester_department }}" readonly
+                <input type="text" value="<?php echo e($this->requester_department); ?>" readonly
                   class="w-full px-3 py-2 text-gray-700 bg-gray-100 border rounded-md" />
               </div>
 
@@ -56,11 +69,18 @@
                 <label class="block text-sm font-medium text-gray-900 mb-2">Assigned to what department</label>
                 <select wire:model="assigned_department_id" class="w-full px-3 py-2 text-gray-900 border rounded-md">
                   <option value="">Select department</option>
-                  @foreach($this->departments as $dept)
-                    <option value="{{ $dept['department_id'] }}">{{ $dept['department_name'] }}</option>
-                  @endforeach
+                  <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $this->departments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $dept): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($dept['department_id']); ?>"><?php echo e($dept['department_name']); ?></option>
+                  <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                 </select>
-                @error('assigned_department_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['assigned_department_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-sm mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
               </div>
             </div>
 
@@ -68,13 +88,20 @@
               <label class="block text-sm font-medium text-gray-900 mb-2">Description</label>
               <textarea wire:model.defer="description" rows="6" placeholder="Describe your issue in detail..."
                 class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border rounded-md"></textarea>
-              @error('description') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+              <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['description'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-sm mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
             </div>
 
-            {{-- TEMP upload hidden + preview --}}
-            @php($uuid = \Illuminate\Support\Str::uuid())
-            <input type="hidden" id="tmp_key" value="{{ $uuid }}">
-            <input type="hidden" id="temp_items_json" name="temp_items_json" value="{{ $temp_items_json }}"
+            
+            <?php ($uuid = \Illuminate\Support\Str::uuid()); ?>
+            <input type="hidden" id="tmp_key" value="<?php echo e($uuid); ?>">
+            <input type="hidden" id="temp_items_json" name="temp_items_json" value="<?php echo e($temp_items_json); ?>"
               wire:model.defer="temp_items_json">
 
             <div>
@@ -86,12 +113,12 @@
                   <div class="text-gray-600">
                     <p class="text-sm">Click to upload files or drag and drop</p>
                     <p class="text-xs text-gray-500 mt-1">PNG, JPG, WEBP, PDF, DOC, DOCX, XLSX, ZIP up to
-                      {{ $per_file_max_mb }}MB/file · Total {{ $total_quota_mb }}MB/ticket
+                      <?php echo e($per_file_max_mb); ?>MB/file · Total <?php echo e($total_quota_mb); ?>MB/ticket
                     </p>
                   </div>
                 </label>
 
-                {{-- progress --}}
+                
                 <div id="progwrap" class="hidden mt-3">
                   <div class="w-full bg-gray-200 rounded h-2 overflow-hidden">
                     <div id="progress" class="bg-gray-900 h-2" style="width:0%"></div>
@@ -102,22 +129,29 @@
                   </div>
                 </div>
 
-                {{-- preview list --}}
+                
                 <div class="mt-3 text-left">
                   <p class="text-sm font-medium text-gray-700 mb-1">Selected files:</p>
                   <ul id="preview-list" class="text-sm text-gray-600 list-disc pl-5 space-y-1">
-                    {{-- JS will fill --}}
+                    
                   </ul>
                 </div>
               </div>
-              @error('temp_items_json') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-              @if($errors->has('attachments'))
-                <p class="text-red-600 text-sm mt-1">{{ $errors->first('attachments') }}</p>
-              @endif
+              <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['temp_items_json'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-sm mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+              <!--[if BLOCK]><![endif]--><?php if($errors->has('attachments')): ?>
+                <p class="text-red-600 text-sm mt-1"><?php echo e($errors->first('attachments')); ?></p>
+              <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
             </div>
 
             <div class="flex space-x-4 pt-4">
-              <a href="{{ route('home') }}"
+              <a href="<?php echo e(route('home')); ?>"
                 class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">Cancel</a>
               <button type="submit"
                 class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
@@ -134,7 +168,7 @@
   </div>
 </div>
 
-{{-- ===== client JS: upload to local temp endpoints ===== --}}
+
 <script>
   (function () {
     const ALLOWED = ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'doc', 'docx', 'xlsx', 'zip'];
@@ -324,4 +358,4 @@
 
     renderList();
   })();
-</script>
+</script><?php /**PATH /home/adomancer/Documents/GitHub/KRB-System/resources/views/livewire/pages/user/createticket.blade.php ENDPATH**/ ?>

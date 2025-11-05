@@ -97,7 +97,7 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 Route::get('/google/oauth/init', function () {
-    $credPath  = base_path(env('GOOGLE_OAUTH_CREDENTIALS_JSON', 'storage/app/google_oauth/credentials.json'));
+    $credPath = base_path(env('GOOGLE_OAUTH_CREDENTIALS_JSON', 'storage/app/google_oauth/credentials.json'));
     $tokenPath = base_path(env('GOOGLE_OAUTH_TOKENS_PATH', 'storage/app/google_oauth/tokens.json'));
 
     $client = new Google\Client();
@@ -112,7 +112,8 @@ Route::get('/google/oauth/init', function () {
     }
 
     $token = $client->fetchAccessTokenWithAuthCode(request('code'));
-    if (!is_dir(dirname($tokenPath))) @mkdir(dirname($tokenPath), 0775, true);
+    if (!is_dir(dirname($tokenPath)))
+        @mkdir(dirname($tokenPath), 0775, true);
     file_put_contents($tokenPath, json_encode($token));
     return 'Google OAuth tokens saved ✅';
 });
@@ -135,7 +136,6 @@ Route::middleware('guest')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
-
     Route::get('/google/connect', fn(GoogleMeetService $svc) => redirect($svc->getAuthUrl()))
         ->name('google.connect');
 
@@ -152,15 +152,15 @@ Route::middleware(['auth'])->group(function () {
         return $svc->getAuthUrl();
     });
 
-    // ---------- Attachments API ----------
-    Route::post('/attachments/signature', [AttachmentController::class, 'signature'])->name('attachments.signature');
-    Route::post('/attachments', [AttachmentController::class, 'store'])->name('attachments.store');
-    Route::get('/tickets/{ticket}/attachments', [AttachmentController::class, 'index'])->whereNumber('ticket')->name('attachments.index');
-    Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->whereNumber('attachment')->name('attachments.destroy');
-    // Temporary attachments
-    Route::post('/attachments/signature-temp', [AttachmentController::class, 'signatureTemp'])->name('attachments.signatureTemp');
-    Route::delete('/attachments/temp', [AttachmentController::class, 'deleteTemp'])->name('attachments.deleteTemp');
-    Route::post('/tickets/finalize-attachments', [AttachmentController::class, 'finalizeTemp'])->name('attachments.finalizeTemp');
+    // ---------- Attachments API (Local Storage) ----------
+    Route::prefix('attachments')->middleware('auth')->group(function () {
+        Route::post('/temp', [AttachmentController::class, 'tempUpload'])
+            ->name('attachments.temp');
+        Route::delete('/temp', [AttachmentController::class, 'deleteTemp'])
+            ->name('attachments.temp.delete');
+        Route::post('/finalize', [AttachmentController::class, 'finalizeTemp'])
+            ->name('attachments.finalize');
+    });
 
     // Vehicle (signed)
     Route::prefix('vehicle-attachments')->name('vehicle.attachments.')->group(function () {
