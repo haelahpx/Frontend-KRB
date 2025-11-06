@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Livewire\Pages\User;
+
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -15,24 +16,32 @@ use Throwable;
 #[Title('Create Ticket')]
 class CreateTicket extends Component
 {
+    // form
     public string $subject = '';
     public string $priority = 'low';
     public ?int $assigned_department_id = null;
     public string $description = '';
 
+    // display
     public string $requester_department = '-';
     public array $departments = [];
+
+    // temp items json (dari JS upload temp)
     public string $temp_items_json = '[]';
+
+    // per-file & total limits (MB)
+    public int $per_file_max_mb = 10;
+    public int $total_quota_mb = 15;
 
     public function mount(): void
     {
         $user = Auth::user()->loadMissing(['department', 'company']);
 
-        $this->requester_department   = optional($user->department)->department_name ?? '-';
+        $this->requester_department = optional($user->department)->department_name ?? '-';
         $this->assigned_department_id = $user->department_id;
 
         $this->departments = Department::query()
-            ->when($user->company_id, fn ($q) => $q->where('company_id', $user->company_id))
+            ->when($user->company_id, fn($q) => $q->where('company_id', $user->company_id))
             ->orderBy('department_name', 'asc')
             ->get(['department_id', 'department_name'])
             ->toArray();
@@ -41,10 +50,11 @@ class CreateTicket extends Component
     protected function rules(): array
     {
         return [
-            'subject'                => ['required', 'string', 'max:255'],
-            'priority'               => ['required', 'in:low,medium,high'],
+            'subject' => ['required', 'string', 'max:255'],
+            'priority' => ['required', 'in:low,medium,high'],
             'assigned_department_id' => ['required', 'exists:departments,department_id'],
-            'description'            => ['nullable', 'string', 'max:10000'],
+            'description' => ['nullable', 'string', 'max:10000'],
+            'temp_items_json' => ['nullable', 'string'],
         ];
     }
 
@@ -55,63 +65,73 @@ class CreateTicket extends Component
 
             $user = Auth::user()->loadMissing(['department', 'company']);
 
+            // create ticket
             $ticket = Ticket::create([
-                'company_id'     => $user->company_id,
-                'requestdept_id' => $user->department_id,   // pastikan kolom ini ada
-                'department_id'  => $this->assigned_department_id,
-                'user_id'        => $user->getKey(),
-                'subject'        => $this->subject,
-                'description'    => $this->description,
-                'priority'       => $this->priority,
-                'status'         => 'OPEN',                 // pastikan enum/status valid
+                'company_id' => $user->company_id,
+                'requestdept_id' => $user->department_id,
+                'department_id' => $this->assigned_department_id,
+                'user_id' => $user->getKey(),
+                'subject' => $this->subject,
+                'description' => $this->description,
+                'priority' => $this->priority,
+                'status' => 'OPEN',
             ]);
 
-            // finalize lampiran (best-effort)
+            // parse temp items JSON (array of uploaded temp file objects)
             $items = [];
             try {
-                $decoded = json_decode($this->temp_items_json ?? '[]', true, 512, JSON_THROW_ON_ERROR);
-                $items = is_array($decoded) ? $decoded : [];
+                $items = json_decode($this->temp_items_json ?? '[]', true, 512, JSON_THROW_ON_ERROR);
+                if (!is_array($items))
+                    $items = [];
             } catch (\JsonException $je) {
                 $items = [];
             }
 
-            if ($items) {
+            // enforce total quota server-side before finalize (sum bytes)
+            $incomingBytes = array_sum(array_map(fn($it) => (int) ($it['bytes'] ?? 0), $items));
+            $quotaBytes = (int) $this->total_quota_mb * 1024 * 1024;
+            if ($incomingBytes > $quotaBytes) {
+                // rollback ticket and show error
+                $ticket->delete();
+                $this->addError('attachments', "Total attachment size exceeds {$this->total_quota_mb} MB.");
+                return;
+            }
+
+            // finalize temp attachments (AttachmentController should move files & insert DB)
+            if (!empty($items)) {
                 try {
-                    app(\App\Http\Controllers\AttachmentController::class)
-                        ->finalizeTemp(new \Illuminate\Http\Request([
-                            'ticket_id' => $ticket->getKey(),
-                            'items'     => $items,
-                        ]));
+                    $req = new \Illuminate\Http\Request([
+                        'ticket_id' => $ticket->getKey(),
+                        'items' => $items,
+                        // optionally include tmp_key: not required if public_id is parseable
+                    ]);
+                    // call controller method directly
+                    app(\App\Http\Controllers\AttachmentController::class)->finalizeTemp($req);
                 } catch (Throwable $e) {
+                    // log but don't fatal: ticket already created (we can mark or notify)
                     Log::warning('Attachment finalizeTemp failed', [
                         'ticket_id' => $ticket->getKey(),
-                        'err' => $e->getMessage()
+                        'err' => $e->getMessage(),
                     ]);
-                    $this->dispatch('toast', type: 'warning', title: 'Lampiran', message: 'Beberapa lampiran gagal diproses.', duration: 3000);
+                    // you may choose to delete ticket on critical failure. For now we keep ticket and notify user.
+                    $this->dispatch('toast', ['type' => 'warning', 'message' => 'Beberapa lampiran gagal diproses.']);
                 }
             }
 
-            // reset (kembalikan dept assignment ke dept user)
-            $userDeptId = $user->department_id;
+            // reset fields
             $this->reset(['subject', 'priority', 'assigned_department_id', 'description', 'temp_items_json']);
+            // restore defaults
             $this->priority = 'low';
-            $this->assigned_department_id = $userDeptId;
+            $this->assigned_department_id = $user->department_id;
             $this->temp_items_json = '[]';
 
-            $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'Tiket berhasil dibuat.', duration: 3000);
-            session()->flash('toast', [
-                'type'    => 'success',
-                'title'   => 'Berhasil',
-                'message' => 'Tiket berhasil dibuat.',
-                'duration'=> 3000,
-            ]);
-
-            // TETAP: redirect ke route 'ticketstatus'
+            // flash & redirect
+            session()->flash('success', 'Tiket berhasil dibuat.');
             return redirect()->route('ticketstatus');
 
         } catch (ValidationException $e) {
             $first = collect($e->validator->errors()->all())->first() ?? 'Periksa kembali input Anda.';
-            $this->dispatch('toast', type: 'error', title: 'Validasi Gagal', message: $first, duration: 3000);
+            $this->dispatch('toast', ['type' => 'error', 'message' => $first]);
             throw $e;
         } catch (Throwable $e) {
             Log::error('CreateTicket.save failed', [
@@ -119,7 +139,7 @@ class CreateTicket extends Component
                 'trace' => $e->getTraceAsString(),
             ]);
             $msg = app()->environment('local') ? $e->getMessage() : 'Terjadi kesalahan tak terduga.';
-            $this->dispatch('toast', type: 'error', title: 'Gagal', message: $msg, duration: 3500);
+            $this->dispatch('toast', ['type' => 'error', 'message' => $msg]);
             return;
         }
     }

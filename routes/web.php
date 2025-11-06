@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 // ========== Controllers ==========
 use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\VehicleAttachmentController;
 
 // ========== Livewire Pages (User) ==========
 use App\Livewire\Pages\User\Home as UserHome;
@@ -19,17 +20,16 @@ use App\Livewire\Pages\User\Bookvehicle;
 use App\Livewire\Pages\User\Meetonline;
 use App\Livewire\Pages\User\Ticketqueue as Ticketqueue;
 use App\Livewire\Pages\User\Vehiclestatus as Vehiclestatus;
+use App\Livewire\Pages\User\Ticketshow as UserTicketshow;
 
-// ========== Livewire Pages (Admin ==========
+// ========== Livewire Pages (Admin) ==========
 use App\Livewire\Pages\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Pages\Admin\Ticket as AdminTicket;
-use App\Livewire\Pages\Admin\Usermanagement as UserManagementAdmin;
 use App\Livewire\Pages\Admin\Ticketshow as AdminTicketshow;
 use App\Livewire\Pages\Admin\RoomMonitoring as RoomMonitoringPage;
 use App\Livewire\Pages\Admin\Information as InformationPage;
 
-// ========== Livewire Pages (Superadmin ==========
-
+// ========== Livewire Pages (Superadmin) ==========
 use App\Livewire\Pages\Superadmin\Dashboard as SuperadminDashboard;
 use App\Livewire\Pages\Superadmin\Announcement;
 use App\Livewire\Pages\Superadmin\Information;
@@ -48,7 +48,6 @@ use App\Livewire\Pages\Superadmin\Guestbookmanagement as Guestbookmanagement;
 use App\Livewire\Pages\Superadmin\Bookingvehicle as SuperadminBookingvehicle;
 
 // ========== Livewire Pages (Receptionist) ==========
-
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
 use App\Livewire\Pages\Receptionist\Documents as Documents;
 use App\Livewire\Pages\Receptionist\Package as ReceptionistPackage;
@@ -62,25 +61,20 @@ use App\Livewire\Pages\Receptionist\DocPackHistory;
 use App\Livewire\Pages\Receptionist\DocPackStatus;
 use App\Livewire\Pages\Receptionist\DocPackForm;
 
-
-
 // ========== Auth Pages ==========
 use App\Livewire\Pages\Auth\Login as LoginPage;
 use App\Livewire\Pages\Auth\Register as RegisterPage;
 
 // ========== Error ==========
 use App\Livewire\Pages\Errors\error404 as Error404;
+
 use App\Services\GoogleMeetService;
-
-
-use App\Http\Controllers\VehicleAttachmentController;
 
 /*
 |--------------------------------------------------------------------------
 | Root: arahkan sesuai status login & role
 |--------------------------------------------------------------------------
 */
-
 Route::get('/', function () {
     if (!Auth::check()) {
         return redirect()->route('login');
@@ -90,19 +84,20 @@ Route::get('/', function () {
     $roleName = $user->role->name ?? $user->role ?? null;
 
     return match ($roleName) {
-        'Superadmin' => redirect()->route('superadmin.dashboard'),
-        'Admin' => redirect()->route('admin.dashboard'),
-        'Receptionist' => redirect()->route('receptionist.dashboard'),
-        default => redirect()->route('user.home'),
+        'Superadmin'    => redirect()->route('superadmin.dashboard'),
+        'Admin'         => redirect()->route('admin.dashboard'),
+        'Receptionist'  => redirect()->route('receptionist.dashboard'),
+        default         => redirect()->route('user.home'),
     };
 })->name('home');
 
-
-
-// meeting online test
-
+/*
+|--------------------------------------------------------------------------
+| Google OAuth (contoh / debug)
+|--------------------------------------------------------------------------
+*/
 Route::get('/google/oauth/init', function () {
-    $credPath  = base_path(env('GOOGLE_OAUTH_CREDENTIALS_JSON', 'storage/app/google_oauth/credentials.json'));
+    $credPath = base_path(env('GOOGLE_OAUTH_CREDENTIALS_JSON', 'storage/app/google_oauth/credentials.json'));
     $tokenPath = base_path(env('GOOGLE_OAUTH_TOKENS_PATH', 'storage/app/google_oauth/tokens.json'));
 
     $client = new Google\Client();
@@ -117,19 +112,13 @@ Route::get('/google/oauth/init', function () {
     }
 
     $token = $client->fetchAccessTokenWithAuthCode(request('code'));
-    if (!is_dir(dirname($tokenPath))) @mkdir(dirname($tokenPath), 0775, true);
+    if (!is_dir(dirname($tokenPath)))
+        @mkdir(dirname($tokenPath), 0775, true);
     file_put_contents($tokenPath, json_encode($token));
     return 'Google OAuth tokens saved ✅';
 });
 
 Route::get('/google/oauth/callback', fn() => redirect('/google/oauth/init'));
-
-
-
-
-
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -144,52 +133,34 @@ Route::middleware('guest')->group(function () {
 /*
 |--------------------------------------------------------------------------
 | Auth only
-|-------------------------------------------------z-------------------------
+|--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
-    Route::get('/google/connect', fn(GoogleMeetService $svc)
-    => redirect($svc->getAuthUrl()))->name('google.connect');
+    Route::get('/google/connect', fn(GoogleMeetService $svc) => redirect($svc->getAuthUrl()))
+        ->name('google.connect');
 
-    // match the URL Google is calling:
-    Route::get('/oauth2callback', function (Illuminate\Http\Request $request) {
+    Route::get('/oauth2callback', function (Request $request) {
         $code = $request->query('code');
         if (!$code) {
             abort(400, 'Missing authorization code');
         }
-        app(App\Services\GoogleMeetService::class)->handleCallback($code);
+        app(GoogleMeetService::class)->handleCallback($code);
         return redirect()->route('dashboard')->with('success', 'Google connected!');
-    })->name('google.callback')->middleware('auth');
+    })->name('google.callback');
 
+    Route::get('/google/debug-auth-url', function (GoogleMeetService $svc) {
+        return $svc->getAuthUrl();
+    });
 
-    Route::get('/google/debug-auth-url', function (\App\Services\GoogleMeetService $svc) {
-        return $svc->getAuthUrl(); // open it and inspect the query param redirect_uri=
-    })->middleware('auth');
-
-    // ---------- Attachments API ----------
-    Route::post('/attachments/signature', [AttachmentController::class, 'signature'])
-        ->name('attachments.signature');
-
-    Route::post('/attachments', [AttachmentController::class, 'store'])
-        ->name('attachments.store');
-
-    Route::get('/tickets/{ticket}/attachments', [AttachmentController::class, 'index'])
-        ->whereNumber('ticket')
-        ->name('attachments.index');
-
-    Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])
-        ->whereNumber('attachment')
-        ->name('attachments.destroy');
-
-    // Temporary attachments (sebelum ticket dibuat)
-    Route::post('/attachments/signature-temp', [AttachmentController::class, 'signatureTemp'])
-        ->name('attachments.signatureTemp');
-
-    Route::delete('/attachments/temp', [AttachmentController::class, 'deleteTemp'])
-        ->name('attachments.deleteTemp');
-
-    Route::post('/tickets/finalize-attachments', [AttachmentController::class, 'finalizeTemp'])
-        ->name('attachments.finalizeTemp');
-
+    // ---------- Attachments API (Local Storage) ----------
+    Route::prefix('attachments')->middleware('auth')->group(function () {
+        Route::post('/temp', [AttachmentController::class, 'tempUpload'])
+            ->name('attachments.temp');
+        Route::delete('/temp', [AttachmentController::class, 'deleteTemp'])
+            ->name('attachments.temp.delete');
+        Route::post('/finalize', [AttachmentController::class, 'finalizeTemp'])
+            ->name('attachments.finalize');
+    });
 
     // Vehicle (signed)
     Route::prefix('vehicle-attachments')->name('vehicle.attachments.')->group(function () {
@@ -209,8 +180,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/package', UserPackage::class)->name('package');
     Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
     Route::get('/vehiclestatus', Vehiclestatus::class)->name('vehiclestatus');
-    Route::get('/tickets/{ticket}', \App\Livewire\Pages\User\Ticketshow::class)
-        ->name('user.ticket.show');
+
+    // TICKET (USER) — gunakan ULID binding; TIDAK bentrok dengan admin
+    Route::get('/tickets/{ticket:ulid}', UserTicketshow::class)->name('user.ticket.show');
+
     Route::get('/ticket-queue', Ticketqueue::class)->name('user.ticket.queue');
 
     // ---------- Admin routes ----------
@@ -218,8 +191,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin-dashboard', AdminDashboard::class)->name('admin.dashboard');
         Route::get('/admin-ticket', AdminTicket::class)->name('admin.ticket');
         Route::get('/admin-roommonitoring', RoomMonitoringPage::class)->name('admin.room.monitoring');
-        Route::get('/tickets/{ticket:ulid}', AdminTicketShow::class)->name('admin.ticket.show');
-        Route::get('/admin-usermanagement', UserManagementAdmin::class)->name('admin.usermanagement');
+        Route::get('/admin/tickets/{ticket:ulid}', AdminTicketshow::class)->name('admin.ticket.show'); // <— Pindah prefix admin
+        Route::get('/admin-usermanagement', \App\Livewire\Pages\Admin\Usermanagement::class)->name('admin.usermanagement');
         Route::get('/admin/information', InformationPage::class)->name('admin.information');
     });
 
@@ -253,23 +226,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/receptionist-bookings', BookingsApproval::class)->name('receptionist.bookings');
         Route::get('/receptionist-roomapproval', RoomApproval::class)->name('receptionist.roomapproval');
         Route::get('/receptionist-bookinghistory', BookingHistory::class)->name('receptionist.bookinghistory');
-        route::get('/receptionist-guestbookhistory', GuestbookHistory::class)->name('receptionist.guestbookhistory');
-        route::get('/receptionist-docpackhistory', DocPackHistory::class)->name('receptionist.docpackhistory');
-        route::get('/receptionist-docpackstatus', DocPackStatus::class)->name('receptionist.docpackstatus');
-        route::get('/receptionist-docpackform', DocPackForm::class)->name('receptionist.docpackform');
+        Route::get('/receptionist-guestbookhistory', GuestbookHistory::class)->name('receptionist.guestbookhistory');
+        Route::get('/receptionist-docpackhistory', DocPackHistory::class)->name('receptionist.docpackhistory');
+        Route::get('/receptionist-docpackstatus', DocPackStatus::class)->name('receptionist.docpackstatus');
+        Route::get('/receptionist-docpackform', DocPackForm::class)->name('receptionist.docpackform');
     });
 
-    // ---------- Logout (BERSIHKAN intended + invalidate session) ----------
+    // ---------- Logout ----------
     Route::post('/logout', function (Request $request) {
         Auth::logout();
-
-        // buang URL yang tersimpan agar tidak redirect ke rute lama
         $request->session()->forget('url.intended');
-
-        // invalidasi session & CSRF
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
         return redirect()->route('login');
     })->name('logout');
 });

@@ -3,21 +3,15 @@
     <div class="flex items-center justify-between">
       <h1 class="text-3xl font-bold text-gray-900">Support Ticket System</h1>
       <div class="inline-flex rounded-md overflow-hidden bg-gray-100 border border-gray-200">
-        <span class="px-4 py-2 text-sm font-medium bg-gray-900 text-white select-none">
-          Create Ticket
-        </span>
+        <span class="px-4 py-2 text-sm font-medium bg-gray-900 text-white select-none">Create Ticket</span>
         <a href="{{ route('ticketstatus') }}"
-          class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
-          Ticket Status
-        </a>
+          class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Ticket Status</a>
       </div>
     </div>
   </div>
 
   @if (session('success'))
-  <div class="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-green-800">
-    {{ session('success') }}
-  </div>
+    <div class="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-green-800">{{ session('success') }}</div>
   @endif
 
   <div class="bg-white rounded-xl border-2 border-black/80 shadow-md p-4">
@@ -27,34 +21,22 @@
           <h2 class="text-2xl font-semibold text-gray-900 mb-2">Create Support Ticket</h2>
           <p class="text-gray-600 mb-6">Fill out the form below to submit a new support ticket</p>
 
-          {{-- IMPORTANT: pastikan layout punya <meta name="csrf-token" content="{{ csrf_token() }}"> --}}
-          <form class="space-y-6" wire:submit.prevent="save" onsubmit="beforeSubmitAttachSync()">
+          {{-- layout must include:
+          <meta name="csrf-token" content="{{ csrf_token() }}"> --}}
+          <form class="space-y-6" wire:submit.prevent="save" onsubmit="return beforeSubmitAttachSync()">
             @csrf
 
-            {{-- ===== basic fields (tetap) ===== --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-900 mb-2">Subject</label>
-                <input
-                  type="text"
-                  wire:model.defer="subject"
-                  placeholder="Enter ticket subject"
-                  @class([ 'w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent' , 'border-red-500'=> $errors->has('subject'),
-                'border-gray-300' => !$errors->has('subject'),
-                'border' => true
-                ])>
+                <input type="text" wire:model.defer="subject" placeholder="Enter ticket subject"
+                  class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900" />
                 @error('subject') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-900 mb-2">Priority</label>
-                <select
-                  wire:model="priority"
-                  @class([ 'w-full px-3 py-2 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent' , 'border-red-500'=> $errors->has('priority'),
-                  'border-gray-300' => !$errors->has('priority'),
-                  'border' => true
-                  ])>
-                  <option value="">Select priority</option>
+                <select wire:model="priority" class="w-full px-3 py-2 text-gray-900 border rounded-md">
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
@@ -66,24 +48,16 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-900 mb-2">Department (your dept)</label>
-                <input
-                  type="text"
-                  value="{{ $this->requester_department }}"
-                  readonly
-                  class="w-full px-3 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md">
+                <input type="text" value="{{ $this->requester_department }}" readonly
+                  class="w-full px-3 py-2 text-gray-700 bg-gray-100 border rounded-md" />
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-900 mb-2">Assigned to what department</label>
-                <select
-                  wire:model="assigned_department_id"
-                  @class([ 'w-full px-3 py-2 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent' , 'border-red-500'=> $errors->has('assigned_department_id'),
-                  'border-gray-300' => !$errors->has('assigned_department_id'),
-                  'border' => true
-                  ])>
+                <select wire:model="assigned_department_id" class="w-full px-3 py-2 text-gray-900 border rounded-md">
                   <option value="">Select department</option>
                   @foreach($this->departments as $dept)
-                  <option value="{{ $dept['department_id'] }}">{{ $dept['department_name'] }}</option>
+                    <option value="{{ $dept['department_id'] }}">{{ $dept['department_name'] }}</option>
                   @endforeach
                 </select>
                 @error('assigned_department_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
@@ -92,41 +66,32 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-900 mb-2">Description</label>
-              <textarea
-                wire:model.defer="description"
-                rows="6"
-                placeholder="Describe your issue in detail..."
-                @class([ 'w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none' , 'border-red-500'=> $errors->has('description'),
-                                  'border-gray-300' => !$errors->has('description'),
-                                  'border'          => true
-                                ])></textarea>
+              <textarea wire:model.defer="description" rows="6" placeholder="Describe your issue in detail..."
+                class="w-full px-3 py-2 text-gray-900 placeholder:text-gray-400 border rounded-md"></textarea>
               @error('description') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
-            {{-- ====== ATTACHMENTS (Cloudinary TMP) ====== --}}
-            {{-- hidden: TMP key + daftar item TMP (json) terikat ke Livewire --}}
+            {{-- TEMP upload hidden + preview --}}
             @php($uuid = \Illuminate\Support\Str::uuid())
             <input type="hidden" id="tmp_key" value="{{ $uuid }}">
-            <input type="hidden" id="temp_items_json" name="temp_items_json" value="{{ $temp_items_json }}" wire:model.defer="temp_items_json">
+            <input type="hidden" id="temp_items_json" name="temp_items_json" value="{{ $temp_items_json }}"
+              wire:model.defer="temp_items_json">
 
             <div>
               <label class="block text-sm font-medium text-gray-900 mb-2">Attachments</label>
               <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
-                {{-- ganti dari wire:model="attachments" ke input biasa; kita handle via JS untuk Cloudinary --}}
-                <input
-                  type="file"
-                  id="file-upload"
-                  class="hidden"
-                  multiple
+                <input type="file" id="file-upload" class="hidden" multiple
                   accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xlsx,.zip">
                 <label for="file-upload" class="cursor-pointer block">
                   <div class="text-gray-600">
                     <p class="text-sm">Click to upload files or drag and drop</p>
-                    <p class="text-xs text-gray-500 mt-1">PNG, JPG, WEBP, PDF, DOC, DOCX, XLSX, ZIP up to 10MB/file · Total 15MB/ticket</p>
+                    <p class="text-xs text-gray-500 mt-1">PNG, JPG, WEBP, PDF, DOC, DOCX, XLSX, ZIP up to
+                      {{ $per_file_max_mb }}MB/file · Total {{ $total_quota_mb }}MB/ticket
+                    </p>
                   </div>
                 </label>
 
-                {{-- Progress upload (global) --}}
+                {{-- progress --}}
                 <div id="progwrap" class="hidden mt-3">
                   <div class="w-full bg-gray-200 rounded h-2 overflow-hidden">
                     <div id="progress" class="bg-gray-900 h-2" style="width:0%"></div>
@@ -137,24 +102,24 @@
                   </div>
                 </div>
 
-                {{-- daftar file (preview) --}}
+                {{-- preview list --}}
                 <div class="mt-3 text-left">
                   <p class="text-sm font-medium text-gray-700 mb-1">Selected files:</p>
                   <ul id="preview-list" class="text-sm text-gray-600 list-disc pl-5 space-y-1">
-                    {{-- diisi oleh JS --}}
+                    {{-- JS will fill --}}
                   </ul>
                 </div>
               </div>
-              {{-- error dari rules lama dihapus karena tidak lagi pakai wire:model attachments --}}
+              @error('temp_items_json') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+              @if($errors->has('attachments'))
+                <p class="text-red-600 text-sm mt-1">{{ $errors->first('attachments') }}</p>
+              @endif
             </div>
 
             <div class="flex space-x-4 pt-4">
               <a href="{{ route('home') }}"
-                class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
-                Cancel
-              </a>
-              <button
-                type="submit"
+                class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">Cancel</a>
+              <button type="submit"
                 class="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
                 wire:loading.attr="disabled">
                 <span wire:loading.remove>Submit Ticket</span>
@@ -162,23 +127,23 @@
               </button>
             </div>
           </form>
+
         </div>
-      </div><!-- /flex-1 -->
+      </div>
     </div>
   </div>
 </div>
 
+{{-- ===== client JS: upload to local temp endpoints ===== --}}
 <script>
-  (function() {
+  (function () {
     const ALLOWED = ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'doc', 'docx', 'xlsx', 'zip'];
     const MAX10 = 10 * 1024 * 1024; // 10MB/file
 
     const tmpKey = document.getElementById('tmp_key').value;
     const input = document.getElementById('file-upload');
-    const dropBox = input?.closest('.border-dashed');
     const listEl = document.getElementById('preview-list');
     const hidden = document.getElementById('temp_items_json');
-
     const progWrap = document.getElementById('progwrap');
     const progBar = document.getElementById('progress');
     const progPct = document.getElementById('progpercent');
@@ -187,6 +152,7 @@
     let tempItems = JSON.parse(hidden.value || '[]');
 
     function setProgress(p, msg) {
+      if (!progWrap) return;
       progWrap.classList.remove('hidden');
       const c = Math.max(0, Math.min(100, Math.round(p)));
       progBar.style.width = c + '%';
@@ -196,30 +162,25 @@
     }
 
     function hideProgress() {
+      if (!progWrap) return;
       progWrap.classList.add('hidden');
+    }
+
+    function syncHidden() {
+      hidden.value = JSON.stringify(tempItems || []);
+      // Livewire: make sure change detected
+      hidden.dispatchEvent(new Event('input', { bubbles: true }));
+      hidden.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     function humanKB(b) {
       return (b / 1024).toFixed(1) + ' KB';
     }
 
-    function toast(msg) {
-      console.log(msg);
-    } // ganti ke toast kustom kalau ada
-
-    function syncHidden() {
-      hidden.value = JSON.stringify(tempItems || []);
-      // <-- WAJIB untuk Livewire mendeteksi perubahan <input type="hidden">
-      hidden.dispatchEvent(new Event('input'));
-    }
-
     function renderList() {
       listEl.innerHTML = '';
       if (!tempItems.length) {
-        const li = document.createElement('li');
-        li.className = 'text-gray-500';
-        li.textContent = 'No files yet.';
-        listEl.appendChild(li);
+        listEl.innerHTML = '<li class="text-gray-500">No files yet.</li>';
         return;
       }
       tempItems.forEach(item => {
@@ -233,19 +194,19 @@
       `;
         li.querySelector('button').addEventListener('click', async () => {
           try {
+            const csrf = document.querySelector('meta[name="csrf-token"]').content;
             await fetch('/attachments/temp', {
               method: 'DELETE',
               headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'X-CSRF-TOKEN': csrf,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
               },
-              body: JSON.stringify({
-                public_id: item.public_id,
-                file_type: item.resource_type
-              })
+              body: JSON.stringify({ public_id: item.public_id })
             });
-          } catch (_) {}
+          } catch (e) {
+            console.warn('Delete temp failed', e);
+          }
           tempItems = tempItems.filter(x => x.public_id !== item.public_id);
           syncHidden();
           renderList();
@@ -253,121 +214,114 @@
         listEl.appendChild(li);
       });
     }
-    renderList();
 
-    // open dialog when clicking the box text
-    dropBox?.addEventListener('click', (e) => {
-      if (!(e.target instanceof HTMLInputElement)) input?.click();
-    });
+    async function uploadSingle(file) {
+      return new Promise((resolve, reject) => {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (!csrf) return reject(new Error('CSRF token not found'));
 
-    // drag&drop UX
-    dropBox?.addEventListener('dragover', e => {
-      e.preventDefault();
-      dropBox.classList.add('bg-gray-50');
-    });
-    dropBox?.addEventListener('dragleave', () => dropBox.classList.remove('bg-gray-50'));
-    dropBox?.addEventListener('drop', async e => {
-      e.preventDefault();
-      dropBox.classList.remove('bg-gray-50');
-      if (e.dataTransfer?.files?.length) await handleFiles(e.dataTransfer.files);
-    });
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('tmp_key', tmpKey);
+
+        // also include _token in formdata for maximum compatibility
+        fd.append('_token', csrf);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/attachments/temp');
+
+        // also set header (some servers/middleware expect header)
+        try { xhr.setRequestHeader('X-CSRF-TOKEN', csrf); } catch (e) { /* some browsers ignore when sending FormData */ }
+
+        xhr.upload.onprogress = (evt) => {
+          if (evt.lengthComputable) setProgress((evt.loaded / evt.total) * 100, `Uploading ${file.name}…`);
+        };
+
+        xhr.onload = () => {
+          // handle http status
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const json = JSON.parse(xhr.responseText);
+              resolve(json);
+            } catch (e) {
+              console.error('Invalid JSON response', xhr.responseText);
+              reject(new Error('Invalid server response'));
+            }
+          } else if (xhr.status === 419) {
+            // CSRF/session expired
+            // show clear message to user
+            alert('Session expired (CSRF). Silakan refresh halaman dan login lagi.');
+            reject(new Error('CSRF / Session expired (419)'));
+          } else {
+            console.error('Upload failed', xhr.status, xhr.responseText);
+            reject(new Error('Upload failed: ' + xhr.status));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.send(fd);
+      });
+    }
 
     input?.addEventListener('change', async (e) => {
-      if (e.target.files?.length) await handleFiles(e.target.files);
-      e.target.value = ''; // reset supaya bisa pilih file yang sama lagi
-    });
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
 
-    async function handleFiles(files) {
+      // sequential upload (easier to reason about)
       for (const f of files) {
         const ext = (f.name.split('.').pop() || '').toLowerCase();
         if (!ALLOWED.includes(ext)) {
-          toast('Format tidak diizinkan: ' + f.name);
+          console.warn('Format not allowed:', f.name);
           continue;
         }
         if (f.size > MAX10) {
-          toast('File >10MB: ' + f.name);
+          console.warn('File too large:', f.name);
           continue;
         }
 
         try {
-          setProgress(5, 'Requesting permission…');
-
-          // 1) minta signature TEMP
-          const sigResp = await fetch('/attachments/signature-temp', {
-            method: 'POST',
-            headers: {
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              tmp_key: tmpKey,
-              filename: f.name,
-              bytes: f.size
-            })
-          });
-
-          if (!sigResp.ok) {
-            hideProgress();
-            const ej = await sigResp.json().catch(() => ({}));
-            toast(ej.message || 'Failed to get signature');
-            continue;
-          }
-          const sig = await sigResp.json();
-
-          // 2) upload Cloudinary TMP (progress)
-          const fd = new FormData();
-          fd.append('file', f);
-          fd.append('api_key', sig.api_key);
-          fd.append('timestamp', sig.timestamp);
-          fd.append('signature', sig.signature);
-          fd.append('upload_preset', sig.upload_preset);
-          fd.append('folder', sig.folder);
-
-          const cloudJson = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', `https://api.cloudinary.com/v1_1/${sig.cloud_name}/auto/upload`);
-            xhr.upload.onprogress = (evt) => {
-              if (evt.lengthComputable) setProgress((evt.loaded / evt.total) * 100, 'Uploading…');
+          setProgress(5, 'Requesting upload…');
+          const data = await uploadSingle(f);
+          // expected response: object with public_id, secure_url, bytes, resource_type, format, original_filename
+          if (data && data.public_id) {
+            const item = {
+              public_id: data.public_id,
+              secure_url: data.secure_url || data.url || null,
+              bytes: data.bytes || f.size,
+              resource_type: data.resource_type || data.type || null,
+              format: data.format || null,
+              original_filename: data.original_filename || f.name
             };
-            xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ?
-              resolve(JSON.parse(xhr.responseText)) :
-              reject({
-                status: xhr.status,
-                body: xhr.responseText
-              });
-            xhr.onerror = () => reject({
-              status: 0,
-              body: 'network error'
-            });
-            xhr.send(fd);
-          });
-
-          // 3) add to list & sinkron ke Livewire
-          const item = {
-            public_id: cloudJson.public_id,
-            secure_url: cloudJson.secure_url,
-            bytes: cloudJson.bytes,
-            resource_type: cloudJson.resource_type,
-            format: cloudJson.format,
-            original_filename: (cloudJson.original_filename || 'file') + (cloudJson.format ? '.' + cloudJson.format : '')
-          };
-          tempItems.push(item);
-          syncHidden();
-          renderList();
-
-          setProgress(100, 'Done');
+            tempItems.push(item);
+            syncHidden();
+            renderList();
+            setProgress(100, 'Done');
+          } else {
+            console.warn('Upload succeeded but response missing public_id', data);
+          }
         } catch (err) {
-          console.error(err);
-          hideProgress(); // jangan nyangkut di 5%
-          toast('Upload failed');
+          console.error('Upload error', err);
+          // helpful guidance for common cause
+          if (String(err).includes('CSRF') || String(err).includes('419')) {
+            // already alerted inside uploadSingle
+          } else {
+            alert('Upload failed: ' + (err.message || err));
+          }
+          hideProgress();
         }
       }
-    }
 
-    // dipanggil saat submit form (Livewire) — pastikan nilai terbaru terkirim
-    window.beforeSubmitAttachSync = function() {
+      // reset input so same file can be chosen again later
+      e.target.value = '';
+    });
+
+    // called before form submit
+    window.beforeSubmitAttachSync = function () {
+      // ensure hidden field up-to-date
       syncHidden();
+      return true;
     };
+
+    renderList();
   })();
 </script>
