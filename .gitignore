@@ -34,3 +34,18 @@ storage/app/google_tokens/*.json
 
 # Optional: ignore any JSON credentials in storage just in case
 /storage/app/*.json
+
+# Laravel runtime caches (stop tracking view/cache/log files)
+/storage/app/*
+!/storage/app/.gitignore
+
+/storage/framework/*
+!/storage/framework/.gitignore
+
+/storage/logs/*
+!/storage/logs/.gitignore
+
+# (optional) compiled cache files
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore
+
