@@ -8,7 +8,6 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use App\Models\BookingRoom;
 use App\Models\Room;
 use App\Services\GoogleMeetService;
@@ -32,12 +31,21 @@ class BookingsApproval extends Component
     public int $perPending = 5;
     public int $perOngoing = 5;
 
+    // Tabs
+    public string $activeTab = 'pending';
+
+    // Room filter (rooms.room_id)
+    public ?int $roomFilterId = null;
+
+    // Mobile filter modal
+    public bool $showFilterModal = false;
+
     // Reject modal
     public bool $showRejectModal = false;
     public ?int $rejectId = null;
     public string $rejectReason = '';
 
-    // Reschedule (cancel) modal
+    // Reschedule modal
     public bool $showRescheduleModal = false;
     public ?int $rescheduleId = null;
     public string $rescheduleDate = '';
@@ -46,7 +54,8 @@ class BookingsApproval extends Component
     public string $rescheduleReason = '';
 
     // Room select in reschedule modal
-    public array $roomsOptions = [];          // [ ['id'=>1,'label'=>'Ruang Garuda'], ... ]
+    /** @var array<int,array{id:int,label:string}> */
+    public array $roomsOptions = [];
     public bool $rescheduleRoomEnabled = false;
     public ?int $rescheduleRoomId = null;
 
@@ -56,35 +65,29 @@ class BookingsApproval extends Component
     {
         $companyId = Auth::user()->company_id ?? null;
 
-        // Pick label column safely: prefer room_number, then room_name, else room_id
-        $labelCol = Schema::hasColumn('rooms', 'room_number')
-            ? 'room_number'
-            : (Schema::hasColumn('rooms', 'room_name') ? 'room_name' : 'room_id');
-
+        // Sesuai tabel rooms: room_id + room_name
         $query = Room::query()
-            ->selectRaw("room_id, {$labelCol} as label");
+            ->selectRaw('room_id, room_name as label');
 
         if ($companyId) {
             $query->where('company_id', $companyId);
         }
 
         $this->roomsOptions = $query
-            ->orderBy($labelCol)
+            ->orderBy('room_name')
             ->get()
             ->map(function ($r) {
-                $label = $r->label ?? ('Room ' . $r->room_id);
                 return [
                     'id'    => (int) $r->room_id,
-                    'label' => (string) $label,
+                    'label' => (string) ($r->label ?? ('Room ' . $r->room_id)),
                 ];
             })
             ->values()
             ->toArray();
     }
 
-    /**
-     * Build a Carbon datetime whether columns are DATE+TIME or already DATETIME.
-     */
+    // ───────────── Helpers ─────────────
+
     private function buildDt(null|string $dateVal, null|string $timeVal): Carbon
     {
         if (!$dateVal && !$timeVal) {
@@ -112,7 +115,7 @@ class BookingsApproval extends Component
     }
 
     /**
-     * Auto-progress approved → completed when end datetime has passed.
+     * Auto-progress approved → completed ketika end datetime lewat.
      */
     private function autoProgressToCompleted(): int
     {
@@ -136,30 +139,6 @@ class BookingsApproval extends Component
                     'updated_at' => Carbon::now($this->tz)->toDateTimeString(),
                 ]);
         });
-    }
-
-    // Livewire filters reset pagination
-    public function updatingQ(): void
-    {
-        $this->resetPage('pendingPage');
-        $this->resetPage('ongoingPage');
-    }
-
-    public function updatingSelectedDate(): void
-    {
-        $this->resetPage('pendingPage');
-        $this->resetPage('ongoingPage');
-    }
-
-    public function updatingDateMode(): void
-    {
-        $this->resetPage('pendingPage');
-        $this->resetPage('ongoingPage');
-    }
-
-    public function getGoogleConnectedProperty(): bool
-    {
-        return app(GoogleMeetService::class)->isConnected(Auth::id());
     }
 
     private function selectedDateValue(): ?string
@@ -194,12 +173,78 @@ class BookingsApproval extends Component
             ->orderByDesc('created_at');
     }
 
+    // ───────── Livewire: reset pagination saat filter berubah ─────────
+
+    public function updatingQ(): void
+    {
+        $this->resetPage('pendingPage');
+        $this->resetPage('ongoingPage');
+    }
+
+    public function updatingSelectedDate(): void
+    {
+        $this->resetPage('pendingPage');
+        $this->resetPage('ongoingPage');
+    }
+
+    public function updatingDateMode(): void
+    {
+        $this->resetPage('pendingPage');
+        $this->resetPage('ongoingPage');
+    }
+
+    public function updatingRoomFilterId(): void
+    {
+        $this->resetPage('pendingPage');
+        $this->resetPage('ongoingPage');
+    }
+
+    // ───────── Tabs & Room filter & Mobile filter modal ─────────
+
+    public function setTab(string $tab): void
+    {
+        if (!in_array($tab, ['pending', 'ongoing'], true)) {
+            return;
+        }
+        $this->activeTab = $tab;
+        $this->resetPage('pendingPage');
+        $this->resetPage('ongoingPage');
+    }
+
+    public function selectRoom(?int $roomId = null): void
+    {
+        $this->roomFilterId = $roomId ?: null;
+
+        $this->resetPage('pendingPage');
+        $this->resetPage('ongoingPage');
+    }
+
+    public function clearRoomFilter(): void
+    {
+        $this->selectRoom(null);
+    }
+
+    public function openFilterModal(): void
+    {
+        $this->showFilterModal = true;
+    }
+
+    public function closeFilterModal(): void
+    {
+        $this->showFilterModal = false;
+    }
+
+    public function getGoogleConnectedProperty(): bool
+    {
+        return app(GoogleMeetService::class)->isConnected(Auth::id());
+    }
+
     // ─────────────────── Reject ────────────────────
 
     public function openReject(int $id): void
     {
-        $this->rejectId = $id;
-        $this->rejectReason = '';
+        $this->rejectId        = $id;
+        $this->rejectReason    = '';
         $this->showRejectModal = true;
     }
 
@@ -359,7 +404,6 @@ class BookingsApproval extends Component
         $this->rescheduleEnd     = $end->format('H:i');
         $this->rescheduleReason  = '';
 
-        // Allow room change for offline bookings
         $this->rescheduleRoomEnabled = !in_array($b->booking_type, ['online_meeting', 'onlinemeeting']);
         $this->rescheduleRoomId      = $b->room_id ?: null;
 
@@ -417,7 +461,6 @@ class BookingsApproval extends Component
                     ? $this->rescheduleRoomId
                     : $b->room_id;
 
-                // Overlap check for offline bookings
                 if (!in_array($b->booking_type, ['online_meeting', 'onlinemeeting']) && $roomId) {
                     $overlap = BookingRoom::query()
                         ->where('bookingroom_id', '!=', $b->bookingroom_id)
@@ -441,7 +484,6 @@ class BookingsApproval extends Component
                 $b->date        = $this->rescheduleDate;
                 $b->start_time  = $start;
                 $b->end_time    = $end;
-                // Note for cancel/reschedule goes into book_reject as requested
                 $b->book_reject = $this->rescheduleReason;
                 $b->updated_at  = Carbon::now($this->tz)->toDateTimeString();
                 $b->save();
@@ -461,44 +503,82 @@ class BookingsApproval extends Component
 
     // ─────────────── Data & render ───────────────
 
-    private function applyCommonFilters($q)
+    private function applyCommonFilters($query, ?int $companyId = null): void
     {
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        }
+
         if ($this->q !== '') {
-            $q->where('meeting_title', 'like', '%' . $this->q . '%');
+            $query->where('meeting_title', 'like', '%' . $this->q . '%');
         }
 
         $selected = $this->selectedDateValue();
         if ($this->dateMode !== 'semua' && $selected) {
-            $q->whereDate('date', $selected);
+            $query->whereDate('date', $selected);
         }
 
-        $this->applyDateTimeOrdering($q);
+        // ROOM FILTER via relation room()
+        if (!is_null($this->roomFilterId)) {
+            $roomId = $this->roomFilterId;
+            $query->whereHas('room', function ($qr) use ($roomId) {
+                $qr->where('room_id', $roomId);
+            });
+        }
+
+        $this->applyDateTimeOrdering($query);
     }
 
     public function render()
     {
-        // auto move approved → completed
         $this->autoProgressToCompleted();
 
         $cols = [
             'bookingroom_id', 'meeting_title', 'booking_type', 'online_provider',
             'online_meeting_url', 'online_meeting_code', 'online_meeting_password',
             'status', 'date', 'start_time', 'end_time', 'room_id',
-            'user_id', 'approved_by', 'book_reject', 'created_at', 'updated_at'
+            'user_id', 'approved_by', 'book_reject', 'company_id', 'created_at', 'updated_at'
         ];
+
+        $companyId = Auth::user()->company_id ?? null;
 
         $pending = BookingRoom::query()
             ->with('room')
             ->where('status', 'pending')
-            ->tap(fn($q) => $this->applyCommonFilters($q))
+            ->tap(fn($q) => $this->applyCommonFilters($q, $companyId))
             ->paginate($this->perPending, $cols, 'pendingPage');
 
         $ongoing = BookingRoom::query()
             ->with('room')
             ->where('status', 'approved')
-            ->tap(fn($q) => $this->applyCommonFilters($q))
+            ->tap(fn($q) => $this->applyCommonFilters($q, $companyId))
             ->paginate($this->perOngoing, $cols, 'ongoingPage');
 
-        return view('livewire.pages.receptionist.bookings-approval', compact('pending', 'ongoing'));
+        // Recent activity: semua status KECUALI pending, approved(ongoing), dan rejected
+        $recentCompletedQuery = BookingRoom::query()
+            ->with('room')
+            ->whereNotIn('status', ['pending', 'approved', 'rejected']);
+
+        if ($companyId) {
+            $recentCompletedQuery->where('company_id', $companyId);
+        }
+
+        if (!is_null($this->roomFilterId)) {
+            $roomId = $this->roomFilterId;
+            $recentCompletedQuery->whereHas('room', function ($qr) use ($roomId) {
+                $qr->where('room_id', $roomId);
+            });
+        }
+
+        $recentCompleted = $recentCompletedQuery
+            ->orderByDesc('updated_at')
+            ->limit(6)
+            ->get($cols);
+
+        return view('livewire.pages.receptionist.bookings-approval', compact(
+            'pending',
+            'ongoing',
+            'recentCompleted'
+        ));
     }
 }
