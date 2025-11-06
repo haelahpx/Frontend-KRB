@@ -7,9 +7,11 @@ use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Department;
 
 #[Layout('layouts.admin')]
 #[Title('Admin - User Management')]
@@ -39,14 +41,19 @@ class Usermanagement extends Component
     public ?string $edit_password = null; // optional
     public ?int $edit_role_id = null;
 
-    /** Derived from auth (locked) */
+    /** Derived from auth */
     public int $company_id;
-    public int $department_id;
+    public ?int $primary_department_id = null;
     public string $company_name = '-';
-    public string $department_name = '-';
+    public string $department_name = '-'; // label yg mengikuti selection
+
+    /** Department switcher */
+    /** @var array<int, array{id:int,name:string}> */
+    public array $deptOptions = [];              // opsi dari user_departments
+    public ?int $selected_department_id = null;  // pilihan aktif
 
     /** Options */
-    /** @var array<array{id:int,name:string}> */
+    /** @var array<int, array{id:int,name:string}> */
     public array $roles = [];
 
     protected $casts = [
@@ -59,10 +66,19 @@ class Usermanagement extends Component
     {
         $auth = Auth::user()->loadMissing(['company', 'department']);
 
-        $this->company_id     = (int) ($auth->company_id ?? 0);
-        $this->department_id  = (int) ($auth->department_id ?? 0);
-        $this->company_name   = optional($auth->company)->company_name ?? '-';
-        $this->department_name= optional($auth->department)->department_name ?? '-';
+        $this->company_id          = (int) ($auth->company_id ?? 0);
+        $this->primary_department_id = $auth->department_id ?: null;
+        $this->company_name        = optional($auth->company)->company_name ?? '-';
+
+        // load switcher options
+        $this->loadUserDepartments();
+
+        // pilih default: primary -> first option -> null
+        $this->selected_department_id = $this->primary_department_id
+            ?: ($this->deptOptions[0]['id'] ?? null);
+
+        $this->department_name = $this->resolveDeptName($this->selected_department_id)
+            ?: (optional($auth->department)->department_name ?? '-');
 
         // Roles dropdown: hide superadmin & receptionist
         $this->roles = Role::query()
@@ -71,6 +87,63 @@ class Usermanagement extends Component
             ->get(['role_id as id', 'name'])
             ->map(fn($r) => ['id' => (int) $r->id, 'name' => (string) $r->name])
             ->toArray();
+    }
+
+    protected function loadUserDepartments(): void
+    {
+        $user = Auth::user();
+
+        $rows = DB::table('user_departments as ud')
+            ->join('departments as d', 'd.department_id', '=', 'ud.department_id')
+            ->where('ud.user_id', $user->user_id)
+            ->orderBy('d.department_name')
+            ->get(['d.department_id as id', 'd.department_name as name']);
+
+        $this->deptOptions = $rows->map(fn($r) => [
+            'id' => (int)$r->id,
+            'name' => (string)$r->name
+        ])->values()->all();
+
+        // fallback jika pivot kosong namun user punya primary
+        if (empty($this->deptOptions) && $this->primary_department_id) {
+            $name = Department::where('department_id', $this->primary_department_id)->value('department_name') ?? 'Unknown';
+            $this->deptOptions = [
+                ['id' => (int)$this->primary_department_id, 'name' => (string)$name]
+            ];
+        }
+    }
+
+    protected function resolveDeptName(?int $deptId): string
+    {
+        if (!$deptId) return '-';
+        foreach ($this->deptOptions as $opt) {
+            if ($opt['id'] === (int)$deptId) return $opt['name'];
+        }
+        return Department::where('department_id', $deptId)->value('department_name') ?? '-';
+    }
+
+    public function resetToPrimaryDepartment(): void
+    {
+        if ($this->primary_department_id) {
+            $this->selected_department_id = $this->primary_department_id;
+            $this->department_name = $this->resolveDeptName($this->selected_department_id);
+            $this->resetPage();
+        }
+    }
+
+    // Livewire 3 naming tolerance
+    public function updatedSelectedDepartment_id(): void { $this->updatedSelectedDepartmentId(); }
+    public function updatedSelectedDepartmentId(): void
+    {
+        $allowed = collect($this->deptOptions)->pluck('id')->all();
+        $id = (int) $this->selected_department_id;
+
+        if (!in_array($id, $allowed, true)) {
+            $this->selected_department_id = $this->primary_department_id ?: ($this->deptOptions[0]['id'] ?? null);
+            $id = (int)$this->selected_department_id;
+        }
+        $this->department_name = $this->resolveDeptName($id);
+        $this->resetPage();
     }
 
     public function updatingSearch(): void { $this->resetPage(); }
@@ -82,14 +155,12 @@ class Usermanagement extends Component
     {
         return [
             'full_name'    => ['required', 'string', 'max:255'],
-            // unique pada baris yang belum dihapus (deleted_at NULL)
             'email'        => ['required', 'email', 'unique:users,email,NULL,user_id,deleted_at,NULL'],
             'phone_number' => ['nullable', 'string', 'max:30'],
             'password'     => ['required', 'string', 'min:6'],
             'role_id'      => [
                 'required',
                 'integer',
-                // Block receptionist & superadmin server-side
                 Rule::exists('roles', 'role_id')
                     ->where(fn($q) => $q->whereNotIn('name', ['receptionist', 'superadmin'])),
             ],
@@ -101,7 +172,6 @@ class Usermanagement extends Component
         $id = $this->editingId ?? 'NULL';
         return [
             'edit_full_name'    => ['required', 'string', 'max:255'],
-            // ignore ID yang sedang diedit, tetap filter deleted_at NULL
             'edit_email'        => ["required", "email", "unique:users,email,{$id},user_id,deleted_at,NULL"],
             'edit_phone_number' => ['nullable', 'string', 'max:30'],
             'edit_role_id'      => [
@@ -110,7 +180,6 @@ class Usermanagement extends Component
                 Rule::exists('roles', 'role_id')
                     ->where(fn($q) => $q->whereNotIn('name', ['receptionist', 'superadmin'])),
             ],
-            // edit_password opsional
         ];
     }
 
@@ -120,18 +189,20 @@ class Usermanagement extends Component
     {
         $data = $this->validate($this->createRules());
 
+        // pakai departemen TERPILIH (fallback primary)
+        $deptId = $this->selected_department_id ?: $this->primary_department_id;
+
         User::create([
             'full_name'     => $data['full_name'],
             'email'         => strtolower($data['email']),
             'phone_number'  => $data['phone_number'] ?? null,
-            // Model sudah cast 'password' => 'hashed', jadi TIDAK perlu bcrypt()
+            // Model cast 'password' => 'hashed'
             'password'      => $this->password,
             'role_id'       => (int) $data['role_id'],
-            'company_id'    => $this->company_id,     // lock ke company auth
-            'department_id' => $this->department_id,  // lock ke dept auth
+            'company_id'    => $this->company_id,
+            'department_id' => $deptId,
         ]);
 
-        // Bersihkan form & kembali ke page pertama
         $this->resetCreateForm();
         $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'User dibuat.', duration: 3000);
         $this->resetPage();
@@ -156,15 +227,17 @@ class Usermanagement extends Component
         $this->resetErrorBag();
         $this->resetValidation();
 
+        $deptId = $this->selected_department_id ?: $this->primary_department_id;
+
         $u = User::with(['role', 'department'])
             ->where('company_id', $this->company_id)
-            ->where('department_id', $this->department_id)   // lock dept
+            ->where('department_id', $deptId) // lock ke dept terpilih
             ->where('user_id', $id)
             ->firstOrFail();
 
         $targetRole = strtolower($u->role->name ?? '');
 
-        // Rule: admin/superadmin hanya bisa diedit dirinya sendiri
+        // Aturan: admin/superadmin hanya boleh edit dirinya sendiri
         if (in_array($targetRole, ['admin', 'superadmin'], true) && $u->user_id !== Auth::id()) {
             $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Anda tidak bisa mengedit akun Admin lain.', duration: 4000);
             return;
@@ -198,15 +271,16 @@ class Usermanagement extends Component
     {
         if (!$this->editingId) return;
 
+        $deptId = $this->selected_department_id ?: $this->primary_department_id;
+
         $u = User::with('role')
             ->where('company_id', $this->company_id)
-            ->where('department_id', $this->department_id)
+            ->where('department_id', $deptId)
             ->where('user_id', $this->editingId)
             ->firstOrFail();
 
         $targetRole = strtolower($u->role->name ?? '');
 
-        // Rule: admin/superadmin hanya bisa update dirinya sendiri
         if (in_array($targetRole, ['admin', 'superadmin'], true) && $u->user_id !== Auth::id()) {
             $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Anda tidak bisa mengedit akun Admin lain.', duration: 4000);
             return;
@@ -222,8 +296,7 @@ class Usermanagement extends Component
         ];
 
         if (!empty($this->edit_password)) {
-            // Model cast akan meng-hash otomatis
-            $payload['password'] = $this->edit_password;
+            $payload['password'] = $this->edit_password; // auto-hash by model cast
         }
 
         $u->update($payload);
@@ -236,9 +309,11 @@ class Usermanagement extends Component
 
     public function delete(int $id): void
     {
+        $deptId = $this->selected_department_id ?: $this->primary_department_id;
+
         $u = User::with('role')
             ->where('company_id', $this->company_id)
-            ->where('department_id', $this->department_id)   // lock dept
+            ->where('department_id', $deptId)
             ->where('user_id', $id)
             ->first();
 
@@ -249,19 +324,16 @@ class Usermanagement extends Component
 
         $roleName = strtolower($u->role->name ?? '');
 
-        // Block deleting admin/superadmin
         if (in_array($roleName, ['admin', 'superadmin'], true)) {
             $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Akun Admin tidak boleh dihapus.', duration: 4000);
             return;
         }
 
-        // Block self-delete
         if ($u->user_id === Auth::id()) {
             $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Tidak boleh menghapus akun sendiri.', duration: 4000);
             return;
         }
 
-        // ✅ Soft delete (kolom deleted_at terisi)
         $u->delete();
 
         if ($this->editingId === $id) {
@@ -271,13 +343,15 @@ class Usermanagement extends Component
         $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'User dihapus (soft delete).', duration: 3000);
     }
 
-    /* ===== (Opsional) Trash actions: restore & force delete ===== */
+    /* ===== Opsional: restore & force delete di Trash ===== */
 
     public function restore(int $id): void
     {
+        $deptId = $this->selected_department_id ?: $this->primary_department_id;
+
         $u = User::onlyTrashed()
             ->where('company_id', $this->company_id)
-            ->where('department_id', $this->department_id)
+            ->where('department_id', $deptId)
             ->where('user_id', $id)
             ->first();
 
@@ -292,9 +366,11 @@ class Usermanagement extends Component
 
     public function destroy(int $id): void
     {
+        $deptId = $this->selected_department_id ?: $this->primary_department_id;
+
         $u = User::onlyTrashed()
             ->where('company_id', $this->company_id)
-            ->where('department_id', $this->department_id)
+            ->where('department_id', $deptId)
             ->where('user_id', $id)
             ->first();
 
@@ -311,24 +387,25 @@ class Usermanagement extends Component
 
     public function render()
     {
+        $deptId = $this->selected_department_id ?: $this->primary_department_id;
+
         $users = User::query()
             ->with(['role', 'department'])
             ->where('company_id', $this->company_id)
-            ->where('department_id', $this->department_id)
+            ->when($deptId, fn($q) => $q->where('department_id', $deptId))
             ->whereHas('role', fn($q) => $q->where('name', '!=', 'superadmin'))
             ->leftJoin('roles', 'roles.role_id', '=', 'users.role_id')
             ->when($this->search, function ($q) {
                 $s = trim($this->search);
                 $q->where(function ($qq) use ($s) {
                     $qq->where('users.full_name', 'like', "%{$s}%")
-                        ->orWhere('users.email', 'like', "%{$s}%");
+                       ->orWhere('users.email', 'like', "%{$s}%");
                 });
             })
             ->when($this->roleFilter, fn($q) => $q->where('users.role_id', (int) $this->roleFilter))
-            // Admin tampil duluan, lalu urut terbaru
             ->orderByRaw("CASE WHEN LOWER(roles.name) = 'admin' THEN 0 ELSE 1 END")
             ->orderByDesc('users.user_id')
-            ->select('users.*') // penting untuk pagination & model hydration
+            ->select('users.*')
             ->paginate(10);
 
         return view('livewire.pages.admin.usermanagement', [

@@ -46,6 +46,7 @@ use App\Livewire\Pages\Superadmin\Packagemanagement as Packagemanagement;
 use App\Livewire\Pages\Superadmin\Documentsmanagement as Documentsmanagement;
 use App\Livewire\Pages\Superadmin\Guestbookmanagement as Guestbookmanagement;
 use App\Livewire\Pages\Superadmin\Bookingvehicle as SuperadminBookingvehicle;
+use App\Livewire\Pages\Superadmin\Adminmanagement as AdminmanagementPage;
 
 // ========== Livewire Pages (Receptionist) ==========
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
@@ -180,10 +181,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/package', UserPackage::class)->name('package');
     Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
     Route::get('/vehiclestatus', Vehiclestatus::class)->name('vehiclestatus');
-
-    // TICKET (USER) — gunakan ULID binding; TIDAK bentrok dengan admin
     Route::get('/tickets/{ticket:ulid}', UserTicketshow::class)->name('user.ticket.show');
-
     Route::get('/ticket-queue', Ticketqueue::class)->name('user.ticket.queue');
 
     // ---------- Admin routes ----------
@@ -214,6 +212,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/superadmin-packagemanagement', Packagemanagement::class)->name('superadmin.packagemanagement');
         Route::get('/superadmin-documentsmanagement', Documentsmanagement::class)->name('superadmin.documentsmanagement');
         Route::get('/superadmin-guestbookmanagement', Guestbookmanagement::class)->name('superadmin.guestbookmanagement');
+        Route::get('/superadmin-adminmanagement', AdminmanagementPage::class)->name('superadmin.adminmanagement');
     });
 
     // ---------- Receptionist routes ----------

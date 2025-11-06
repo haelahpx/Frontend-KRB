@@ -124,7 +124,7 @@ class DatabaseSeeder extends Seeder
                 $firstNames = ['Agus','Bambang','Cici','Dedi','Endang','Fajar','Gita','Hadi','Indah','Joko','Kartika','Lina','Mega','Nina','Oscar','Putra','Qori','Rian','Sari','Tono','Umar','Vina','Wati','Yoga','Zul'];
                 $lastNames = ['Susanto','Wijaya','Permata','Nugroho','Pratama','Wibowo','Hidayat','Kusuma','Lestari','Setiawan'];
 
-                for ($i = 1; $i <= 100; $i++) {
+                for ($i = 1; $i <= 10; $i++) {
                     $name = Arr::random($firstNames) . ' ' . Arr::random($lastNames);
                     $slug = Str::slug($name) . "-{$i}";
                     $dept = Arr::random($depts);
@@ -195,7 +195,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // ===== DELIVERIES =====
-        for ($i=1; $i<=100; $i++) {
+        for ($i=1; $i<=10; $i++) {
             Delivery::create([
                 'company_id'=>$companyId,
                 'receptionist_id'=>$receptionist->user_id,
@@ -209,7 +209,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // ===== ANNOUNCEMENTS, INFORMATION, GUESTBOOK =====
-        for ($i=1; $i<=100; $i++) {
+        for ($i=1; $i<=10; $i++) {
             $randomDate=$now->copy()->subDays(rand(0,365));
 
             Announcement::create([
@@ -315,7 +315,7 @@ class DatabaseSeeder extends Seeder
             'low' => 72,
         ];
 
-        foreach (range(1,100) as $i) {
+        foreach (range(1,10) as $i) {
             $user=$users->random();
             $dept=$depts[array_rand($depts)];
             $reqDept=$depts[array_rand($depts)];
@@ -329,7 +329,7 @@ class DatabaseSeeder extends Seeder
             $updated = $created->copy();
 
             if ($isResolved) {
-                $isWithinSla = rand(0,100) < 70;
+                $isWithinSla = rand(0,10) < 70;
                 $hoursTaken = $isWithinSla ? rand(1,$targetHours-1) : $targetHours + rand(10,48);
                 $updated = $created->copy()->addHours($hoursTaken);
             } else {

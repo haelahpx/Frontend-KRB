@@ -15,6 +15,7 @@ use Carbon\Carbon;
 
 use App\Models\Information as InformationModel;
 use App\Models\BookingRoom;
+use App\Models\Department;
 
 #[Layout('layouts.admin')]
 #[Title('Admin - Information')]
@@ -34,11 +35,11 @@ class Information extends Component
     // ====== FILTERS (information list) ======
     public ?string $search = null;
 
-    // ====== FORM FIELDS (create / edit single info) ======
+    // ====== FORM FIELDS ======
     public string $description = '';
     public string $event_at   = ''; // Y-m-d\TH:i
 
-    // ====== BROADCAST (own department only) ======
+    // ====== BROADCAST (own department only; now uses selected dept) ======
     public string $broadcast_description = '';
     public string $broadcast_event_at    = '';
 
@@ -46,23 +47,122 @@ class Information extends Component
     public bool  $informModal = false;
     public ?int  $informBookingId = null;
 
-    // ====== HEADER (hero) ======
+    // ====== HEADER (hero) & DEPT SWITCHER ======
     public string $company_name    = '-';
-    public string $department_name = '-';
+    public string $department_name = '-'; // resolved from selected
+    public array  $deptOptions     = [];  // [ ['id'=>1,'name'=>'...'], ... ]
+    public ?int   $selected_department_id = null; // live switch
+    public ?int   $primary_department_id  = null; // users.department_id
+
+    public bool $showSwitcher = false;          
 
     public function mount(): void
     {
         try {
             $auth = Auth::user()->loadMissing(['company', 'department']);
-            $this->company_name    = optional($auth->company)->company_name ?? '-';
-            $this->department_name = optional($auth->department)->department_name ?? '-';
+            $this->company_name = optional($auth->company)->company_name ?? '-';
+
+            // Primary dari users.department_id
+            $this->primary_department_id = $auth->department_id ?: null;
+
+            // Muat daftar departemen yang dimiliki user (pivot user_departments)
+            $this->loadUserDepartments();
+
+            // Set selected: prioritas primary; fallback ke pertama di list
+            if (!$this->selected_department_id) {
+                $this->selected_department_id = $this->primary_department_id
+                    ?: ($this->deptOptions[0]['id'] ?? null);
+            }
+
+            $this->department_name = $this->resolveDeptName($this->selected_department_id);
 
             $this->resetForm();
             $this->resetBroadcastForm();
+
         } catch (Throwable $e) {
             $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal memuat header.', duration: 5000);
             Log::error('Information mount error', ['m' => $e->getMessage()]);
         }
+    }
+
+    protected function loadUserDepartments(): void
+    {
+        $user = Auth::user();
+
+        $rows = DB::table('user_departments as ud')
+            ->join('departments as d', 'd.department_id', '=', 'ud.department_id')
+            ->where('ud.user_id', $user->user_id) // PK kamu pakai user_id
+            ->orderBy('d.department_name')
+            ->get(['d.department_id as id', 'd.department_name as name']);
+
+        $this->deptOptions = $rows->map(fn($r) => ['id' => (int)$r->id, 'name' => (string)$r->name])->values()->all();
+
+        $this->showSwitcher = true; 
+
+        // kalau user tidak punya pivot apapun, tetapi punya primary, masukkan primary supaya tetap bisa jalan
+        if (empty($this->deptOptions) && $this->primary_department_id) {
+            $name = Department::where('department_id', $this->primary_department_id)->value('department_name') ?? 'Unknown';
+            $this->deptOptions = [['id' => (int)$this->primary_department_id, 'name' => (string)$name]];
+
+            $this->showSwitcher = false;
+        }
+    }
+
+    protected function resolveDeptName(?int $deptId): string
+    {
+        if (!$deptId) return '-';
+        foreach ($this->deptOptions as $opt) {
+            if ($opt['id'] === (int)$deptId) {
+                return $opt['name'];
+            }
+        }
+        // fallback query (kalau tidak ada di list karena perubahan data)
+        return Department::where('department_id', $deptId)->value('department_name') ?? '-';
+    }
+
+    public function resetToPrimaryDepartment(): void
+    {
+        if ($this->primary_department_id) {
+            $this->selected_department_id = $this->primary_department_id;
+            $this->department_name = $this->resolveDeptName($this->selected_department_id);
+            $this->resetPaginationForAll();
+            $this->dispatch('toast', type: 'success', title: 'Switched', message: 'Kembali ke primary department.', duration: 2000);
+        }
+    }
+
+    public function updatedSelectedDepartment_id(): void
+    {
+        // Livewire camelCase <-> snakeCase guard; jika method ini tidak terpanggil di versimu,
+        // gunakan updatedSelectedDepartmentId() di bawah
+        $this->updatedSelectedDepartmentId();
+    }
+
+    public function updatedSelectedDepartmentId(): void
+    {
+        $id = (int) $this->selected_department_id;
+
+        // Validasi: hanya boleh memilih dari deptOptions
+        $allowed = collect($this->deptOptions)->pluck('id')->all();
+        if (!in_array($id, $allowed, true)) {
+            // fallback ke primary atau first
+            $this->selected_department_id = $this->primary_department_id ?: ($this->deptOptions[0]['id'] ?? null);
+            $id = (int) $this->selected_department_id;
+        }
+
+        $this->department_name = $this->resolveDeptName($id);
+        $this->resetPaginationForAll();
+    }
+
+    protected function currentDeptId(): ?int
+    {
+        return $this->selected_department_id ?: $this->primary_department_id;
+    }
+
+    protected function resetPaginationForAll(): void
+    {
+        $this->resetPage('infoPage');
+        $this->resetPage('offlinePage');
+        $this->resetPage('onlinePage');
     }
 
     private function resetForm(): void
@@ -103,9 +203,12 @@ class Information extends Component
 
     public function edit(int $id): void
     {
+        $user = Auth::user();
+        $deptId = $this->currentDeptId();
+
         $row = InformationModel::where('information_id', $id)
-            ->where('company_id', Auth::user()->company_id)
-            ->where('department_id', Auth::user()->department_id)
+            ->where('company_id', $user->company_id)
+            ->where('department_id', $deptId)
             ->firstOrFail();
 
         $this->editingId   = $row->information_id;
@@ -119,15 +222,16 @@ class Information extends Component
     {
         $data = $this->validate($this->rules());
         $user = Auth::user();
+        $deptId = $this->currentDeptId();
 
-        if (!$user->department_id) {
-            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Akun Anda belum memiliki department.', duration: 5000);
+        if (!$deptId) {
+            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Tidak ada departemen terpilih.', duration: 5000);
             return;
         }
 
         InformationModel::create([
             'company_id'    => $user->company_id,
-            'department_id' => $user->department_id,
+            'department_id' => $deptId,
             'description'   => $data['description'],
             'event_at'      => Carbon::parse($data['event_at']),
         ]);
@@ -142,15 +246,17 @@ class Information extends Component
     {
         $this->validate($this->rules());
 
-        $user = Auth::user();
+        $user   = Auth::user();
+        $deptId = $this->currentDeptId();
+
         $row = InformationModel::where('information_id', $this->editingId)
             ->where('company_id', $user->company_id)
-            ->where('department_id', $user->department_id)
+            ->where('department_id', $deptId)
             ->firstOrFail();
 
         $row->fill([
             'company_id'    => $user->company_id,
-            'department_id' => $user->department_id,
+            'department_id' => $deptId,
             'description'   => $this->description,
             'event_at'      => Carbon::parse($this->event_at),
         ])->save();
@@ -162,9 +268,12 @@ class Information extends Component
 
     public function destroy(int $id): void
     {
+        $user   = Auth::user();
+        $deptId = $this->currentDeptId();
+
         $row = InformationModel::where('information_id', $id)
-            ->where('company_id', Auth::user()->company_id)
-            ->where('department_id', Auth::user()->department_id)
+            ->where('company_id', $user->company_id)
+            ->where('department_id', $deptId)
             ->firstOrFail();
 
         $row->delete();
@@ -185,28 +294,28 @@ class Information extends Component
     public function openBroadcast(): void
     {
         $this->resetBroadcastForm();
-        // Tidak perlu view khusus; quick form ada di hero bar
     }
 
     public function submitBroadcast(): void
     {
-        $data = $this->validate($this->broadcastRules());
-        $user = Auth::user();
+        $data  = $this->validate($this->broadcastRules());
+        $user  = Auth::user();
+        $deptId = $this->currentDeptId();
 
-        if (!$user->department_id) {
-            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Akun Anda belum memiliki department.', duration: 5000);
+        if (!$deptId) {
+            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Tidak ada departemen terpilih.', duration: 5000);
             return;
         }
 
         try {
             InformationModel::create([
                 'company_id'    => $user->company_id,
-                'department_id' => $user->department_id,
+                'department_id' => $deptId,
                 'description'   => $data['broadcast_description'],
                 'event_at'      => Carbon::parse($data['broadcast_event_at'])->format('Y-m-d H:i:s'),
             ]);
 
-            $this->dispatch('toast', type: 'success', title: 'Broadcast Sent', message: 'Information broadcast to your department.', duration: 3500);
+            $this->dispatch('toast', type: 'success', title: 'Broadcast Sent', message: 'Information broadcast ke departemen terpilih.', duration: 3500);
             $this->resetBroadcastForm();
             $this->resetPage('infoPage');
 
@@ -216,7 +325,7 @@ class Information extends Component
         }
     }
 
-    // ========= REQUEST → INFORM (own department only) =========
+    // ========= REQUEST → INFORM =========
     public function openInformModal(int $bookingId): void
     {
         try {
@@ -240,9 +349,11 @@ class Information extends Component
             'informBookingId' => 'required|integer',
         ]);
 
-        $user = Auth::user();
-        if (!$user->department_id) {
-            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Akun Anda belum memiliki department.', duration: 5000);
+        $user    = Auth::user();
+        $deptId  = $this->currentDeptId();
+
+        if (!$deptId) {
+            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Tidak ada departemen terpilih.', duration: 5000);
             return;
         }
 
@@ -252,7 +363,6 @@ class Information extends Component
             ->firstOrFail();
 
         $companyId = $user->company_id;
-        $deptId    = $user->department_id;
         $eventAt   = Carbon::parse($booking->date.' '.$booking->start_time)->format('Y-m-d H:i:s');
         $desc      = $this->composeDescription($booking);
 
@@ -272,7 +382,7 @@ class Information extends Component
             $this->resetPage('offlinePage');
             $this->resetPage('onlinePage');
 
-            $this->dispatch('toast', type: 'success', title: 'Sent', message: 'Information sent to your department.', duration: 3500);
+            $this->dispatch('toast', type: 'success', title: 'Sent', message: 'Information dikirim ke departemen terpilih.', duration: 3500);
 
         } catch (Throwable $e) {
             $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal mengirim informasi.', duration: 5000);
@@ -326,9 +436,9 @@ class Information extends Component
     {
         $user      = Auth::user();
         $companyId = $user->company_id;
-        $deptId    = $user->department_id;
+        $deptId    = $this->currentDeptId();
 
-        // Request lists (company-scope; action push ke own dept)
+        // Request lists (company-scope; action push ke dept terpilih)
         $offline = BookingRoom::query()
             ->with(['room','user','department'])
             ->where('company_id', $companyId)
@@ -349,10 +459,10 @@ class Information extends Component
             ->orderByDesc('date')->orderByDesc('start_time')
             ->paginate($this->perPageReq, ['*'], 'onlinePage');
 
-        // Information table: ONLY own department
+        // Information table: ONLY department terpilih
         $rows = InformationModel::query()
             ->where('company_id', $companyId)
-            ->where('department_id', $deptId)
+            ->when($deptId, fn($q) => $q->where('department_id', $deptId))
             ->when($this->search, fn($q) =>
                 $q->where('description', 'like', '%'.$this->search.'%')
             )

@@ -1,5 +1,5 @@
 {{-- resources/views/livewire/pages/admin/information.blade.php --}}
-<div class="bg-slate-300/40 min-h-screen" wire:key="information-root">
+<div class="bg-gray-50 min-h-screen" wire:key="information-root">
     @php
     $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
     $label = 'block text-sm font-medium text-gray-700 mb-2';
@@ -20,22 +20,69 @@
             </div>
 
             <div class="relative z-10 p-6 sm:p-8">
+                @if (!$showSwitcher)
+                {{-- SIMPLE HEADER (no switcher) --}}
                 <div class="flex items-start gap-4">
                     <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                        {{-- Blade Icon: document-text --}}
                         <x-heroicon-o-document-text class="w-6 h-6 text-white" />
                     </div>
                     <div class="min-w-0">
-                        <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Information Center</h2>
+                        <h2 class="text-lg sm:text-xl font-semibold">Information Center</h2>
                         <p class="text-sm text-white/80">
                             Perusahaan: <span class="font-semibold">{{ $company_name }}</span>
                             <span class="mx-2">•</span>
                             Departemen: <span class="font-semibold">{{ $department_name }}</span>
                         </p>
+                        <p class="text-xs text-white/60 mt-1">
+                            Halaman ini <strong>terkunci</strong> ke departemen Anda (tidak ada data multi-department).
+                        </p>
                     </div>
-                </div>  
+                </div>
+                @else
+                {{-- HEADER + SWITCHER --}}
+                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+                            <x-heroicon-o-document-text class="w-6 h-6 text-white" />
+                        </div>
+                        <div class="min-w-0">
+                            <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Information Center</h2>
+                            <p class="text-sm text-white/80">
+                                Perusahaan: <span class="font-semibold">{{ $company_name }}</span>
+                                <span class="mx-2">•</span>
+                                Departemen: <span class="font-semibold">{{ $department_name }}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="w-full lg:w-80">
+                        <label class="block text-xs font-medium text-white/80 mb-1">Pilih Departemen</label>
+                        <div class="flex items-center gap-2">
+                            <select
+                                wire:model.live="selected_department_id"
+                                class="w-full h-10 px-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder:text-white/60 focus:border-white focus:ring-2 focus:ring-white/30 transition">
+                                @foreach ($deptOptions as $opt)
+                                <option class="text-gray-900" value="{{ $opt['id'] }}">
+                                    {{ $opt['name'] }}{{ $opt['id'] === $primary_department_id ? ' — Primary' : '' }}
+                                </option>
+                                @endforeach
+                            </select>
+
+                            <button
+                                type="button"
+                                wire:click="resetToPrimaryDepartment"
+                                class="inline-flex items-center gap-1 px-2.5 py-2 text-xs font-medium rounded-lg bg-white/10 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30">
+                                <x-heroicon-o-star class="w-4 h-4" />
+                                Primary
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-white/60 mt-1">Data mengikuti departemen yang dipilih.</p>
+                    </div>
+                </div>
+                @endif
             </div>
         </section>
+
 
         {{-- REQUEST QUEUE (RoomMonitoring moved here) --}}
         <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -208,7 +255,7 @@
             <div class="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
                 <div class="inline-flex items-center gap-2">
                     <x-heroicon-o-information-circle class="w-5 h-5 text-gray-700" />
-                    <h3 class="text-base font-semibold text-gray-900">Information (My Department)</h3>
+                    <h3 class="text-base font-semibold text-gray-900">Information (Selected Department)</h3>
                 </div>
                 <span class="{{ $mono }}">Showing: {{ $rows->count() }} / Total: {{ $rows->total() }}</span>
             </div>
@@ -224,6 +271,7 @@
                                 placeholder="Search description..."
                                 class="pl-10 {{ $input }}">
                         </div>
+
                         <button wire:click="create" class="{{ $btnBlk }}">
                             <x-heroicon-o-plus class="w-5 h-5" />
                             <span>New</span>
@@ -299,7 +347,7 @@
                     <span class="text-gray-500">Auto-fill:</span>
                     <span class="font-medium text-gray-700">
                         company_id={{ auth()->user()->company_id }},
-                        department_id={{ auth()->user()->department_id }}
+                        department_id={{ $selected_department_id }}
                     </span>
                 </span>
             </div>
@@ -360,7 +408,7 @@
 
                 <div class="p-5 space-y-4">
                     <p class="text-sm text-gray-700">
-                        Informasi dari booking ini akan dikirim <span class="font-semibold">hanya</span> ke departemen Anda:
+                        Informasi dari booking ini akan dikirim ke departemen terpilih:
                         <span class="font-semibold">{{ $department_name }}</span>.
                     </p>
 

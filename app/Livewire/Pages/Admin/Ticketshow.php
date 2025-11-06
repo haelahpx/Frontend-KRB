@@ -128,9 +128,6 @@ class Ticketshow extends Component
 
         $this->status   = self::DB_TO_UI_STATUS_MAP[$ticket->status] ?? 'open';
         $this->agent_id = optional($ticket->assignment)->user_id;
-
-        // Info toast saat berhasil memuat
-        $this->toast('info', 'Loaded', "Ticket #{$ticket->ticket_id} dimuat.", 1800);
     }
 
     /** ------------------------------
