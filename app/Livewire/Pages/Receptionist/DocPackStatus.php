@@ -22,33 +22,39 @@ class DocPackStatus extends Component
 
     // Filters
     public string $q = '';
-    public ?string $selectedDate = null;   // 'YYYY-MM-DD' (created_at)
-    public string $dateMode = 'semua';     // 'semua' | 'terbaru' | 'terlama'
-    public string $type = 'all';           // 'all' | 'document' | 'package'
+    public ?string $selectedDate = null;
+    public string $dateMode = 'semua';
+    public string $type = 'all';
     public ?int $departmentId = null;
     public ?int $userId = null;
     public string $departmentQ = '';
     public string $userQ = '';
 
+    // Tabs
+    public string $activeTab = 'pending';
+
     // Pagination per box
     public int $perPending = 5;
     public int $perStored = 5;
 
-    // Edit modal (optional)
+    // Mobile filter modal
+    public bool $showFilterModal = false;
+
+    // Edit modal
     public bool $showEdit = false;
     public ?int $editId = null;
     public array $edit = [
-        'item_name'     => null,
+        'item_name' => null,
         'nama_pengirim' => null,
         'nama_penerima' => null,
-        'catatan'       => null,
+        'catatan' => null,
     ];
 
     protected $rules = [
-        'edit.item_name'     => 'nullable|string|max:255',
+        'edit.item_name' => 'nullable|string|max:255',
         'edit.nama_pengirim' => 'nullable|string|max:255',
         'edit.nama_penerima' => 'nullable|string|max:255',
-        'edit.catatan'       => 'nullable|string|max:5000',
+        'edit.catatan' => 'nullable|string|max:5000',
     ];
 
     public function updated($name): void
@@ -57,21 +63,32 @@ class DocPackStatus extends Component
             $this->userId = null;
         }
 
-        if (
-            in_array($name, [
-                'q',
-                'selectedDate',
-                'dateMode',
-                'type',
-                'departmentId',
-                'userId',
-                'departmentQ',
-                'userQ',
-            ], true)
-        ) {
-            $this->resetPage('pending');
-            $this->resetPage('stored');
+        if (in_array($name, ['q', 'selectedDate', 'dateMode', 'type', 'departmentId', 'userId', 'departmentQ', 'userQ'], true)) {
+            $this->resetPage('pendingPage');
+            $this->resetPage('storedPage');
         }
+    }
+
+    // ───────── Tabs ─────────
+    public function setTab(string $tab): void
+    {
+        if (!in_array($tab, ['pending', 'stored'], true)) {
+            return;
+        }
+        $this->activeTab = $tab;
+        $this->resetPage('pendingPage');
+        $this->resetPage('storedPage');
+    }
+
+    // ───────── Mobile Filter Modal ─────────
+    public function openFilterModal(): void
+    {
+        $this->showFilterModal = true;
+    }
+
+    public function closeFilterModal(): void
+    {
+        $this->showFilterModal = false;
     }
 
     private function base()
@@ -138,35 +155,31 @@ class DocPackStatus extends Component
         return $q;
     }
 
-    /** Pending set (still at receptionist, not stored yet) */
     public function getPendingProperty()
     {
         $q = $this->base()->where('status', 'pending');
         $this->applySharedFilters($q)->latest('created_at');
 
-        return $q->with('receptionist')->paginate($this->perPending, pageName: 'pending');
+        return $q->with('receptionist')->paginate($this->perPending, pageName: 'pendingPage');
     }
 
-    /** Stored set (already stored to a slot) */
     public function getStoredProperty()
     {
         $q = $this->base()->where('status', 'stored');
         $this->applySharedFilters($q)->latest('created_at');
 
-        return $q->with('receptionist')->paginate($this->perStored, pageName: 'stored');
+        return $q->with('receptionist')->paginate($this->perStored, pageName: 'storedPage');
     }
-
-    /* ===== Pending box actions ===== */
 
     public function openEdit(int $id): void
     {
         $row = $this->base()->findOrFail($id);
         $this->editId = $row->delivery_id ?? $row->id ?? $id;
         $this->edit = [
-            'item_name'     => $row->item_name,
+            'item_name' => $row->item_name,
             'nama_pengirim' => $row->nama_pengirim,
             'nama_penerima' => $row->nama_penerima,
-            'catatan'       => $row->catatan,
+            'catatan' => $row->catatan,
         ];
         $this->showEdit = true;
     }
@@ -180,15 +193,15 @@ class DocPackStatus extends Component
 
         $row = $this->base()->findOrFail($this->editId);
         $row->fill([
-            'item_name'     => $this->edit['item_name'],
+            'item_name' => $this->edit['item_name'],
             'nama_pengirim' => $this->edit['nama_pengirim'],
             'nama_penerima' => $this->edit['nama_penerima'],
-            'catatan'       => $this->edit['catatan'],
+            'catatan' => $this->edit['catatan'],
         ])->save();
 
         $this->showEdit = false;
         $this->editId = null;
-        $this->resetPage('pending');
+        $this->resetPage('pendingPage');
         $this->dispatch('toast', type: 'success', title: 'Saved', message: 'Information successfully saved.', duration: 3000);
     }
 
@@ -198,12 +211,10 @@ class DocPackStatus extends Component
         $row->status = 'stored';
         $row->save();
 
-        $this->resetPage('pending');
-        $this->resetPage('stored');
+        $this->resetPage('pendingPage');
+        $this->resetPage('storedPage');
         $this->dispatch('toast', type: 'success', title: 'Stored', message: 'Item successfully stored.', duration: 3000);
     }
-
-    /* ===== Direction helpers & Stored actions ===== */
 
     private function getDirectionFor(Delivery $row): string
     {
@@ -223,8 +234,8 @@ class DocPackStatus extends Component
         $pengirim = trim((string) $row->nama_pengirim);
         $penerima = trim((string) $row->nama_penerima);
 
-        $isPengirimUser  = false;
-        $isPenerimaUser  = false;
+        $isPengirimUser = false;
+        $isPenerimaUser = false;
 
         if ($pengirim !== '') {
             $isPengirimUser = UserModel::query()
@@ -247,11 +258,10 @@ class DocPackStatus extends Component
         return ($row->type === 'document') ? 'deliver' : 'taken';
     }
 
-    /** Stored → final (delivered/taken) based on direction column */
     public function finalizeItem(int $id): void
     {
         $row = $this->base()->where('status', 'stored')->findOrFail($id);
-        $dir = $this->getDirectionFor($row); // 'deliver' | 'taken'
+        $dir = $this->getDirectionFor($row);
 
         $when = now();
 
@@ -269,10 +279,9 @@ class DocPackStatus extends Component
 
         $row->save();
 
-        $this->resetPage('stored');
+        $this->resetPage('storedPage');
         $this->dispatch('toast', type: 'success', title: 'Done', message: 'Item successfully finalized.', duration: 3000);
     }
-
 
     public function render()
     {
@@ -297,17 +306,17 @@ class DocPackStatus extends Component
 
         $storedDirections = collect($this->stored->items())
             ->mapWithKeys(function ($row) {
-                $dir = $this->getDirectionFor($row); // 'deliver' | 'taken'
+                $dir = $this->getDirectionFor($row);
                 return [($row->delivery_id ?? $row->id) => $dir];
             })
             ->toArray();
 
         return view('livewire.pages.receptionist.docpackstatus', [
-            'pending'         => $this->pending,
-            'stored'          => $this->stored,
-            'storedDirections'=> $storedDirections,
-            'departments'     => $departments,
-            'users'           => $users,
+            'pending' => $this->pending,
+            'stored' => $this->stored,
+            'storedDirections' => $storedDirections,
+            'departments' => $departments,
+            'users' => $users,
         ]);
     }
 }

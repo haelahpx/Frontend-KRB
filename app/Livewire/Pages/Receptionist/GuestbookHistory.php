@@ -19,11 +19,12 @@ class GuestbookHistory extends Component
     protected string $paginationTheme = 'tailwind';
 
     // Per-page controls
-    public int $perLatest = 5;   // for "Kunjungan Terbaru"
-    public int $perEntries = 5;   // for "Riwayat Kunjungan"
+    public int $perLatest   = 5; // for "Kunjungan Terbaru"
+    public int $perEntries  = 5; // for "Riwayat Kunjungan"
 
     // Filters for history box
-    public ?string $filter_date = null;  // YYYY-MM-DD
+    public ?string $filter_date   = null; // YYYY-MM-DD (used in Blade as wire:model="filter_date")
+    public ?string $selectedDate  = null; // <-- added to satisfy old Livewire snapshot
     public string $q = '';
 
     // Sorting (follow BookingsApproval pattern)
@@ -34,29 +35,32 @@ class GuestbookHistory extends Component
 
     // Edit modal state
     public bool $showEdit = false;
-    public ?int $editId = null;
+    public ?int $editId   = null;
+
+    // Active tab: entries | latest
+    public string $activeTab = 'entries';
 
     public array $edit = [
-        'date' => null,
-        'jam_in' => null,
-        'jam_out' => null,
-        'name' => null,
-        'phone_number' => null,
-        'instansi' => null,
-        'keperluan' => null,
-        'petugas_penjaga' => null,
+        'date'             => null,
+        'jam_in'           => null,
+        'jam_out'          => null,
+        'name'             => null,
+        'phone_number'     => null,
+        'instansi'         => null,
+        'keperluan'        => null,
+        'petugas_penjaga'  => null,
     ];
 
     protected function rulesEdit(): array
     {
         return [
-            'edit.date' => ['required', 'date'],
-            'edit.jam_in' => ['required', 'date_format:H:i'],
-            'edit.jam_out' => ['nullable', 'date_format:H:i'],
-            'edit.name' => ['required', 'string', 'max:255'],
-            'edit.phone_number' => ['nullable', 'string', 'max:50'],
-            'edit.instansi' => ['nullable', 'string', 'max:255'],
-            'edit.keperluan' => ['nullable', 'string', 'max:255'],
+            'edit.date'            => ['required', 'date'],
+            'edit.jam_in'          => ['required', 'date_format:H:i'],
+            'edit.jam_out'         => ['nullable', 'date_format:H:i'],
+            'edit.name'            => ['required', 'string', 'max:255'],
+            'edit.phone_number'    => ['nullable', 'string', 'max:50'],
+            'edit.instansi'        => ['nullable', 'string', 'max:255'],
+            'edit.keperluan'       => ['nullable', 'string', 'max:255'],
             'edit.petugas_penjaga' => ['required', 'string', 'max:255'],
         ];
     }
@@ -66,10 +70,12 @@ class GuestbookHistory extends Component
     {
         $this->edit['date'] = $this->normalizeDate($v);
     }
+
     public function updatedEditJamIn($v): void
     {
         $this->edit['jam_in'] = $this->normalizeTime($v);
     }
+
     public function updatedEditJamOut($v): void
     {
         $this->edit['jam_out'] = $this->normalizeTime($v, true);
@@ -77,8 +83,10 @@ class GuestbookHistory extends Component
 
     private function normalizeDate($v): ?string
     {
-        if (!$v)
+        if (!$v) {
             return null;
+        }
+
         try {
             return Carbon::parse(str_replace('/', '-', $v))->format('Y-m-d');
         } catch (\Throwable) {
@@ -88,10 +96,13 @@ class GuestbookHistory extends Component
 
     private function normalizeTime($v, bool $nullable = false): ?string
     {
-        if ($nullable && $v === '')
+        if ($nullable && $v === '') {
             return null;
-        if (!$v)
+        }
+        if (!$v) {
             return null;
+        }
+
         try {
             return Carbon::parse($v)->format('H:i');
         } catch (\Throwable) {
@@ -104,7 +115,9 @@ class GuestbookHistory extends Component
         return Auth::user()?->company_id;
     }
 
-    /** Pastikan data milik company yang sama; tidak ikut yang sudah di-trashed kecuali withTrashed() */
+    /**
+     * Pastikan data milik company yang sama; tidak ikut yang sudah di-trashed kecuali withTrashed()
+     */
     private function findOwnedOrFail(int $id): GuestbookModel
     {
         return GuestbookModel::withTrashed()
@@ -113,30 +126,51 @@ class GuestbookHistory extends Component
             ->firstOrFail();
     }
 
-    /** ==== Reset the correct paginator when filters change ==== */
+    /** ==== Reset the correct paginator when filters / per-page change ==== */
     public function updatingQ(): void
     {
         $this->resetPage('entriesPage');
     }
+
     public function updatingFilterDate(): void
     {
         $this->resetPage('entriesPage');
     }
+
     public function updatedWithTrashed(): void
     {
         $this->resetPage('entriesPage');
     }
+
     public function updatedDateMode(): void
     {
         $this->resetPage('entriesPage');
     }
+
     public function updatedPerLatest(): void
     {
         $this->resetPage('latestPage');
     }
+
     public function updatedPerEntries(): void
     {
         $this->resetPage('entriesPage');
+    }
+
+    /** Tabs switcher (Riwayat / Terbaru) */
+    public function setTab(string $tab): void
+    {
+        if (!in_array($tab, ['entries', 'latest'], true)) {
+            return;
+        }
+
+        $this->activeTab = $tab;
+
+        if ($tab === 'entries') {
+            $this->resetPage('entriesPage');
+        } else {
+            $this->resetPage('latestPage');
+        }
     }
 
     /** Sorting helper like BookingsApproval */
@@ -147,20 +181,24 @@ class GuestbookHistory extends Component
 
     /** ==== Computed props with pagination ==== */
 
-    /** Kunjungan hari ini yang BELUM keluar, paginated (independent page name) */
+    /**
+     * Kunjungan hari ini yang BELUM keluar, paginated (independent page name)
+     */
     public function getLatestProperty()
     {
         $q = GuestbookModel::where('company_id', $this->companyId())
             ->whereDate('date', now()->toDateString())
             ->whereNull('jam_out');
 
-        // Order newer first
+        // Newest first
         $q->orderByDesc('created_at');
 
         return $q->paginate($this->perLatest, ['*'], 'latestPage');
     }
 
-    /** Riwayat kunjungan (sudah keluar), with soft delete toggle, paginated (independent page name) */
+    /**
+     * Riwayat kunjungan (sudah keluar), with soft delete toggle, paginated (independent page name)
+     */
     public function getEntriesProperty()
     {
         $q = GuestbookModel::query()
@@ -189,20 +227,17 @@ class GuestbookHistory extends Component
             });
         }
 
-        // Sort by date+jam_in similar to BookingsApproval (dateMode)
+        // Sort by date+jam_in / jam_out similar to BookingsApproval (dateMode)
         $dir = $this->sortingDirection();
         $dtExpr = "COALESCE(
             CASE WHEN `jam_out` REGEXP '^[0-9]{2}:' THEN CONCAT(`date`, ' ', `jam_out`) ELSE CONCAT(`date`, ' ', `jam_in`) END,
             CONCAT(`date`, ' 00:00:00')
         )";
-        $q->orderByRaw("$dtExpr $dir")->orderByDesc('created_at');
+
+        $q->orderByRaw("$dtExpr $dir")
+          ->orderByDesc('created_at');
 
         return $q->paginate($this->perEntries, ['*'], 'entriesPage');
-    }
-
-    public function getServerClockProperty(): string
-    {
-        return Carbon::now(config('app.timezone', 'Asia/Jakarta'))->format('H:i:s');
     }
 
     /** ====== Actions for history (edit/delete/restore) ====== */
@@ -212,14 +247,14 @@ class GuestbookHistory extends Component
 
         $this->editId = $row->getKey();
         $this->edit = [
-            'date' => $row->date ? Carbon::parse($row->date)->format('Y-m-d') : null,
-            'jam_in' => $row->jam_in ? Carbon::parse($row->jam_in)->format('H:i') : null,
-            'jam_out' => $row->jam_out ? Carbon::parse($row->jam_out)->format('H:i') : null,
-            'name' => $row->name,
-            'phone_number' => $row->phone_number,
-            'instansi' => $row->instansi,
-            'keperluan' => $row->keperluan,
-            'petugas_penjaga' => $row->petugas_penjaga,
+            'date'             => $row->date ? Carbon::parse($row->date)->format('Y-m-d') : null,
+            'jam_in'           => $row->jam_in ? Carbon::parse($row->jam_in)->format('H:i') : null,
+            'jam_out'          => $row->jam_out ? Carbon::parse($row->jam_out)->format('H:i') : null,
+            'name'             => $row->name,
+            'phone_number'     => $row->phone_number,
+            'instansi'         => $row->instansi,
+            'keperluan'        => $row->keperluan,
+            'petugas_penjaga'  => $row->petugas_penjaga,
         ];
 
         $this->resetValidation();
@@ -231,19 +266,28 @@ class GuestbookHistory extends Component
         $this->validate($this->rulesEdit());
 
         $row = $this->findOwnedOrFail($this->editId);
+
         $row->update([
-            'date' => $this->edit['date'],
-            'jam_in' => $this->edit['jam_in'],
-            'jam_out' => $this->edit['jam_out'] ?: null,
-            'name' => $this->edit['name'],
-            'phone_number' => $this->edit['phone_number'],
-            'instansi' => $this->edit['instansi'],
-            'keperluan' => $this->edit['keperluan'],
-            'petugas_penjaga' => $this->edit['petugas_penjaga'],
+            'date'             => $this->edit['date'],
+            'jam_in'           => $this->edit['jam_in'],
+            'jam_out'          => $this->edit['jam_out'] ?: null,
+            'name'             => $this->edit['name'],
+            'phone_number'     => $this->edit['phone_number'],
+            'instansi'         => $this->edit['instansi'],
+            'keperluan'        => $this->edit['keperluan'],
+            'petugas_penjaga'  => $this->edit['petugas_penjaga'],
         ]);
 
         $this->showEdit = false;
-        $this->dispatch('toast', type: 'success', title: 'Update', message: 'Guest diedit.', duration: 3000);
+
+        $this->dispatch(
+            'toast',
+            type: 'success',
+            title: 'Update',
+            message: 'Guest diedit.',
+            duration: 3000
+        );
+
         $this->dispatch('$refresh');
     }
 
@@ -251,10 +295,19 @@ class GuestbookHistory extends Component
     public function setJamKeluarNow(int $id): void
     {
         $row = $this->findOwnedOrFail($id);
+
         $row->update([
             'jam_out' => Carbon::now()->format('H:i'),
         ]);
-        $this->dispatch('toast', type: 'success', title: 'Keluar', message: 'Jam keluar diset sekarang.', duration: 2500);
+
+        $this->dispatch(
+            'toast',
+            type: 'success',
+            title: 'Keluar',
+            message: 'Jam keluar diset sekarang.',
+            duration: 2500
+        );
+
         $this->dispatch('$refresh');
     }
 
@@ -265,12 +318,19 @@ class GuestbookHistory extends Component
         $row->delete();
 
         // If page becomes empty after deletion, go back one page
-        $entries = $this->getEntriesProperty();
+        $entries = $this->entries;
         if ($entries->isEmpty() && $entries->currentPage() > 1) {
             $this->setPage($entries->currentPage() - 1, 'entriesPage');
         }
 
-        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'Guest dihapus (soft delete).', duration: 3000);
+        $this->dispatch(
+            'toast',
+            type: 'success',
+            title: 'Dihapus',
+            message: 'Guest dihapus (soft delete).',
+            duration: 3000
+        );
+
         $this->dispatch('$refresh');
     }
 
@@ -283,7 +343,15 @@ class GuestbookHistory extends Component
 
         if ($row) {
             $row->restore();
-            $this->dispatch('toast', type: 'success', title: 'Pulihkan', message: 'Guest dipulihkan.', duration: 2500);
+
+            $this->dispatch(
+                'toast',
+                type: 'success',
+                title: 'Pulihkan',
+                message: 'Guest dipulihkan.',
+                duration: 2500
+            );
+
             $this->dispatch('$refresh');
         }
     }
@@ -297,7 +365,15 @@ class GuestbookHistory extends Component
 
         if ($row) {
             $row->forceDelete();
-            $this->dispatch('toast', type: 'success', title: 'Hapus Permanen', message: 'Guest dihapus permanen.', duration: 2500);
+
+            $this->dispatch(
+                'toast',
+                type: 'success',
+                title: 'Hapus Permanen',
+                message: 'Guest dihapus permanen.',
+                duration: 2500
+            );
+
             $this->dispatch('$refresh');
         }
     }
@@ -311,7 +387,7 @@ class GuestbookHistory extends Component
     public function render()
     {
         return view('livewire.pages.receptionist.guestbookhistory', [
-            'latest' => $this->latest,
+            'latest'  => $this->latest,
             'entries' => $this->entries,
         ]);
     }

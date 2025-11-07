@@ -61,6 +61,9 @@ use App\Livewire\Pages\Receptionist\GuestbookHistory;
 use App\Livewire\Pages\Receptionist\DocPackHistory;
 use App\Livewire\Pages\Receptionist\DocPackStatus;
 use App\Livewire\Pages\Receptionist\DocPackForm;
+use App\Livewire\Pages\Receptionist\Bookingvehicle;
+use App\Livewire\Pages\Receptionist\Vehicleshistory;
+use App\Livewire\Pages\Receptionist\Vehiclestatus as ReceptionistVehiclestatus;
 
 // ========== Auth Pages ==========
 use App\Livewire\Pages\Auth\Login as LoginPage;
@@ -229,6 +232,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/receptionist-docpackhistory', DocPackHistory::class)->name('receptionist.docpackhistory');
         Route::get('/receptionist-docpackstatus', DocPackStatus::class)->name('receptionist.docpackstatus');
         Route::get('/receptionist-docpackform', DocPackForm::class)->name('receptionist.docpackform');
+        route::get('/receptionist-bookingvehicle', Bookingvehicle::class)->name('receptionist.bookingvehicle');
+        Route::get('/receptionist-vehicleshistory', Vehicleshistory::class)->name('receptionist.vehicleshistory');
+        Route::get('/receptionist-vehiclestatus', ReceptionistVehiclestatus::class)->name('receptionist.vehiclestatus');
+
     });
 
     // ---------- Logout ----------

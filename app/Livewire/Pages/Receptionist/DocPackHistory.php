@@ -30,24 +30,27 @@ class DocPackHistory extends Component
     public string $departmentQ = '';
     public string $userQ = '';
 
-    // Only one box now: Done
+    // Pagination
     public int $perDone = 5;
+
+    // Mobile filter modal
+    public bool $showFilterModal = false;
 
     // Edit & Delete (soft)
     public bool $showEdit = false;
     public ?int $editId = null;
     public array $edit = [
-        'item_name'     => null,
+        'item_name' => null,
         'nama_pengirim' => null,
         'nama_penerima' => null,
-        'catatan'       => null,
+        'catatan' => null,
     ];
 
     protected $rules = [
-        'edit.item_name'     => 'nullable|string|max:255',
+        'edit.item_name' => 'nullable|string|max:255',
         'edit.nama_pengirim' => 'nullable|string|max:255',
         'edit.nama_penerima' => 'nullable|string|max:255',
-        'edit.catatan'       => 'nullable|string|max:5000',
+        'edit.catatan' => 'nullable|string|max:5000',
     ];
 
     public function updated($name): void
@@ -56,20 +59,20 @@ class DocPackHistory extends Component
             $this->userId = null;
         }
 
-        if (
-            in_array($name, [
-                'q',
-                'selectedDate',
-                'dateMode',
-                'type',
-                'departmentId',
-                'userId',
-                'departmentQ',
-                'userQ',
-            ], true)
-        ) {
-            $this->resetPage('done');
+        if (in_array($name, ['q', 'selectedDate', 'dateMode', 'type', 'departmentId', 'userId', 'departmentQ', 'userQ'], true)) {
+            $this->resetPage('donePage');
         }
+    }
+
+    // ───────── Mobile Filter Modal ─────────
+    public function openFilterModal(): void
+    {
+        $this->showFilterModal = true;
+    }
+
+    public function closeFilterModal(): void
+    {
+        $this->showFilterModal = false;
     }
 
     private function base()
@@ -145,7 +148,6 @@ class DocPackHistory extends Component
         return $q;
     }
 
-    /** Done set only: show both delivered & taken */
     public function getDoneProperty()
     {
         $q = $this->base()->whereIn('status', ['delivered', 'taken']);
@@ -163,20 +165,18 @@ class DocPackHistory extends Component
         ");
 
         return $q->with('receptionist')
-            ->paginate($this->perDone, pageName: 'done');
+            ->paginate($this->perDone, pageName: 'donePage');
     }
-
-    /* ==== Edit & Soft Delete for Done box ==== */
 
     public function openEdit(int $id): void
     {
         $row = $this->base()->findOrFail($id);
         $this->editId = $row->delivery_id ?? $row->id ?? $id;
         $this->edit = [
-            'item_name'     => $row->item_name,
+            'item_name' => $row->item_name,
             'nama_pengirim' => $row->nama_pengirim,
             'nama_penerima' => $row->nama_penerima,
-            'catatan'       => $row->catatan,
+            'catatan' => $row->catatan,
         ];
         $this->showEdit = true;
     }
@@ -191,24 +191,24 @@ class DocPackHistory extends Component
 
         $row = $this->base()->findOrFail($this->editId);
         $row->fill([
-            'item_name'     => $this->edit['item_name'],
+            'item_name' => $this->edit['item_name'],
             'nama_pengirim' => $this->edit['nama_pengirim'],
             'nama_penerima' => $this->edit['nama_penerima'],
-            'catatan'       => $this->edit['catatan'],
+            'catatan' => $this->edit['catatan'],
         ]);
         $row->save();
 
         $this->showEdit = false;
         $this->editId = null;
-        $this->resetPage('done');
+        $this->resetPage('donePage');
         $this->dispatch('toast', type: 'success', title: 'Saved', message: 'Information successfully saved.', duration: 3000);
     }
 
     public function softDelete(int $id): void
     {
         $row = $this->base()->findOrFail($id);
-        $row->delete(); // Soft delete assumed (use SoftDeletes in model)
-        $this->resetPage('done');
+        $row->delete();
+        $this->resetPage('donePage');
         $this->dispatch('toast', type: 'success', title: 'Deleted', message: 'Information successfully deleted.', duration: 3000);
     }
 
@@ -236,9 +236,9 @@ class DocPackHistory extends Component
             ->get(['user_id', 'full_name']);
 
         return view('livewire.pages.receptionist.docpackhistory', [
-            'done'        => $this->done,
+            'done' => $this->done,
             'departments' => $departments,
-            'users'       => $users,
+            'users' => $users,
         ]);
     }
 }

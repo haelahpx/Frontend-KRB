@@ -50,6 +50,15 @@ class Vehiclestatus extends Component
         $this->resetPage();
     }
 
+    /**
+     * NEW: buka halaman Bookvehicle dengan query ?edit=<id>
+     * Ganti 'bookvehicle' jika nama route-mu beda.
+     */
+    public function openUpload(int $bookingId)
+    {
+        return redirect()->route('bookvehicle', ['edit' => $bookingId]);
+    }
+
     public function render()
     {
         $user = Auth::user();

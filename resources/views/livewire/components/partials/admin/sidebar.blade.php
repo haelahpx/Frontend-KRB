@@ -11,14 +11,12 @@
 >
     {{-- Logo + Brand + Collapse (mobile) --}}
     <flux:sidebar.header>
-        {{-- Brand: text putih + logo putih --}}
         <flux:sidebar.brand
             href="#"
-            logo="{{ asset('images/logo/kebun-raya-bogor.png') }}"
-            name="Kebun Raya Bogor."
+            logo="{{ $brandLogo }}"
+            name="{{ $brandName }}"
             class="text-white"
-            style="filter: brightness(0) invert(1);"
-        />
+            style="{{ $invertStyle }}" />
         <flux:sidebar.collapse class="lg:hidden" />
     </flux:sidebar.header>
 

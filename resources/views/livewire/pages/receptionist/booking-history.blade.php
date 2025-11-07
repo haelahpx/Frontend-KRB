@@ -17,10 +17,10 @@
                 }
                 return '—';
             }
-        } 
+        }
     }
 
-     /** @var int|null $roomFilterId */
+    /** @var int|null $roomFilterId */
     $roomFilterId = $roomFilterId ?? null;
 
     $card      = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
@@ -33,7 +33,7 @@
 
 <div class="min-h-screen bg-gray-50" wire:poll.1000ms.keep-alive>
     <main class="px-4 sm:px-6 py-6 space-y-6">
-        {{-- HERO (match style with Bookings Approval) --}}
+        {{-- HERO --}}
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
             <div class="pointer-events-none absolute inset-0 opacity-10">
                 <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
@@ -80,11 +80,11 @@
             </div>
         </div>
 
-        {{-- MAIN LAYOUT: LEFT (HISTORY LIST) + RIGHT (ROOM FILTER + RECENT) --}}
+        {{-- MAIN LAYOUT --}}
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             {{-- LEFT: HISTORY LIST CARD --}}
             <section class="{{ $card }} md:col-span-3">
-                {{-- Header: title + tabs + active room chip --}}
+                {{-- Header: title + tabs + active room chip + type scope --}}
                 <div class="px-4 sm:px-6 pt-4 pb-3 border-b border-gray-200 space-y-3">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div>
@@ -115,35 +115,66 @@
                         </div>
                     </div>
 
-                    {{-- Active room filter badge (same style as bookings approval) --}}
-                    <div class="flex flex-wrap items-center gap-2 text-xs mt-1">
-                        @if(!is_null($roomFilterId))
-                            @php
-                                $activeRoom = collect($roomsOptions)->firstWhere('id', $roomFilterId);
-                            @endphp
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-900 text-white border border-gray-800">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                                <span>
-                                    Room: {{ $activeRoom['label'] ?? 'Unknown' }}
+                    {{-- Room badge + Type scope (All / Offline / Online) --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs mt-1">
+                        {{-- Active room filter badge --}}
+                        <div class="flex flex-wrap items-center gap-2">
+                            @if(!is_null($roomFilterId))
+                                @php
+                                    $activeRoom = collect($roomsOptions)->firstWhere('id', $roomFilterId);
+                                @endphp
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-900 text-white border border-gray-800">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                    <span>
+                                        Room: {{ $activeRoom['label'] ?? 'Unknown' }}
+                                    </span>
+                                    <button type="button" class="ml-1 hover:text-gray-200" wire:click="clearRoomFilter">×</button>
                                 </span>
-                                <button type="button" class="ml-1 hover:text-gray-200" wire:click="clearRoomFilter">×</button>
-                            </span>
-                        @else
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-dashed border-gray-300">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M3 4h18M4 9h16M6 14h12M9 19h6" />
-                                </svg>
-                                <span>No room filter</span>
-                            </span>
-                        @endif
+                            @else
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-dashed border-gray-300">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M3 4h18M4 9h16M6 14h12M9 19h6" />
+                                    </svg>
+                                    <span>No room filter</span>
+                                </span>
+                            @endif
+                        </div>
+
+                        {{-- Type scope: All / Offline / Online --}}
+                        <div class="inline-flex items-center bg-gray-100 rounded-full p-1 text-[11px] font-medium">
+                            <button type="button"
+                                    wire:click="setTypeScope('all')"
+                                    class="px-3 py-1 rounded-full transition
+                                        {{ $typeScope === 'all'
+                                            ? 'bg-gray-900 text-white shadow-sm'
+                                            : 'text-gray-700 hover:bg-gray-200' }}">
+                                All
+                            </button>
+                            <button type="button"
+                                    wire:click="setTypeScope('offline')"
+                                    class="px-3 py-1 rounded-full transition
+                                        {{ $typeScope === 'offline'
+                                            ? 'bg-gray-900 text-white shadow-sm'
+                                            : 'text-gray-700 hover:bg-gray-200' }}">
+                                Offline
+                            </button>
+                            <button type="button"
+                                    wire:click="setTypeScope('online')"
+                                    class="px-3 py-1 rounded-full transition
+                                        {{ $typeScope === 'online'
+                                            ? 'bg-gray-900 text-white shadow-sm'
+                                            : 'text-gray-700 hover:bg-gray-200' }}">
+                                Online
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Filters (Search + Date + Sort) inside card like Bookings Approval --}}
+                {{-- Filters (Search + Date + Sort) --}}
                 <div class="px-4 sm:px-6 pt-4 pb-3 border-b border-gray-200">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {{-- Search --}}
@@ -436,7 +467,7 @@
                     @endif
                 </div>
 
-                {{-- PAGINATION (based on active tab) --}}
+                {{-- PAGINATION --}}
                 <div class="px-4 sm:px-6 py-5 bg-gray-50 border-t border-gray-200">
                     <div class="flex justify-center">
                         @if($activeTab === 'done')
@@ -448,7 +479,7 @@
                 </div>
             </section>
 
-            {{-- RIGHT: SIDEBAR (ROOM FILTER + RECENT ACTIVITY) - DESKTOP/TABLET --}}
+            {{-- RIGHT: SIDEBAR (ROOM FILTER + RECENT ACTIVITY) --}}
             <aside class="hidden md:flex md:flex-col md:col-span-1 gap-4">
                 <section class="{{ $card }}">
                     <div class="px-4 py-4 border-b border-gray-200">
@@ -536,7 +567,7 @@
             </aside>
         </div>
 
-        {{-- EDIT / CREATE MODAL (original history modal) --}}
+        {{-- EDIT / CREATE MODAL --}}
         @if($showModal)
             <div class="fixed inset-0 z-50">
                 <div class="absolute inset-0 bg-black/50"></div>

@@ -21,10 +21,10 @@
         }
     }
 
-    $card   = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
-    $label  = 'block text-sm font-medium text-gray-700 mb-2';
-    $input  = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
-    $chip   = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
+    $card      = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
+    $label     = 'block text-sm font-medium text-gray-700 mb-2';
+    $input     = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
+    $chip      = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
     $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0';
 ?>
 
@@ -75,7 +75,6 @@
         </div>
 
         
-        
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             
             <section class="<?php echo e($card); ?> md:col-span-3">
@@ -109,31 +108,62 @@
                     </div>
 
                     
-                    <div class="flex flex-wrap items-center gap-2 text-xs mt-1">
-                        <!--[if BLOCK]><![endif]--><?php if(!is_null($roomFilterId)): ?>
-                            <?php
-                                $activeRoom = collect($roomsOptions)->firstWhere('id', $roomFilterId);
-                            ?>
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-900 text-white border border-gray-800">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                                <span>
-                                    Room: <?php echo e($activeRoom['label'] ?? 'Unknown'); ?>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs mt-1">
+                        
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!--[if BLOCK]><![endif]--><?php if(!is_null($roomFilterId)): ?>
+                                <?php
+                                    $activeRoom = collect($roomsOptions)->firstWhere('id', $roomFilterId);
+                                ?>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-900 text-white border border-gray-800">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                    <span>
+                                        Room: <?php echo e($activeRoom['label'] ?? 'Unknown'); ?>
 
+                                    </span>
+                                    <button type="button" class="ml-1 hover:text-gray-200" wire:click="clearRoomFilter">×</button>
                                 </span>
-                                <button type="button" class="ml-1 hover:text-gray-200" wire:click="clearRoomFilter">×</button>
-                            </span>
-                        <?php else: ?>
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-dashed border-gray-300">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M3 4h18M4 9h16M6 14h12M9 19h6" />
-                                </svg>
-                                <span>No room filter</span>
-                            </span>
-                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                            <?php else: ?>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-dashed border-gray-300">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M3 4h18M4 9h16M6 14h12M9 19h6" />
+                                    </svg>
+                                    <span>No room filter</span>
+                                </span>
+                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                        </div>
+
+                        
+                        <div class="inline-flex items-center bg-gray-100 rounded-full p-1 text-[11px] font-medium">
+                            <button type="button"
+                                    wire:click="setTypeScope('all')"
+                                    class="px-3 py-1 rounded-full transition
+                                        <?php echo e($typeScope === 'all'
+                                            ? 'bg-gray-900 text-white shadow-sm'
+                                            : 'text-gray-700 hover:bg-gray-200'); ?>">
+                                All
+                            </button>
+                            <button type="button"
+                                    wire:click="setTypeScope('offline')"
+                                    class="px-3 py-1 rounded-full transition
+                                        <?php echo e($typeScope === 'offline'
+                                            ? 'bg-gray-900 text-white shadow-sm'
+                                            : 'text-gray-700 hover:bg-gray-200'); ?>">
+                                Offline
+                            </button>
+                            <button type="button"
+                                    wire:click="setTypeScope('online')"
+                                    class="px-3 py-1 rounded-full transition
+                                        <?php echo e($typeScope === 'online'
+                                            ? 'bg-gray-900 text-white shadow-sm'
+                                            : 'text-gray-700 hover:bg-gray-200'); ?>">
+                                Online
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -208,7 +238,7 @@
                                                 <span class="flex items-center gap-1.5">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 0 0118 0z" />
                                                     </svg>
                                                     <?php echo e(fmtTime($row->start_time)); ?>–<?php echo e(fmtTime($row->end_time)); ?>
 
@@ -302,7 +332,7 @@
                                                 <span class="flex items-center gap-1.5">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 0 0118 0z" />
                                                     </svg>
                                                     <?php echo e(fmtTime($row->start_time)); ?>–<?php echo e(fmtTime($row->end_time)); ?>
 
@@ -578,7 +608,7 @@
             <div class="absolute inset-0 bg-black/50"></div>
             <div class="absolute inset-0 flex items-center justify-center p-4">
                 <div class="w-full max-w-lg bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-                    <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <div class="px-5 py-4 border-b border-gray-200 flex items-centerjustify-between">
                         <h3 class="font-semibold">Tuliskan alasan penolakan</h3>
                         <button type="button" class="text-gray-500 hover:text-gray-700" wire:click="$set('showRejectModal', false)">×</button>
                     </div>

@@ -118,29 +118,21 @@ class DocPackForm extends Component
             $receiver = $this->receiverText;
         }
 
-        /*
-         * SIMPAN FOTO KE FOLDER PUBLIC
-         * - Folder fisik: public/images/deliveries
-         * - Path di DB (kolom image): "images/deliveries/nama_file.ext"
-         */
+        // SIMPAN FOTO KE FOLDER PUBLIC/images/deliveries
         $imagePath = null;
 
         if ($this->photo) {
             $ext = strtolower($this->photo->getClientOriginalExtension() ?: 'png');
             $filename = 'delivery_' . $now->format('Ymd_His') . '_' . uniqid() . '.' . $ext;
 
-            // path folder di dalam public
             $publicDir = public_path('images/deliveries');
 
             if (!is_dir($publicDir)) {
                 mkdir($publicDir, 0755, true);
             }
 
-            // pindahkan file upload dari tmp Livewire ke public/images/deliveries
-            // hasil fisik: public/images/deliveries/{filename}
             $this->photo->move($publicDir, $filename);
 
-            // path yang disimpan di database (relative dari public)
             $imagePath = 'images/deliveries/' . $filename;
         }
 
@@ -156,7 +148,7 @@ class DocPackForm extends Component
             'direction'       => $this->direction,
             'pengambilan'     => null,
             'pengiriman'      => null,
-            'image'           => $imagePath, // <-- simpan path di kolom image
+            'image'           => $imagePath,
             'created_at'      => $now,
             'updated_at'      => $now,
         ]);

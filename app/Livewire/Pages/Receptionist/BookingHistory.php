@@ -32,6 +32,9 @@ class BookingHistory extends Component
     public ?string $selectedDate = null;   // 'YYYY-MM-DD'
     public string $dateMode      = 'semua'; // 'semua' | 'terbaru' | 'terlama'
 
+    // Online/Offline scope: all | offline | online
+    public string $typeScope = 'all';
+
     public bool $showModal   = false;
     public string $modalMode = 'create';
     public ?int $editingId   = null;
@@ -141,6 +144,20 @@ class BookingHistory extends Component
         $this->activeTab = $tab;
 
         // reset both paginations for safety
+        $this->resetPage('pageDone');
+        $this->resetPage('pageRejected');
+    }
+
+    /**
+     * Scope online/offline/all.
+     */
+    public function setTypeScope(string $scope): void
+    {
+        if (!in_array($scope, ['all', 'offline', 'online'], true)) {
+            return;
+        }
+
+        $this->typeScope = $scope;
         $this->resetPage('pageDone');
         $this->resetPage('pageRejected');
     }
@@ -404,7 +421,21 @@ class BookingHistory extends Component
                    ->orWhere('book_reject', '');
             })
 
+            // Room filter
             ->when($this->roomFilterId, fn ($qq) => $qq->where('room_id', $this->roomFilterId))
+
+            // Type scope filter: online / offline / all
+            ->when($this->typeScope === 'online', function ($qq) {
+                $qq->whereIn('booking_type', ['online_meeting', 'onlinemeeting']);
+            })
+            ->when($this->typeScope === 'offline', function ($qq) {
+                $qq->where(function ($q) {
+                    $q->whereNull('booking_type')
+                      ->orWhereNotIn('booking_type', ['online_meeting', 'onlinemeeting']);
+                });
+            })
+
+            // Other filters
             ->when($this->q !== '',               fn ($qq) => $qq->where('meeting_title', 'like', '%' . $this->q . '%'))
             ->when($this->selectedDate,           fn ($qq) => $qq->whereDate('date', $this->selectedDate))
             ->when($this->dateMode === 'terbaru', fn ($qq) => $qq->orderByDesc('date')->orderByDesc('start_time'))
@@ -424,7 +455,21 @@ class BookingHistory extends Component
             // Normalized check for "rejected"
             ->whereRaw("LOWER(TRIM(`status`)) = 'rejected'")
 
+            // Room filter
             ->when($this->roomFilterId, fn ($qq) => $qq->where('room_id', $this->roomFilterId))
+
+            // Type scope filter: online / offline / all
+            ->when($this->typeScope === 'online', function ($qq) {
+                $qq->whereIn('booking_type', ['online_meeting', 'onlinemeeting']);
+            })
+            ->when($this->typeScope === 'offline', function ($qq) {
+                $qq->where(function ($q) {
+                    $q->whereNull('booking_type')
+                      ->orWhereNotIn('booking_type', ['online_meeting', 'onlinemeeting']);
+                });
+            })
+
+            // Other filters
             ->when($this->q !== '',               fn ($qq) => $qq->where('meeting_title', 'like', '%' . $this->q . '%'))
             ->when($this->selectedDate,           fn ($qq) => $qq->whereDate('date', $this->selectedDate))
             ->when($this->dateMode === 'terbaru', fn ($qq) => $qq->orderByDesc('date')->orderByDesc('start_time'))

@@ -8,6 +8,13 @@ $parts = preg_split('/\s+/', $fullName);
 $firstInitial = strtoupper(substr($parts[0] ?? 'U', 0, 1));
 $lastInitial = strtoupper(substr($parts[count($parts)-1] ?? '', 0, 1));
 $initials = $firstInitial . $lastInitial;
+
+//sidebar brand
+$authUser = Auth::user()?->loadMissing('company');
+$brandName = $authUser?->company?->company_name ?? 'Kebun Raya Bogor';
+$brandLogo = $authUser?->company?->image ?: asset('images/logo/kebun-raya-bogor.png');
+
+$invertStyle = 'filter: brightness(0) invert(1);';
 @endphp
 <!DOCTYPE html>
 <html lang="en" data-theme="light">

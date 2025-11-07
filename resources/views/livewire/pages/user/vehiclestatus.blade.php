@@ -199,6 +199,17 @@
                         <x-heroicon-o-arrow-path class="w-3.5 h-3.5"/>
                         <span>Updated: {{ optional($b->updated_at)->format('Y-m-d H:i') }}</span>
                     </div>
+
+                    {{-- Upload button (NEW) --}}
+                    @if(in_array($b->status, ['in_use','returned']))
+                        <div class="mt-4 flex justify-end">
+                            <button type="button"
+                                    wire:click="openUpload({{ $b->vehiclebooking_id }})"
+                                    class="px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
+                                Upload Before / After Photo
+                            </button>
+                        </div>
+                    @endif
                 </div>
             @empty
                 <div class="rounded-lg border-2 border-dashed border-gray-300 p-10 text-center text-gray-600">

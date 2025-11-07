@@ -27,6 +27,10 @@ class BookingsApproval extends Component
     public ?string $selectedDate = null;   // YYYY-MM-DD
     public string $dateMode = 'semua';     // semua | terbaru | terlama
 
+    // Online/Offline scope filter
+    // all | offline | online
+    public string $typeScope = 'all';
+
     // Pagination
     public int $perPending = 5;
     public int $perOngoing = 5;
@@ -65,7 +69,7 @@ class BookingsApproval extends Component
     {
         $companyId = Auth::user()->company_id ?? null;
 
-        // Sesuai tabel rooms: room_id + room_name
+        // sesuai tabel rooms: room_id + room_name
         $query = Room::query()
             ->selectRaw('room_id, room_name as label');
 
@@ -207,6 +211,20 @@ class BookingsApproval extends Component
             return;
         }
         $this->activeTab = $tab;
+        $this->resetPage('pendingPage');
+        $this->resetPage('ongoingPage');
+    }
+
+    /**
+     * Scope online/offline/all.
+     */
+    public function setTypeScope(string $scope): void
+    {
+        if (!in_array($scope, ['all', 'offline', 'online'], true)) {
+            return;
+        }
+
+        $this->typeScope = $scope;
         $this->resetPage('pendingPage');
         $this->resetPage('ongoingPage');
     }
@@ -526,6 +544,16 @@ class BookingsApproval extends Component
             });
         }
 
+        // Type scope filter: online / offline / all
+        if ($this->typeScope === 'online') {
+            $query->whereIn('booking_type', ['online_meeting', 'onlinemeeting']);
+        } elseif ($this->typeScope === 'offline') {
+            $query->where(function ($q) {
+                $q->whereNull('booking_type')
+                  ->orWhereNotIn('booking_type', ['online_meeting', 'onlinemeeting']);
+            });
+        }
+
         $this->applyDateTimeOrdering($query);
     }
 
@@ -554,7 +582,7 @@ class BookingsApproval extends Component
             ->tap(fn($q) => $this->applyCommonFilters($q, $companyId))
             ->paginate($this->perOngoing, $cols, 'ongoingPage');
 
-        // Recent activity: semua status KECUALI pending, approved(ongoing), dan rejected
+        // Recent activity: semua status kecuali pending, approved(ongoing), dan rejected
         $recentCompletedQuery = BookingRoom::query()
             ->with('room')
             ->whereNotIn('status', ['pending', 'approved', 'rejected']);
