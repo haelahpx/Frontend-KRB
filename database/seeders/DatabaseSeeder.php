@@ -18,7 +18,7 @@ use App\Models\{
     Storage,
     Vehicle,
     VehicleBooking,
-    VehicleBookingPhoto,
+    VehicleBookingPhoto, // Pastikan ini di-import
     Delivery,
     Announcement,
     Information,
@@ -33,6 +33,9 @@ use App\Models\{
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
         DB::transaction(function () {
@@ -45,16 +48,24 @@ class DatabaseSeeder extends Seeder
                 ['Kebun Raya Purwodadi', 'krpurwodadi.id', 'https://tiketkebunraya.id/assets/images/kebun-raya-purwodadi.png'],
             ];
 
+            // Default Company (jika ada relasi yg butuh company_id=1)
+            Company::firstOrCreate(
+                ['company_id' => 1],
+                ['company_name' => 'Default Company']
+            );
+
             foreach ($companies as [$companyName, $domain, $imageUrl]) {
                 echo "\n🌿 Seeding {$companyName}...\n";
 
                 // === COMPANY CREATION ===
-                $company = Company::create([
-                    'company_name' => $companyName,
-                    'company_address' => 'Jl. Raya ' . $companyName,
-                    'company_email' => "info@{$domain}",
-                    'image' => $imageUrl,
-                ]);
+                $company = Company::firstOrCreate(
+                    ['company_name' => $companyName], // Cari berdasarkan nama
+                    [
+                        'company_address' => 'Jl. Raya ' . $companyName,
+                        'company_email' => "info@{$domain}",
+                        'image' => $imageUrl,
+                    ]
+                );
 
                 $companyId = $company->company_id;
 
@@ -124,7 +135,7 @@ class DatabaseSeeder extends Seeder
                 $firstNames = ['Agus','Bambang','Cici','Dedi','Endang','Fajar','Gita','Hadi','Indah','Joko','Kartika','Lina','Mega','Nina','Oscar','Putra','Qori','Rian','Sari','Tono','Umar','Vina','Wati','Yoga','Zul'];
                 $lastNames = ['Susanto','Wijaya','Permata','Nugroho','Pratama','Wibowo','Hidayat','Kusuma','Lestari','Setiawan'];
 
-                for ($i = 1; $i <= 10; $i++) {
+                for ($i = 1; $i <= 100; $i++) { // Tambah jumlah user
                     $name = Arr::random($firstNames) . ' ' . Arr::random($lastNames);
                     $slug = Str::slug($name) . "-{$i}";
                     $dept = Arr::random($depts);
@@ -141,6 +152,14 @@ class DatabaseSeeder extends Seeder
                         ]
                     ));
                 }
+                
+                // BARU: Pindahkan user ke pivot table
+                foreach (User::where('company_id', $companyId)->whereNotNull('department_id')->get() as $user) {
+                     DB::table('user_departments')->insertOrIgnore([
+                        'user_id' => $user->user_id,
+                        'department_id' => $user->department_id
+                    ]);
+                }
 
                 $this->seedAssetsAndActivities($companyId, $companyName, $depts, $roles, $admins, $users, $receptionist, $now);
             }
@@ -149,7 +168,7 @@ class DatabaseSeeder extends Seeder
 
     protected function seedAssetsAndActivities($companyId, $companyName, $depts, $roles, $admins, $users, $receptionist, $now)
     {
-        mt_srand($companyId * 999);
+        mt_srand($companyId * 999); // Set seed based on company ID for consistency
 
         $demoImages = [
             'https://res.cloudinary.com/demo/image/upload/sample.jpg',
@@ -176,6 +195,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // ===== VEHICLES =====
+        $vehicles = collect(); // Kumpulkan vehicle yang baru dibuat
         foreach ([
             ['Avanza','car',2022],
             ['Innova','car',2021],
@@ -183,39 +203,40 @@ class DatabaseSeeder extends Seeder
             ['Carry PickUp','pickup',2019]
         ] as [$name,$type,$year]) {
             $plate = 'B ' . rand(1000,9999) . ' ' . Str::upper(Str::random(3));
-            Vehicle::firstOrCreate(
-                ['plate_number'=>$plate],
+            $vehicles->push(Vehicle::firstOrCreate(
+                ['plate_number'=>$plate], // Gunakan plate number sbg unique key
                 [
                     'company_id'=>$companyId,
                     'name'=>$name,
                     'category'=>$type,
                     'year'=>$year,
                 ]
-            );
+            ));
         }
 
         // ===== DELIVERIES =====
-        for ($i=1; $i<=10; $i++) {
+        for ($i=1; $i<=100; $i++) { // Tingkatkan jumlah
             Delivery::create([
                 'company_id'=>$companyId,
                 'receptionist_id'=>$receptionist->user_id,
                 'item_name'=>"Paket {$companyName} #{$i}",
-                'type'=>Arr::random(['package','document']),
+                'type'=>Arr::random(['package','document','invoice','etc']), // Tambahkan 'invoice','etc'
                 'nama_pengirim'=>Arr::random(['JNE','TIKI','SiCepat','Pos Indonesia']),
                 'nama_penerima'=>$users->random()->full_name,
-                'status'=>Arr::random(['pending','stored','delivered']),
+                'status'=>Arr::random(['pending','stored','taken','delivered']), // Tambahkan 'taken'
+                'direction' => Arr::random(['taken', 'deliver']), // Tambahkan 'direction'
                 'pengiriman'=>$now->copy()->subDays(rand(0,300)),
             ]);
         }
 
         // ===== ANNOUNCEMENTS, INFORMATION, GUESTBOOK =====
-        for ($i=1; $i<=10; $i++) {
+        for ($i=1; $i<=100; $i++) { // Tingkatkan jumlah
             $randomDate=$now->copy()->subDays(rand(0,365));
 
             Announcement::create([
                 'company_id'=>$companyId,
                 'description'=>"📢 Pengumuman {$companyName} #{$i} - Event internal {$companyName}",
-                'event_at'=>$randomDate->addDays(rand(2,10)),
+                'event_at'=>$randomDate->copy()->addDays(rand(2,10)),
                 'created_at'=>$randomDate,
             ]);
 
@@ -223,7 +244,7 @@ class DatabaseSeeder extends Seeder
                 'company_id'=>$companyId,
                 'department_id'=>Arr::random($depts)->department_id,
                 'description'=>"📰 Info khusus {$companyName} #{$i}",
-                'event_at'=>$randomDate->addDays(rand(1,5)),
+                'event_at'=>$randomDate->copy()->addDays(rand(1,5)),
                 'created_at'=>$randomDate,
             ]);
 
@@ -257,50 +278,81 @@ class DatabaseSeeder extends Seeder
                 'number_of_attendees'=>rand(3,30),
                 'start_time'=>$startDate,
                 'end_time'=>$endDate,
-                'is_approve'=>1,
+                'is_approve'=>1, // Tetap gunakan ini jika kolom masih ada
                 'booking_type'=>'meeting',
-                'status'=>'approved',
+                'status'=>'approved', // Status dari room booking
                 'approved_by'=>$admins->random()->user_id,
             ]);
         }
 
-        // ===== VEHICLE BOOKINGS =====
-        $vehicles = Vehicle::where('company_id', $companyId)->get();
+        // ===========================================
+        // ===== VEHICLE BOOKINGS (UPDATED LOGIC) ====
+        // ===========================================
+        // $vehicles = Vehicle::where('company_id', $companyId)->get(); // Kita sudah punya $vehicles dari atas
+        if ($vehicles->isEmpty()) {
+             echo "⚠️ No vehicles found for {$companyName}. Skipping vehicle booking seeding.\n";
+             return; // Keluar jika tidak ada kendaraan
+        }
+
         foreach (range(1,50) as $i) {
-            $user=$users->random();
-            $vehicle=$vehicles->random();
-            $start=$now->copy()->subDays(rand(0,180))->hour(rand(8,14));
-            $end=$start->copy()->addHours(rand(2,6));
+            $user = $users->random();
+            $vehicle = $vehicles->random();
+            $start = $now->copy()->subDays(rand(0,180))->hour(rand(8,14))->minute(0)->second(0);
+            $end = $start->copy()->addHours(rand(2,6));
 
+            // GANTI: Ambil dari enum baru di migrasi vehicle_bookings
             $purposeType = Arr::random(['dinas', 'operasional', 'antar_jemput', 'lainnya']);
-
-            $booking=VehicleBooking::create([
-                'vehicle_id'=>$vehicle->vehicle_id,
-                'company_id'=>$companyId,
-                'department_id'=>$user->department_id,
-                'user_id'=>$user->user_id,
-                'borrower_name'=>$user->full_name,
-                'start_at'=>$start,
-                'end_at'=>$end,
-                'purpose'=>ucfirst(str_replace('_', ' ', $purposeType)),
-                'purpose_type'=>$purposeType,
-                'destination'=>Arr::random(['Bogor','Jakarta','Bali','Purwodadi']),
-                'status'=>Arr::random(['approved','in_use','returned']),
-                'terms_agreed'=>1,
+            
+            // BARU: Ambil dari enum baru di migrasi
+            $status = Arr::random(['pending', 'approved', 'on_progress', 'returned', 'completed', 'rejected', 'cancelled']);
+            
+            $booking = VehicleBooking::create([
+                'vehicle_id' => $vehicle->vehicle_id,
+                'company_id' => $companyId,
+                'department_id' => $user->department_id,
+                'user_id' => $user->user_id,
+                'borrower_name' => $user->full_name,
+                'start_at' => $start,
+                'end_at' => $end,
+                'purpose' => "Keperluan " . ucfirst(str_replace('_', ' ', $purposeType)) . " #{$i}",
+                'purpose_type' => $purposeType,
+                'destination' => Arr::random(['Bogor','Jakarta','Bali','Purwodadi']),
+                'odd_even_area' => Arr::random(['tidak', 'ganjil', 'genap']), // GANTI: Sesuai migrasi baru
+                'status' => $status, // GANTI: Gunakan status baru
+                'terms_agreed' => 1,
+                // HAPUS: 'is_approve' sudah tidak ada
             ]);
 
-            foreach (['before','after'] as $type) {
+            // BARU: Logika seeder foto disesuaikan dengan status
+            // (Sesuai permintaan: Pakai local storage `photo_path`)
+
+            // Seed 'before' photo jika status 'on_progress', 'returned', atau 'completed'
+            if (in_array($status, ['on_progress', 'returned', 'completed'])) {
                 VehicleBookingPhoto::create([
-                    'vehiclebooking_id'=>$booking->vehiclebooking_id,
-                    'user_id'=>$user->user_id,
-                    'photo_type'=>$type,
-                    'photo_url'=>Arr::random($demoImages),
-                    'cloudinary_public_id'=>'demo_sample_'.$type,
+                    'vehiclebooking_id' => $booking->vehiclebooking_id,
+                    'user_id' => $user->user_id,
+                    'photo_type' => 'before',
+                    'photo_path' => 'vehicle_photos/demo_sample_before_' . $i . '.jpg', // GANTI: ke photo_path
+                    // HAPUS: photo_url dan cloudinary_public_id
+                ]);
+            }
+
+            // Seed 'after' photo HANYA jika status 'completed'
+            if ($status == 'completed') {
+                VehicleBookingPhoto::create([
+                    'vehiclebooking_id' => $booking->vehiclebooking_id,
+                    'user_id' => $user->user_id,
+                    'photo_type' => 'after',
+                    'photo_path' => 'vehicle_photos/demo_sample_after_' . $i . '.jpg', // GANTI: ke photo_path
+                    // HAPUS: photo_url dan cloudinary_public_id
                 ]);
             }
         }
+        // ===== END OF VEHICLE BOOKINGS =====
+
 
         // ===== TICKETING =====
+        // (Sistem Tiket tidak diubah, masih pakai Cloudinary sesuai migrasi aslinya)
         $this->seedTicketSystem($companyId,$companyName,$depts,$users,$now,$demoImages);
     }
 
@@ -315,13 +367,15 @@ class DatabaseSeeder extends Seeder
             'low' => 72,
         ];
 
-        foreach (range(1,10) as $i) {
-            $user=$users->random();
-            $dept=$depts[array_rand($depts)];
-            $reqDept=$depts[array_rand($depts)];
-            $priority=Arr::random($priorities);
-            $status=Arr::random($statuses);
-            $created=$now->copy()->subDays(rand(0,300));
+        foreach (range(1,100) as $i) { // Tingkatkan jumlah
+            $user = $users->random();
+            // Ambil departemen secara acak dari koleksi $depts
+            $dept = Arr::random($depts); 
+            $reqDept = Arr::random($depts);
+            
+            $priority = Arr::random($priorities);
+            $status = Arr::random($statuses);
+            $created = $now->copy()->subDays(rand(0,300));
 
             $targetHours = $slaTargets[$priority];
             $isResolved = in_array($status, ['RESOLVED','CLOSED']);
@@ -336,59 +390,49 @@ class DatabaseSeeder extends Seeder
                 $updated = $created->copy()->addHours(rand(1,12));
             }
 
-            $ticket=Ticket::create([
-                'company_id'=>$companyId,
-                'department_id'=>$dept->department_id,
-                'requestdept_id'=>$reqDept->department_id,
-                'user_id'=>$user->user_id,
-                'subject'=>"Ticket {$companyName} #{$i}",
-                'description'=>"Masalah prioritas {$priority} pada {$companyName}",
-                'priority'=>$priority,
-                'status'=>$status,
-                'created_at'=>$created,
-                'updated_at'=>$updated,
+            $ticket = Ticket::create([
+                'company_id' => $companyId,
+                'department_id' => $dept->department_id,
+                'requestdept_id' => $reqDept->department_id,
+                'user_id' => $user->user_id,
+                'subject' => "Ticket {$companyName} #{$i}",
+                'description' => "Masalah prioritas {$priority} pada {$companyName}",
+                'priority' => $priority,
+                'status' => $status,
+                'created_at' => $created,
+                'updated_at' => $updated,
             ]);
 
             TicketAssignment::create([
-                'ticket_id'=>$ticket->ticket_id,
-                'user_id'=>$users->random()->user_id,
-                'created_at'=>$created,
+                'ticket_id' => $ticket->ticket_id,
+                'user_id' => $users->random()->user_id,
+                'created_at' => $created,
             ]);
 
             TicketAttachment::create([
-                'ticket_id'=>$ticket->ticket_id,
-                'file_url'=>Arr::random($demoImages),
-                'file_type'=>'image/jpeg',
-                'uploaded_by'=>$user->user_id,
-                'cloudinary_public_id'=>'demo_sample_ticket',
-                'bytes'=>random_int(10000,50000),
-                'original_filename'=>'demo_sample.jpg',
-                'created_at'=>$created,
+                'ticket_id' => $ticket->ticket_id,
+                'file_url' => Arr::random($demoImages),
+                'file_type' => 'image/jpeg',
+                'uploaded_by' => $user->user_id,
+                'cloudinary_public_id' => 'demo_sample_ticket', // Biarkan ini sesuai .sql lama
+                'bytes' => random_int(10000,50000),
+                'original_filename' => 'demo_sample.jpg',
+                'created_at' => $created,
             ]);
 
             TicketComment::create([
-                'ticket_id'=>$ticket->ticket_id,
-                'user_id'=>$user->user_id,
-                'comment_text'=>"Komentar #{$i} untuk {$companyName}",
-                'created_at'=>$created->copy()->addHours(1),
+                'ticket_id' => $ticket->ticket_id,
+                'user_id' => $user->user_id,
+                'comment_text' => "Komentar #{$i} untuk {$companyName}",
+                'created_at' => $created->copy()->addHours(1),
             ]);
 
             TicketHistory::create([
-                'ticket_id'=>$ticket->ticket_id,
-                'status'=>$status,
-                'changed_by'=>$user->user_id,
-                'created_at'=>$updated,
+                'ticket_id' => $ticket->ticket_id,
+                'status' => $status,
+                'changed_by' => $user->user_id,
+                'created_at' => $updated,
             ]);
-
-            if ($isResolved) {
-                echo "🎫 {$companyName} Ticket #{$i} ({$priority}) [{$status}] → " .
-                     ($isWithinSla ? "✅ SLA met" : "⏰ SLA missed") .
-                     " (" . $updated->diffInHours($created) . "h)\n";
-            } else {
-                echo "🕓 {$companyName} Ticket #{$i} ({$priority}) [{$status}] still open\n";
-            }
         }
-
-        echo "✅ {$companyName} – ticketing data with SLA simulation seeded successfully.\n";
     }
 }

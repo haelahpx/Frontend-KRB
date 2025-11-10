@@ -6,36 +6,29 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('vehicle_booking_photos', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id();
+            $table->foreignId('vehiclebooking_id')->constrained('vehicle_bookings', 'vehiclebooking_id')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->enum('photo_type', ['before', 'after']);
+            
+            // PERBAIKAN: Menggunakan 'photo_path' untuk local storage
+            // Menghapus 'cloudinary_public_id' sesuai permintaan
+            $table->string('photo_path', 1024); // Path ke file di local storage
 
-            // sesuai struktur vehicle_bookings di db kamu
-            $table->unsignedBigInteger('vehiclebooking_id');
-
-            // sesuai struktur users di db kamu (user_id bigint unsigned)
-            $table->unsignedBigInteger('user_id');
-
-            $table->enum('photo_type', ['before', 'after'])->index();
-            $table->string('photo_url', 1024)->nullable();
-            $table->string('cloudinary_public_id')->nullable();
             $table->timestamps();
-
-            // foreign key ke vehicle_bookings.vehiclebooking_id
-            $table->foreign('vehiclebooking_id')
-                ->references('vehiclebooking_id')
-                ->on('vehicle_bookings')
-                ->onDelete('cascade');
-
-            // foreign key ke users.user_id
-            $table->foreign('user_id')
-                ->references('user_id')
-                ->on('users')
-                ->onDelete('cascade');
+            // Tidak ada softDeletes di SQL asli, jadi kita ikuti
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('vehicle_booking_photos');

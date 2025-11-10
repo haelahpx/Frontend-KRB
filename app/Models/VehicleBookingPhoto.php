@@ -10,13 +10,18 @@ class VehicleBookingPhoto extends Model
     use HasFactory;
 
     protected $table = 'vehicle_booking_photos';
+    public $timestamps = true; // Migrasi baru menambahkan timestamps
 
+    /**
+     * Properti $fillable DI-UPDATE.
+     * - 'photo_url' dan 'cloudinary_public_id' dihapus.
+     * - 'photo_path' ditambahkan untuk local storage.
+     */
     protected $fillable = [
         'vehiclebooking_id',
         'user_id',
         'photo_type',
-        'photo_url',
-        'cloudinary_public_id',
+        'photo_path', // <-- Ganti ini
     ];
 
     public function booking()

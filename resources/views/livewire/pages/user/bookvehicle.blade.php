@@ -5,16 +5,23 @@
         <div class="bg-white border-2 border-black/5 rounded-2xl shadow-sm overflow-hidden">
             <div class="px-6 py-5 border-b border-black/5">
                 <h2 class="text-2xl font-semibold">
-                    @if($isEdit)
-                        Upload Foto - Booking #{{ $editingBookingId }}
+                    {{-- Judul dinamis berdasarkan state $booking --}}
+                    @if($booking)
+                        Upload Foto - Booking #{{ $booking->vehiclebooking_id }}
                     @else
                         Book a Vehicle
                     @endif
                 </h2>
                 <p class="text-sm text-gray-500 mt-1">
-                    @if($isEdit)
-                        Booking sudah <span class="font-medium text-emerald-700">approved</span>. Silakan unggah foto
-                        sebelum dan setelah penggunaan.
+                    {{-- Deskripsi dinamis --}}
+                    @if($booking)
+                        @if($booking->status === 'approved')
+                            Booking sudah <span class="font-medium text-emerald-700">approved</span>.
+                            Silakan unggah **foto sebelum** penggunaan untuk memulai perjalanan.
+                        @elseif($booking->status === 'returned')
+                            Kendaraan sudah dikembalikan.
+                            Silakan unggah **foto setelah** penggunaan untuk menyelesaikan booking.
+                        @endif
                     @else
                         Fill out the form below to request a vehicle booking
                     @endif
@@ -22,6 +29,7 @@
             </div>
 
             <div class="p-6">
+                {{-- Session Messages --}}
                 @if(session()->has('success'))
                     <div class="text-sm bg-green-50 border border-green-100 text-green-800 px-3 py-2 rounded-md mb-4">
                         {{ session('success') }}
@@ -33,50 +41,78 @@
                     </div>
                 @endif
 
-                {{-- EDIT MODE --}}
-                @if($isEdit && $editingBooking)
-                    <div class="mb-4 space-y-3">
+                {{--
+                KONDISI 1: STATE UPLOAD (jika $booking ada)
+                Tampilkan form untuk upload foto (before/after)
+                --}}
+                @if($booking)
+                    <div class="mb-4 space-y-3 border-b border-gray-200 pb-4">
                         <div class="text-sm text-gray-700">Nama: <span
-                                class="font-medium">{{ $editingBooking->borrower_name }}</span></div>
+                                class="font-medium">{{ $booking->borrower_name }}</span></div>
                         <div class="text-sm text-gray-700">Departemen: <span
-                                class="font-medium">{{ $departments->firstWhere('department_id', $editingBooking->department_id)->department_name ?? '-' }}</span>
+                                class="font-medium">{{ $departments->firstWhere('department_id', $booking->department_id)->department_name ?? '-' }}</span>
                         </div>
-                        <div class="text-sm text-gray-700">Tanggal: <span
-                                class="font-medium">{{ \Carbon\Carbon::parse($editingBooking->start_at)->format('Y-m-d') }}
-                                → {{ \Carbon\Carbon::parse($editingBooking->end_at)->format('Y-m-d') }}</span></div>
+                        <div class="text-sm text-gray-700">Kendaraan: <span
+                                class="font-medium">{{ $vehicles->firstWhere('vehicle_id', $booking->vehicle_id)->name ?? 'N/A' }}
+                                —
+                                {{ $vehicles->firstWhere('vehicle_id', $booking->vehicle_id)->plate_number ?? 'N/A' }}</span>
+                        </div>
                         <div class="text-sm text-gray-700">Waktu: <span
-                                class="font-medium">{{ \Carbon\Carbon::parse($editingBooking->start_at)->format('H:i') }} →
-                                {{ \Carbon\Carbon::parse($editingBooking->end_at)->format('H:i') }}</span></div>
+                                class="font-medium">{{ \Carbon\Carbon::parse($booking->start_at)->format('d M Y, H:i') }} →
+                                {{ \Carbon\Carbon::parse($booking->end_at)->format('d M Y, H:i') }}</span></div>
                         <div class="text-sm text-gray-700">Tujuan: <span
-                                class="font-medium">{{ $editingBooking->destination ?? '-' }}</span></div>
+                                class="font-medium">{{ $booking->destination ?? '-' }}</span></div>
                     </div>
 
-                    <form wire:submit.prevent="submit" enctype="multipart/form-data" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Foto Sebelum <span
-                                    class="text-red-600">*</span></label>
-                            <input wire:model="photo_before" type="file" accept="image/*" class="w-full text-xs">
-                            @error('photo_before') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                    <form wire:submit.prevent="handlePhotoUpload" enctype="multipart/form-data" class="space-y-4">
+                        {{-- Tampilkan input 'photo_before' HANYA JIKA status 'approved' --}}
+                        @if($booking->status === 'approved')
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Foto Sebelum <span
+                                        class="text-red-600">*</span></label>
+                                <input wire:model="photo_before" type="file" accept="image/*"
+                                    class="w-full text-sm border border-gray-300 rounded-md p-2">
+                                @error('photo_before') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                            </div>
+                        @endif
+
+                        {{-- Tampilkan input 'photo_after' HANYA JIKA status 'returned' --}}
+                        @if($booking->status === 'returned')
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Foto Setelah <span
+                                        class="text-red-600">*</span></label>
+                                <input wire:model="photo_after" type="file" accept="image/*"
+                                    class="w-full text-sm border border-gray-300 rounded-md p-2">
+                                @error('photo_after') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                            </div>
+                        @endif
+
+                        {{-- Loading indicator --}}
+                        <div wire:loading wire:target="photo_before, photo_after">
+                            <span class="text-sm text-blue-600">Uploading photo...</span>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Foto Setelah <span
-                                    class="text-red-600">*</span></label>
-                            <input wire:model="photo_after" type="file" accept="image/*" class="w-full text-xs">
-                            @error('photo_after') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                        </div>
+                        <div class="flex items-center gap-3 pt-2">
+                            <a href="{{ route('vehiclestatus') }}" wire:navigate
+                                class="px-4 py-2 rounded-md border border-gray-300 bg-white text-sm text-gray-700">Kembali
+                                ke Status</a>
 
-                        <div class="flex items-center gap-3">
-                            <button type="button" wire:click="$set('isEdit', false)"
-                                class="px-4 py-2 rounded-md border border-gray-200 bg-white">Cancel</button>
-                            <button type="submit" class="px-4 py-2 rounded-md bg-emerald-600 text-white">Upload &
-                                Selesai</button>
+                            @if($booking->status === 'approved')
+                                <button type="submit" class="px-4 py-2 rounded-md bg-emerald-600 text-white text-sm"
+                                    wire:loading.attr="disabled">Upload & Mulai Perjalanan</button>
+                            @elseif($booking->status === 'returned')
+                                <button type="submit" class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm"
+                                    wire:loading.attr="disabled">Upload & Selesaikan Booking</button>
+                            @endif
                         </div>
                     </form>
 
-                    {{-- CREATE MODE --}}
+                    {{--
+                    KONDISI 2: STATE CREATE (jika $booking == null)
+                    Tampilkan form untuk membuat booking baru
+                    --}}
                 @else
-                    <form wire:submit.prevent="submit" class="space-y-4" enctype="multipart/form-data">
+                    <form wire:submit.prevent="submitBooking" class="space-y-4" enctype="multipart/form-data">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {{-- Nama --}}
                             <div>
@@ -86,9 +122,9 @@
                                     <div
                                         class="w-full text-sm rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
                                         {{ $name }}</div>
-                                    <input type="hidden" wire:model.defer="name" />
+                                    <input type="hidden" wire:model="name" />
                                 @else
-                                    <input wire:model.defer="name" type="text" placeholder="Nama"
+                                    <input wire:model="name" type="text" placeholder="Nama"
                                         class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
                                 @endif
                                 @error('name') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
@@ -103,9 +139,9 @@
                                     <div
                                         class="w-full text-sm rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
                                         {{ $dept->department_name }}</div>
-                                    <input type="hidden" wire:model.defer="department_id" />
+                                    <input type="hidden" wire:model="department_id" />
                                 @else
-                                    <select wire:model.defer="department_id"
+                                    <select wire:model="department_id"
                                         class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
                                         <option value="">Select department</option>
                                         @foreach($departments as $d)
@@ -116,20 +152,20 @@
                                 @error('department_id') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                             </div>
 
-                            {{-- Pukul --}}
+                            {{-- Pukul Mulai --}}
                             <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Pukul <span
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Pukul Mulai <span
                                         class="text-red-600">*</span></label>
-                                <input wire:model.defer="start_time" type="time"
+                                <input wire:model="start_time" type="time"
                                     class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
                                 @error('start_time') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                             </div>
 
-                            {{-- Selesai Pukul --}}
+                            {{-- Pukul Selesai --}}
                             <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Selesai Pukul <span
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Pukul Selesai <span
                                         class="text-red-600">*</span></label>
-                                <input wire:model.defer="end_time" type="time"
+                                <input wire:model="end_time" type="time"
                                     class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
                                 @error('end_time') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                             </div>
@@ -138,7 +174,7 @@
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Tanggal Peminjaman <span
                                         class="text-red-600">*</span></label>
-                                <input wire:model.defer="date_from" type="date"
+                                <input wire:model.live="date_from" type="date"
                                     class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
                                 @error('date_from') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                             </div>
@@ -147,7 +183,7 @@
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Tanggal Pengembalian <span
                                         class="text-red-600">*</span></label>
-                                <input wire:model.defer="date_to" type="date"
+                                <input wire:model.live="date_to" type="date"
                                     class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
                                 @error('date_to') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                             </div>
@@ -156,7 +192,7 @@
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Keperluan <span
                                         class="text-red-600">*</span></label>
-                                <input wire:model.defer="purpose" type="text" placeholder="Uraian singkat keperluan"
+                                <input wire:model="purpose" type="text" placeholder="Uraian singkat keperluan"
                                     class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
                                 @error('purpose') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                             </div>
@@ -164,15 +200,15 @@
                             {{-- Tujuan Lokasi --}}
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Tujuan Lokasi</label>
-                                <input wire:model.defer="destination" type="text"
-                                    placeholder="Contoh: Kantor Cabang Cibubur" class="w-full text-sm rounded-...">
+                                <input wire:model="destination" type="text" placeholder="Contoh: Kantor Cabang Cibubur"
+                                    class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
                                 @error('destination') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                             </div>
 
                             {{-- Odd/Even --}}
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Masuk Area Ganjil/Genap</label>
-                                <select wire:model.defer="odd_even_area"
+                                <select wire:model="odd_even_area"
                                     class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
                                     <option value="tidak">Tidak Masuk</option>
                                     <option value="ganjil">Ganjil</option>
@@ -181,28 +217,30 @@
                                 @error('odd_even_area') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                             </div>
 
-                            {{-- Jenis Keperluan --}}
+                            {{-- Jenis Keperluan (diubah valuenya agar sesuai DB) --}}
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Jenis Keperluan</label>
-                                <select wire:model.defer="jenis_keperluan"
+                                <select wire:model="jenis_keperluan"
                                     class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
                                     <option value="">Pilih Keperluan</option>
-                                    <option value="visitasi">Visitasi</option>
-                                    <option value="logistik barang">Logistik Barang</option>
+                                    <option value="dinas">Dinas (Visitasi)</option>
+                                    <option value="operasional">Operasional (Logistik Barang)</option>
+                                    <option value="antar_jemput">Antar Jemput</option>
+                                    <option value="lainnya">Lainnya</option>
                                 </select>
                                 @error('jenis_keperluan') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             {{-- Kendaraan --}}
-                            <div>
+                            <div class="md:col-span-2">
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Kendaraan (opsional)</label>
-                                <select wire:model.defer="vehicle_id" @if(!$hasVehicles) disabled @endif
+                                <select wire:model.live="vehicle_id" @if(!$hasVehicles) disabled @endif
                                     class="w-full text-sm rounded-md border border-gray-300 px-3 py-2 bg-white">
                                     @if(!$hasVehicles)
                                         <option value="">Data kendaraan belum tersedia</option>
                                     @else
-                                        <option value="">Select vehicle</option>
+                                        <option value="">Pilih kendaraan jika tahu</option>
                                         @foreach($vehicles as $v)
                                             @php
                                                 $id = $v->vehicle_id ?? $v->id;
@@ -213,46 +251,38 @@
                                         @endforeach
                                     @endif
                                 </select>
-                            </div>
-
-                            {{-- Foto before --}}
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Foto Sebelum</label>
-                                <input wire:model="photo_before" type="file" accept="image/*" class="w-full text-xs">
-                                @error('photo_before') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-
-                            {{-- Foto after --}}
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Foto Setelah</label>
-                                <input wire:model="photo_after" type="file" accept="image/*" class="w-full text-xs">
-                                @error('photo_after') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                                @error('vehicle_id') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                             </div>
                         </div>
 
-                        {{-- syarat --}}
-                        <div class="mt-3 text-sm">
-                            <div class="flex items-start gap-4">
+                        {{-- Syarat & Ketentuan --}}
+                        <div class="mt-3 text-sm border-t border-gray-200 pt-4">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                 <label class="inline-flex items-center">
-                                    <input wire:model.defer="has_sim_a" type="checkbox" class="mr-2">
+                                    <input wire:model="has_sim_a" type="checkbox" class="rounded mr-2 border-gray-400">
                                     Saya memiliki SIM A (wajib)
                                 </label>
 
                                 <label class="inline-flex items-center">
-                                    <input wire:model.defer="agree_terms" type="checkbox" class="mr-2">
-                                    Saya Menyetujui Syarat dan Ketentuan diatas <span class="text-red-600">*</span>
+                                    <input wire:model="agree_terms" type="checkbox" class="rounded mr-2 border-gray-400">
+                                    Saya Menyetujui Syarat dan Ketentuan <span class="text-red-600">*</span>
                                 </label>
                             </div>
+                            {{-- INI PERBAIKANNYA --}}
                             @error('has_sim_a') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                             @error('agree_terms') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                         </div>
 
-                        {{-- actions --}}
+                        {{-- Actions --}}
                         <div class="mt-4 flex items-center gap-3">
                             <button type="button" wire:click="resetForm"
-                                class="px-4 py-2 rounded-md border border-gray-200 text-sm bg-white">Clear Form</button>
-                            <button type="submit" class="px-4 py-2 rounded-md bg-slate-900 text-white text-sm">Submit
-                                Request</button>
+                                class="px-4 py-2 rounded-md border border-gray-300 text-sm bg-white text-gray-700">Clear
+                                Form</button>
+                            <button type="submit" class="px-4 py-2 rounded-md bg-slate-900 text-white text-sm"
+                                wire:loading.attr="disabled">
+                                <span wire:loading.remove wire:target="submitBooking">Submit Request</span>
+                                <span wire:loading wire:target="submitBooking">Sending...</span>
+                            </button>
                         </div>
                     </form>
                 @endif
@@ -265,14 +295,19 @@
         {{-- Availability --}}
         <div class="bg-white border-2 border-black/5 rounded-2xl shadow-sm p-5">
             <h3 class="text-base font-medium">Vehicle Availability</h3>
-            <div class="text-xs text-gray-500 mt-1 mb-3">For selected date: {{ $date_from ?? '—' }} —
-                {{ $start_time ?? '' }}</div>
+            <div class="text-xs text-gray-500 mt-1 mb-3">
+                @if($date_from && $start_time)
+                    For: {{ \Carbon\Carbon::parse($date_from)->format('d M Y') }}, {{ $start_time }}
+                @else
+                    For: (Pilih tanggal & jam)
+                @endif
+            </div>
 
             <div class="space-y-3" wire:poll.5000ms="loadAvailability">
-                @foreach($availability as $a)
+                @forelse($availability as $a)
                     <div
                         class="flex items-center justify-between rounded-md px-3 py-2
-                            {{ $a['status'] === 'available' ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100' }}">
+                                {{ $a['status'] === 'available' ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100' }}">
                         <div class="flex items-center gap-3">
                             <span
                                 class="w-2 h-2 rounded-full {{ $a['status'] === 'available' ? 'bg-emerald-500' : 'bg-red-600' }}"></span>
@@ -283,42 +318,52 @@
                             {{ $a['status'] === 'available' ? 'Available' : 'Booked' }}
                         </div>
                     </div>
-                @endforeach
+                @empty
+                    <div class="text-xs text-gray-500">Pilih tanggal dan jam untuk cek ketersediaan.</div>
+                @endforelse
             </div>
         </div>
 
         {{-- Recent bookings --}}
         <div class="bg-white border-2 border-black/5 rounded-2xl shadow-sm p-5">
-            <h3 class="text-base font-medium">Recent Bookings</h3>
+            <h3 class="text-base font-medium">My Dept's Recent Bookings</h3>
             <div class="mt-3 space-y-3 text-sm">
                 @forelse($recentBookings as $rb)
+                    @php
+                        $statusText = str_replace('_', ' ', ucfirst($rb->status));
+                        $statusColorClass = [
+                            'pending' => 'bg-yellow-100 text-yellow-800',
+                            'approved' => 'bg-emerald-100 text-emerald-800',
+                            'on_progress' => 'bg-blue-100 text-blue-800',
+                            'returned' => 'bg-indigo-100 text-indigo-800',
+                            'completed' => 'bg-gray-100 text-gray-700',
+                            'rejected' => 'bg-red-100 text-red-800',
+                            'cancelled' => 'bg-gray-100 text-gray-700',
+                        ][$rb->status] ?? 'bg-gray-100 text-gray-700';
+                    @endphp
                     <div class="flex items-start gap-3">
-                        <div class="w-3 h-3 rounded-full bg-gray-300 mt-1"></div>
+                        <div
+                            class="w-3 h-3 rounded-full {{ $rb->status === 'completed' ? 'bg-gray-300' : 'bg-blue-400' }} mt-1">
+                        </div>
                         <div class="flex-1">
                             <div class="font-medium text-gray-800">{{ $rb->borrower_name ?? ($rb->purpose ?? 'Booking') }}
                             </div>
                             <div class="text-xs text-gray-500">
-                                {{ \Carbon\Carbon::parse($rb->start_at ?? now())->format('M d, Y H:i') }}</div>
+                                {{ \Carbon\Carbon::parse($rb->start_at ?? now())->format('M d, H:i') }}</div>
                         </div>
-                        <div
-                            class="text-xs px-2 py-1 rounded-md {{ $rb->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ($rb->status === 'approved' ? 'bg-emerald-100 text-emerald-800' : ($rb->status === 'draft' ? 'bg-sky-100 text-sky-800' : 'bg-gray-100 text-gray-700')) }}">
-                            {{ ucfirst($rb->status ?? 'pending') }}
+                        <div class="text-xs px-2 py-1 rounded-md {{ $statusColorClass }}">
+                            {{ $statusText }}
                         </div>
                     </div>
                 @empty
-                    <div class="text-xs text-gray-500">No recent bookings.</div>
+                    <div class="text-xs text-gray-500">No recent bookings from your department.</div>
                 @endforelse
             </div>
 
-            <div class="mt-3 text-xs text-gray-500">
-                Catatan: Setelah admin <span class="font-medium">approve</span>, buka halaman ini dengan query
-                <code>?edit=&lt;booking_id&gt;</code> untuk upload foto.
+            <div class="mt-4 text-xs text-gray-500 border-t border-gray-200 pt-3">
+                Catatan: Aksi upload foto akan muncul di halaman <a href="{{ route('vehiclestatus') }}" wire:navigate
+                    class="text-blue-600 hover:underline">Vehicle Status</a>.
             </div>
-        </div>
-
-        {{-- helper --}}
-        <div class="bg-white border-2 border-black/5 rounded-2xl shadow-sm p-4 text-sm text-gray-600">
-            Tip: Pastikan mengisi tanggal & jam dengan benar. Jika kendaraan belum tersedia, hubungi FM Ops.
         </div>
     </div>
 </div>
