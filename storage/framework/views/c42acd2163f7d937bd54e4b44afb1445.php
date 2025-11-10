@@ -280,41 +280,83 @@
                                                 </span>
                                             </div>
 
-                                            <div class="flex flex-wrap items-center gap-4 text-[13px] text-gray-600">
-                                                
-                                                <span class="flex items-center gap-1.5">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    <?php echo e(fmtDate($b->date)); ?>
-
-                                                </span>
-
-                                                
-                                                <span class="flex items-center gap-1.5">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    <?php echo e(fmtTime($b->start_time)); ?>–<?php echo e(fmtTime($b->end_time)); ?>
-
-                                                </span>
-
-                                                
-                                                <!--[if BLOCK]><![endif]--><?php if($isRoomType): ?>
-                                                    <span class="<?php echo e($chip); ?>">
-                                                        <svg class="w-3.5 h-3.5 text-gray-500"
-                                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="flex flex-col gap-2 text-[13px] text-gray-600">
+                                                <div class="flex flex-wrap items-center gap-4">
+                                                    
+                                                    <span class="flex items-center gap-1.5">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                         </svg>
-                                                        <span class="font-medium <?php echo e($b->room?->room_name ? 'text-gray-700' : 'text-rose-500'); ?>">
-                                                            Room: <?php echo e($b->room?->room_name ?? 'Belum dipilih'); ?>
+                                                        <?php echo e(fmtDate($b->date)); ?>
 
-                                                        </span>
                                                     </span>
-                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+                                                    
+                                                    <span class="flex items-center gap-1.5">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        <?php echo e(fmtTime($b->start_time)); ?>–<?php echo e(fmtTime($b->end_time)); ?>
+
+                                                    </span>
+
+                                                    
+                                                    <!--[if BLOCK]><![endif]--><?php if($isRoomType): ?>
+                                                        <span class="<?php echo e($chip); ?>">
+                                                            <svg class="w-3.5 h-3.5 text-gray-500"
+                                                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                            </svg>
+                                                            <span class="font-medium <?php echo e($b->room?->room_name ? 'text-gray-700' : 'text-rose-500'); ?>">
+                                                                Room: <?php echo e($b->room?->room_name ?? 'Belum dipilih'); ?>
+
+                                                            </span>
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <!--[if BLOCK]><![endif]--><?php if($b->online_meeting_url): ?>
+                                                            
+                                                            <a href="<?php echo e($b->online_meeting_url); ?>"
+                                                               target="_blank"
+                                                               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-medium transition">
+                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                </svg>
+                                                                Join Meeting
+                                                            </a>
+
+                                                            
+                                                            <div class="mt-1 space-y-0.5 text-[11px] text-gray-600">
+                                                                <div class="flex flex-wrap items-center gap-1">
+                                                                    <span class="font-medium">Link:</span>
+                                                                    <a href="<?php echo e($b->online_meeting_url); ?>"
+                                                                       target="_blank"
+                                                                       class="break-all hover:underline">
+                                                                        <?php echo e($b->online_meeting_url); ?>
+
+                                                                    </a>
+                                                                </div>
+
+                                                                <!--[if BLOCK]><![endif]--><?php if($b->online_meeting_code): ?>
+                                                                    <div class="flex flex-wrap items-center gap-1">
+                                                                        <span class="font-medium">Code:</span>
+                                                                        <span><?php echo e($b->online_meeting_code); ?></span>
+                                                                    </div>
+                                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+                                                                <!--[if BLOCK]><![endif]--><?php if($b->online_meeting_password): ?>
+                                                                    <div class="flex flex-wrap items-center gap-1">
+                                                                        <span class="font-medium">Password:</span>
+                                                                        <span><?php echo e($b->online_meeting_password); ?></span>
+                                                                    </div>
+                                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                            </div>
+                                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                </div>
                                             </div>
 
                                             <!--[if BLOCK]><![endif]--><?php if($b->book_reject): ?>
@@ -396,41 +438,85 @@
                                                 </span>
                                             </div>
 
-                                            <div class="flex flex-wrap items-center gap-4 text-[13px] text-gray-600">
-                                                
-                                                <span class="flex items-center gap-1.5">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    <?php echo e(fmtDate($b->date)); ?>
-
-                                                </span>
-
-                                                
-                                                <span class="flex items-center gap-1.5">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    <?php echo e(fmtTime($b->start_time)); ?>–<?php echo e(fmtTime($b->end_time)); ?>
-
-                                                </span>
-
-                                                
-                                                <!--[if BLOCK]><![endif]--><?php if($isRoomType): ?>
-                                                    <span class="<?php echo e($chip); ?>">
-                                                        <svg class="w-3.5 h-3.5 text-gray-500"
-                                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="flex flex-col gap-2 text-[13px] text-gray-600">
+                                                <div class="flex flex-wrap items-center gap-4">
+                                                    
+                                                    <span class="flex items-center gap-1.5">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                         </svg>
-                                                        <span class="font-medium text-gray-700">
-                                                            Room: <?php echo e($b->room?->room_name ?? '—'); ?>
+                                                        <?php echo e(fmtDate($b->date)); ?>
 
-                                                        </span>
                                                     </span>
-                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+                                                    
+                                                    <span class="flex items-center gap-1.5">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        <?php echo e(fmtTime($b->start_time)); ?>–<?php echo e(fmtTime($b->end_time)); ?>
+
+                                                    </span>
+
+                                                    
+                                                    <!--[if BLOCK]><![endif]--><?php if($isRoomType): ?>
+                                                        <span class="<?php echo e($chip); ?>">
+                                                            <svg class="w-3.5 h-3.5 text-gray-500"
+                                                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                            </svg>
+                                                            <span class="font-medium text-gray-700">
+                                                                Room: <?php echo e($b->room?->room_name ?? '—'); ?>
+
+                                                            </span>
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <!--[if BLOCK]><![endif]--><?php if($b->online_meeting_url): ?>
+                                                            
+                                                            <a href="<?php echo e($b->online_meeting_url); ?>"
+                                                               target="_blank"
+                                                               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-medium transition">
+                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                </svg>
+                                                                Join Meeting
+                                                            </a>
+
+                                                            
+                                                            <div class="mt-1 space-y-0.5 text-[11px] text-gray-600">
+                                                                <div class="flex flex-wrap items-center gap-1">
+           
+
+                                                                    <span class="font-medium">Link:</span>
+                                                                    <a href="<?php echo e($b->online_meeting_url); ?>"
+                                                                       target="_blank"
+                                                                       class="break-all hover:underline">
+                                                                        <?php echo e($b->online_meeting_url); ?>
+
+                                                                    </a>
+                                                                </div>
+
+                                                                <!--[if BLOCK]><![endif]--><?php if($b->online_meeting_code): ?>
+                                                                    <div class="flex flex-wrap items-center gap-1">
+                                                                        <span class="font-medium">Code:</span>
+                                                                        <span><?php echo e($b->online_meeting_code); ?></span>
+                                                                    </div>
+                                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+                                                                <!--[if BLOCK]><![endif]--><?php if($b->online_meeting_password): ?>
+                                                                    <div class="flex flex-wrap items-center gap-1">
+                                                                        <span class="font-medium">Password:</span>
+                                                                        <span><?php echo e($b->online_meeting_password); ?></span>
+                                                                    </div>
+                                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                            </div>
+                                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                </div>
                                             </div>
 
                                             <!--[if BLOCK]><![endif]--><?php if($b->book_reject): ?>
@@ -445,15 +531,22 @@
                                     
                                     <div class="text-right shrink-0 space-y-2">
                                         <div class="flex flex-wrap gap-2 justify-end pt-1.5">
+                                            
                                             <button type="button"
-                                                    wire:click="openReschedule(<?php echo e($b->bookingroom_id); ?>)"
+                                                    x-data
+                                                    @click="
+                                                        if (confirm('Are you sure want to cancel this request?')) {
+                                                            $wire.openReschedule(<?php echo e($b->bookingroom_id); ?>);
+                                                        }
+                                                    "
                                                     wire:loading.attr="disabled"
-                                                    class="<?php echo e($btnGhost); ?>">
+                                                    wire:target="openReschedule"
+                                                    class="px-3 py-2 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600/20 disabled:opacity-60 transition">
                                                 <svg class="w-3.5 h-3.5 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
-                                                          d="M12 6v6l3 3M4 4l2.5 2.5M20 4l-2.5 2.5M4 20l2.5-2.5M20 20l-2.5-2.5" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                                          d="M6 18L18 6M6 6l12 12"/>
                                                 </svg>
-                                                Reschedule
+                                                Cancel
                                             </button>
                                         </div>
 
@@ -676,5 +769,145 @@
                 </div>
             </div>
         <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+        
+        <!--[if BLOCK]><![endif]--><?php if($showRescheduleModal): ?>
+            <div class="fixed inset-0 z-50 flex items-center justify-center">
+                <div class="absolute inset-0 bg-black/40" wire:click="closeReschedule"></div>
+
+                <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4">
+                    <form wire:submit.prevent="submitReschedule">
+                        <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-900">Reschedule Booking</h3>
+                                <p class="text-xs text-gray-500">
+                                    Atur ulang tanggal, waktu, dan ruangan. Alasan reschedule wajib diisi.
+                                </p>
+                            </div>
+                            <button type="button"
+                                    class="text-gray-400 hover:text-gray-600"
+                                    wire:click="closeReschedule">
+                                ✕
+                            </button>
+                        </div>
+
+                        <div class="px-5 py-4 space-y-4">
+                            
+                            <div>
+                                <label class="<?php echo e($label); ?>">Tanggal baru</label>
+                                <input type="date"
+                                       class="<?php echo e($input); ?>"
+                                       wire:model.live="rescheduleDate"
+                                       required>
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['rescheduleDate'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <p class="text-xs text-rose-600 mt-1"><?php echo e($message); ?></p>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                            </div>
+
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="<?php echo e($label); ?>">Jam mulai</label>
+                                    <input type="time"
+                                           class="<?php echo e($input); ?>"
+                                           wire:model.live="rescheduleStart"
+                                           required>
+                                    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['rescheduleStart'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                        <p class="text-xs text-rose-600 mt-1"><?php echo e($message); ?></p>
+                                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                </div>
+                                <div>
+                                    <label class="<?php echo e($label); ?>">Jam selesai</label>
+                                    <input type="time"
+                                           class="<?php echo e($input); ?>"
+                                           wire:model.live="rescheduleEnd"
+                                           required>
+                                    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['rescheduleEnd'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                        <p class="text-xs text-rose-600 mt-1"><?php echo e($message); ?></p>
+                                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                </div>
+                            </div>
+
+                            
+                            <div>
+                                <label class="<?php echo e($label); ?>">Ruangan (opsional)</label>
+                                <select class="<?php echo e($input); ?>"
+                                        wire:model.live="rescheduleRoomId">
+                                    <option value="">Pilih ruangan…</option>
+                                    <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $roomsOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($r['id']); ?>"><?php echo e($r['label']); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
+                                </select>
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['rescheduleRoomId'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <p class="text-xs text-rose-600 mt-1"><?php echo e($message); ?></p>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                            </div>
+
+                            
+                            <div>
+                                <label class="<?php echo e($label); ?>">Alasan reschedule <span class="text-rose-600">*</span></label>
+                                <textarea rows="3"
+                                          class="<?php echo e($input); ?> resize-none"
+                                          wire:model.live="rescheduleReason"
+                                          required></textarea>
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['rescheduleReason'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <p class="text-xs text-rose-600 mt-1"><?php echo e($message); ?></p>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                            </div>
+                        </div>
+
+                        <div class="px-5 py-3 border-t border-gray-200 flex items-center justify-end gap-2 bg-gray-50">
+                            <button type="button"
+                                    class="<?php echo e($btnGhost); ?>"
+                                    wire:click="closeReschedule">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                    class="<?php echo e($btnBlk); ?>"
+                                    wire:loading.attr="disabled"
+                                    wire:target="submitReschedule">
+                                Simpan Reschedule
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
     </main>
-</div><?php /**PATH C:\Users\Ochie\OneDrive\Documents\GitHub\Frontend-KRB\resources\views/livewire/pages/receptionist/bookings-approval.blade.php ENDPATH**/ ?>
+</div>
+<?php /**PATH C:\Users\Ochie\OneDrive\Documents\GitHub\Frontend-KRB\resources\views/livewire/pages/receptionist/bookings-approval.blade.php ENDPATH**/ ?>

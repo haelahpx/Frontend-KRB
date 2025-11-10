@@ -60,7 +60,7 @@ class BookingsApproval extends Component
     // Room select in reschedule modal
     /** @var array<int,array{id:int,label:string}> */
     public array $roomsOptions = [];
-    public bool $rescheduleRoomEnabled = false;
+    public bool $rescheduleRoomEnabled = false; // tidak dipakai di Blade, tapi boleh tetap ada
     public ?int $rescheduleRoomId = null;
 
     private string $tz = 'Asia/Jakarta';
@@ -426,13 +426,6 @@ class BookingsApproval extends Component
         $this->rescheduleRoomId      = $b->room_id ?: null;
 
         $this->showRescheduleModal = true;
-
-        $this->dispatch(
-            'toast',
-            type: 'warning',
-            title: 'Reschedule',
-            message: 'Do you really want to cancel this request? Please set the new schedule.'
-        );
     }
 
     public function closeReschedule(): void
@@ -455,11 +448,9 @@ class BookingsApproval extends Component
             'rescheduleStart'  => 'required|date_format:H:i',
             'rescheduleEnd'    => 'required|date_format:H:i|after:rescheduleStart',
             'rescheduleReason' => 'required|string|min:3|max:500',
+            // room opsional, tapi kalau diisi harus valid
+            'rescheduleRoomId' => 'nullable|integer|exists:rooms,room_id',
         ];
-
-        if ($this->rescheduleRoomEnabled) {
-            $rules['rescheduleRoomId'] = 'required|integer|exists:rooms,room_id';
-        }
 
         $this->validate($rules);
 
@@ -468,17 +459,25 @@ class BookingsApproval extends Component
                 /** @var BookingRoom $b */
                 $b = BookingRoom::lockForUpdate()->findOrFail($this->rescheduleId);
 
-                $start = Carbon::createFromFormat('Y-m-d H:i', "{$this->rescheduleDate} {$this->rescheduleStart}", $this->tz);
-                $end   = Carbon::createFromFormat('Y-m-d H:i', "{$this->rescheduleDate} {$this->rescheduleEnd}", $this->tz);
+                $start = Carbon::createFromFormat(
+                    'Y-m-d H:i',
+                    "{$this->rescheduleDate} {$this->rescheduleStart}",
+                    $this->tz
+                );
+                $end   = Carbon::createFromFormat(
+                    'Y-m-d H:i',
+                    "{$this->rescheduleDate} {$this->rescheduleEnd}",
+                    $this->tz
+                );
 
                 if ($end->lte($start)) {
                     throw new \RuntimeException('Waktu tidak valid (end <= start).');
                 }
 
-                $roomId = $this->rescheduleRoomEnabled
-                    ? $this->rescheduleRoomId
-                    : $b->room_id;
+                // Kalau user pilih room baru, pakai itu; kalau tidak, pakai room lama
+                $roomId = $this->rescheduleRoomId ?: $b->room_id;
 
+                // Cek bentrok hanya untuk booking offline
                 if (!in_array($b->booking_type, ['online_meeting', 'onlinemeeting']) && $roomId) {
                     $overlap = BookingRoom::query()
                         ->where('bookingroom_id', '!=', $b->bookingroom_id)
