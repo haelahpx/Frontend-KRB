@@ -22,6 +22,7 @@ class Information extends Model
         'department_id',   // NEW
         'description',
         'event_at',
+        'user_id',
     ];
 
     protected function casts(): array
