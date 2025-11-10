@@ -61,10 +61,13 @@
                     <option value="all">All</option>
                     <option value="pending">Pending</option>
                     <option value="approved">Approved</option>
-                    <option value="in_use">In Use</option>
+                    {{-- GANTI: 'in_use' menjadi 'on_progress' --}}
+                    <option value="on_progress">On Progress</option> 
                     <option value="returned">Returned</option>
                     <option value="rejected">Rejected</option>
                     <option value="completed">Completed</option>
+                    {{-- BARU: Menambahkan status 'cancelled' --}}
+                    <option value="cancelled">Cancelled</option>
                 </select>
             </div>
         </div>
@@ -77,20 +80,51 @@
                     $dateStr = $start->format('D, M j, Y');
                     $timeStr = $start->format('H:i').'–'.$end->format('H:i');
                     $vehicleName = $vehicleMap[$b->vehicle_id] ?? 'Unknown';
+                    
+                    // GANTI: 'in_use' menjadi 'on_progress' dan tambahkan status baru
                     $statusColor = [
-                        'pending'   => 'bg-amber-50 text-amber-700 border-2 border-amber-500',
-                        'approved'  => 'bg-emerald-50 text-emerald-700 border-2 border-emerald-500',
-                        'in_use'    => 'bg-blue-50 text-blue-700 border-2 border-blue-500',
-                        'returned'  => 'bg-indigo-50 text-indigo-700 border-2 border-indigo-500',
-                        'rejected'  => 'bg-rose-50 text-rose-700 border-2 border-rose-500',
-                        'completed' => 'bg-slate-50 text-slate-700 border-2 border-slate-500',
+                        'pending'     => 'bg-amber-50 text-amber-700 border-2 border-amber-500',
+                        'approved'    => 'bg-emerald-50 text-emerald-700 border-2 border-emerald-500',
+                        'on_progress' => 'bg-blue-50 text-blue-700 border-2 border-blue-500', // Ganti dari in_use
+                        'returned'    => 'bg-indigo-50 text-indigo-700 border-2 border-indigo-500',
+                        'rejected'    => 'bg-rose-50 text-rose-700 border-2 border-rose-500',
+                        'completed'   => 'bg-slate-50 text-slate-700 border-2 border-slate-500',
+                        'cancelled'   => 'bg-gray-50 text-gray-700 border-2 border-gray-400',
                     ][$b->status] ?? 'bg-slate-50 text-slate-700 border-2 border-slate-400';
 
                     $beforeC = $photoCounts[$b->vehiclebooking_id]['before'] ?? 0;
                     $afterC  = $photoCounts[$b->vehiclebooking_id]['after'] ?? 0;
+
+                    // BARU: Tentukan apakah card bisa di-klik (untuk upload foto)
+                    $isClickable = in_array($b->status, ['approved', 'returned']);
+                    $cardTag = $isClickable ? 'a' : 'div';
+                    $cardLink = $isClickable ? route('book-vehicle', ['id' => $b->vehiclebooking_id]) : null;
                 @endphp
 
-                <div class="relative bg-white rounded-xl border-2 border-black/80 shadow-md p-4 md:p-5 hover:shadow-lg hover:-translate-y-0.5 transition">
+                {{-- BARU: Wrapper card dibuat dinamis (<a> atau <div>) --}}
+                <{{ $cardTag }} 
+                    @if($isClickable) 
+                        href="{{ $cardLink }}" 
+                        wire:navigate 
+                        class="block relative bg-white rounded-xl border-2 border-black/80 shadow-md p-4 md:p-5 hover:shadow-lg hover:border-blue-500 hover:-translate-y-0.5 transition"
+                    @else
+                        class="relative bg-white rounded-xl border-2 border-black/80 shadow-md p-4 md:p-5 transition"
+                    @endif
+                >
+                    {{-- BARU: Tambahkan notifikasi jika bisa di-klik untuk upload foto --}}
+                    @if($isClickable)
+                        <div class="absolute top-3 right-16 px-2 py-0.5 rounded-md 
+                                    @if($b->status == 'approved') bg-emerald-100 text-emerald-700 
+                                    @else bg-indigo-100 text-indigo-700 @endif 
+                                    text-xs font-bold animate-pulse">
+                            @if($b->status == 'approved')
+                                Upload Foto (Before)
+                            @else
+                                Upload Foto (After)
+                            @endif
+                        </div>
+                    @endif
+
                     <div class="flex items-start justify-between gap-4 mb-2">
                         <div class="flex-1 min-w-0">
                             <h3 class="text-base md:text-lg font-semibold text-gray-900 truncate">
@@ -132,6 +166,7 @@
                         <div class="flex items-center gap-2">
                             <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium {{ $statusColor }}">
                                 <x-heroicon-o-check-badge class="w-4 h-4"/>
+                                {{-- GANTI: Tampilkan status 'On Progress' --}}
                                 {{ str_replace('_',' ',ucfirst($b->status)) }}
                             </span>
                         </div>
@@ -153,7 +188,8 @@
                         @if(isset($b->odd_even_area))
                             <div class="inline-flex items-center gap-1">
                                 <x-heroicon-o-arrows-right-left class="w-4 h-4"/>
-                                <span class="font-semibold">Odd/Even Area:</span> {{ $b->odd_even_area === 'ya' ? 'Ya' : 'Tidak' }}
+                                {{-- GANTI: Logika 'ya'/'tidak' dari DB lama diubah --}}
+                                <span class="font-semibold">Odd/Even Area:</span> {{ ucfirst($b->odd_even_area) }}
                             </div>
                         @endif
                         @if(!empty($b->destination))
@@ -199,18 +235,7 @@
                         <x-heroicon-o-arrow-path class="w-3.5 h-3.5"/>
                         <span>Updated: {{ optional($b->updated_at)->format('Y-m-d H:i') }}</span>
                     </div>
-
-                    {{-- Upload button (NEW) --}}
-                    @if(in_array($b->status, ['in_use','returned']))
-                        <div class="mt-4 flex justify-end">
-                            <button type="button"
-                                    wire:click="openUpload({{ $b->vehiclebooking_id }})"
-                                    class="px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
-                                Upload Before / After Photo
-                            </button>
-                        </div>
-                    @endif
-                </div>
+                </{{ $cardTag }}> {{-- BARU: Penutup <a> atau <div> --}}
             @empty
                 <div class="rounded-lg border-2 border-dashed border-gray-300 p-10 text-center text-gray-600">
                     Belum ada data pada filter ini.
