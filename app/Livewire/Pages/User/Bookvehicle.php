@@ -212,10 +212,7 @@ class Bookvehicle extends Component
                 // Simpan ke local storage
                 $this->uploadToLocalStorageAndSave($this->photo_after, 'after', $bookingId, $userId);
 
-                // Update status booking
-                $this->booking->update(['status' => 'completed']);
-
-                session()->flash('success', 'Foto "SESUDAH" berhasil diunggah. Booking Selesai (Status: Completed).');
+                session()->flash('success', 'Foto "SESUDAH" berhasil diunggah.');
             }
 
         } catch (\Exception $e) {

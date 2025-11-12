@@ -193,12 +193,12 @@ class Vehiclestatus extends Component
         // PERBAIKAN: Logika filter tab disesuaikan
         if ($this->statusTab === 'pending') {
             $query->where('status', 'pending');
+        } elseif ($this ->statusTab === 'approved') {
+            $query->whereIn('status', ['approved']);
         } elseif ($this->statusTab === 'on_progress') {
-            // Tab 'On Progress' (sebelumnya 'In Use') sekarang memonitor:
-            // 'approved' (menunggu foto before)
-            // 'on_progress' (sedang dipakai)
-            // 'returned' (menunggu foto after)
-            $query->whereIn('status', ['approved', 'on_progress', 'returned']);
+            $query->whereIn('status', ['on_progress']);
+        } elseif ($this->statusTab === 'returned') {
+            $query->where('status', 'returned');
         }
 
         if (!empty($this->selectedDate)) {
