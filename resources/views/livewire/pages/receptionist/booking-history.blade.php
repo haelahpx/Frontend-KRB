@@ -650,6 +650,22 @@
                                 </div>
                             @endif
 
+                            {{-- Rejection reason (only when status = rejected) --}}
+                            @if(($form['status'] ?? null) === 'rejected')
+                                <div>
+                                    <label class="{{ $label }}">Reject Reason <span class="text-rose-600">*</span></label>
+                                    <textarea
+                                        class="{{ $input }} !h-auto resize-none"
+                                        rows="3"
+                                        placeholder="Tuliskan alasan penolakan…"
+                                        wire:model.live="form.book_reject"
+                                    ></textarea>
+                                    @error('form.book_reject')
+                                        <p class="text-sm text-rose-600 mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            @endif
+
                             <div>
                                 <label class="{{ $label }}">Notes</label>
                                 <textarea class="{{ $input }} !h-auto resize-none"

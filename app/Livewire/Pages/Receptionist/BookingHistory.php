@@ -61,6 +61,7 @@ class BookingHistory extends Component
         'online_provider' => null,
         'notes'           => '',
         'status'          => 'completed',
+        'book_reject'     => '',     // ⬅️ reason (required if rejected)
     ];
 
     // Tabs: done | rejected
@@ -236,6 +237,7 @@ class BookingHistory extends Component
                 : null,
             'notes'           => '',
             'status'          => $status,
+            'book_reject'     => '', // ⬅️ NEW
         ];
 
         $this->showModal = true;
@@ -258,9 +260,18 @@ class BookingHistory extends Component
             'online_provider' => (string) ($row->online_provider ?? ''),
             'notes'           => (string) ($row->notes ?? ''),
             'status'          => $this->normalizeDbStatus($row->status),
+            'book_reject'     => (string) ($row->book_reject ?? ''), // ⬅️ NEW
         ];
 
         $this->showModal = true;
+    }
+
+    public function updatedFormStatus($value): void
+    {
+        // UX: clear reason when not rejected
+        if ($value !== 'rejected') {
+            $this->form['book_reject'] = '';
+        }
     }
 
     public function save(): void
@@ -283,6 +294,7 @@ class BookingHistory extends Component
                     : null,
                 'notes'           => $data['notes'],
                 'status'          => $statusForDb,
+                'book_reject'     => $statusForDb === 'rejected' ? ($data['book_reject'] ?? null) : null, // ⬅️ NEW
                 'user_id'         => Auth::id(),
             ]);
         } else {
@@ -302,6 +314,7 @@ class BookingHistory extends Component
                     : null,
                 'notes'           => $data['notes'],
                 'status'          => $statusForDb,
+                'book_reject'     => $statusForDb === 'rejected' ? ($data['book_reject'] ?? null) : null, // ⬅️ NEW
             ]);
         }
 
@@ -389,11 +402,13 @@ class BookingHistory extends Component
             'form.online_provider' => [$isRoomType ? 'nullable' : 'required', Rule::in(['zoom', 'google_meet'])],
             'form.notes'           => ['nullable', 'string', 'max:1000'],
             'form.status'          => ['required', Rule::in(['completed', 'rejected'])],
+            // required if rejected
+            'form.book_reject'     => ['nullable', 'string', 'max:500', 'required_if:form.status,rejected'],
         ];
 
         $data = $this->validate($rules)['form'];
 
-        foreach (['date', 'start_time', 'end_time', 'notes'] as $k) {
+        foreach (['date', 'start_time', 'end_time', 'notes', 'book_reject'] as $k) {
             if (($data[$k] ?? null) === '') {
                 $data[$k] = null;
             }

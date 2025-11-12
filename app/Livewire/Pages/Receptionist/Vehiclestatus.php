@@ -6,8 +6,8 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use App\Models\VehicleBooking;
 use App\Models\Vehicle;
 use App\Models\VehicleBookingPhoto;
@@ -21,236 +21,261 @@ class Vehiclestatus extends Component
     protected string $paginationTheme = 'tailwind';
     protected string $tz = 'Asia/Jakarta';
 
+    // Filters/state
     public string $q = '';
     public ?int $vehicleFilter = null;
-
-    // PERBAIKAN: Mengganti 'in_use' menjadi 'on_progress' agar sesuai alur baru
-    public string $statusTab = 'pending'; // pending | on_progress
-
-    // Sort & date filter
+    public ?string $selectedDate = null;   // YYYY-MM-DD
+    public string $statusTab = 'pending';  // pending | approved | on_progress | returned
     public string $sortFilter = 'recent';  // recent | oldest | nearest
-    public ?string $selectedDate = null;   // YYYY-MM-DD atau null
-
-    public int $perPage = 5;
-
+    public int $perPage = 10;
     public bool $includeDeleted = false;
+
+    /** cache */
+    public $vehicles;
+    /** @var array<int,string> */
+    public array $vehicleMap = [];
+    /** @var array<int,array{before:int,after:int}> */
+    public array $photoCounts = [];
+
+    // Reject modal state
+    public bool $showRejectModal = false;
+    public ?int $rejectId = null;
+    public string $rejectNote = '';
 
     protected $queryString = [
         'q' => ['except' => ''],
         'vehicleFilter' => ['except' => null],
-        'statusTab' => ['except' => 'pending'], // Default tetap 'pending'
-        'sortFilter' => ['except' => 'recent'],
         'selectedDate' => ['except' => null],
-        'includeDeleted' => ['except' => false],
+        'statusTab' => ['except' => 'pending'],
+        'sortFilter' => ['except' => 'recent'],
         'page' => ['except' => 1],
     ];
 
-    public function updatingQ()
+    // Reset page on filter change
+    public function updatedQ()
     {
         $this->resetPage();
     }
-    public function updatingVehicleFilter()
+    public function updatedVehicleFilter()
     {
         $this->resetPage();
     }
-    public function updatingStatusTab()
+    public function updatedSelectedDate()
     {
         $this->resetPage();
     }
-    public function updatingSortFilter()
+    public function updatedStatusTab()
     {
         $this->resetPage();
     }
-    public function updatingSelectedDate()
+    public function updatedSortFilter()
     {
         $this->resetPage();
     }
-    public function updatingIncludeDeleted()
+    public function updatedIncludeDeleted()
     {
         $this->resetPage();
     }
 
     public function mount(): void
     {
-        // PERBAIKAN: Cek status tab baru ('on_progress')
-        if (!in_array($this->statusTab, ['pending', 'on_progress'], true)) {
-            $this->statusTab = 'pending';
-        }
-
-        if (!in_array($this->sortFilter, ['recent', 'oldest', 'nearest'], true)) {
-            $this->sortFilter = 'recent';
-        }
+        $this->vehicles = Vehicle::orderBy('name')->get();
+        $this->vehicleMap = $this->vehicles
+            ->mapWithKeys(fn($v) => [(int) $v->vehicle_id => (string) ($v->name ?? $v->plate_number ?? ('#' . $v->vehicle_id))])
+            ->toArray();
     }
-
-    /**
-     * PERBAIKAN: Logika Approve disesuaikan dengan Alur Baru.
-     * Hanya mengubah status ke 'approved' untuk menunggu foto 'before' dari user.
-     */
-    public function approve(int $id): void
-    {
-        $booking = VehicleBooking::find($id);
-        if (!$booking)
-            return;
-
-        $user = Auth::user();
-        if ((int) $booking->company_id !== (int) ($user?->company_id ?? 0))
-            return;
-
-        if ($booking->status !== 'pending')
-            return;
-
-        // PERBAIKAN: Hapus kolom 'is_approve' dan set status ke 'approved'
-        // $booking->is_approve = 1; // <-- DIHAPUS (Kolom tidak ada)
-        $booking->status = 'approved'; // <-- Ganti dari 'in_use' ke 'approved'
-        $booking->save();
-
-        session()->flash('success', "Booking #{$booking->vehiclebooking_id} approved. Menunggu foto 'Before' dari user.");
-    }
-
-    /**
-     * PERBAIKAN: Logika Reject disesuaikan.
-     * Hanya mengubah status, tanpa 'is_approve'.
-     */
-    public function reject(int $id): void
-    {
-        $booking = VehicleBooking::find($id);
-        if (!$booking)
-            return;
-
-        $user = Auth::user();
-        if ((int) $booking->company_id !== (int) ($user?->company_id ?? 0))
-            return;
-
-        if ($booking->status !== 'pending')
-            return;
-
-        // $booking->is_approve = 0; // <-- DIHAPUS (Kolom tidak ada)
-        $booking->status = 'rejected';
-        $booking->save();
-
-        session()->flash('success', "Booking #{$booking->vehiclebooking_id} rejected.");
-    }
-
-    /**
-     * PERBAIKAN: Mengganti nama 'markDone' menjadi 'markReturned'
-     * Fungsi ini untuk menandakan mobil SUDAH KEMBALI,
-     * dan mengubah status ke 'returned' agar user bisa upload foto 'after'.
-     */
-    public function markReturned(int $id): void
-    {
-        $booking = VehicleBooking::find($id);
-        if (!$booking)
-            return;
-
-        $user = Auth::user();
-        if ((int) $booking->company_id !== (int) ($user?->company_id ?? 0))
-            return;
-
-        // Hanya mobil yang 'on_progress' (sedang dipakai) yang bisa dikembalikan
-        if ($booking->status !== 'on_progress') {
-            session()->flash('error', 'Booking ini tidak sedang dalam status "On Progress".');
-            return;
-        }
-
-        // Set status ke 'returned'
-        $booking->status = 'returned';
-        $booking->save();
-
-        session()->flash('success', "Booking #{$booking->vehiclebooking_id} ditandai sudah kembali. Menunggu foto 'After' dari user.");
-    }
-
-    // CATATAN: Fungsi 'markDone' (yang lama) dihapus. 
-    // Booking akan otomatis 'completed' saat user upload foto 'after'.
 
     public function render()
     {
-        $user = Auth::user();
-        $companyId = (int) ($user?->company_id ?? 0);
-        $now = Carbon::now($this->tz);
+        $bookings = VehicleBooking::query()
+            ->when(!$this->includeDeleted, fn(Builder $q) => $q->whereNull('deleted_at'))
+            ->when($this->includeDeleted, fn(Builder $q) => $q->withTrashed())
+            ->when($this->vehicleFilter, fn(Builder $q) => $q->where('vehicle_id', $this->vehicleFilter))
+            ->when($this->q !== '', function (Builder $q) {
+                $like = '%' . $this->q . '%';
+                $q->where(function (Builder $qq) use ($like) {
+                    $qq->where('purpose', 'like', $like)
+                        ->orWhere('destination', 'like', $like)
+                        ->orWhere('borrower_name', 'like', $like);
+                });
+            })
+            ->when($this->selectedDate, fn(Builder $q) => $q->whereDate('start_at', $this->selectedDate))
+            ->when($this->statusTab, fn(Builder $q) => $q->where('status', $this->statusTab))
+            ->when($this->sortFilter === 'recent', fn(Builder $q) => $q->orderByDesc('vehiclebooking_id'))
+            ->when($this->sortFilter === 'oldest', fn(Builder $q) => $q->orderBy('vehiclebooking_id'))
+            ->when($this->sortFilter === 'nearest', fn(Builder $q) => $q->orderByRaw('ABS(TIMESTAMPDIFF(SECOND, NOW(), start_at))'))
+            ->paginate($this->perPage);
 
-        $query = VehicleBooking::query()
-            ->where('company_id', $companyId);
-
-        if ($this->includeDeleted) {
-            $query->withTrashed();
-        }
-
-        if (strlen(trim($this->q)) > 0) {
-            $q = trim($this->q);
-
-            $query->where(function ($qq) use ($q) {
-                $qq->where('purpose', 'like', "%{$q}%")
-                    ->orWhere('destination', 'like', "%{$q}%")
-                    ->orWhere('borrower_name', 'like', "%{$q}%")
-                    ->orWhere('purpose_type', 'like', "%{$q}%");
-            });
-        }
-
-        if ($this->vehicleFilter) {
-            $query->where('vehicle_id', $this->vehicleFilter);
-        }
-
-        // PERBAIKAN: Logika filter tab disesuaikan
-        if ($this->statusTab === 'pending') {
-            $query->where('status', 'pending');
-        } elseif ($this ->statusTab === 'approved') {
-            $query->whereIn('status', ['approved']);
-        } elseif ($this->statusTab === 'on_progress') {
-            $query->whereIn('status', ['on_progress']);
-        } elseif ($this->statusTab === 'returned') {
-            $query->where('status', 'returned');
-        }
-
-        if (!empty($this->selectedDate)) {
-            $query->whereDate('start_at', $this->selectedDate);
-        }
-
-        switch ($this->sortFilter) {
-            case 'oldest':
-                $query->orderBy('start_at', 'asc');
-                break;
-            case 'nearest':
-                $query->orderByRaw(
-                    'CASE WHEN start_at >= ? THEN 0 ELSE 1 END',
-                    [$now->toDateTimeString()]
-                )->orderBy('start_at', 'asc');
-                break;
-            case 'recent':
-            default:
-                $query->orderBy('start_at', 'desc');
-                break;
-        }
-
-        $bookings = $query->paginate($this->perPage);
-
-        $vehicles = Vehicle::where('company_id', $companyId)
-            ->get(['vehicle_id', 'name', 'plate_number']);
-
-        $vehicleMap = $vehicles->mapWithKeys(function ($v) {
-            $label = $v->name ?? $v->plate_number ?? ('#' . $v->vehicle_id);
-            return [$v->vehicle_id => $label];
-        })->toArray();
-
-        $ids = method_exists($bookings, 'pluck') ? $bookings->pluck('vehiclebooking_id')->all() : [];
-        $photoCounts = [];
-        if (!empty($ids)) {
-            // PERBAIKAN: Query ke 'photo_path' (meskipun di sini tidak error,
-            // hanya memastikan query tetap efisien tanpa kolom 'photo_url')
-            $rows = VehicleBookingPhoto::selectRaw('vehiclebooking_id, photo_type, COUNT(id) as c')
-                ->whereIn('vehiclebooking_id', $ids)
-                ->groupBy('vehiclebooking_id', 'photo_type')
-                ->get();
-
-            foreach ($rows as $r) {
-                $photoCounts[$r->vehiclebooking_id][$r->photo_type] = (int) $r->c;
-            }
-        }
+        $ids = $bookings->pluck('vehiclebooking_id')->all();
+        $this->photoCounts = $this->buildPhotoCounts($ids);
 
         return view('livewire.pages.receptionist.vehiclestatus', [
             'bookings' => $bookings,
-            'vehicleMap' => $vehicleMap,
-            'vehicles' => $vehicles,
-            'photoCounts' => $photoCounts,
         ]);
+    }
+
+    /**
+     * @param  array<int> $bookingIds
+     * @return array<int,array{before:int,after:int}>
+     */
+    protected function buildPhotoCounts(array $bookingIds): array
+    {
+        if (empty($bookingIds))
+            return [];
+        $rows = VehicleBookingPhoto::selectRaw('vehiclebooking_id, photo_type, COUNT(*) as c')
+            ->whereIn('vehiclebooking_id', $bookingIds)
+            ->groupBy('vehiclebooking_id', 'photo_type')
+            ->get();
+
+        $out = [];
+        foreach ($bookingIds as $id)
+            $out[$id] = ['before' => 0, 'after' => 0];
+        foreach ($rows as $r) {
+            $vb = (int) $r->vehiclebooking_id;
+            $type = $r->photo_type === 'after' ? 'after' : 'before';
+            $out[$vb][$type] = (int) $r->c;
+        }
+        return $out;
+    }
+
+    /* =========================
+     * Actions
+     * ========================= */
+
+    public function approve(int $id): void
+    {
+        try {
+            DB::transaction(function () use ($id) {
+                /** @var VehicleBooking $b */
+                $b = VehicleBooking::lockForUpdate()
+                    ->when($this->includeDeleted, fn($q) => $q->withTrashed())
+                    ->findOrFail($id);
+
+                if ($b->status !== 'pending') {
+                    throw new \RuntimeException("Booking #{$b->vehiclebooking_id} bukan status pending.");
+                }
+                $b->status = 'approved';
+                $b->save();
+            });
+
+            $this->dispatch('toast', type: 'success', title: 'Approved', message: 'Booking disetujui.');
+            $this->resetPage();
+        } catch (\RuntimeException $e) {
+            $this->dispatch('toast', type: 'warning', title: 'Tidak Bisa Disetujui', message: $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal menyetujui: ' . $e->getMessage());
+        }
+    }
+
+    /** Open modal to ask for reject reason */
+    public function confirmReject(int $id): void
+    {
+        $this->rejectId = $id;
+        $this->rejectNote = '';
+        $this->showRejectModal = true;
+    }
+
+    /** Close/cancel modal */
+    public function cancelReject(): void
+    {
+        $this->showRejectModal = false;
+        $this->rejectId = null;
+        $this->rejectNote = '';
+    }
+
+    /** Validate + perform rejection with required note */
+    public function submitReject(): void
+    {
+        $data = $this->validate([
+            'rejectNote' => 'required|string|min:5|max:2000',
+            'rejectId' => 'required|integer',
+        ]);
+
+        try {
+            DB::transaction(function () use ($data) {
+                /** @var VehicleBooking $b */
+                $b = VehicleBooking::lockForUpdate()
+                    ->when($this->includeDeleted, fn($q) => $q->withTrashed())
+                    ->findOrFail($data['rejectId']);
+
+                if ($b->status !== 'pending') {
+                    throw new \RuntimeException("Booking #{$b->vehiclebooking_id} bukan status pending.");
+                }
+
+                // Store reason in `notes` (adjust if you have a dedicated reject column)
+                $prefix = '[Rejected] ';
+                $reason = trim($data['rejectNote']);
+                $b->notes = trim(($b->notes ? $b->notes . "\n" : '') . $prefix . $reason);
+                $b->status = 'rejected';
+                $b->save();
+            });
+
+            $this->showRejectModal = false;
+            $this->rejectId = null;
+            $this->rejectNote = '';
+
+            $this->dispatch('toast', type: 'info', title: 'Rejected', message: 'Booking ditolak dengan alasan.');
+            $this->resetPage();
+        } catch (\RuntimeException $e) {
+            $this->dispatch('toast', type: 'warning', title: 'Tidak Bisa Ditolak', message: $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal menolak: ' . $e->getMessage());
+        }
+    }
+
+    public function markReturned(int $id): void
+    {
+        try {
+            DB::transaction(function () use ($id) {
+                $b = VehicleBooking::lockForUpdate()
+                    ->when($this->includeDeleted, fn($q) => $q->withTrashed())
+                    ->findOrFail($id);
+                if (!in_array($b->status, ['approved', 'on_progress'], true)) {
+                    throw new \RuntimeException("Booking #{$b->vehiclebooking_id} belum on progress.");
+                }
+                $b->status = 'returned';
+                $b->save();
+            });
+
+            $this->dispatch('toast', type: 'success', title: 'Returned', message: 'Status diubah ke Returned.');
+            $this->resetPage();
+        } catch (\RuntimeException $e) {
+            $this->dispatch('toast', type: 'warning', title: 'Tidak Bisa', message: $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal update: ' . $e->getMessage());
+        }
+    }
+
+    public function markDone(int $id): void
+    {
+        try {
+            DB::transaction(function () use ($id) {
+                $b = VehicleBooking::lockForUpdate()
+                    ->when($this->includeDeleted, fn($q) => $q->withTrashed())
+                    ->findOrFail($id);
+                if ($b->status !== 'returned') {
+                    throw new \RuntimeException("Booking #{$b->vehiclebooking_id} belum Returned.");
+                }
+                $afterCount = VehicleBookingPhoto::where('vehiclebooking_id', $b->vehiclebooking_id)
+                    ->where('photo_type', 'after')
+                    ->count();
+                if ($afterCount < 1) {
+                    throw new \RuntimeException('Upload minimal 1 foto AFTER terlebih dahulu.');
+                }
+                $b->status = 'completed';
+                $b->save();
+            });
+
+            $this->dispatch('toast', type: 'success', title: 'Completed', message: 'Booking ditandai selesai.');
+            $this->resetPage();
+        } catch (\RuntimeException $e) {
+            $this->dispatch('toast', type: 'warning', title: 'Tidak Bisa', message: $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal update: ' . $e->getMessage());
+        }
     }
 }

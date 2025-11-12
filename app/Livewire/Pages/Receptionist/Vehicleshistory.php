@@ -9,7 +9,6 @@ use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
 use App\Models\VehicleBooking;
 use App\Models\Vehicle;
-use App\Models\VehicleBookingPhoto;
 use Carbon\Carbon;
 
 #[Layout('layouts.receptionist')]
@@ -34,7 +33,7 @@ class Vehicleshistory extends Component
     // Include deleted checkbox
     public bool $includeDeleted = false;
 
-    // Date filter (single date seperti screenshot)
+    // Date filter (single date)
     public ?string $selectedDate = null;   // 'YYYY-MM-DD' atau null
 
     // Sort filter
@@ -53,37 +52,12 @@ class Vehicleshistory extends Component
         'page'           => ['except' => 1],
     ];
 
-    // --- Reset page kalau filter berubah ---
-
-    public function updatingQ(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingVehicleFilter(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingStatusTab(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingIncludeDeleted(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingSelectedDate(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingSortFilter(): void
-    {
-        $this->resetPage();
-    }
+    public function updatingQ(): void                { $this->resetPage(); }
+    public function updatingVehicleFilter(): void    { $this->resetPage(); }
+    public function updatingStatusTab(): void        { $this->resetPage(); }
+    public function updatingIncludeDeleted(): void   { $this->resetPage(); }
+    public function updatingSelectedDate(): void     { $this->resetPage(); }
+    public function updatingSortFilter(): void       { $this->resetPage(); }
 
     public function mount(): void
     {
@@ -93,6 +67,66 @@ class Vehicleshistory extends Component
         if (!in_array($this->sortFilter, ['recent', 'oldest', 'nearest'], true)) {
             $this->sortFilter = 'recent';
         }
+    }
+
+    /**
+     * Soft delete untuk status 'completed' (Done) dan 'rejected'.
+     */
+    public function softDelete(int $vehiclebookingId): void
+    {
+        $user = Auth::user();
+        $companyId = (int) ($user?->company_id ?? 0);
+
+        $booking = VehicleBooking::where('company_id', $companyId)
+            ->where('vehiclebooking_id', $vehiclebookingId)
+            ->first();
+
+        if (!$booking) {
+            session()->flash('error', 'Data tidak ditemukan.');
+            return;
+        }
+
+        if (!in_array($booking->status, ['completed', 'rejected'], true)) {
+            session()->flash('error', 'Hanya data Completed (Done) atau Rejected yang bisa dihapus.');
+            return;
+        }
+
+        if (method_exists($booking, 'delete')) {
+            $booking->delete();
+            session()->flash('success', "Data #{$vehiclebookingId} berhasil dihapus (soft delete).");
+        } else {
+            session()->flash('error', 'Model belum mendukung soft delete.');
+        }
+
+        $this->resetPage();
+    }
+
+    /**
+     * Restore soft-deleted row.
+     */
+    public function restore(int $vehiclebookingId): void
+    {
+        $user = Auth::user();
+        $companyId = (int) ($user?->company_id ?? 0);
+
+        $booking = VehicleBooking::withTrashed()
+            ->where('company_id', $companyId)
+            ->where('vehiclebooking_id', $vehiclebookingId)
+            ->first();
+
+        if (!$booking) {
+            session()->flash('error', 'Data tidak ditemukan untuk di-restore.');
+            return;
+        }
+
+        if (method_exists($booking, 'restore') && $booking->trashed()) {
+            $booking->restore();
+            session()->flash('success', "Data #{$vehiclebookingId} berhasil direstore.");
+        } else {
+            session()->flash('error', 'Data tidak dalam kondisi terhapus atau model belum mendukung restore.');
+        }
+
+        $this->resetPage();
     }
 
     public function render()
@@ -117,11 +151,10 @@ class Vehicleshistory extends Component
         // Search
         if (strlen(trim($this->q)) > 0) {
             $q = trim($this->q);
-
             $query->where(function ($qq) use ($q) {
                 $qq->where('purpose', 'like', "%{$q}%")
-                    ->orWhere('destination', 'like', "%{$q}%")
-                    ->orWhere('borrower_name', 'like', "%{$q}%");
+                   ->orWhere('destination', 'like', "%{$q}%")
+                   ->orWhere('borrower_name', 'like', "%{$q}%");
             });
         }
 
@@ -137,17 +170,13 @@ class Vehicleshistory extends Component
 
         // Sorting
         $now = Carbon::now($this->tz);
-
         switch ($this->sortFilter) {
             case 'oldest':
                 $query->orderBy('start_at', 'asc');
                 break;
-
             case 'nearest':
-                // Booking yang paling dekat dengan waktu sekarang
                 $query->orderByRaw('ABS(TIMESTAMPDIFF(SECOND, start_at, ?))', [$now]);
                 break;
-
             case 'recent':
             default:
                 $query->orderBy('start_at', 'desc');
@@ -165,25 +194,10 @@ class Vehicleshistory extends Component
             return [$v->vehicle_id => $label];
         })->toArray();
 
-        // Hitung foto before / after
-        $ids = method_exists($bookings, 'pluck') ? $bookings->pluck('vehiclebooking_id')->all() : [];
-        $photoCounts = [];
-        if (!empty($ids)) {
-            $rows = VehicleBookingPhoto::selectRaw('vehiclebooking_id, photo_type, COUNT(*) as c')
-                ->whereIn('vehiclebooking_id', $ids)
-                ->groupBy('vehiclebooking_id', 'photo_type')
-                ->get();
-
-            foreach ($rows as $r) {
-                $photoCounts[$r->vehiclebooking_id][$r->photo_type] = (int) $r->c;
-            }
-        }
-
         return view('livewire.pages.receptionist.vehicleshistory', [
-            'bookings'    => $bookings,
-            'vehicleMap'  => $vehicleMap,
-            'vehicles'    => $vehicles,
-            'photoCounts' => $photoCounts,
+            'bookings'   => $bookings,
+            'vehicleMap' => $vehicleMap,
+            'vehicles'   => $vehicles,
         ]);
     }
 }

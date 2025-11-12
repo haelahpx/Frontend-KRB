@@ -162,7 +162,8 @@ class Bookingvehicle extends Component
             'notes'          => null,
         ]);
 
-        session()->flash('success', 'Vehicle booking created as pending.');
+        $this->dispatch('$refresh');
+        $this->dispatch('toast', type: 'success', title: 'Ditambah', message: 'Terkirim..', duration: 3000);
 
         // reset form (list departemen/vehicles tetap)
         $this->reset([
