@@ -126,7 +126,7 @@ class Vehiclestatus extends Component
         })->toArray();
 
         // Hitung jumlah foto before/after
-        $ids = method_exists($bookings, 'pluck') ? $bookings->pluck('vehiclebooking_id')->all() : [];
+        $ids = $bookings->getCollection()->pluck('vehiclebooking_id')->all();
         $photoCounts = [];
         if (!empty($ids)) {
             $rows = VehicleBookingPhoto::selectRaw('vehiclebooking_id, photo_type, COUNT(*) as c')
@@ -134,7 +134,11 @@ class Vehiclestatus extends Component
                 ->groupBy('vehiclebooking_id', 'photo_type')
                 ->get();
             foreach ($rows as $r) {
-                $photoCounts[$r->vehiclebooking_id][$r->photo_type] = (int)$r->c;
+                // FIX: Sanitize photo_type to prevent issues with whitespace or case sensitivity.
+                $type = strtolower(trim($r->photo_type));
+                if ($type === 'before' || $type === 'after') {
+                    $photoCounts[$r->vehiclebooking_id][$type] = (int)$r->c;
+                }
             }
         }
 

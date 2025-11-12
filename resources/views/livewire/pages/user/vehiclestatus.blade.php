@@ -92,8 +92,10 @@
                         'cancelled'   => 'bg-gray-50 text-gray-700 border-2 border-gray-400',
                     ][$b->status] ?? 'bg-slate-50 text-slate-700 border-2 border-slate-400';
 
-                    $beforeC = $photoCounts[$b->vehiclebooking_id]['before'] ?? 0;
-                    $afterC  = $photoCounts[$b->vehiclebooking_id]['after'] ?? 0;
+                    // FIX: Safely get photo counts to prevent errors on bookings with no photos.
+                    $currentPhotoCounts = $photoCounts[$b->vehiclebooking_id] ?? [];
+                    $beforeC = $currentPhotoCounts['before'] ?? 0;
+                    $afterC  = $currentPhotoCounts['after'] ?? 0;
 
                     // BARU: Tentukan apakah card bisa di-klik (untuk upload foto)
                     $isClickable = in_array($b->status, ['approved', 'returned']);
