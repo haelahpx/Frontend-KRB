@@ -1,155 +1,369 @@
-<div class="bg-gray-50" wire:poll.1000ms>
+<div class="bg-gray-50" wire:poll.2000ms.keep-alive>
     <main class="px-4 sm:px-6 py-6">
         <div class="space-y-8">
-            <div
-                class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
-                <div class="pointer-events-none absolute inset-0 opacity-10">
-                    <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
-                    <div class="absolute bottom-0 -left-4 w-16 h-16 bg-white rounded-full blur-lg"></div>
-                </div>
-                <div class="relative z-10 p-6 sm:p-8">
-                    <div class="flex items-center gap-4">
-                        <div
-                            class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+            {{-- Greeting --}}
+            <div class="rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white p-6 shadow-2xl">
+                <h2 class="text-lg font-semibold">Selamat Datang di Dashboard Receptionist</h2>
+                <p class="text-sm text-gray-300">Berikut 5 data terbaru dari setiap modul</p>
+            </div>
+
+            {{-- Statistics Cards --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {{-- Total Room Bookings --}}
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">Room Bookings</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ count($latestBookingRooms) }}</p>
+                            <p class="text-xs text-green-600 mt-1">+12% vs last week</p>
+                        </div>
+                        <div class="p-3 bg-gray-100 rounded-lg">
+                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
+                    </div>
+                </div>
+
+                {{-- Vehicle Bookings --}}
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="text-lg sm:text-xl font-semibold">Selamat datang di Kebun Raya Bogor</h2>
-                            <p class="text-sm text-white/80">Ringkasan kegiatan hari ini</p>
+                            <p class="text-sm text-gray-600 mb-1">Vehicle Bookings</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ count($latestVehicleBookings) }}</p>
+                            <p class="text-xs text-green-600 mt-1">+8% vs last week</p>
+                        </div>
+                        <div class="p-3 bg-gray-100 rounded-lg">
+                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Guests --}}
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">Guest Visits</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ count($latestGuests) }}</p>
+                            <p class="text-xs text-green-600 mt-1">+15% vs last week</p>
+                        </div>
+                        <div class="p-3 bg-gray-100 rounded-lg">
+                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Documents --}}
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">Documents/Packages</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ count($latestDocs) }}</p>
+                            <p class="text-xs text-green-600 mt-1">+5% vs last week</p>
+                        </div>
+                        <div class="p-3 bg-gray-100 rounded-lg">
+                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                            </svg>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                @foreach($stats as $s)
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p class="text-sm text-gray-500">{{ $s['label'] }}</p>
-                    <div class="mt-2 flex items-end gap-2">
-                        <h3 class="text-2xl font-semibold text-gray-900">{{ $s['value'] }}</h3>
-                        <span class="text-xs px-2 py-0.5 rounded-full {{ $s['badgeClass'] }}">{{ $s['badge'] }}</span>
-                    </div>
-                </div>
-                @endforeach
-            </section>
+            {{-- Charts Section --}}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {{-- Activity Chart --}}
+                <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                    <h3 class="text-base font-semibold text-gray-900 mb-4">
+                        Weekly Activity (Room / Vehicle / DocPac / Guestbook)
+                    </h3>
 
-            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div class="px-5 py-4 border-b border-gray-200">
-                        <h3 class="text-base font-semibold text-gray-900">Jadwal Meeting Hari Ini</h3>
-                        <p class="text-sm text-gray-500">Ringkasan ruangan & waktu</p>
-                    </div>
-                    <ul class="divide-y divide-gray-200">
-                        @forelse ($meetings as $m)
-                        <li class="px-5 py-4 flex items-center justify-between">
-                            <div>
-                                <p class="text-sm text-gray-500">{{ $m['time'] }} • {{ $m['room'] }}</p>
-                                <p class="font-medium text-gray-900">{{ $m['title'] }}</p>
-                            </div>
-                            @php
-                            $statusClass = match ($m['status']) {
-                                'Berlangsung' => 'bg-green-100 text-green-700',
-                                'Berikutnya' => 'bg-blue-100 text-blue-700',
-                                default => 'bg-gray-100 text-gray-700'
-                            };
-                            @endphp
-                            <span class="text-xs px-2 py-1 rounded-full {{ $statusClass }}">{{ $m['status'] }}</span>
-                        </li>
-                        @empty
-                        <li class="px-5 py-8 text-center text-sm text-gray-500">Tidak ada meeting terjadwal hari ini.</li>
-                        @endforelse
-                    </ul>
-                    <div class="px-5 py-3 border-t border-gray-200 text-right">
-                        <a href="{{ route('receptionist.schedule') }}"
-                            class="text-sm font-medium text-gray-700 hover:text-gray-900">Lihat semua →</a>
+                    {{-- IMPORTANT: Livewire should not re-render this --}}
+                    <div class="h-64" wire:ignore>
+                        <canvas id="activityChart"></canvas>
                     </div>
                 </div>
-                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div class="px-5 py-4 border-b border-gray-200">
-                        <h3 class="text-base font-semibold text-gray-900">Buku Tamu (Hari Ini)</h3>
-                        <p class="text-sm text-gray-500">{{ count($guests) }} entri terbaru</p>
-                    </div>
-                    <ul class="divide-y divide-gray-200">
-                        @forelse ($guests as $g)
-                        <li class="px-5 py-4 flex items-center justify-between">
-                            <div>
-                                <p class="font-medium text-gray-900">{{ $g['name'] }}</p>
-                                <p class="text-sm text-gray-500">{{ $g['purpose'] }}</p>
+
+                {{-- Status Distribution --}}
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                    <h3 class="text-base font-semibold text-gray-900 mb-4">Status Distribution</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-700">Approved</span>
+                                <span class="text-sm font-bold text-gray-900">65%</span>
                             </div>
-                            <span class="text-sm text-gray-500">{{ $g['time'] }}</span>
-                        </li>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-gray-900 h-2 rounded-full" style="width: 65%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-700">Pending</span>
+                                <span class="text-sm font-bold text-gray-900">25%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-gray-600 h-2 rounded-full" style="width: 25%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-700">Rejected</span>
+                                <span class="text-sm font-bold text-gray-900">10%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-gray-400 h-2 rounded-full" style="width: 10%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <p class="text-xs text-gray-600 mb-1">Total Requests This Month</p>
+                        <p class="text-2xl font-bold text-gray-900">247</p>
+                        <p class="text-xs text-gray-600 mt-1">↑ 18% from last month</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Grid: 4 boxes --}}
+            <section class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-6">
+                {{-- Booking Room --}}
+                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div class="px-5 py-4 border-b">
+                        <h3 class="text-base font-semibold text-gray-900">Newest Booking Room</h3>
+                        <p class="text-sm text-gray-500">5 data terbaru</p>
+                    </div>
+                    <ul class="divide-y divide-gray-100">
+                        @forelse($latestBookingRooms as $b)
+                            <li class="px-5 py-3">
+                                <p class="font-medium text-gray-900">{{ $b['title'] }}</p>
+                                <p class="text-sm text-gray-500">{{ $b['time'] }} • {{ $b['date'] }}</p>
+                                <p class="text-xs text-gray-400 mt-1">Status: {{ $b['status'] }}</p>
+                            </li>
                         @empty
-                        <li class="px-5 py-8 text-center text-sm text-gray-500">Belum ada tamu hari ini.</li>
+                            <li class="px-5 py-6 text-center text-sm text-gray-500">
+                                Tidak ada booking terbaru.
+                            </li>
                         @endforelse
                     </ul>
-                    <div class="px-5 py-3 border-t border-gray-200 text-right">
+                    <div class="px-5 py-3 border-t text-right">
+                        <a href="{{ route('receptionist.bookings') }}"
+                           class="text-sm font-medium text-gray-700 hover:text-gray-900">
+                            Lihat semua →
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Vehicle Booking --}}
+                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div class="px-5 py-4 border-b">
+                        <h3 class="text-base font-semibold text-gray-900">Newest Vehicle Booking</h3>
+                        <p class="text-sm text-gray-500">5 data terbaru</p>
+                    </div>
+                    <ul class="divide-y divide-gray-100">
+                        @forelse($latestVehicleBookings as $v)
+                            <li class="px-5 py-3">
+                                <p class="font-medium text-gray-900">{{ $v['borrower'] }}</p>
+                                <p class="text-sm text-gray-500">{{ $v['purpose'] }} • {{ $v['destination'] }}</p>
+                                <p class="text-xs text-gray-400 mt-1">Status: {{ $v['status'] }}</p>
+                            </li>
+                        @empty
+                            <li class="px-5 py-6 text-center text-sm text-gray-500">
+                                Tidak ada peminjaman kendaraan.
+                            </li>
+                        @endforelse
+                    </ul>
+                    <div class="px-5 py-3 border-t text-right">
+                        <a href="{{ route('receptionist.bookingvehicle') }}"
+                           class="text-sm font-medium text-gray-700 hover:text-gray-900">
+                            Lihat semua →
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Guestbook --}}
+                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div class="px-5 py-4 border-b">
+                        <h3 class="text-base font-semibold text-gray-900">Newest Guest List</h3>
+                        <p class="text-sm text-gray-500">5 data terbaru</p>
+                    </div>
+                    <ul class="divide-y divide-gray-100">
+                        @forelse($latestGuests as $g)
+                            <li class="px-5 py-3 flex justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ $g['name'] }}</p>
+                                    <p class="text-sm text-gray-500">{{ $g['purpose'] }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm text-gray-500">{{ $g['date'] }}</p>
+                                    <p class="text-xs text-gray-400">{{ $g['time_in'] }}</p>
+                                </div>
+                            </li>
+                        @empty
+                            <li class="px-5 py-6 text-center text-sm text-gray-500">
+                                Belum ada tamu baru.
+                            </li>
+                        @endforelse
+                    </ul>
+                    <div class="px-5 py-3 border-t text-right">
                         <a href="{{ route('receptionist.guestbook') }}"
-                            class="text-sm font-medium text-gray-700 hover:text-gray-900">Kelola buku tamu →</a>
+                           class="text-sm font-medium text-gray-700 hover:text-gray-900">
+                            Kelola buku tamu →
+                        </a>
                     </div>
                 </div>
-            </section>
-            
-            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div class="px-5 py-4 border-b border-gray-200">
-                        <h3 class="text-base font-semibold text-gray-900">Dokumen Terbaru</h3>
-                        <p class="text-sm text-gray-500">5 unggahan terakhir</p>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm">
-                            <thead>
-                                <tr class="text-left text-gray-500 border-b border-gray-200">
-                                    <th class="px-5 py-3 font-medium">Nama</th>
-                                    <th class="px-5 py-3 font-medium">Kategori</th>
-                                    <th class="px-5 py-3 font-medium">Tanggal</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                @forelse ($documents as $d)
-                                <tr>
-                                    <td class="px-5 py-3 text-gray-900">{{ $d['name'] }}</td>
-                                    <td class="px-5 py-3 text-gray-700">{{ $d['cat'] }}</td>
-                                    <td class="px-5 py-3 text-gray-700">{{ $d['date'] }}</td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="3" class="px-5 py-8 text-center text-sm text-gray-500">Tidak ada dokumen terbaru.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="px-5 py-3 border-t border-gray-200 text-right">
-                        <a href="{{ route('receptionist.documents') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900">Lihat semua dokumen →</a>
-                    </div>
-                </div>
+
+                {{-- Deliveries --}}
                 <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div class="px-5 py-4 border-b border-gray-200">
-                        <h3 class="text-base font-semibold text-gray-900">Kalender</h3>
-                        <p class="text-sm text-gray-500">{{ now()->translatedFormat('F Y') }}</p>
+                    <div class="px-5 py-4 border-b">
+                        <h3 class="text-base font-semibold text-gray-900">Newest Document / Package</h3>
+                        <p class="text-sm text-gray-500">5 data terbaru</p>
                     </div>
-                    <div class="p-5">
-                        @php
-                            $daysInMonth = (int) now()->endOfMonth()->format('j');
-                            $today = (int) now()->format('j');
-                        @endphp
-                        <div class="grid grid-cols-7 text-center text-xs text-gray-500">
-                            <span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span>
-                        </div>
-                        <div class="mt-2 grid grid-cols-7 gap-1 text-sm text-center">
-                            @foreach (range(1, $daysInMonth) as $day)
-                            <div class="py-2 rounded-lg border
-                                {{ $day === $today ? 'border-gray-900 bg-gray-900 text-white font-semibold' : 'border-gray-200 text-gray-700' }}">
-                                {{ $day }}
-                            </div>
-                            @endforeach
-                        </div>
+                    <ul class="divide-y divide-gray-100">
+                        @forelse($latestDocs as $d)
+                            <li class="px-5 py-3">
+                                <p class="font-medium text-gray-900">{{ $d['item'] }}</p>
+                                <p class="text-sm text-gray-500">{{ $d['type'] }} • {{ $d['direction'] }}</p>
+                                <p class="text-xs text-gray-400 mt-1">
+                                    Status: {{ $d['status'] }} • {{ $d['created'] }}
+                                </p>
+                            </li>
+                        @empty
+                            <li class="px-5 py-6 text-center text-sm text-gray-500">
+                                Tidak ada dokumen atau paket terbaru.
+                            </li>
+                        @endforelse
+                    </ul>
+                    <div class="px-5 py-3 border-t text-right">
+                        <a href="{{ route('receptionist.docpackstatus') }}"
+                           class="text-sm font-medium text-gray-700 hover:text-gray-900">
+                            Lihat semua →
+                        </a>
                     </div>
                 </div>
             </section>
         </div>
     </main>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+@verbatim
+<script>
+    let activityChartInstance = null;
+
+    function initActivityChart() {
+        console.log('[Dashboard] initActivityChart called');
+
+        const canvas = document.getElementById('activityChart');
+        if (!canvas) {
+            console.warn('[Dashboard] Canvas #activityChart not found');
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+
+        const chartData = {
+            labels:  ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            rooms:   [5, 9, 7, 12, 10, 8, 11],
+            vehicles:[2, 4, 3, 6,  5,  4,  5],
+            docpacs: [1, 3, 2, 4,  3,  2,  3],
+            guests:  [4, 6, 5, 9,  8,  7,  9]
+        };
+
+        if (activityChartInstance) {
+            console.log('[Dashboard] Destroying previous chart instance');
+            activityChartInstance.destroy();
+        }
+
+        activityChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [
+                    {
+                        label: 'Room Bookings',
+                        data: chartData.rooms,
+                        borderColor: 'rgb(31, 41, 55)',
+                        backgroundColor: 'rgba(31, 41, 55, 0.10)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Vehicle Bookings',
+                        data: chartData.vehicles,
+                        borderColor: 'rgb(107, 114, 128)',
+                        backgroundColor: 'rgba(107, 114, 128, 0.10)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'DocPac',
+                        data: chartData.docpacs,
+                        borderColor: 'rgb(156, 163, 175)',
+                        backgroundColor: 'rgba(156, 163, 175, 0.10)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Guestbook',
+                        data: chartData.guests,
+                        borderColor: 'rgb(55, 65, 81)',
+                        backgroundColor: 'rgba(55, 65, 81, 0.10)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        console.log('[Dashboard] Chart initialized');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('[Dashboard] DOMContentLoaded');
+        initActivityChart();
+    });
+
+    document.addEventListener('livewire:load', function () {
+        console.log('[Dashboard] livewire:load');
+        initActivityChart();
+    });
+
+    document.addEventListener('livewire:navigated', function () {
+        console.log('[Dashboard] livewire:navigated');
+        initActivityChart();
+    });
+</script>
+@endverbatim
