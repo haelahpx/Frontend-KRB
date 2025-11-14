@@ -9,13 +9,12 @@ use App\Models\Department;
 use App\Models\VehicleBooking;
 use App\Models\VehicleBookingPhoto;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage; // <-- PASTIKAN INI ADA
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
-// HAPUS: Cloudinary
-// use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary; 
 
-#[Layout('layouts.app')] // <-- Pastikan ini 'layouts.app'
+#[Layout('layouts.app')]
 #[Title('Book Vehicle')]
 class Bookvehicle extends Component
 {
@@ -30,13 +29,13 @@ class Bookvehicle extends Component
     public $date_to;
     public $purpose;
     public $destination;
-    public $odd_even_area = 'tidak'; 
-    public $purpose_type = 'dinas'; 
+    public $odd_even_area = 'tidak';
+    public $purpose_type = 'dinas';
     public $vehicle_id = null;
     public $has_sim_a = false;
     public $agree_terms = false;
 
-    // files
+    // files (Livewire temporary uploads)
     public $photo_before;
     public $photo_after;
 
@@ -63,8 +62,7 @@ class Bookvehicle extends Component
         $this->loadAvailability();
         $this->loadRecentBookings();
 
-        // GANTI: Cek query 'id' (sesuai blade status)
-        $bookingId = request()->query('id'); 
+        $bookingId = request()->query('id');
         if ($bookingId) {
             $this->loadBooking($bookingId, $user);
         }
@@ -82,10 +80,10 @@ class Bookvehicle extends Component
         }
 
         if ($booking->user_id != $user->user_id && $booking->department_id != $user->department_id) {
-             session()->flash('error', 'Anda tidak memiliki akses ke booking ini.');
-             return;
+            session()->flash('error', 'Anda tidak memiliki akses ke booking ini.');
+            return;
         }
-        
+
         if (!in_array($booking->status, ['approved', 'returned'])) {
             session()->flash('error', 'Booking ini tidak sedang menunggu upload foto (Status: ' . $booking->status . ').');
             return;
@@ -107,21 +105,21 @@ class Bookvehicle extends Component
             'destination' => 'nullable|string|max:255',
             'odd_even_area' => ['required', Rule::in(['ganjil', 'genap', 'tidak'])],
             'purpose_type' => ['required', Rule::in(['dinas', 'operasional', 'antar_jemput', 'lainnya'])],
-            'has_sim_a' => 'accepted', // <-- Ini harus ada di DB
+            'has_sim_a' => 'accepted',
             'agree_terms' => 'accepted',
             'vehicle_id' => 'nullable|integer|exists:vehicles,vehicle_id',
         ];
     }
-    
+
     public function submitBooking()
     {
-        $this->validate($this->rules()); 
+        $this->validate($this->rules());
 
         $user = Auth::user();
         $startAt = $this->combineDateTime($this->date_from, $this->start_time);
         $endAt = $this->combineDateTime($this->date_to, $this->end_time);
 
-        if($this->vehicle_id) {
+        if ($this->vehicle_id) {
             $isAvailable = $this->checkAvailabilityForVehicle($this->vehicle_id, $startAt, $endAt);
             if (!$isAvailable) {
                 session()->flash('error', 'Kendaraan tidak tersedia pada jadwal yang dipilih. Silakan cek ulang.');
@@ -131,7 +129,7 @@ class Bookvehicle extends Component
 
         $booking = VehicleBooking::create([
             'company_id' => $user->company_id ?? 1,
-            'user_id' => $user->user_id ?? Auth::id(), 
+            'user_id' => $user->user_id ?? Auth::id(),
             'vehicle_id' => $this->vehicle_id ?: null,
             'borrower_name' => $this->name,
             'department_id' => $this->department_id,
@@ -142,8 +140,8 @@ class Bookvehicle extends Component
             'odd_even_area' => $this->odd_even_area,
             'purpose_type' => $this->purpose_type,
             'terms_agreed' => $this->agree_terms,
-            'has_sim_a' => $this->has_sim_a, // <-- Pastikan ini sesuai Model & Migrasi
-            'status' => 'pending', 
+            'has_sim_a' => $this->has_sim_a,
+            'status' => 'pending',
         ]);
 
         session()->flash('success', 'Booking berhasil dikirim — status: PENDING.');
@@ -164,31 +162,28 @@ class Bookvehicle extends Component
         try {
             if ($this->booking->status == 'approved') {
                 $this->validate(['photo_before' => 'required|image|max:5120']);
-                
+
                 $this->uploadToLocalStorageAndSave($this->photo_before, 'before', $bookingId, $userId);
 
                 $this->booking->update(['status' => 'on_progress']);
-                
+
                 session()->flash('success', 'Foto "SEBELUM" berhasil diunggah. Perjalanan Anda dimulai (Status: On Progress).');
 
             } elseif ($this->booking->status == 'returned') {
                 $this->validate(['photo_after' => 'required|image|max:5120']);
-                
-                $this->uploadToLocalStorageAndSave($this->photo_after, 'after', $bookingId, $userId);
 
+                $this->uploadToLocalStorageAndSave($this->photo_after, 'after', $bookingId, $userId);
 
                 session()->flash('success', 'Foto "SESUDAH" berhasil diunggah.');
             }
 
         } catch (\Exception $e) {
-            // Tampilkan error jika GAGAL (ini yang penting untuk debug)
             session()->flash('error', 'Upload Gagal: ' . $e->getMessage());
             return;
         }
 
         return redirect()->route('vehiclestatus');
     }
-
 
     private function combineDateTime($date, $time)
     {
@@ -197,24 +192,44 @@ class Bookvehicle extends Component
     }
 
     /**
-     * GANTI: Fungsi upload ke Local Storage (bukan Cloudinary)
+     * Upload ke local public disk dan simpan record.
+     *
+     * Perubahan penting:
+     * - gunakan disk 'public' (storage/app/public)
+     * - simpan path RELATIF yang dikembalikan oleh storeAs, mis: "vehicle_photos/xxx.png"
+     * - nama file dibuat unik & disanitasi
      */
     private function uploadToLocalStorageAndSave($file, $type, $bookingId, $userId)
     {
-        $filename = "booking_{$bookingId}_{$type}_" . time() . '.' . $file->extension();
-        
-        // Simpan ke 'storage/app/public/vehicle_photos'
-        $path = $file->storeAs('public/vehicle_photos', $filename);
+        if (!$file) {
+            throw new \Exception('Tidak ada file yang diunggah.');
+        }
 
-        // Path yang disimpan di DB: 'vehicle_photos/namafile.jpg'
-        $storagePath = str_replace('public/', '', $path);
+        // pastikan object file Livewire valid
+        // Livewire temporary file supports methods like getClientOriginalName()
+        $originalName = method_exists($file, 'getClientOriginalName') ? $file->getClientOriginalName() : 'upload';
+        $ext = method_exists($file, 'getClientOriginalExtension') ? $file->getClientOriginalExtension() : ($file->extension() ?? 'jpg');
 
-        // Simpan record ke database
+        // buat nama file yang aman dan unik
+        $filename = "booking_{$bookingId}_{$type}_" . time() . '_' . Str::random(6) . '.' . $ext;
+        $filename = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $filename);
+
+        // simpan ke folder vehicle_photos pada disk 'public' (returns 'vehicle_photos/filename.ext')
+        $storedPath = $file->storeAs('vehicle_photos', $filename, 'public');
+
+        if (!$storedPath) {
+            throw new \Exception('Gagal menyimpan file ke storage.');
+        }
+
+        // storedPath already relative (e.g. vehicle_photos/booking_...png)
+        $storagePath = $storedPath;
+
+        // create DB record (sesuaikan nama kolom di model VehicleBookingPhoto)
         VehicleBookingPhoto::create([
             'vehiclebooking_id' => $bookingId,
             'user_id' => $userId,
             'photo_type' => $type,
-            'photo_path' => $storagePath, // <-- Sesuai Model
+            'photo_path' => $storagePath,
         ]);
 
         return $storagePath;
@@ -223,10 +238,10 @@ class Bookvehicle extends Component
     private function checkAvailabilityForVehicle($vehicleId, $start, $end)
     {
         return !VehicleBooking::where('vehicle_id', $vehicleId)
-            ->whereIn('status', ['pending', 'approved', 'on_progress', 'returned']) 
+            ->whereIn('status', ['pending', 'approved', 'on_progress', 'returned'])
             ->where(function ($q) use ($start, $end) {
                 $q->where('start_at', '<', $end)
-                  ->where('end_at', '>', $start);
+                    ->where('end_at', '>', $start);
             })
             ->exists();
     }
@@ -245,7 +260,7 @@ class Bookvehicle extends Component
 
         $this->availability = $vehicles->map(function ($v) use ($desiredStart, $desiredEnd) {
             $isAvailable = $this->checkAvailabilityForVehicle($v->vehicle_id, $desiredStart, $desiredEnd);
-            
+
             return [
                 'label' => ($v->vehicle_name ?? ($v->name ?? 'Kendaraan')) . (($v->plate_number ?? $v->license_plate) ? " — " . ($v->plate_number ?? $v->license_plate) : ''),
                 'status' => $isAvailable ? 'available' : 'unavailable',
@@ -257,11 +272,11 @@ class Bookvehicle extends Component
     public function loadRecentBookings()
     {
         $user = Auth::user();
-        if (!$user) return;
+        if (!$user)
+            return;
 
-        // Load booking berdasarkan departemen
         $this->recentBookings = VehicleBooking::where('company_id', $user->company_id ?? 1)
-            ->where('department_id', $user->department_id) 
+            ->where('department_id', $user->department_id)
             ->orderByDesc('created_at')
             ->limit(6)
             ->get();
@@ -297,7 +312,7 @@ class Bookvehicle extends Component
         }
 
         return view('livewire.pages.user.bookvehicle', [
-            'booking' => $this->booking, 
+            'booking' => $this->booking,
             'departments' => $this->departments,
             'vehicles' => $this->vehicles,
             'availability' => $this->availability,

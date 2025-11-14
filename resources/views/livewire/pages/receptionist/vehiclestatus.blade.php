@@ -132,7 +132,9 @@
 
                         <div wire:key="booking-{{ $b->vehiclebooking_id }}" class="px-4 sm:px-6 py-5 hover:bg-gray-50 transition-colors">
                             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                                <div class="flex items-start gap-3 flex-1 min-w-0">
+                                
+                                {{-- *** DIUBAH: Tambahkan wire:click dan cursor-pointer *** --}}
+                                <div class="flex items-start gap-3 flex-1 min-w-0 cursor-pointer" wire:click="showDetails({{ $b->vehiclebooking_id }})">
                                     <div class="{{ $icoAvatar }}">{{ $avatarChar }}</div>
                                     <div class="min-w-0 flex-1">
                                         <div class="flex flex-wrap items-center gap-2 mb-1.5">
@@ -196,15 +198,15 @@
                                     <div class="flex flex-wrap gap-2 justify-end pt-1.5">
                                         @if($b->status === 'pending')
                                             <button type="button"
-                                                    wire:click="reject({{ $b->vehiclebooking_id }})"
+                                                    wire:click.stop="confirmReject({{ $b->vehiclebooking_id }})"
                                                     wire:loading.attr="disabled"
-                                                    wire:target="reject({{ $b->vehiclebooking_id }})"
+                                                    wire:target="confirmReject({{ $b->vehiclebooking_id }})"
                                                     class="px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300/20 disabled:opacity-60 transition">
                                                 Reject
                                             </button>
 
                                             <button type="button"
-                                                    wire:click="approve({{ $b->vehiclebooking_id }})"
+                                                    wire:click.stop="approve({{ $b->vehiclebooking_id }})"
                                                     wire:loading.attr="disabled"
                                                     wire:target="approve({{ $b->vehiclebooking_id }})"
                                                     class="px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition">
@@ -212,7 +214,7 @@
                                             </button>
                                         @elseif($b->status === 'on_progress')
                                             <button type="button"
-                                                    wire:click="markReturned({{ $b->vehiclebooking_id }})"
+                                                    wire:click.stop="markReturned({{ $b->vehiclebooking_id }})"
                                                     wire:loading.attr="disabled"
                                                     wire:target="markReturned({{ $b->vehiclebooking_id }})"
                                                     class="px-3 py-2 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 disabled:opacity-60 transition">
@@ -220,7 +222,7 @@
                                             </button>
                                         @elseif($b->status === 'returned')
                                             <button type="button"
-                                                    wire:click="markDone({{ $b->vehiclebooking_id }})"
+                                                    wire:click.stop="markDone({{ $b->vehiclebooking_id }})"
                                                     wire:loading.attr="disabled"
                                                     wire:target="markDone({{ $b->vehiclebooking_id }})"
                                                     class="px-3 py-2 text-xs font-medium rounded-lg {{ $afterC === 0 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600/20' }}"
@@ -307,4 +309,132 @@
             </aside>
         </div>
     </main>
+
+
+    {{-- *** BARU: Modal Detail Booking *** --}}
+    @if($showDetailModal && $selectedBooking)
+        <div x-data="{ show: @entangle('showDetailModal') }"
+             x-show="show"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style="display: none;">
+
+            {{-- Backdrop --}}
+            <div class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm" wire:click="closeDetailModal"></div>
+
+            {{-- Modal Content --}}
+            <div x-show="show"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="relative z-10 w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden">
+
+                {{-- Header --}}
+                <div class="flex items-start justify-between p-4 border-b border-gray-200">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            Detail Booking #{{ $selectedBooking->vehiclebooking_id }}
+                        </h3>
+                        <p class="text-sm text-gray-600">
+                            {{ $selectedBooking->purpose }}
+                        </p>
+                    </div>
+                    <button type="button" wire:click="closeDetailModal" class="p-1 text-gray-400 hover:text-gray-700 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                    {{-- Detail Grid --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="block text-xs text-gray-500">Peminjam</span>
+                            <span class="font-medium text-gray-800">{{ $selectedBooking->borrower_name }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-500">Kendaraan</span>
+                            <span class="font-medium text-gray-800">{{ $vehicleMap[$selectedBooking->vehicle_id] ?? 'N/A' }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-500">Tujuan</span>
+                            <span class="font-medium text-gray-800">{{ $selectedBooking->destination ?? 'N/A' }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-500">Tipe Keperluan</span>
+                            <span class="font-medium text-gray-800">{{ ucfirst($selectedBooking->purpose_type) }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-500">Mulai</span>
+                            <span class="font-medium text-gray-800">{{ fmtDate($selectedBooking->start_at) }}, {{ fmtTime($selectedBooking->start_at) }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-500">Selesai</span>
+                            <span class="font-medium text-gray-800">{{ fmtDate($selectedBooking->end_at) }}, {{ fmtTime($selectedBooking->end_at) }}</span>
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-200" />
+
+                    {{-- Foto Sebelum --}}
+                    <div>
+                        <h4 class="text-base font-semibold text-gray-800 mb-3">Foto Sebelum Peminjaman</h4>
+                        @forelse($selectedPhotos['before'] as $photo)
+                            <div class="mb-4">
+                                <a href="{{ asset('storage/' . $photo->photo_path) }}" target="_blank" class="block rounded-lg overflow-hidden border border-gray-200">
+                                    <img src="{{ asset('storage/' . $photo->photo_path) }}" alt="Foto Before" class="w-full h-auto object-cover">
+                                </a>
+                                <span class="text-xs text-gray-500 mt-1 block">
+                                    Di-upload oleh: {{ $photo->user->full_name ?? 'N/A' }}
+                                </span>
+                            </div>
+                        @empty
+                            <p class="text-sm text-gray-500">Tidak ada foto 'before' yang di-upload.</p>
+                        @endforelse
+                    </div>
+
+                    <hr class="border-gray-200" />
+
+                    {{-- Foto Sesudah --}}
+                    <div>
+                        <h4 class="text-base font-semibold text-gray-800 mb-3">Foto Setelah Peminjaman</h4>
+                        @forelse($selectedPhotos['after'] as $photo)
+                            <div class="mb-4">
+                                <a href="{{ asset('storage/' . $photo->photo_path) }}" target="_blank" class="block rounded-lg overflow-hidden border border-gray-200">
+                                    <img src="{{ asset('storage/' . $photo->photo_path) }}" alt="Foto After" class="w-full h-auto object-cover">
+                                </a>
+                                <span class="text-xs text-gray-500 mt-1 block">
+                                    Di-upload oleh: {{ $photo->user->full_name ?? 'N/A' }}
+                                </span>
+                            </div>
+                        @empty
+                            <p class="text-sm text-gray-500">Tidak ada foto 'after' yang di-upload.</p>
+                        @endforelse
+                    </div>
+
+                </div>
+
+                {{-- Footer --}}
+                <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-right">
+                    <button type="button"
+                            wire:click="closeDetailModal"
+                            class="px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300/20 transition">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+    {{-- *** END BARU *** --}}
+
 </div>
