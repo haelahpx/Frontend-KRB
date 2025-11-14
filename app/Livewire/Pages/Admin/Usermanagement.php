@@ -49,8 +49,9 @@ class Usermanagement extends Component
 
     /** Department switcher */
     /** @var array<int, array{id:int,name:string}> */
-    public array $deptOptions = [];              // opsi dari user_departments
+    public array $departmentOptions = []; // renamed variable
     public ?int $selected_department_id = null;  // pilihan aktif
+    public bool $showSwitcher = false;  // control visibility of the department switcher
 
     /** Options */
     /** @var array<int, array{id:int,name:string}> */
@@ -66,16 +67,16 @@ class Usermanagement extends Component
     {
         $auth = Auth::user()->loadMissing(['company', 'department']);
 
-        $this->company_id          = (int) ($auth->company_id ?? 0);
+        $this->company_id = (int)($auth->company_id ?? 0);
         $this->primary_department_id = $auth->department_id ?: null;
-        $this->company_name        = optional($auth->company)->company_name ?? '-';
+        $this->company_name = optional($auth->company)->company_name ?? '-';
 
         // load switcher options
         $this->loadUserDepartments();
 
         // pilih default: primary -> first option -> null
         $this->selected_department_id = $this->primary_department_id
-            ?: ($this->deptOptions[0]['id'] ?? null);
+            ?: ($this->departmentOptions[0]['id'] ?? null);
 
         $this->department_name = $this->resolveDeptName($this->selected_department_id)
             ?: (optional($auth->department)->department_name ?? '-');
@@ -99,24 +100,28 @@ class Usermanagement extends Component
             ->orderBy('d.department_name')
             ->get(['d.department_id as id', 'd.department_name as name']);
 
-        $this->deptOptions = $rows->map(fn($r) => [
+        $this->departmentOptions = $rows->map(fn($r) => [
             'id' => (int)$r->id,
             'name' => (string)$r->name
         ])->values()->all();
 
+        $this->showSwitcher = true; // Show switcher if departments are loaded
+
         // fallback jika pivot kosong namun user punya primary
-        if (empty($this->deptOptions) && $this->primary_department_id) {
+        if (empty($this->departmentOptions) && $this->primary_department_id) {
             $name = Department::where('department_id', $this->primary_department_id)->value('department_name') ?? 'Unknown';
-            $this->deptOptions = [
+            $this->departmentOptions = [
                 ['id' => (int)$this->primary_department_id, 'name' => (string)$name]
             ];
+
+            $this->showSwitcher = false; // Hide switcher if no department options are available
         }
     }
 
     protected function resolveDeptName(?int $deptId): string
     {
         if (!$deptId) return '-';
-        foreach ($this->deptOptions as $opt) {
+        foreach ($this->departmentOptions as $opt) {
             if ($opt['id'] === (int)$deptId) return $opt['name'];
         }
         return Department::where('department_id', $deptId)->value('department_name') ?? '-';
@@ -135,11 +140,11 @@ class Usermanagement extends Component
     public function updatedSelectedDepartment_id(): void { $this->updatedSelectedDepartmentId(); }
     public function updatedSelectedDepartmentId(): void
     {
-        $allowed = collect($this->deptOptions)->pluck('id')->all();
+        $allowed = collect($this->departmentOptions)->pluck('id')->all();
         $id = (int) $this->selected_department_id;
 
         if (!in_array($id, $allowed, true)) {
-            $this->selected_department_id = $this->primary_department_id ?: ($this->deptOptions[0]['id'] ?? null);
+            $this->selected_department_id = $this->primary_department_id ?: ($this->departmentOptions[0]['id'] ?? null);
             $id = (int)$this->selected_department_id;
         }
         $this->department_name = $this->resolveDeptName($id);
@@ -196,7 +201,6 @@ class Usermanagement extends Component
             'full_name'     => $data['full_name'],
             'email'         => strtolower($data['email']),
             'phone_number'  => $data['phone_number'] ?? null,
-            // Model cast 'password' => 'hashed'
             'password'      => $this->password,
             'role_id'       => (int) $data['role_id'],
             'company_id'    => $this->company_id,

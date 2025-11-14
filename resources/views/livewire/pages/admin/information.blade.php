@@ -13,75 +13,84 @@
 
     <main class="px-4 sm:px-6 py-6 space-y-8">
         {{-- HERO --}}
-        <section class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
-            <div class="absolute inset-y-0 right-0 w-1/2 pointer-events-none opacity-10">
-                <div class="absolute -top-6 -right-6 size-44 bg-white rounded-full blur-3xl"></div>
-                <div class="absolute bottom-0 -left-10 size-24 bg-white rounded-full blur-xl"></div>
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
+            <!-- Soft glow background -->
+            <div class="pointer-events-none absolute inset-0 opacity-10">
+                <div class="absolute top-0 -right-6 w-28 h-28 bg-white/20 rounded-full blur-xl"></div>
+                <div class="absolute bottom-0 -left-6 w-20 h-20 bg-white/10 rounded-full blur-lg"></div>
             </div>
 
             <div class="relative z-10 p-6 sm:p-8">
-                @if (!$showSwitcher)
-                {{-- SIMPLE HEADER (no switcher) --}}
-                <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                        <x-heroicon-o-document-text class="w-6 h-6 text-white" />
-                    </div>
-                    <div class="min-w-0">
-                        <h2 class="text-lg sm:text-xl font-semibold">Information Center</h2>
-                        <p class="text-sm text-white/80">
-                            Perusahaan: <span class="font-semibold">{{ $company_name }}</span>
-                            <span class="mx-2">•</span>
-                            Departemen: <span class="font-semibold">{{ $department_name }}</span>
-                        </p>
-                        <p class="text-xs text-white/60 mt-1">
-                            Halaman ini <strong>terkunci</strong> ke departemen Anda (tidak ada data multi-department).
-                        </p>
-                    </div>
-                </div>
-                @else
-                {{-- HEADER + SWITCHER --}}
-                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                    <div class="flex items-start gap-4">
-                        <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                            <x-heroicon-o-document-text class="w-6 h-6 text-white" />
+                <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                    <!-- LEFT: Icon + Title + Meta -->
+                    <div class="flex items-start gap-4 sm:gap-6">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3M5 11h14M5 19h14M5 11a2 2 0 012-2h10a2 2 0 012 2M5 19a2 2 0 002 2h10a2 2 0 002-2" />
+                            </svg>
                         </div>
-                        <div class="min-w-0">
-                            <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Information Center</h2>
+
+                        <div class="space-y-1.5">
+                            <h2 class="text-xl sm:text-2xl font-semibold leading-tight">
+                                Information
+                            </h2>
                             <p class="text-sm text-white/80">
                                 Perusahaan: <span class="font-semibold">{{ $company_name }}</span>
                                 <span class="mx-2">•</span>
                                 Departemen: <span class="font-semibold">{{ $department_name }}</span>
                             </p>
+                            <p class="text-xs text-white/60">
+                                Menampilkan informasi untuk departemen: <span class="font-medium">{{ $department_name }}</span>.
+                            </p>
                         </div>
                     </div>
 
-                    <div class="w-full lg:w-80">
-                        <label class="block text-xs font-medium text-white/80 mb-1">Pilih Departemen</label>
-                        <div class="flex items-center gap-2">
-                            <select
-                                wire:model.live="selected_department_id"
-                                class="w-full h-10 px-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder:text-white/60 focus:border-white focus:ring-2 focus:ring-white/30 transition">
-                                @foreach ($deptOptions as $opt)
-                                <option class="text-gray-900" value="{{ $opt['id'] }}">
-                                    {{ $opt['name'] }}{{ $opt['id'] === $primary_department_id ? ' — Primary' : '' }}
-                                </option>
-                                @endforeach
-                            </select>
+                    <!-- RIGHT: Switcher or Search -->
+                    @if ($showSwitcher)
+                    <div class="w-full lg:w-[32rem] lg:ml-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-medium text-white/80 mb-2">
+                                    Pilih Departemen
+                                </label>
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                    <select
+                                        wire:model.live="selected_department_id"
+                                        class="w-full h-11 sm:h-12 px-3 sm:px-4 rounded-lg border border-white/20 bg-white/10 text-white text-sm placeholder:text-white/60 focus:border-white focus:ring-2 focus:ring-white/30 focus:outline-none transition">
+                                        @foreach ($deptOptions as $opt)
+                                        <option class="text-gray-900" value="{{ $opt['id'] }}">
+                                            {{ $opt['name'] }}{{ $opt['id'] === $primary_department_id ? ' — Primary' : '' }}
+                                        </option>
+                                        @endforeach
+                                    </select>
 
-                            <button
-                                type="button"
-                                wire:click="resetToPrimaryDepartment"
-                                class="inline-flex items-center gap-1 px-2.5 py-2 text-xs font-medium rounded-lg bg-white/10 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30">
-                                <x-heroicon-o-star class="w-4 h-4" />
-                                Primary
-                            </button>
+                                    <button
+                                        type="button"
+                                        wire:click="resetToPrimaryDepartment"
+                                        class="inline-flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-medium rounded-lg bg-white/10 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 transition">
+                                        <x-heroicon-o-star class="w-4 h-4" />
+                                        Primary
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <p class="text-[11px] text-white/60 mt-1">Data mengikuti departemen yang dipilih.</p>
                     </div>
+                    @else
+                    <!-- Search (no switcher) -->
+                    <div class="w-full lg:w-80 lg:ml-auto">
+                        <label class="sr-only">Search</label>
+                        <input
+                            type="text"
+                            wire:model.live.debounce.400ms="search"
+                            placeholder="Cari judul atau catatan…"
+                            class="w-full h-11 px-3 sm:px-3.5 bg-white/10 border border-white/20 rounded-lg text-sm placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white transition">
+                    </div>
+                    @endif
                 </div>
-                @endif
             </div>
-        </section>
+        </div>
+
 
 
         {{-- REQUEST QUEUE (RoomMonitoring moved here) --}}

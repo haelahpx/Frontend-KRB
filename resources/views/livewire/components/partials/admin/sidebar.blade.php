@@ -61,6 +61,13 @@
         >
             User Management
         </flux:sidebar.item>
+        <flux:sidebar.item
+            icon="chart-bar"
+            href="{{ route('admin.agentreport') }}"
+            :current="request()->routeIs('admin.agentreport')"
+        >
+            Agent Report
+        </flux:sidebar.item>
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />
