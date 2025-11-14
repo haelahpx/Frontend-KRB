@@ -21,7 +21,7 @@
                         <div class="p-3 bg-gray-100 rounded-lg">
                             <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
                     </div>
@@ -38,7 +38,7 @@
                         <div class="p-3 bg-gray-100 rounded-lg">
                             <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
                         </div>
                     </div>
@@ -55,7 +55,7 @@
                         <div class="p-3 bg-gray-100 rounded-lg">
                             <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                         </div>
                     </div>
@@ -72,7 +72,7 @@
                         <div class="p-3 bg-gray-100 rounded-lg">
                             <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                             </svg>
                         </div>
                     </div>
@@ -81,15 +81,21 @@
 
             {{-- Charts Section --}}
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {{-- Activity Chart --}}
+                {{-- Activity Chart (new style like report page) --}}
                 <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                    <h3 class="text-base font-semibold text-gray-900 mb-4">
-                        Weekly Activity (Room / Vehicle / DocPac / Guestbook)
-                    </h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-semibold text-gray-900 flex items-center gap-2">
+                            {{-- pakai heroicon kalau ada, kalau tidak bisa ganti svg biasa --}}
+                            <x-heroicon-o-chart-bar class="h-5 w-5 text-gray-900" />
+                            Weekly Activity – Room / Vehicle / DocPac / Guestbook
+                        </h3>
+                        <p class="text-xs text-gray-500">
+                            7 hari terakhir (dummy data)
+                        </p>
+                    </div>
 
-                    {{-- IMPORTANT: Livewire should not re-render this --}}
-                    <div class="h-64" wire:ignore>
-                        <canvas id="activityChart"></canvas>
+                    <div class="h-[320px]" wire:ignore>
+                        <canvas id="activityChart" class="w-full" style="max-height:320px"></canvas>
                     </div>
                 </div>
 
@@ -156,7 +162,7 @@
                     </ul>
                     <div class="px-5 py-3 border-t text-right">
                         <a href="{{ route('receptionist.bookings') }}"
-                           class="text-sm font-medium text-gray-700 hover:text-gray-900">
+                            class="text-sm font-medium text-gray-700 hover:text-gray-900">
                             Lihat semua →
                         </a>
                     </div>
@@ -183,7 +189,7 @@
                     </ul>
                     <div class="px-5 py-3 border-t text-right">
                         <a href="{{ route('receptionist.bookingvehicle') }}"
-                           class="text-sm font-medium text-gray-700 hover:text-gray-900">
+                            class="text-sm font-medium text-gray-700 hover:text-gray-900">
                             Lihat semua →
                         </a>
                     </div>
@@ -215,7 +221,7 @@
                     </ul>
                     <div class="px-5 py-3 border-t text-right">
                         <a href="{{ route('receptionist.guestbook') }}"
-                           class="text-sm font-medium text-gray-700 hover:text-gray-900">
+                            class="text-sm font-medium text-gray-700 hover:text-gray-900">
                             Kelola buku tamu →
                         </a>
                     </div>
@@ -244,7 +250,7 @@
                     </ul>
                     <div class="px-5 py-3 border-t text-right">
                         <a href="{{ route('receptionist.docpackstatus') }}"
-                           class="text-sm font-medium text-gray-700 hover:text-gray-900">
+                            class="text-sm font-medium text-gray-700 hover:text-gray-900">
                             Lihat semua →
                         </a>
                     </div>
@@ -252,118 +258,129 @@
             </section>
         </div>
     </main>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    {{-- Chart.js v4 seperti di report page --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-@verbatim
-<script>
-    let activityChartInstance = null;
+    @verbatim
+        <script>
+            let __activityChart;
 
-    function initActivityChart() {
-        console.log('[Dashboard] initActivityChart called');
+            function rebuildActivityChart() {
+                const canvas = document.getElementById('activityChart');
+                if (!canvas) return;
 
-        const canvas = document.getElementById('activityChart');
-        if (!canvas) {
-            console.warn('[Dashboard] Canvas #activityChart not found');
-            return;
-        }
+                const ctx = canvas.getContext('2d');
 
-        const ctx = canvas.getContext('2d');
+                // Dummy weekly data – bisa kamu ganti dari @json kalau nanti mau dinamis
+                const weekly = {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    room: [5, 9, 7, 12, 10, 8, 11],
+                    vehicle: [2, 4, 3, 6, 5, 4, 5],
+                    docpac: [1, 3, 2, 4, 3, 2, 3],
+                    guest: [4, 6, 5, 9, 8, 7, 9],
+                };
 
-        const chartData = {
-            labels:  ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            rooms:   [5, 9, 7, 12, 10, 8, 11],
-            vehicles:[2, 4, 3, 6,  5,  4,  5],
-            docpacs: [1, 3, 2, 4,  3,  2,  3],
-            guests:  [4, 6, 5, 9,  8,  7,  9]
-        };
+                if (__activityChart) {
+                    __activityChart.destroy();
+                }
 
-        if (activityChartInstance) {
-            console.log('[Dashboard] Destroying previous chart instance');
-            activityChartInstance.destroy();
-        }
+                const paletteLine = {
+                    room: '#1d4ed8', // blue
+                    vehicle: '#059669', // emerald
+                    docpac: '#f59e0b', // amber
+                    guest: '#7c3aed', // violet
+                };
 
-        activityChartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: chartData.labels,
-                datasets: [
+                const datasets = [
                     {
-                        label: 'Room Bookings',
-                        data: chartData.rooms,
-                        borderColor: 'rgb(31, 41, 55)',
-                        backgroundColor: 'rgba(31, 41, 55, 0.10)',
-                        tension: 0.4,
-                        fill: true
+                        label: 'Room',
+                        data: weekly.room,
+                        borderColor: paletteLine.room,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        fill: false,
                     },
                     {
-                        label: 'Vehicle Bookings',
-                        data: chartData.vehicles,
-                        borderColor: 'rgb(107, 114, 128)',
-                        backgroundColor: 'rgba(107, 114, 128, 0.10)',
-                        tension: 0.4,
-                        fill: true
+                        label: 'Vehicle',
+                        data: weekly.vehicle,
+                        borderColor: paletteLine.vehicle,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        fill: false,
                     },
                     {
                         label: 'DocPac',
-                        data: chartData.docpacs,
-                        borderColor: 'rgb(156, 163, 175)',
-                        backgroundColor: 'rgba(156, 163, 175, 0.10)',
-                        tension: 0.4,
-                        fill: true
+                        data: weekly.docpac,
+                        borderColor: paletteLine.docpac,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        fill: false,
                     },
                     {
                         label: 'Guestbook',
-                        data: chartData.guests,
-                        borderColor: 'rgb(55, 65, 81)',
-                        backgroundColor: 'rgba(55, 65, 81, 0.10)',
-                        tension: 0.4,
-                        fill: true
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
+                        data: weekly.guest,
+                        borderColor: paletteLine.guest,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        fill: false,
                     },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
+                ];
+
+                __activityChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: weekly.labels,
+                        datasets: datasets,
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                            },
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0,
+                                    stepSize: 1,
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)',
+                                },
+                            },
+                            x: {
+                                grid: {
+                                    display: false,
+                                },
+                            },
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            intersect: false,
+                        },
+                    },
+                });
             }
-        });
 
-        console.log('[Dashboard] Chart initialized');
-    }
+            document.addEventListener('DOMContentLoaded', () => {
+                rebuildActivityChart();
+            });
 
-    document.addEventListener('DOMContentLoaded', function () {
-        console.log('[Dashboard] DOMContentLoaded');
-        initActivityChart();
-    });
+            document.addEventListener('livewire:load', () => {
+                rebuildActivityChart();
+            });
 
-    document.addEventListener('livewire:load', function () {
-        console.log('[Dashboard] livewire:load');
-        initActivityChart();
-    });
-
-    document.addEventListener('livewire:navigated', function () {
-        console.log('[Dashboard] livewire:navigated');
-        initActivityChart();
-    });
-</script>
-@endverbatim
+            document.addEventListener('livewire:navigated', () => {
+                rebuildActivityChart();
+            });
+        </script>
+    @endverbatim
+</div>
