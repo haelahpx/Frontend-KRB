@@ -251,7 +251,7 @@ class Ticket extends Component
             if ($dbStatus) $query->where('status', $dbStatus);
         }
 
-        $tickets = $query->paginate(30);
+        $tickets = $query->paginate(12);
 
         return view('livewire.pages.admin.ticket', compact('tickets'));
     }

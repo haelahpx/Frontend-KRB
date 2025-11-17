@@ -197,9 +197,11 @@
                                                 <span class="text-xs font-semibold text-green-800 bg-green-100 px-2 py-0.5 rounded">Approved</span>
                                             @elseif($booking['status'] === 'pending')
                                                 <span class="text-xs font-semibold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded">Pending</span>
-                                            @else
+                                            @elseif($booking['status'] === 'rejected')
                                                 <span class="text-xs font-semibold text-red-800 bg-red-100 px-2 py-0.5 rounded">Rejected</span>
-                                            @endif
+                                            @else
+                                                <span class="text-xs font-semibold text-green-800 bg-green-100 px-2 py-0.5 rounded">Completed</span> 
+                                            @endif   
                                         @endif
                                     </div>
                                     <p class="text-sm text-gray-600">

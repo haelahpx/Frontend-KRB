@@ -60,23 +60,16 @@
                             <!-- DARK SELECT FIX -->
                             <select
                                 wire:model.live="selected_department_id"
-                                class="w-full rounded-lg bg-white/10 text-white border border-white/20
-                               px-3 py-2 backdrop-blur-sm focus:ring-2 focus:ring-white/30 focus:outline-none">
+                                class="w-full h-11 sm:h-12 px-3 sm:px-4 rounded-lg border border-white/20 bg-white/10 text-white text-sm placeholder:text-white/60 focus:border-white focus:ring-2 focus:ring-white/30 focus:outline-none transition">
                                 @foreach ($departmentOptions as $opt)
+                                <option class="text-gray-900" value="{{ auth()->user()->department_id }}">
+                                            {{ auth()->user()->department->name }} (Your Primary Department)
+                                        </option>
                                 <option class="text-gray-900" value="{{ $opt['id'] }}">
                                     {{ $opt['name'] }}{{ $opt['id'] === $primary_department_id ? ' — Primary' : '' }}
                                 </option>
                                 @endforeach
                             </select>
-
-                            <!-- BUTTON -->
-                            <button
-                                type="button"
-                                wire:click="resetToPrimaryDepartment"
-                                class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-sm">
-                                Primary
-                            </button>
-
                         </div>
                     </div>
                     @else

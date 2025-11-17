@@ -59,19 +59,15 @@
                                         wire:model.live="selected_department_id"
                                         class="w-full h-11 sm:h-12 px-3 sm:px-4 rounded-lg border border-white/20 bg-white/10 text-white text-sm placeholder:text-white/60 focus:border-white focus:ring-2 focus:ring-white/30 focus:outline-none transition">
                                         @foreach ($deptOptions as $opt)
+                                        <option class="text-gray-900" value="{{ auth()->user()->department_id }}">
+                                            {{ auth()->user()->department->name }} (Your Primary Department)
+                                        </option>
                                         <option class="text-gray-900" value="{{ $opt['id'] }}">
                                             {{ $opt['name'] }}{{ $opt['id'] === $primary_department_id ? ' — Primary' : '' }}
                                         </option>
                                         @endforeach
                                     </select>
 
-                                    <button
-                                        type="button"
-                                        wire:click="resetToPrimaryDepartment"
-                                        class="inline-flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-medium rounded-lg bg-white/10 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 transition">
-                                        <x-heroicon-o-star class="w-4 h-4" />
-                                        Primary
-                                    </button>
                                 </div>
                             </div>
                         </div>

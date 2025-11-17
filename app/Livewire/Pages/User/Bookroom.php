@@ -332,7 +332,7 @@ class Bookroom extends Component
                 'date' => (string) $b->date,
                 'start_time' => (string) $b->start_time,
                 'end_time' => (string) $b->end_time,
-                'status' => (string) ($b->status ?? 'pending'),
+                'status' => (string) ($b->status),
                 'is_approve' => (bool) ($b->is_approve ?? 0),
                 'requestinformation' => $b->requestinformation,
             ])->all();
