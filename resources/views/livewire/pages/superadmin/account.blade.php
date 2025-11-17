@@ -77,22 +77,34 @@
                     {{-- ROLE --}}
                     <div>
                         <label class="{{ $label }}">Role</label>
-                        <select class="{{ $input }}" wire:model.live="role_id">
+                        <select class="{{ $input }}" wire:model.live="role_key">
                             <option value="">Pilih role</option>
-                            @foreach ($roles as $r)
-                                <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
+                            @foreach ($roleOptions as $r)
+                                <option value="{{ $r['key'] }}">{{ $r['name'] }}</option>
                             @endforeach
                         </select>
-                        @if($role_id == $roleReceptionistId || $role_id == $roleSuperadminId)
+                        @php
+                            $roleId = null;
+                            if ($role_key) {
+                                [$roleId] = explode('_', $role_key);
+                            }
+                        @endphp
+                        @if($roleId == $roleReceptionistId || $roleId == $roleSuperadminId)
                             <p class="mt-1 text-xs text-gray-500">Department akan diisi otomatis.</p>
                         @endif
-                        @error('role_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
+                        @error('role_key') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- DEPARTMENT --}}
                     <div class="md:col-span-2">
                         <label class="{{ $label }}">Department</label>
-                        @if($role_id == $roleReceptionistId || $role_id == $roleSuperadminId)
+                        @php
+                            $roleId = null;
+                            if ($role_key) {
+                                [$roleId] = explode('_', $role_key);
+                            }
+                        @endphp
+                        @if($roleId == $roleReceptionistId || $roleId == $roleSuperadminId)
                             <input type="text" value="Tidak diperlukan untuk peran ini" disabled
                                 class="{{ $input }} bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed">
                             <input type="hidden" wire:model="department_id">
@@ -261,21 +273,34 @@
                             {{-- ROLE --}}
                             <div>
                                 <label class="{{ $label }}">Role</label>
-                                <select class="{{ $input }}" wire:model.live="edit_role_id">
+                                <select class="{{ $input }}" wire:model.live="edit_role_key">
                                     <option value="">Pilih role</option>
-                                    @foreach ($roles as $r)
-                                        <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
+                                    @foreach ($roleOptions as $r)
+                                        <option value="{{ $r['key'] }}">{{ $r['name'] }}</option>
                                     @endforeach
                                 </select>
-                                @if($edit_role_id == $roleReceptionistId || $edit_role_id == $roleSuperadminId)
+                                @php
+                                    $editRoleId = null;
+                                    if ($edit_role_key) {
+                                        [$editRoleId] = explode('_', $edit_role_key);
+                                    }
+                                @endphp
+                                @if($editRoleId == $roleReceptionistId || $editRoleId == $roleSuperadminId)
                                     <p class="mt-1 text-xs text-gray-500">Department akan diisi otomatis.</p>
                                 @endif
+                                @error('edit_role_key') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                             </div>
 
                             {{-- DEPARTMENT --}}
                             <div>
                                 <label class="{{ $label }}">Department</label>
-                                @if($edit_role_id == $roleReceptionistId || $edit_role_id == $roleSuperadminId)
+                                @php
+                                    $editRoleId = null;
+                                    if ($edit_role_key) {
+                                        [$editRoleId] = explode('_', $edit_role_key);
+                                    }
+                                @endphp
+                                @if($editRoleId == $roleReceptionistId || $editRoleId == $roleSuperadminId)
                                     <input type="text" value="Tidak diperlukan untuk peran ini" disabled
                                         class="{{ $input }} bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed">
                                     <input type="hidden" wire:model="edit_department_id">

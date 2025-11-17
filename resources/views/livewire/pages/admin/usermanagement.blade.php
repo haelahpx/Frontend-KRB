@@ -126,13 +126,13 @@
 
                     <div>
                         <label class="{{ $label }}">Role</label>
-                        <select class="{{ $input }}" wire:model.defer="role_id">
+                        <select class="{{ $input }}" wire:model.defer="role_key">
                             <option value="">Pilih role</option>
-                            @foreach ($roles as $r)
-                            <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
+                            @foreach ($roleOptions as $r)
+                            <option value="{{ $r['key'] }}">{{ $r['name'] }}</option>
                             @endforeach
                         </select>
-                        @error('role_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
+                        @error('role_key') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -312,13 +312,13 @@
 
                         <div>
                             <label class="{{ $label }}">Role</label>
-                            <select class="{{ $input }}" wire:model.live="edit_role_id">
+                            <select class="{{ $input }}" wire:model.live="edit_role_key">
                                 <option value="">Pilih role</option>
-                                @foreach ($roles as $r)
-                                <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
+                                @foreach ($roleOptions as $r)
+                                <option value="{{ $r['key'] }}">{{ $r['name'] }}</option>
                                 @endforeach
                             </select>
-                            @error('edit_role_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
+                            @error('edit_role_key') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                         </div>
 
                         <div>

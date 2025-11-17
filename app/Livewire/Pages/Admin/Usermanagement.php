@@ -30,7 +30,7 @@ class Usermanagement extends Component
     public string $email = '';
     public ?string $phone_number = null;
     public ?string $password = null;
-    public ?int $role_id = null;
+    public ?string $role_key = null;
 
     /** Edit (modal) */
     public bool $modalEdit = false;
@@ -39,7 +39,7 @@ class Usermanagement extends Component
     public string $edit_email = '';
     public ?string $edit_phone_number = null;
     public ?string $edit_password = null; // optional
-    public ?int $edit_role_id = null;
+    public ?string $edit_role_key = null;
 
     /** Derived from auth */
     public int $company_id;
@@ -56,6 +56,7 @@ class Usermanagement extends Component
     /** Options */
     /** @var array<int, array{id:int,name:string}> */
     public array $roles = [];
+    public array $roleOptions = [];
 
     protected $casts = [
         'modalEdit' => 'bool',
@@ -88,6 +89,17 @@ class Usermanagement extends Component
             ->get(['role_id as id', 'name'])
             ->map(fn($r) => ['id' => (int) $r->id, 'name' => (string) $r->name])
             ->toArray();
+
+        $options = [];
+        foreach ($this->roles as $role) {
+            if (strtolower($role['name']) === 'user') {
+                $options[] = ['key' => $role['id'] . '_no', 'name' => 'User'];
+                $options[] = ['key' => $role['id'] . '_yes', 'name' => 'User (Agent)'];
+            } else {
+                $options[] = ['key' => $role['id'] . '_no', 'name' => $role['name']];
+            }
+        }
+        $this->roleOptions = $options;
     }
 
     protected function loadUserDepartments(): void
@@ -163,11 +175,10 @@ class Usermanagement extends Component
             'email'        => ['required', 'email', 'unique:users,email,NULL,user_id,deleted_at,NULL'],
             'phone_number' => ['nullable', 'string', 'max:30'],
             'password'     => ['required', 'string', 'min:6'],
-            'role_id'      => [
+            'role_key'      => [
                 'required',
-                'integer',
-                Rule::exists('roles', 'role_id')
-                    ->where(fn($q) => $q->whereNotIn('name', ['receptionist', 'superadmin'])),
+                'string',
+                Rule::in(array_column($this->roleOptions, 'key'))
             ],
         ];
     }
@@ -179,11 +190,10 @@ class Usermanagement extends Component
             'edit_full_name'    => ['required', 'string', 'max:255'],
             'edit_email'        => ["required", "email", "unique:users,email,{$id},user_id,deleted_at,NULL"],
             'edit_phone_number' => ['nullable', 'string', 'max:30'],
-            'edit_role_id'      => [
+            'edit_role_key'      => [
                 'required',
-                'integer',
-                Rule::exists('roles', 'role_id')
-                    ->where(fn($q) => $q->whereNotIn('name', ['receptionist', 'superadmin'])),
+                'string',
+                Rule::in(array_column($this->roleOptions, 'key'))
             ],
         ];
     }
@@ -197,12 +207,15 @@ class Usermanagement extends Component
         // pakai departemen TERPILIH (fallback primary)
         $deptId = $this->selected_department_id ?: $this->primary_department_id;
 
+        [$roleId, $isAgent] = explode('_', $data['role_key']);
+
         User::create([
             'full_name'     => $data['full_name'],
             'email'         => strtolower($data['email']),
             'phone_number'  => $data['phone_number'] ?? null,
             'password'      => $this->password,
-            'role_id'       => (int) $data['role_id'],
+            'role_id'       => (int) $roleId,
+            'is_agent'      => $isAgent,
             'company_id'    => $this->company_id,
             'department_id' => $deptId,
         ]);
@@ -219,7 +232,7 @@ class Usermanagement extends Component
             'email',
             'phone_number',
             'password',
-            'role_id',
+            'role_key',
         ]);
         $this->resetValidation();
     }
@@ -251,7 +264,7 @@ class Usermanagement extends Component
         $this->edit_full_name    = (string) $u->full_name;
         $this->edit_email        = (string) $u->email;
         $this->edit_phone_number = $u->phone_number;
-        $this->edit_role_id      = $u->role_id;
+        $this->edit_role_key     = $u->role_id . '_' . $u->is_agent;
         $this->edit_password     = null;
 
         $this->modalEdit = true;
@@ -264,7 +277,7 @@ class Usermanagement extends Component
         $this->edit_full_name   = '';
         $this->edit_email       = '';
         $this->edit_phone_number= null;
-        $this->edit_role_id     = null;
+        $this->edit_role_key    = null;
         $this->edit_password    = null;
 
         $this->resetErrorBag();
@@ -292,11 +305,14 @@ class Usermanagement extends Component
 
         $data = $this->validate($this->editRules());
 
+        [$roleId, $isAgent] = explode('_', $data['edit_role_key']);
+
         $payload = [
             'full_name'    => $data['edit_full_name'],
             'email'        => strtolower($data['edit_email']),
             'phone_number' => $data['edit_phone_number'] ?? null,
-            'role_id'      => (int) $data['edit_role_id'],
+            'role_id'      => (int) $roleId,
+            'is_agent'     => $isAgent,
         ];
 
         if (!empty($this->edit_password)) {
