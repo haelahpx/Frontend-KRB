@@ -127,8 +127,12 @@ class MeetingSchedule extends Component
         $idCol = $this->pickColumn('requirements', ['requirement_id', 'id'], 'requirement_id');
         $nmCol = $this->pickColumn('requirements', ['name', 'requirement_name'], 'name');
 
+        $cid = Auth::user()?->company_id;
+
+        // Update the query to include the company_id filter
         $this->requirementOptions = DB::table('requirements')
             ->selectRaw("$idCol as id, $nmCol as name")
+            ->when($cid, fn($q) => $q->where('company_id', $cid)) // Ensure only company-specific requirements are fetched
             ->orderBy($nmCol)
             ->get()
             ->map(fn($r) => ['id' => (int)$r->id, 'name' => (string)$r->name])
@@ -169,9 +173,9 @@ class MeetingSchedule extends Component
             $q->where(function ($qq) use ($name, $needle) {
                 $qq->where($name, 'like', "%{$needle}%");
             })
-              ->orderByRaw("CASE WHEN $name LIKE ? THEN 0 ELSE 1 END", ["{$needle}%"])
-              ->orderBy($name)
-              ->limit($limit);
+                ->orderByRaw("CASE WHEN $name LIKE ? THEN 0 ELSE 1 END", ["{$needle}%"])
+                ->orderBy($name)
+                ->limit($limit);
         } else {
             $q->orderBy($name)->limit($limit);
         }
@@ -212,7 +216,10 @@ class MeetingSchedule extends Component
     public function updatedUserQueryOffline($q): void
     {
         $deptId = (int) ($this->form['department_id'] ?: 0);
-        if ($deptId === 0) { $this->usersByDeptOffline = []; return; }
+        if ($deptId === 0) {
+            $this->usersByDeptOffline = [];
+            return;
+        }
 
         $this->usersByDeptOffline = $this->queryUsersForDropdown($deptId, $q);
         $first = $this->usersByDeptOffline[0] ?? null;
@@ -224,7 +231,10 @@ class MeetingSchedule extends Component
     public function updatedUserQueryOnline($q): void
     {
         $deptId = (int) ($this->online_department_id ?: 0);
-        if ($deptId === 0) { $this->usersByDept = []; return; }
+        if ($deptId === 0) {
+            $this->usersByDept = [];
+            return;
+        }
 
         $this->usersByDept = $this->queryUsersForDropdown($deptId, $q);
 
@@ -251,7 +261,7 @@ class MeetingSchedule extends Component
             'form.participant'   => ['required', 'integer', 'min:1'],
             'form.notes'         => ['nullable', 'string', 'max:1000'],
             'form.requirements'  => ['array'],
-            'form.requirements.*'=> ['integer'],
+            'form.requirements.*' => ['integer'],
         ];
     }
 
@@ -387,7 +397,7 @@ class MeetingSchedule extends Component
             'online_provider'        => $data['online_platform'],
             'online_meeting_url'     => null,
             'online_meeting_code'    => null,
-            'online_meeting_password'=> null,
+            'online_meeting_password' => null,
             'created_at'             => now(),
             'updated_at'             => now(),
         ]);
@@ -426,7 +436,8 @@ class MeetingSchedule extends Component
                 if (method_exists($svc, 'connected'))   return (bool) $svc->connected();
                 if (method_exists($svc, 'isConnected')) return (bool) $svc->isConnected();
             }
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
         return false;
     }
 
@@ -444,7 +455,7 @@ class MeetingSchedule extends Component
 
         $row = DB::table('requirements')
             ->select($idCol . ' as id', $nmCol . ' as name')
-            ->whereRaw('LOWER('.$nmCol.') = ?', ['other'])
+            ->whereRaw('LOWER(' . $nmCol . ') = ?', ['other'])
             ->first();
 
         return $row ? (int) $row->id : null;
@@ -503,8 +514,8 @@ class MeetingSchedule extends Component
         $prefix = array_values(array_filter($items, fn($r) => isset($r['name']) && mb_stripos($r['name'], $qLower) === 0));
         $extra  = array_values(array_filter($items, fn($r) => isset($r['name']) && mb_stripos($r['name'], $qLower) !== false && mb_stripos($r['name'], $qLower) !== 0));
 
-        usort($prefix, fn($a,$b)=>strnatcasecmp($a['name'],$b['name']));
-        usort($extra,  fn($a,$b)=>strnatcasecmp($a['name'],$b['name']));
+        usort($prefix, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
+        usort($extra,  fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
         return array_slice(array_merge($prefix, $extra), 0, $max);
     }
 

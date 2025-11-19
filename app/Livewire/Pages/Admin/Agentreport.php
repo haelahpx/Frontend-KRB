@@ -21,7 +21,7 @@ class Agentreport extends Component
     protected $paginationTheme = 'tailwind';
 
     public $openAgent = null;
-    public $search = ''; 
+    public $search = '';
     public $companyId;
     public $departmentId;
 
@@ -51,14 +51,13 @@ class Agentreport extends Component
         $query = User::where('role_id', 3)
             ->whereIn('user_id', Ticket::select('user_id')->distinct())
             ->when($this->companyId, fn($q) => $q->where('company_id', $this->companyId))
-            ->when($this->departmentId, fn($q) => $q->where('department_id', $this->departmentId));
-
-        if (!empty($this->search)) {
-            $query->where(function ($q) {
-                $q->where('full_name', 'like', '%' . $this->search . '%')
-                    ->orWhere('user_id', 'like', '%' . $this->search . '%');
+            ->when($this->departmentId, fn($q) => $q->where('department_id', $this->departmentId))
+            ->when($this->search, function ($q) {
+                $q->where(function ($qq) {
+                    $qq->where('full_name', 'like', '%' . $this->search . '%')
+                        ->orWhere('user_id', 'like', '%' . $this->search . '%');
+                });
             });
-        }
 
         $agents = $query->orderBy('full_name')->paginate(5);
         $agentIds = $agents->pluck('user_id')->toArray();

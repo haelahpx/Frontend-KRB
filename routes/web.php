@@ -167,12 +167,11 @@ Route::middleware(['auth'])->group(function () {
             ->name('attachments.finalize');
     });
 
-    // Vehicle (signed)
-    Route::prefix('vehicle-attachments')->name('vehicle.attachments.')->group(function () {
-        Route::post('/signature-temp', [VehicleAttachmentController::class, 'signatureTemp'])->name('signatureTemp');
-        Route::delete('/temp', [VehicleAttachmentController::class, 'deleteTemp'])->name('deleteTemp');
-        Route::post('/finalize', [VehicleAttachmentController::class, 'finalize'])->name('finalize');
-    });
+
+    // ---------- Agent Routes ----------
+    Route::middleware(['auth', 'is_agent'])->group(function () {
+    Route::get('/ticket-queue', Ticketqueue::class)->name('user.ticket.queue');
+});
 
     // ---------- User routes ----------
     Route::get('/dashboard', UserHome::class)->name('user.home');
@@ -186,7 +185,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/ticketstatus', Ticketstatus::class)->name('ticketstatus');
     Route::get('/vehiclestatus', Vehiclestatus::class)->name('vehiclestatus');
     Route::get('/tickets/{ticket:ulid}', UserTicketshow::class)->name('user.ticket.show');
-    Route::get('/ticket-queue', Ticketqueue::class)->name('user.ticket.queue');
+    
 
     // ---------- Admin routes ----------
     Route::middleware('is.admin')->group(function () {

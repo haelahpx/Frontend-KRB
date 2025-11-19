@@ -29,8 +29,9 @@ class Account extends Component
     public string $email = '';
     public ?string $phone_number = null;
     public ?string $password = null;
-    public ?int $role_id = null;
+    public ?string $role_key = null;
     public ?int $department_id = null;
+    public string $is_agent = 'no';
 
     // Edit form
     public bool $modalEdit = false;
@@ -39,14 +40,16 @@ class Account extends Component
     public string $edit_email = '';
     public ?string $edit_phone_number = null;
     public ?string $edit_password = null;
-    public ?int $edit_role_id = null;
+    public ?string $edit_role_key = null;
     public ?int $edit_department_id = null;
+    public string $edit_is_agent = 'no';
 
     // Derived
     public int $company_id;
     public string $company_name = '-';
 
     public array $roles = [];
+    public array $roleOptions = [];
     public $departments;
 
     public ?int $roleReceptionistId = null;
@@ -71,6 +74,17 @@ class Account extends Component
             ->map(fn($r) => ['id' => (int)$r->id, 'name' => (string)$r->name])
             ->toArray();
 
+        $options = [];
+        foreach ($this->roles as $role) {
+            if (strtolower($role['name']) === 'user') {
+                $options[] = ['key' => $role['id'] . '_no', 'name' => 'User'];
+                $options[] = ['key' => $role['id'] . '_yes', 'name' => 'User (Agent)'];
+            } else {
+                $options[] = ['key' => $role['id'] . '_no', 'name' => $role['name']];
+            }
+        }
+        $this->roleOptions = $options;
+
         $this->roleReceptionistId = Role::where('name', 'receptionist')->value('role_id');
         $this->roleSuperadminId   = Role::where('name', 'superadmin')->value('role_id');
 
@@ -80,7 +94,7 @@ class Account extends Component
             ->where('department_name', 'Administration')
             ->value('department_id');
 
-        $this->deptExecutiveId = Department::where('company_id', $this->company_id)
+        $this->deptExecutiveId = Department::where('company_id', '!=', 0)
             ->where('department_name', 'Executive')
             ->value('department_id');
     }
@@ -100,7 +114,11 @@ class Account extends Component
 
     protected function createRules(): array
     {
-        $isSpecialRole = in_array($this->role_id, [$this->roleReceptionistId, $this->roleSuperadminId]);
+        $roleId = null;
+        if ($this->role_key) {
+            [$roleId] = explode('_', $this->role_key);
+        }
+        $isSpecialRole = in_array($roleId, [$this->roleReceptionistId, $this->roleSuperadminId]);
 
         return [
             'full_name'     => ['required', 'string', 'max:255'],
@@ -110,7 +128,7 @@ class Account extends Component
             ],
             'phone_number'  => ['nullable', 'string', 'max:30'],
             'password'      => ['required', 'string', 'min:6'],
-            'role_id'       => ['required', 'integer', Rule::exists('roles', 'role_id')],
+            'role_key'      => ['required', 'string', Rule::in(array_column($this->roleOptions, 'key'))],
             'department_id' => $isSpecialRole
                 ? ['nullable']
                 : ['required', 'integer', Rule::exists('departments', 'department_id')->where('company_id', $this->company_id)],
@@ -120,7 +138,11 @@ class Account extends Component
     protected function editRules(): array
     {
         $ignoreId = $this->editingId ?? null;
-        $isSpecialRole = in_array($this->edit_role_id, [$this->roleReceptionistId, $this->roleSuperadminId]);
+        $roleId = null;
+        if ($this->edit_role_key) {
+            [$roleId] = explode('_', $this->edit_role_key);
+        }
+        $isSpecialRole = in_array($roleId, [$this->roleReceptionistId, $this->roleSuperadminId]);
 
         return [
             'edit_full_name' => ['required', 'string', 'max:255'],
@@ -131,7 +153,7 @@ class Account extends Component
                     ->whereNull('deleted_at'),
             ],
             'edit_phone_number' => ['nullable', 'string', 'max:30'],
-            'edit_role_id' => ['required', 'integer', Rule::exists('roles', 'role_id')],
+            'edit_role_key' => ['required', 'string', Rule::in(array_column($this->roleOptions, 'key'))],
             'edit_department_id' => $isSpecialRole
                 ? ['nullable']
                 : ['required', 'integer', Rule::exists('departments', 'department_id')->where('company_id', $this->company_id)],
@@ -162,15 +184,17 @@ class Account extends Component
 
     /* ======================== Reactive hooks ======================== */
 
-    public function updatedRoleId($value): void
+    public function updatedRoleKey($value): void
     {
-        $mapped = $this->mapDeptForRole((int)$value);
+        [$roleId] = explode('_', $value);
+        $mapped = $this->mapDeptForRole((int)$roleId);
         $this->department_id = $mapped;
     }
 
-    public function updatedEditRoleId($value): void
+    public function updatedEditRoleKey($value): void
     {
-        $mapped = $this->mapDeptForRole((int)$value);
+        [$roleId] = explode('_', $value);
+        $mapped = $this->mapDeptForRole((int)$roleId);
         $this->edit_department_id = $mapped;
     }
 
@@ -178,16 +202,19 @@ class Account extends Component
 
     public function store(): void
     {
-        if (!$this->role_id) {
+        if (!$this->role_key) {
             $this->dispatch('toast', type: 'warning', title: 'Gagal', message: 'Silakan pilih role terlebih dahulu.', duration: 3000);
             return;
         }
 
-        $forced = $this->mapDeptForRole((int)$this->role_id);
+        [$roleId, $isAgent] = explode('_', $this->role_key);
+        $roleId = (int)$roleId;
+
+        $forced = $this->mapDeptForRole($roleId);
 
         // Jika department belum ada untuk role receptionist/superadmin
-        if (in_array($this->role_id, [$this->roleReceptionistId, $this->roleSuperadminId]) && !$forced) {
-            $roleName = $this->role_id === $this->roleReceptionistId ? 'Administration' : 'Executive';
+        if (in_array($roleId, [$this->roleReceptionistId, $this->roleSuperadminId]) && !$forced) {
+            $roleName = $roleId === $this->roleReceptionistId ? 'Administration' : 'Executive';
             $this->dispatch('toast', type: 'warning', title: 'Department Belum Ada', message: "Silakan buat department {$roleName} terlebih dahulu sebelum menambahkan user ini.", duration: 5000);
             return;
         }
@@ -203,7 +230,8 @@ class Account extends Component
             'email'         => strtolower($data['email']),
             'phone_number'  => $data['phone_number'] ?? null,
             'password'      => bcrypt($this->password),
-            'role_id'       => (int)$data['role_id'],
+            'role_id'       => $roleId,
+            'is_agent'      => $isAgent,
             'company_id'    => $this->company_id,
             'department_id' => (int)$data['department_id'],
         ]);
@@ -219,7 +247,7 @@ class Account extends Component
         $this->email = '';
         $this->phone_number = null;
         $this->password = null;
-        $this->role_id = null;
+        $this->role_key = null;
         $this->department_id = null;
         $this->resetValidation();
     }
@@ -244,7 +272,7 @@ class Account extends Component
         $this->edit_full_name = $u->full_name;
         $this->edit_email = $u->email;
         $this->edit_phone_number = $u->phone_number;
-        $this->edit_role_id = $u->role_id;
+        $this->edit_role_key = $u->role_id . '_' . ($u->is_agent ?? 'no');
         $this->edit_department_id = $u->department_id;
         $this->edit_password = null;
 
@@ -258,7 +286,7 @@ class Account extends Component
         $this->edit_full_name = '';
         $this->edit_email = '';
         $this->edit_phone_number = null;
-        $this->edit_role_id = null;
+        $this->edit_role_key = null;
         $this->edit_department_id = null;
         $this->edit_password = null;
         $this->resetErrorBag();
@@ -278,11 +306,14 @@ class Account extends Component
             return;
         }
 
+        [$roleId, $isAgent] = explode('_', $this->edit_role_key);
+        $roleId = (int)$roleId;
+
         // Cek department untuk role tertentu
-        if (in_array($this->edit_role_id, [$this->roleReceptionistId, $this->roleSuperadminId])) {
-            $forced = $this->mapDeptForRole((int)$this->edit_role_id);
+        if (in_array($roleId, [$this->roleReceptionistId, $this->roleSuperadminId])) {
+            $forced = $this->mapDeptForRole($roleId);
             if (!$forced) {
-                $roleName = $this->edit_role_id === $this->roleReceptionistId ? 'Administration' : 'Executive';
+                $roleName = $roleId === $this->roleReceptionistId ? 'Administration' : 'Executive';
                 $this->dispatch('toast', type: 'warning', title: 'Department Belum Ada', message: "Silakan buat department {$roleName} terlebih dahulu sebelum mengubah user ini.", duration: 5000);
                 return;
             }
@@ -295,7 +326,8 @@ class Account extends Component
             'full_name' => $data['edit_full_name'],
             'email' => strtolower($data['edit_email']),
             'phone_number' => $data['edit_phone_number'] ?? null,
-            'role_id' => (int)$data['edit_role_id'],
+            'role_id' => $roleId,
+            'is_agent' => $isAgent,
             'department_id' => (int)$data['edit_department_id'],
         ];
 

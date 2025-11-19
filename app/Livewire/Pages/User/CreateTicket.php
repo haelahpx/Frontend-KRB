@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Models\Department;
 use App\Models\Ticket;
+use App\Models\TicketAttachment; // Pastikan model ini ada atau gunakan DB facade
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -65,7 +66,7 @@ class CreateTicket extends Component
 
             $user = Auth::user()->loadMissing(['department', 'company']);
 
-            // create ticket
+            // 1. Create Ticket
             $ticket = Ticket::create([
                 'company_id' => $user->company_id,
                 'requestdept_id' => $user->department_id,
@@ -77,55 +78,51 @@ class CreateTicket extends Component
                 'status' => 'OPEN',
             ]);
 
-            // parse temp items JSON (array of uploaded temp file objects)
+            // 2. Parse JSON lampiran
             $items = [];
             try {
                 $items = json_decode($this->temp_items_json ?? '[]', true, 512, JSON_THROW_ON_ERROR);
-                if (!is_array($items))
-                    $items = [];
+                if (!is_array($items)) $items = [];
             } catch (\JsonException $je) {
                 $items = [];
             }
 
-            // enforce total quota server-side before finalize (sum bytes)
+            // 3. Cek total kuota size (Server Side check)
             $incomingBytes = array_sum(array_map(fn($it) => (int) ($it['bytes'] ?? 0), $items));
             $quotaBytes = (int) $this->total_quota_mb * 1024 * 1024;
+
             if ($incomingBytes > $quotaBytes) {
-                // rollback ticket and show error
-                $ticket->delete();
+                $ticket->delete(); // Rollback
                 $this->addError('attachments', "Total attachment size exceeds {$this->total_quota_mb} MB.");
                 return;
             }
 
-            // finalize temp attachments (AttachmentController should move files & insert DB)
+            // 4. Finalisasi Lampiran (Pindah dari Temp ke Folder Tiket)
             if (!empty($items)) {
                 try {
                     $req = new \Illuminate\Http\Request([
                         'ticket_id' => $ticket->getKey(),
                         'items' => $items,
-                        // optionally include tmp_key: not required if public_id is parseable
                     ]);
-                    // call controller method directly
+                    
+                    // Panggil controller untuk memindahkan file fisik dan insert ke DB
                     app(\App\Http\Controllers\AttachmentController::class)->finalizeTemp($req);
+                    
                 } catch (Throwable $e) {
-                    // log but don't fatal: ticket already created (we can mark or notify)
                     Log::warning('Attachment finalizeTemp failed', [
                         'ticket_id' => $ticket->getKey(),
                         'err' => $e->getMessage(),
                     ]);
-                    // you may choose to delete ticket on critical failure. For now we keep ticket and notify user.
-                    $this->dispatch('toast', ['type' => 'warning', 'message' => 'Beberapa lampiran gagal diproses.']);
+                    $this->dispatch('toast', ['type' => 'warning', 'message' => 'Tiket dibuat, tetapi beberapa lampiran gagal diproses.']);
                 }
             }
 
-            // reset fields
+            // 5. Reset & Redirect
             $this->reset(['subject', 'priority', 'assigned_department_id', 'description', 'temp_items_json']);
-            // restore defaults
             $this->priority = 'low';
             $this->assigned_department_id = $user->department_id;
             $this->temp_items_json = '[]';
 
-            // flash & redirect
             session()->flash('success', 'Tiket berhasil dibuat.');
             return redirect()->route('ticketstatus');
 

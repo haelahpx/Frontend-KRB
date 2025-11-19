@@ -68,7 +68,7 @@
 
                 {{-- Search --}}
                 <div class="w-full max-w-md">
-                    <input type="text" wire:model.debounce.400ms="search" placeholder="Search agent by name or ID..."
+                    <input type="text" wire:model.live.debounce.100ms="search" placeholder="Search agent by name or ID..."
                         class="w-full rounded-lg bg-white/50 border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-gray-900/10 focus:outline-none">
                 </div>
             </div>

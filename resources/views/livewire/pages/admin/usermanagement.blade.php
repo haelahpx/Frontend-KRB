@@ -60,23 +60,16 @@
                             <!-- DARK SELECT FIX -->
                             <select
                                 wire:model.live="selected_department_id"
-                                class="w-full rounded-lg bg-white/10 text-white border border-white/20
-                               px-3 py-2 backdrop-blur-sm focus:ring-2 focus:ring-white/30 focus:outline-none">
+                                class="w-full h-11 sm:h-12 px-3 sm:px-4 rounded-lg border border-white/20 bg-white/10 text-white text-sm placeholder:text-white/60 focus:border-white focus:ring-2 focus:ring-white/30 focus:outline-none transition">
                                 @foreach ($departmentOptions as $opt)
+                                <option class="text-gray-900" value="{{ auth()->user()->department_id }}">
+                                            {{ auth()->user()->department->name }} (Your Primary Department)
+                                        </option>
                                 <option class="text-gray-900" value="{{ $opt['id'] }}">
                                     {{ $opt['name'] }}{{ $opt['id'] === $primary_department_id ? ' — Primary' : '' }}
                                 </option>
                                 @endforeach
                             </select>
-
-                            <!-- BUTTON -->
-                            <button
-                                type="button"
-                                wire:click="resetToPrimaryDepartment"
-                                class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-sm">
-                                Primary
-                            </button>
-
                         </div>
                     </div>
                     @else
@@ -133,13 +126,13 @@
 
                     <div>
                         <label class="{{ $label }}">Role</label>
-                        <select class="{{ $input }}" wire:model.defer="role_id">
+                        <select class="{{ $input }}" wire:model.defer="role_key">
                             <option value="">Pilih role</option>
-                            @foreach ($roles as $r)
-                            <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
+                            @foreach ($roleOptions as $r)
+                            <option value="{{ $r['key'] }}">{{ $r['name'] }}</option>
                             @endforeach
                         </select>
-                        @error('role_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
+                        @error('role_key') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -319,13 +312,13 @@
 
                         <div>
                             <label class="{{ $label }}">Role</label>
-                            <select class="{{ $input }}" wire:model.live="edit_role_id">
+                            <select class="{{ $input }}" wire:model.live="edit_role_key">
                                 <option value="">Pilih role</option>
-                                @foreach ($roles as $r)
-                                <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
+                                @foreach ($roleOptions as $r)
+                                <option value="{{ $r['key'] }}">{{ $r['name'] }}</option>
                                 @endforeach
                             </select>
-                            @error('edit_role_id') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
+                            @error('edit_role_key') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                         </div>
 
                         <div>

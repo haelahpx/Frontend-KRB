@@ -54,7 +54,7 @@ class Information extends Component
     public ?int   $selected_department_id = null; // live switch
     public ?int   $primary_department_id  = null; // users.department_id
 
-    public bool $showSwitcher = false;          
+    public bool $showSwitcher = false;
 
     public function mount(): void
     {
@@ -78,7 +78,6 @@ class Information extends Component
 
             $this->resetForm();
             $this->resetBroadcastForm();
-
         } catch (Throwable $e) {
             $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal memuat header.', duration: 5000);
             Log::error('Information mount error', ['m' => $e->getMessage()]);
@@ -97,7 +96,7 @@ class Information extends Component
 
         $this->deptOptions = $rows->map(fn($r) => ['id' => (int)$r->id, 'name' => (string)$r->name])->values()->all();
 
-        $this->showSwitcher = true; 
+        $this->showSwitcher = true;
 
         // kalau user tidak punya pivot apapun, tetapi punya primary, masukkan primary supaya tetap bisa jalan
         if (empty($this->deptOptions) && $this->primary_department_id) {
@@ -181,16 +180,16 @@ class Information extends Component
     private function rules(): array
     {
         return [
-            'description' => ['required','string'],
-            'event_at'    => ['required','date'],
+            'description' => ['required', 'string'],
+            'event_at'    => ['required', 'date'],
         ];
     }
 
     private function broadcastRules(): array
     {
         return [
-            'broadcast_description' => ['required','string'],
-            'broadcast_event_at'    => ['required','date'],
+            'broadcast_description' => ['required', 'string'],
+            'broadcast_event_at'    => ['required', 'date'],
         ];
     }
 
@@ -318,7 +317,6 @@ class Information extends Component
             $this->dispatch('toast', type: 'success', title: 'Broadcast Sent', message: 'Information broadcast ke departemen terpilih.', duration: 3500);
             $this->resetBroadcastForm();
             $this->resetPage('infoPage');
-
         } catch (Throwable $e) {
             $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal mengirim broadcast.', duration: 5000);
             Log::error('Information submitBroadcast error', ['m' => $e->getMessage()]);
@@ -358,13 +356,20 @@ class Information extends Component
         }
 
         $booking = BookingRoom::query()
-            ->with(['user','room','department'])
+            ->with(['user', 'room', 'department'])
             ->where('bookingroom_id', $this->informBookingId)
             ->firstOrFail();
 
         $companyId = $user->company_id;
-        $eventAt   = Carbon::parse($booking->date.' '.$booking->start_time)->format('Y-m-d H:i:s');
-        $desc      = $this->composeDescription($booking);
+
+        // --- FIX HERE ---
+        $date = Carbon::parse($booking->date)->toDateString();               // "2025-11-17"
+        $time = Carbon::parse($booking->start_time)->format('H:i:s');        // "14:00:00"
+        $eventAt = Carbon::createFromFormat('Y-m-d H:i:s', "$date $time")
+            ->format('Y-m-d H:i:s');
+        // -----------------
+
+        $desc = $this->composeDescription($booking);
 
         try {
             DB::transaction(function () use ($companyId, $deptId, $eventAt, $desc, $booking) {
@@ -383,7 +388,6 @@ class Information extends Component
             $this->resetPage('onlinePage');
 
             $this->dispatch('toast', type: 'success', title: 'Sent', message: 'Information dikirim ke departemen terpilih.', duration: 3500);
-
         } catch (Throwable $e) {
             $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal mengirim informasi.', duration: 5000);
             Log::error('Information submitInform error', ['m' => $e->getMessage()]);
@@ -440,7 +444,7 @@ class Information extends Component
 
         // Request lists (company-scope; action push ke dept terpilih)
         $offline = BookingRoom::query()
-            ->with(['room','user','department'])
+            ->with(['room', 'user', 'department'])
             ->where('company_id', $companyId)
             ->whereNull('deleted_at')
             ->where('booking_type', 'meeting')
@@ -450,7 +454,7 @@ class Information extends Component
             ->paginate($this->perPageReq, ['*'], 'offlinePage');
 
         $online = BookingRoom::query()
-            ->with(['room','user','department'])
+            ->with(['room', 'user', 'department'])
             ->where('company_id', $companyId)
             ->whereNull('deleted_at')
             ->where('booking_type', 'online_meeting')
@@ -463,8 +467,10 @@ class Information extends Component
         $rows = InformationModel::query()
             ->where('company_id', $companyId)
             ->when($deptId, fn($q) => $q->where('department_id', $deptId))
-            ->when($this->search, fn($q) =>
-                $q->where('description', 'like', '%'.$this->search.'%')
+            ->when(
+                $this->search,
+                fn($q) =>
+                $q->where('description', 'like', '%' . $this->search . '%')
             )
             ->orderByDesc('event_at')
             ->paginate($this->perPageInfo, ['*'], 'infoPage');

@@ -78,7 +78,7 @@ class DatabaseSeeder extends Seeder
                 // === DEPARTMENTS ===
                 $deptNames = [
                     'IT','Finance','HRD','Marketing','Operations',
-                    'General Affairs','Executive','Research & Development',
+                    'General Affairs','Executive',
                     'Customer Support','Legal','Maintenance','Administration'
                 ];
                 $depts = [];
@@ -372,7 +372,7 @@ class DatabaseSeeder extends Seeder
             'low' => 72,
         ];
 
-        foreach (range(1,100) as $i) {
+        foreach (range(1,200) as $i) {
             $user = $users->random();
             $dept = Arr::random($depts);
             $reqDept = Arr::random($depts);
