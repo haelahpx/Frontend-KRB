@@ -3,33 +3,33 @@
     use Carbon\Carbon;
 
     if (!function_exists('fmtDate')) {
-    function fmtDate($v) {
-    try { return $v ? Carbon::parse($v)->format('d M Y') : '—'; }
-    catch (\Throwable) { return '—'; }
-    }
+        function fmtDate($v) {
+            try { return $v ? Carbon::parse($v)->format('d M Y') : '—'; }
+            catch (\Throwable) { return '—'; }
+        }
     }
     if (!function_exists('fmtTime')) {
-    function fmtTime($v) {
-    try { return $v ? Carbon::parse($v)->format('H.i') : '—'; }
-    catch (\Throwable) {
-    if (is_string($v)) {
-    if (preg_match('/^\d{2}:\d{2}/', $v)) return str_replace(':','.', substr($v,0,5));
-    if (preg_match('/^\d{2}\.\d{2}/', $v)) return substr($v,0,5);
-    }
-    return '—';
-    }
-    }
+        function fmtTime($v) {
+            try { return $v ? Carbon::parse($v)->format('H.i') : '—'; }
+            catch (\Throwable) {
+                if (is_string($v)) {
+                    if (preg_match('/^\d{2}:\d{2}/', $v)) return str_replace(':','.', substr($v,0,5));
+                    if (preg_match('/^\d{2}\.\d{2}/', $v)) return substr($v,0,5);
+                }
+                return '—';
+            }
+        }
     }
 
     /** @var int|null $roomFilterId */
     $roomFilterId = $roomFilterId ?? null;
 
-    $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
-    $label = 'block text-sm font-medium text-gray-700 mb-2';
-    $input = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
-    $btnBlk = 'px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition';
-    $btnGhost = 'px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300/20 disabled:opacity-60 transition';
-    $chip = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
+    $card      = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
+    $label     = 'block text-sm font-medium text-gray-700 mb-2';
+    $input     = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
+    $btnBlk    = 'px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition';
+    $btnGhost  = 'px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300/20 disabled:opacity-60 transition';
+    $chip      = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
     $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0';
     @endphp
 
@@ -58,7 +58,7 @@
                 <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
                 <div class="absolute bottom-0 -left-4 w-16 h-16 bg-white rounded-full blur-lg"></div>
             </div>
-            <div class="relative z-10 p-6 sm:p-8">
+            <div class="relative z-10 p-6 sm:px-8">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div class="space-y-1">
                         <h2 class="text-lg sm:text-xl font-semibold">Bookings Approval (Receptionist)</h2>
@@ -115,23 +115,23 @@
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs mt-1">
                         <div class="flex flex-wrap items-center gap-2">
                             @if(!is_null($roomFilterId))
-                            @php $activeRoom = collect($roomsOptions)->firstWhere('id', $roomFilterId); @endphp
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-900 text-white border border-gray-800">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                                <span>Room: {{ $activeRoom['label'] ?? 'Unknown' }}</span>
-                                <button type="button" class="ml-1 hover:text-gray-200" wire:click="clearRoomFilter">×</button>
-                            </span>
+                                @php $activeRoom = collect($roomsOptions)->firstWhere('id', $roomFilterId); @endphp
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-900 text-white border border-gray-800">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                    <span>Room: {{ $activeRoom['label'] ?? 'Unknown' }}</span>
+                                    <button type="button" class="ml-1 hover:text-gray-200" wire:click="clearRoomFilter">×</button>
+                                </span>
                             @else
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-dashed border-gray-300">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 4h18M4 9h16M6 14h12M9 19h6" />
-                                </svg>
-                                <span>No room filter</span>
-                            </span>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-dashed border-gray-300">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 4h18M4 9h16M6 14h12M9 19h6" />
+                                    </svg>
+                                    <span>No room filter</span>
+                                </span>
                             @endif
                         </div>
 
@@ -144,8 +144,8 @@
                                 class="px-3 py-1 rounded-full {{ $typeScope === 'offline' ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-200' }}">
                                 Offline
                             </button>
-                            <button type="button" wire:click="setTypeScope('online')
-                                " class="px-3 py-1 rounded-full {{ $typeScope === 'online' ? 'bg-gray-900 text-white' : 'text-gray-700' }}">
+                            <button type="button" wire:click="setTypeScope('online')"
+                                class="px-3 py-1 rounded-full {{ $typeScope === 'online' ? 'bg-gray-900 text-white' : 'text-gray-700' }}">
                                 Online
                             </button>
                         </div>
@@ -192,229 +192,398 @@
                     </div>
                 </div>
 
-                {{-- LIST AREA (Pending / Ongoing) --}}
-                <div class="divide-y divide-gray-200">
-                    @php $list = $activeTab === 'pending' ? $pending : $ongoing; @endphp
+                @php $list = $activeTab === 'pending' ? $pending : $ongoing; @endphp
 
-                    {{-- PENDING TAB --}}
-                    @if($activeTab === 'pending')
-                    @forelse($list as $b)
-                    @php
-                    $isOnline = in_array($b->booking_type, ['online_meeting','onlinemeeting']);
-                    $isRoomType = in_array($b->booking_type, ['bookingroom','meeting']);
-                    $avatarChar = strtoupper(substr($b->meeting_title ?? '—', 0, 1));
-                    @endphp
+                {{-- PENDING TAB --}}
+                @if($activeTab === 'pending')
+                    @if($list->isEmpty())
+                        <div class="px-4 sm:px-6 py-14 text-center text-gray-500 text-sm">
+                            Tidak ada booking pending dengan filter saat ini.
+                        </div>
+                    @else
+                        <div class="px-4 sm:px-6 py-5">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                @foreach($list as $b)
+                                    @php
+                                        $isOnline   = in_array($b->booking_type, ['online_meeting','onlinemeeting']);
+                                        $isRoomType = in_array($b->booking_type, ['bookingroom','meeting']);
+                                        $avatarChar = strtoupper(substr($b->meeting_title ?? '—', 0, 1));
 
-                    <div wire:key="pending-{{ $b->bookingroom_id }}" class="px-4 sm:px-6 py-5 hover:bg-gray-50 transition-colors">
-                        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                            {{-- LEFT: info --}}
-                            <div class="flex items-start gap-3 flex-1 min-w-0">
-                                <div class="{{ $icoAvatar }}">{{ $b->meeting_title ? $avatarChar : '?' }}</div>
-                                <div class="min-w-0 flex-1">
-                                    <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                        <h4 class="font-semibold text-gray-900 text-base truncate">
-                                            {{ $b->meeting_title ?? 'Untitled meeting' }}
-                                        </h4>
-                                        <span class="text-[11px] px-2 py-0.5 rounded-full border {{ $isOnline ? 'border-emerald-300 text-emerald-700 bg-emerald-50' : 'border-blue-300 text-blue-700 bg-blue-50' }}">
-                                            {{ $isOnline ? 'Online Meeting' : 'Offline Room' }}
-                                        </span>
-                                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                                            {{ strtoupper($b->status) }}
-                                        </span>
-                                    </div>
+                                        $platform = $b->online_meeting_platform
+                                                    ?? $b->platform
+                                                    ?? $b->meeting_platform
+                                                    ?? ($isOnline ? 'Online Meeting' : null);
 
-                                    <div class="flex flex-col gap-2 text-[13px] text-gray-600">
-                                        <div class="flex flex-wrap items-center gap-4">
-                                            <span class="flex items-center gap-1.5">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                {{ fmtDate($b->date) }}
-                                            </span>
-                                            <span class="flex items-center gap-1.5">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                {{ fmtTime($b->start_time) }}–{{ fmtTime($b->end_time) }}
-                                            </span>
+                                        $meetingUrl      = $b->online_meeting_url ?? null;
+                                        $meetingCode     = $b->online_meeting_code ?? null;
+                                        $meetingPassword = $b->online_meeting_password ?? null;
 
-                                            @if($isRoomType)
-                                            <span class="{{ $chip }}">
-                                                <svg class="w-3.5 h-3.5 text-gray-500"
-                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                </svg>
-                                                <span class="font-medium {{ $b->room?->room_name ? 'text-gray-700' : 'text-rose-600' }}">
-                                                    Room: {{ $b->room?->room_name ?? 'Belum dipilih' }}
+                                        $requesterName = $b->user?->name
+                                                        ?? $b->requester_name
+                                                        ?? null;
+
+                                        $requesterDept = $b->user?->department?->department_name
+                                                        ?? $b->user?->department?->dept_name
+                                                        ?? $b->department_name
+                                                        ?? null;
+                                    @endphp
+
+                                    <div wire:key="pending-{{ $b->bookingroom_id }}"
+                                        class="bg-white border border-gray-200 rounded-xl px-4 sm:px-5 py-4 hover:shadow-sm hover:border-gray-300 transition">
+                                        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                                            {{-- LEFT: info --}}
+                                            <div class="flex items-start gap-3 flex-1 min-w-0">
+                                                <div class="{{ $icoAvatar }}">{{ $b->meeting_title ? $avatarChar : '?' }}</div>
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                                                        <h4 class="font-semibold text-gray-900 text-base truncate">
+                                                            {{ $b->meeting_title ?? 'Untitled meeting' }}
+                                                        </h4>
+                                                        <span class="text-[11px] px-2 py-0.5 rounded-full border {{ $isOnline ? 'border-emerald-300 text-emerald-700 bg-emerald-50' : 'border-blue-300 text-blue-700 bg-blue-50' }}">
+                                                            {{ $isOnline ? 'Online Meeting' : 'Offline Room' }}
+                                                        </span>
+                                                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                                            {{ strtoupper($b->status) }}
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="flex flex-col gap-2 text-[13px] text-gray-600">
+                                                        <div class="flex flex-wrap items-center gap-4">
+                                                            <span class="flex items-center gap-1.5">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
+                                                                {{ fmtDate($b->date) }}
+                                                            </span>
+                                                            <span class="flex items-center gap-1.5">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                                {{ fmtTime($b->start_time) }}–{{ fmtTime($b->end_time) }}
+                                                            </span>
+
+                                                            @if($isRoomType)
+                                                                <span class="{{ $chip }}">
+                                                                    <svg class="w-3.5 h-3.5 text-gray-500"
+                                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                                    </svg>
+                                                                    <span class="font-medium {{ $b->room?->room_name ? 'text-gray-700' : 'text-rose-600' }}">
+                                                                        Room: {{ $b->room?->room_name ?? 'Belum dipilih' }}
+                                                                    </span>
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+
+                                                    {{-- ONLINE: platform + url + code/pass --}}
+                                                    @if($isOnline && ($platform || $meetingUrl || $meetingCode || $meetingPassword))
+                                                        <div class="mt-2 space-y-1 text-[12px]">
+                                                            <div class="flex flex-wrap items-center gap-2">
+                                                                @if($platform)
+                                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                                d="M3 4a2 2 0 012-2h3l2 3h6a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4z" />
+                                                                        </svg>
+                                                                        <span class="font-medium">{{ $platform }}</span>
+                                                                    </span>
+                                                                @endif
+
+                                                                @if($meetingUrl)
+                                                                    <a href="{{ $meetingUrl }}" target="_blank"
+                                                                       class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gray-900 text-white text-[11px] hover:bg-black">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                                d="M5 12h7m0 0l-3-3m3 3l-3 3m5-9h3a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2v-1" />
+                                                                        </svg>
+                                                                        Join link
+                                                                    </a>
+                                                                @endif
+                                                            </div>
+
+                                                            @if($meetingCode || $meetingPassword)
+                                                                <div class="flex flex-wrap items-center gap-2">
+                                                                    @if($meetingCode)
+                                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                                                                            Code:
+                                                                            <span class="font-mono text-[11px]">{{ $meetingCode }}</span>
+                                                                        </span>
+                                                                    @endif
+                                                                    @if($meetingPassword)
+                                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                                                                            Password:
+                                                                            <span class="font-mono text-[11px]">{{ $meetingPassword }}</span>
+                                                                        </span>
+                                                                    @endif
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+
+                                                    {{-- REQUESTER --}}
+                                                    @if($requesterName || $requesterDept)
+                                                        <div class="mt-2 text-[12px] text-gray-600 flex flex-wrap items-center gap-2">
+                                                            @if($requesterName)
+                                                                <span>Requested by
+                                                                    <span class="font-medium text-gray-800">{{ $requesterName }}</span>
+                                                                </span>
+                                                            @endif
+                                                            @if($requesterDept)
+                                                                <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                                                                    {{ $requesterDept }}
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+
+                                                    @if($b->book_reject)
+                                                        <div class="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1 inline-block">
+                                                            Catatan: {{ $b->book_reject }}
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            {{-- RIGHT: actions --}}
+                                            <div class="text-right shrink-0 space-y-2">
+                                                <div class="flex flex-wrap gap-2 justify-end pt-1.5">
+                                                    <button type="button"
+                                                        wire:click="approve({{ $b->bookingroom_id }})"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="approve"
+                                                        class="{{ $btnBlk }}">
+                                                        <svg class="w-3.5 h-3.5 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                        Approve
+                                                    </button>
+
+                                                    <button type="button"
+                                                        wire:click="openReject({{ $b->bookingroom_id }})"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="openReject"
+                                                        class="{{ $btnGhost }}">
+                                                        <svg class="w-3.5 h-3.5 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                        Reject
+                                                    </button>
+                                                </div>
+
+                                                <span class="inline-block text-[11px] px-2 py-0.5 rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
+                                                    {{ optional($b->created_at)->timezone('Asia/Jakarta')->format('d M Y H:i') }}
                                                 </span>
-                                            </span>
-                                            @endif
+                                            </div>
                                         </div>
                                     </div>
-
-                                    @if($b->book_reject)
-                                    <div class="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1 inline-block">
-                                        Catatan: {{ $b->book_reject }}
-                                    </div>
-                                    @endif
-                                </div>
-                            </div>
-
-                            {{-- RIGHT: actions --}}
-                            <div class="text-right shrink-0 space-y-2">
-                                <div class="flex flex-wrap gap-2 justify-end pt-1.5">
-                                    <button type="button"
-                                        wire:click="approve({{ $b->bookingroom_id }})"
-                                        wire:loading.attr="disabled"
-                                        wire:target="approve"
-                                        class="{{ $btnBlk }}">
-                                        <svg class="w-3.5 h-3.5 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Approve
-                                    </button>
-
-                                    <button type="button"
-                                        wire:click="openReject({{ $b->bookingroom_id }})"
-                                        wire:loading.attr="disabled"
-                                        wire:target="openReject"
-                                        class="{{ $btnGhost }}">
-                                        <svg class="w-3.5 h-3.5 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                        Reject
-                                    </button>
-                                </div>
-
-                                <span class="inline-block text-[11px] px-2 py-0.5 rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
-                                    {{ optional($b->created_at)->timezone('Asia/Jakarta')->format('d M Y H:i') }}
-                                </span>
+                                @endforeach
                             </div>
                         </div>
-                    </div>
-                    @empty
-                    <div class="px-4 sm:px-6 py-14 text-center text-gray-500 text-sm">
-                        Tidak ada booking pending dengan filter saat ini.
-                    </div>
-                    @endforelse
                     @endif
+                @endif
 
-                    {{-- ONGOING TAB --}}
-                    @if($activeTab === 'ongoing')
-                    @forelse($list as $b)
-                    @php
-                    $isOnline = in_array($b->booking_type, ['online_meeting','onlinemeeting']);
-                    $isRoomType = in_array($b->booking_type, ['bookingroom','meeting']);
-                    $avatarChar = strtoupper(substr($b->meeting_title ?? '—', 0, 1));
-                    @endphp
+                {{-- ONGOING TAB --}}
+                @if($activeTab === 'ongoing')
+                    @if($list->isEmpty())
+                        <div class="px-4 sm:px-6 py-14 text-center text-gray-500 text-sm">
+                            Tidak ada booking ongoing dengan filter saat ini.
+                        </div>
+                    @else
+                        <div class="px-4 sm:px-6 py-5">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                @foreach($list as $b)
+                                    @php
+                                        $isOnline   = in_array($b->booking_type, ['online_meeting','onlinemeeting']);
+                                        $isRoomType = in_array($b->booking_type, ['bookingroom','meeting']);
+                                        $avatarChar = strtoupper(substr($b->meeting_title ?? '—', 0, 1));
 
-                    <div wire:key="ongoing-{{ $b->bookingroom_id }}" class="px-4 sm:px-6 py-5 hover:bg-gray-50 transition-colors">
-                        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                            <div class="flex items-start gap-3 flex-1 min-w-0">
-                                <div class="{{ $icoAvatar }}">{{ $b->meeting_title ? $avatarChar : '?' }}</div>
-                                <div class="min-w-0 flex-1">
-                                    <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                        <h4 class="font-semibold text-gray-900 text-base truncate">
-                                            {{ $b->meeting_title ?? 'Untitled meeting' }}
-                                        </h4>
-                                        <span class="text-[11px] px-2 py-0.5 rounded-full border {{ $isOnline ? 'border-emerald-300 text-emerald-700 bg-emerald-50' : 'border-blue-300 text-blue-700 bg-blue-50' }}">
-                                            {{ $isOnline ? 'Online Meeting' : 'Offline Room' }}
-                                        </span>
-                                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-green-100 text-green-800">
-                                            {{ strtoupper($b->status) }}
-                                        </span>
-                                    </div>
+                                        $platform = $b->online_meeting_platform
+                                                    ?? $b->platform
+                                                    ?? $b->meeting_platform
+                                                    ?? ($isOnline ? 'Online Meeting' : null);
 
-                                    <div class="flex flex-col gap-2 text-[13px] text-gray-600">
-                                        <div class="flex flex-wrap items-center gap-4">
-                                            <span class="flex items-center gap-1.5">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                {{ fmtDate($b->date) }}
-                                            </span>
-                                            <span class="flex items-center gap-1.5">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                {{ fmtTime($b->start_time) }}–{{ fmtTime($b->end_time) }}
-                                            </span>
+                                        $meetingUrl      = $b->online_meeting_url ?? null;
+                                        $meetingCode     = $b->online_meeting_code ?? null;
+                                        $meetingPassword = $b->online_meeting_password ?? null;
 
-                                            @if($isRoomType)
-                                            <span class="{{ $chip }}">
-                                                <svg class="w-3.5 h-3.5 text-gray-500"
-                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                </svg>
-                                                <span class="font-medium text-gray-700">
-                                                    Room: {{ $b->room?->room_name ?? '—' }}
+                                        $requesterName = $b->user?->name
+                                                        ?? $b->requester_name
+                                                        ?? null;
+
+                                        $requesterDept = $b->user?->department?->department_name
+                                                        ?? $b->user?->department?->dept_name
+                                                        ?? $b->department_name
+                                                        ?? null;
+                                    @endphp
+
+                                    <div wire:key="ongoing-{{ $b->bookingroom_id }}"
+                                        class="bg-white border border-gray-200 rounded-xl px-4 sm:px-5 py-4 hover:shadow-sm hover:border-gray-300 transition">
+                                        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                                            <div class="flex items-start gap-3 flex-1 min-w-0">
+                                                <div class="{{ $icoAvatar }}">{{ $b->meeting_title ? $avatarChar : '?' }}</div>
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                                                        <h4 class="font-semibold text-gray-900 text-base truncate">
+                                                            {{ $b->meeting_title ?? 'Untitled meeting' }}
+                                                        </h4>
+                                                        <span class="text-[11px] px-2 py-0.5 rounded-full border {{ $isOnline ? 'border-emerald-300 text-emerald-700 bg-emerald-50' : 'border-blue-300 text-blue-700 bg-blue-50' }}">
+                                                            {{ $isOnline ? 'Online Meeting' : 'Offline Room' }}
+                                                        </span>
+                                                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                                                            {{ strtoupper($b->status) }}
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="flex flex-col gap-2 text-[13px] text-gray-600">
+                                                        <div class="flex flex-wrap items-center gap-4">
+                                                            <span class="flex items-center gap-1.5">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
+                                                                {{ fmtDate($b->date) }}
+                                                            </span>
+                                                            <span class="flex items-center gap-1.5">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                                {{ fmtTime($b->start_time) }}–{{ fmtTime($b->end_time) }}
+                                                            </span>
+
+                                                            @if($isRoomType)
+                                                                <span class="{{ $chip }}">
+                                                                    <svg class="w-3.5 h-3.5 text-gray-500"
+                                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                                    </svg>
+                                                                    <span class="font-medium text-gray-700">
+                                                                        Room: {{ $b->room?->room_name ?? '—' }}
+                                                                    </span>
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+
+                                                    {{-- ONLINE: platform + url + code/pass --}}
+                                                    @if($isOnline && ($platform || $meetingUrl || $meetingCode || $meetingPassword))
+                                                        <div class="mt-2 space-y-1 text-[12px]">
+                                                            <div class="flex flex-wrap items-center gap-2">
+                                                                @if($platform)
+                                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                                d="M3 4a2 2 0 012-2h3l2 3h6a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4z" />
+                                                                        </svg>
+                                                                        <span class="font-medium">{{ $platform }}</span>
+                                                                    </span>
+                                                                @endif
+
+                                                                @if($meetingUrl)
+                                                                    <a href="{{ $meetingUrl }}" target="_blank"
+                                                                       class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gray-900 text-white text-[11px] hover:bg-black">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                                d="M5 12h7m0 0l-3-3m3 3l-3 3m5-9h3a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2v-1" />
+                                                                        </svg>
+                                                                        Join link
+                                                                    </a>
+                                                                @endif
+                                                            </div>
+
+                                                            @if($meetingCode || $meetingPassword)
+                                                                <div class="flex flex-wrap items-center gap-2">
+                                                                    @if($meetingCode)
+                                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                                                                            Code:
+                                                                            <span class="font-mono text-[11px]">{{ $meetingCode }}</span>
+                                                                        </span>
+                                                                    @endif
+                                                                    @if($meetingPassword)
+                                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                                                                            Password:
+                                                                            <span class="font-mono text-[11px]">{{ $meetingPassword }}</span>
+                                                                        </span>
+                                                                    @endif
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+
+                                                    {{-- REQUESTER --}}
+                                                    @if($requesterName || $requesterDept)
+                                                        <div class="mt-2 text-[12px] text-gray-600 flex flex-wrap items-center gap-2">
+                                                            @if($requesterName)
+                                                                <span>Requested by
+                                                                    <span class="font-medium text-gray-800">{{ $requesterName }}</span>
+                                                                </span>
+                                                            @endif
+                                                            @if($requesterDept)
+                                                                <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                                                                    {{ $requesterDept }}
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+
+                                                    @if($b->book_reject)
+                                                        <div class="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1 inline-block">
+                                                            Catatan: {{ $b->book_reject }}
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            {{-- RIGHT: actions (Cancel / Reschedule) --}}
+                                            <div class="text-right shrink-0 space-y-2">
+                                                <div class="flex flex-wrap gap-2 justify-end pt-1.5">
+                                                    <button type="button"
+                                                        x-data
+                                                        @click="
+                                                            if (confirm('Are you sure want to cancel this request?')) {
+                                                                $wire.openReschedule({{ $b->bookingroom_id }});
+                                                            }
+                                                        "
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="openReschedule"
+                                                        class="px-3 py-2 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600/20 disabled:opacity-60 transition">
+                                                        <svg class="w-3.5 h-3.5 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                        Cancel
+                                                    </button>
+                                                </div>
+
+                                                <span class="inline-block text-[11px] px-2 py-0.5 rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
+                                                    {{ optional($b->created_at)->timezone('Asia/Jakarta')->format('d M Y H:i') }}
                                                 </span>
-                                            </span>
-                                            @endif
+                                            </div>
                                         </div>
                                     </div>
-
-                                    @if($b->book_reject)
-                                    <div class="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1 inline-block">
-                                        Catatan: {{ $b->book_reject }}
-                                    </div>
-                                    @endif
-                                </div>
-                            </div>
-
-                            {{-- RIGHT: actions (Only Cancel / Reschedule for ongoing) --}}
-                            <div class="text-right shrink-0 space-y-2">
-                                <div class="flex flex-wrap gap-2 justify-end pt-1.5">
-                                    <button type="button"
-                                        x-data
-                                        @click="
-                                                    if (confirm('Are you sure want to cancel this request?')) {
-                                                        $wire.openReschedule({{ $b->bookingroom_id }});
-                                                    }
-                                                "
-                                        wire:loading.attr="disabled"
-                                        wire:target="openReschedule"
-                                        class="px-3 py-2 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600/20 disabled:opacity-60 transition">
-                                        <svg class="w-3.5 h-3.5 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                        Cancel
-                                    </button>
-                                </div>
-
-                                <span class="inline-block text-[11px] px-2 py-0.5 rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
-                                    {{ optional($b->created_at)->timezone('Asia/Jakarta')->format('d M Y H:i') }}
-                                </span>
+                                @endforeach
                             </div>
                         </div>
-                    </div>
-                    @empty
-                    <div class="px-4 sm:px-6 py-14 text-center text-gray-500 text-sm">
-                        Tidak ada booking ongoing dengan filter saat ini.
-                    </div>
-                    @endforelse
                     @endif
-                </div>
+                @endif
 
                 {{-- PAGINATION --}}
                 <div class="px-4 sm:px-6 py-5 bg-gray-50 border-top border-gray-200">
                     <div class="flex justify-center">
                         @if($activeTab === 'pending')
-                        {{ $pending->onEachSide(1)->links() }}
+                            {{ $pending->onEachSide(1)->links() }}
                         @else
-                        {{ $ongoing->onEachSide(1)->links() }}
+                            {{ $ongoing->onEachSide(1)->links() }}
                         @endif
                     </div>
                 </div>
             </section>
 
-            {{-- RIGHT: SIDEBAR (Rooms + Recent) --}}
+            {{-- RIGHT: SIDEBAR (Rooms) --}}
             <aside class="hidden md:flex md:flex-col md:col-span-1 gap-4">
                 <section class="{{ $card }}">
                     <div class="px-4 py-4 border-b border-gray-200">
@@ -435,34 +604,32 @@
                                 <span>All Rooms</span>
                             </span>
                             @if(is_null($roomFilterId))
-                            <span class="text[10px] uppercase tracking-wide opacity-80">Active</span>
+                                <span class="text[10px] uppercase tracking-wide opacity-80">Active</span>
                             @endif
                         </button>
 
                         <div class="mt-2 space-y-1.5">
                             @forelse($roomsOptions as $r)
-                            @php $active = !is_null($roomFilterId) && (int)$roomFilterId === (int)$r['id']; @endphp
-                            <button type="button"
-                                wire:click="selectRoom({{ $r['id'] }})"
-                                class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs
+                                @php $active = !is_null($roomFilterId) && (int)$roomFilterId === (int)$r['id']; @endphp
+                                <button type="button"
+                                    wire:click="selectRoom({{ $r['id'] }})"
+                                    class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs
                                         {{ $active ? 'bg-gray-900 text-white' : 'text-gray-800 hover:bg-gray-100' }}">
-                                <span class="flex items-center gap-2">
-                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-md border border-gray-300 text-[11px]">
-                                        {{ substr($r['label'],0,2) }}
+                                    <span class="flex items-center gap-2">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-md border border-gray-300 text-[11px]">
+                                            {{ substr($r['label'],0,2) }}
+                                        </span>
+                                        <span class="truncate">{{ $r['label'] }}</span>
                                     </span>
-                                    <span class="truncate">{{ $r['label'] }}</span>
-                                </span>
-                                @if($active)
-                                <span class="text-[10px] uppercase tracking-wide opacity-80">Active</span>
-                                @endif
-                            </button>
+                                    @if($active)
+                                        <span class="text-[10px] uppercase tracking-wide opacity-80">Active</span>
+                                    @endif
+                                </button>
                             @empty
-                            <p class="text-xs text-gray-500">Tidak ada data ruangan.</p>
+                                <p class="text-xs text-gray-500">Tidak ada data ruangan.</p>
                             @endforelse
                         </div>
                     </div>
-
-
                 </section>
             </aside>
         </div>
@@ -577,7 +744,7 @@
         </div>
         @endif
 
-        {{-- MOBILE FILTER MODAL (rooms + recent) --}}
+        {{-- MOBILE FILTER MODAL --}}
         @if($showFilterModal)
         <div class="fixed inset-0 z-40 md:hidden">
             <div class="absolute inset-0 bg-black/40" wire:click="closeFilterModal"></div>
@@ -590,14 +757,13 @@
                 </div>
 
                 <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-                    {{-- Rooms --}}
                     <div>
                         <h4 class="text-xs font-semibold text-gray-800 mb-2">Filter by Room</h4>
 
                         <button type="button"
                             wire:click="clearRoomFilter"
                             class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs font-medium
-                                        {{ is_null($roomFilterId) ? 'bg-gray-900 text-white' : 'text-gray-800 hover:bg-gray-100' }}">
+                                {{ is_null($roomFilterId) ? 'bg-gray-900 text-white' : 'text-gray-800 hover:bg-gray-100' }}">
                             <span class="flex items-center gap-2">
                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-md border border-gray-300 text-[11px]">
                                     All
@@ -605,35 +771,34 @@
                                 <span>All Rooms</span>
                             </span>
                             @if(is_null($roomFilterId))
-                            <span class="text-[10px] uppercase tracking-wide opacity-80">Active</span>
+                                <span class="text-[10px] uppercase tracking-wide opacity-80">Active</span>
                             @endif
                         </button>
 
                         <div class="mt-2 space-y-1.5">
                             @forelse($roomsOptions as $r)
-                            @php
-                            $active = !is_null($roomFilterId) && (int) $roomFilterId === (int) $r['id'];
-                            @endphp
-                            <button type="button"
-                                wire:click="selectRoom({{ $r['id'] }})"
-                                class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs
-                                                {{ $active ? 'bg-gray-900 text-white' : 'text-gray-800 hover:bg-gray-100' }}">
-                                <span class="flex items-center gap-2">
-                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-md border border-gray-300 text-[11px]">
-                                        {{ substr($r['label'], 0, 2) }}
+                                @php
+                                    $active = !is_null($roomFilterId) && (int) $roomFilterId === (int) $r['id'];
+                                @endphp
+                                <button type="button"
+                                    wire:click="selectRoom({{ $r['id'] }})"
+                                    class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs
+                                        {{ $active ? 'bg-gray-900 text-white' : 'text-gray-800 hover:bg-gray-100' }}">
+                                    <span class="flex items-center gap-2">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-md border border-gray-300 text-[11px]">
+                                            {{ substr($r['label'], 0, 2) }}
+                                        </span>
+                                        <span class="truncate">{{ $r['label'] }}</span>
                                     </span>
-                                    <span class="truncate">{{ $r['label'] }}</span>
-                                </span>
-                                @if($active)
-                                <span class="text-[10px] uppercase tracking-wide opacity-80">Active</span>
-                                @endif
-                            </button>
+                                    @if($active)
+                                        <span class="text-[10px] uppercase tracking-wide opacity-80">Active</span>
+                                    @endif
+                                </button>
                             @empty
-                            <p class="text-xs text-gray-500">Tidak ada data ruangan.</p>
+                                <p class="text-xs text-gray-500">Tidak ada data ruangan.</p>
                             @endforelse
                         </div>
                     </div>
-
                 </div>
 
                 <div class="px-4 py-3 border-t border-gray-200">
