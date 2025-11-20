@@ -31,7 +31,7 @@ class DocPackHistory extends Component
     public string $userQ = '';
 
     // Pagination
-    public int $perDone = 5;
+    public int $perDone = 12;
 
     // Mobile filter modal
     public bool $showFilterModal = false;

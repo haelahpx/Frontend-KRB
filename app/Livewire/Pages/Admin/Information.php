@@ -29,8 +29,8 @@ class Information extends Component
 
     // ====== PAGINATION ======
     protected string $paginationTheme = 'tailwind';
-    public int $perPageInfo = 10;  // information list
-    public int $perPageReq  = 6;   // requests (offline/online)
+    public int $perPageInfo = 12;  // information list
+    public int $perPageReq  = 5;   // requests (offline/online)
 
     // ====== FILTERS (information list) ======
     public ?string $search = null;

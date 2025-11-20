@@ -8,6 +8,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'App' }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo/kebun-raya-bogor.png') }}" />
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 
     {{-- Tailwind + your app entry (NO Alpine import inside app.js) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])

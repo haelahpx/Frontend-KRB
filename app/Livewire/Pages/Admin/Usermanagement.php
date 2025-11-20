@@ -24,6 +24,7 @@ class Usermanagement extends Component
     /** Filters */
     public string $search = '';
     public string $roleFilter = '';
+    public string $agentFilter = ''; // '' = semua, 'yes' = hanya agent, 'no' = non agent
 
     /** Create form */
     public string $full_name = '';
@@ -165,6 +166,7 @@ class Usermanagement extends Component
 
     public function updatingSearch(): void { $this->resetPage(); }
     public function updatingRoleFilter(): void { $this->resetPage(); }
+    public function updatingAgentFilter(): void { $this->resetPage(); }
 
     /* ======================== Validation ======================== */
 
@@ -316,91 +318,13 @@ class Usermanagement extends Component
         ];
 
         if (!empty($this->edit_password)) {
-            $payload['password'] = $this->edit_password; // auto-hash by model cast
+            $payload['password'] = $this->edit_password; 
         }
 
         $u->update($payload);
 
         $this->closeEdit();
         $this->dispatch('toast', type: 'success', title: 'Diupdate', message: 'User diupdate.', duration: 3000);
-    }
-
-    /* ======================== Delete (Soft Delete) ======================== */
-
-    public function delete(int $id): void
-    {
-        $deptId = $this->selected_department_id ?: $this->primary_department_id;
-
-        $u = User::with('role')
-            ->where('company_id', $this->company_id)
-            ->where('department_id', $deptId)
-            ->where('user_id', $id)
-            ->first();
-
-        if (!$u) {
-            $this->dispatch('toast', type: 'warning', title: 'Tidak ditemukan', message: 'User tidak ditemukan.', duration: 3000);
-            return;
-        }
-
-        $roleName = strtolower($u->role->name ?? '');
-
-        if (in_array($roleName, ['admin', 'superadmin'], true)) {
-            $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Akun Admin tidak boleh dihapus.', duration: 4000);
-            return;
-        }
-
-        if ($u->user_id === Auth::id()) {
-            $this->dispatch('toast', type: 'warning', title: 'Ditolak', message: 'Tidak boleh menghapus akun sendiri.', duration: 4000);
-            return;
-        }
-
-        $u->delete();
-
-        if ($this->editingId === $id) {
-            $this->closeEdit();
-        }
-
-        $this->dispatch('toast', type: 'success', title: 'Dihapus', message: 'User dihapus (soft delete).', duration: 3000);
-    }
-
-    /* ===== Opsional: restore & force delete di Trash ===== */
-
-    public function restore(int $id): void
-    {
-        $deptId = $this->selected_department_id ?: $this->primary_department_id;
-
-        $u = User::onlyTrashed()
-            ->where('company_id', $this->company_id)
-            ->where('department_id', $deptId)
-            ->where('user_id', $id)
-            ->first();
-
-        if (!$u) {
-            $this->dispatch('toast', type: 'warning', title: 'Tidak ditemukan', message: 'User tidak ditemukan di Trash.', duration: 3000);
-            return;
-        }
-
-        $u->restore();
-        $this->dispatch('toast', type: 'success', title: 'Dipulihkan', message: 'User dipulihkan.', duration: 3000);
-    }
-
-    public function destroy(int $id): void
-    {
-        $deptId = $this->selected_department_id ?: $this->primary_department_id;
-
-        $u = User::onlyTrashed()
-            ->where('company_id', $this->company_id)
-            ->where('department_id', $deptId)
-            ->where('user_id', $id)
-            ->first();
-
-        if (!$u) {
-            $this->dispatch('toast', type: 'warning', title: 'Tidak ditemukan', message: 'User tidak ditemukan di Trash.', duration: 3000);
-            return;
-        }
-
-        $u->forceDelete();
-        $this->dispatch('toast', type: 'success', title: 'Dihapus Permanen', message: 'User dihapus permanen.', duration: 3000);
     }
 
     /* ======================== Render ======================== */
@@ -423,6 +347,19 @@ class Usermanagement extends Component
                 });
             })
             ->when($this->roleFilter, fn($q) => $q->where('users.role_id', (int) $this->roleFilter))
+            ->when($this->agentFilter === 'yes', function ($q) {
+                $q->where(function ($qq) {
+                    $qq->where('users.is_agent', 'yes')
+                       ->orWhere('users.is_agent', 1);
+                });
+            })
+            ->when($this->agentFilter === 'no', function ($q) {
+                $q->where(function ($qq) {
+                    $qq->where('users.is_agent', 'no')
+                       ->orWhere('users.is_agent', 0)
+                       ->orWhereNull('users.is_agent');
+                });
+            })
             ->orderByRaw("CASE WHEN LOWER(roles.name) = 'admin' THEN 0 ELSE 1 END")
             ->orderByDesc('users.user_id')
             ->select('users.*')

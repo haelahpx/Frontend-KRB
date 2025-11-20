@@ -45,6 +45,15 @@ class Ticketshow extends Component
         'deleted'     => 'DELETED',
     ];
 
+    /**
+     * Status yang membutuhkan assignment agent terlebih dahulu.
+     */
+    private const UI_STATUS_NEED_ASSIGNMENT = [
+        'in_progress',
+        'resolved',
+        'closed',
+    ];
+
     /** ------------------------------
      *  Helpers
      *  ------------------------------*/
@@ -74,6 +83,7 @@ class Ticketshow extends Component
         $admin = $this->currentAdmin();
 
         $q = UserModel::query()
+            ->where('is_agent', 'yes') // only users marked as agent
             ->whereHas('role', fn($qr) => $qr->whereIn('name', self::AGENT_ROLE_NAMES));
 
         if (!$this->isSuperadmin()) {
@@ -84,6 +94,7 @@ class Ticketshow extends Component
                 $q->where('department_id', $admin->department_id);
             }
         }
+
         return $q;
     }
 
@@ -122,7 +133,7 @@ class Ticketshow extends Component
             'department:department_id,department_name',
             'assignment.agent:user_id,full_name',
             'attachments:attachment_id,ticket_id,file_url,file_type,original_filename,bytes',
-            'comments' => fn ($q) => $q->orderBy('created_at', 'asc'),
+            'comments' => fn($q) => $q->orderBy('created_at', 'asc'),
             'comments.user:user_id,full_name',
         ]);
 
@@ -142,7 +153,7 @@ class Ticketshow extends Component
 
         try {
             $this->validate([
-                'status'   => 'required|in:open,in_progress,resolved,closed,deleted',
+                'status'   => 'required|in:open,in_progress,resolved,closed',
                 'agent_id' => 'nullable|integer',
             ]);
 
@@ -153,6 +164,19 @@ class Ticketshow extends Component
                 return;
             }
 
+            // Cek: status tertentu butuh assignment agent
+            if (
+                \in_array($this->status, self::UI_STATUS_NEED_ASSIGNMENT, true)
+                && empty($this->agent_id)
+            ) {
+                $this->addError(
+                    'status',
+                    'Ticket harus di-assign ke agent sebelum status bisa diubah ke In Progress / Resolved / Closed.'
+                );
+                $this->toast('error', 'Validasi', 'Assign ticket ke agent terlebih dahulu.');
+                return;
+            }
+
             // Assignment
             $assignmentChanged = false;
             if ($this->agent_id) {
@@ -160,8 +184,8 @@ class Ticketshow extends Component
                     ->where('user_id', $this->agent_id)
                     ->exists();
                 if (!$isAllowed) {
-                    $this->addError('agent_id', 'Agent tidak dalam cakupan Anda.');
-                    $this->toast('error', 'Validasi', 'Agent tidak dalam cakupan Anda.');
+                    $this->addError('agent_id', 'Agent belum di input.');
+                    $this->toast('error', 'Validasi', 'Agent belum di input.');
                     return;
                 }
 
@@ -178,9 +202,9 @@ class Ticketshow extends Component
             }
 
             // Status
-            $oldStatus = $ticket->status;
+            $oldStatus      = $ticket->status;
             $ticket->status = self::UI_TO_DB_STATUS_MAP[$this->status] ?? 'OPEN';
-            $statusChanged = $oldStatus !== $ticket->status;
+            $statusChanged  = $oldStatus !== $ticket->status;
 
             $ticket->save();
 
@@ -188,7 +212,7 @@ class Ticketshow extends Component
                 'user',
                 'assignment.agent',
                 'attachments',
-                'comments' => fn ($q) => $q->orderBy('created_at', 'asc'),
+                'comments' => fn($q) => $q->orderBy('created_at', 'asc'),
                 'comments.user:user_id,full_name',
             ]);
 
@@ -238,7 +262,7 @@ class Ticketshow extends Component
 
         try {
             $this->validate([
-                'newComment' => ['required','string','min:2'],
+                'newComment' => ['required', 'string', 'min:2'],
             ], [
                 'newComment.required' => 'Komentar tidak boleh kosong.',
                 'newComment.min'      => 'Komentar terlalu pendek.',
@@ -252,7 +276,7 @@ class Ticketshow extends Component
             $this->reset('newComment');
 
             $this->ticket->load([
-                'comments' => fn ($q) => $q->orderBy('created_at', 'asc'),
+                'comments' => fn($q) => $q->orderBy('created_at', 'asc'),
                 'comments.user:user_id,full_name',
             ]);
 
@@ -272,7 +296,8 @@ class Ticketshow extends Component
      *  ------------------------------*/
     public function render()
     {
-        $agents = $this->allowedAgentsQuery()->orderBy('full_name')->get(['user_id','full_name']);
+        $agents = $this->allowedAgentsQuery()->orderBy('full_name')->get(['user_id', 'full_name']);
+
         return view('livewire.pages.admin.ticketshow', [
             'agents' => $agents,
             't'      => $this->ticket,

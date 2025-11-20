@@ -24,10 +24,7 @@
                     <!-- LEFT SECTION -->
                     <div class="flex items-start gap-4 sm:gap-6">
                         <div class="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3m8 4V3M5 11h14M5 19h14M5 11a2 2 0 012-2h10a2 2 0 012 2M5 19a2 2 0 002 2h10a2 2 0 002-2" />
-                            </svg>
+                            <x-heroicon-o-users class="w-6 h-6 text-white" />
                         </div>
 
                         <div class="space-y-1.5">
@@ -56,15 +53,14 @@
                         </label>
 
                         <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-
                             <!-- DARK SELECT FIX -->
                             <select
                                 wire:model.live="selected_department_id"
                                 class="w-full h-11 sm:h-12 px-3 sm:px-4 rounded-lg border border-white/20 bg-white/10 text-white text-sm placeholder:text-white/60 focus:border-white focus:ring-2 focus:ring-white/30 focus:outline-none transition">
                                 @foreach ($departmentOptions as $opt)
                                 <option class="text-gray-900" value="{{ auth()->user()->department_id }}">
-                                            {{ auth()->user()->department->name }} (Your Primary Department)
-                                        </option>
+                                    {{ auth()->user()->department->name }} (Your Primary Department)
+                                </option>
                                 <option class="text-gray-900" value="{{ $opt['id'] }}">
                                     {{ $opt['name'] }}{{ $opt['id'] === $primary_department_id ? ' — Primary' : '' }}
                                 </option>
@@ -73,7 +69,6 @@
                         </div>
                     </div>
                     @else
-
                     <!-- SEARCH VERSION -->
                     <div class="w-full lg:w-80 lg:ml-auto">
                         <input
@@ -81,15 +76,12 @@
                             wire:model.live.debounce.400ms="search"
                             placeholder="Cari judul atau catatan…"
                             class="w-full rounded-lg bg-white/10 text-white border border-white/20
-                           px-3 py-2 backdrop-blur-sm focus:ring-2 focus:ring-white/30 focus:outline-none">
+                                   px-3 py-2 backdrop-blur-sm focus:ring-2 focus:ring-white/30 focus:outline-none">
                     </div>
-
                     @endif
                 </div>
             </div>
         </div>
-
-
 
         {{-- FORM CREATE --}}
         <section class="{{ $card }}">
@@ -146,16 +138,11 @@
                         class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition active:scale-95 hover:bg-black disabled:opacity-60 relative overflow-hidden"
                         wire:loading.class="opacity-80 cursor-wait">
                         <span class="flex items-center gap-2" wire:loading.remove wire:target="store">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
+                            <x-heroicon-o-check class="w-4 h-4" />
                             Simpan Data
                         </span>
                         <span class="flex items-center gap-2" wire:loading wire:target="store">
-                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                            </svg>
+                            <x-heroicon-o-arrow-path class="h-4 w-4 animate-spin" />
                             Menyimpan…
                         </span>
                     </button>
@@ -167,13 +154,14 @@
         <div class="{{ $card }}">
             <div class="px-5 py-4 border-b border-gray-200">
                 <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+                    {{-- Search --}}
                     <div class="relative flex-1">
                         <input type="text" wire:model.live="search" placeholder="Cari nama atau email..." class="{{ $input }} pl-10 w-full placeholder:text-gray-400">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
-                        </svg>
+                        <x-heroicon-o-magnifying-glass
+                            class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     </div>
 
+                    {{-- Role filter --}}
                     <div class="relative">
                         <select wire:model.live="roleFilter" class="{{ $input }} pl-10 w-full lg:w-60">
                             <option value="">Semua Role</option>
@@ -181,10 +169,20 @@
                             <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
                             @endforeach
                         </select>
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.284-1.255-.778-1.664M6 18H2v-2a3 3 0 015.356-1.857M14 5a3 3 0 11-6 0 3 3 0 016 0zM4.5 8.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0z" />
-                        </svg>
+                        <x-heroicon-o-briefcase
+                            class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    </div>
+
+                    {{-- Agent filter --}}
+                    <div class="relative">
+                        <select wire:model.live="agentFilter" class="{{ $input }} pl-10 w-full lg:w-48">
+                            <option value="">Semua User</option>
+                            <option value="yes">Hanya Agent</option>
+                            <option value="no">Non Agent</option>
+                        </select>
+                        {{-- Blade icon / agent icon --}}
+                        <x-heroicon-o-user-circle
+                            class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     </div>
                 </div>
             </div>
@@ -206,13 +204,26 @@
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-2">
                                     <h4 class="font-semibold text-gray-900 text-sm sm:text-base truncate">{{ $u->full_name }}</h4>
+
+                                    {{-- Role badge --}}
                                     <span class="{{ $chip }}">
                                         <span class="font-medium text-gray-700">{{ $u->role->name ?? 'No Role' }}</span>
                                     </span>
+
+                                    {{-- Agent badge + icon --}}
+                                    @if($u->is_agent == 'yes' || $u->is_agent == 1)
+                                    <span class="{{ $chip }}">
+                                        <x-heroicon-o-user class="w-3.5 h-3.5 text-gray-600" />
+                                        <span class="font-medium text-gray-700">Agent</span>
+                                    </span>
+                                    @endif
+
+                                    {{-- Dept badge --}}
                                     <span class="{{ $chip }}">
                                         <span class="text-gray-500">Dept:</span>
                                         <span class="font-medium text-gray-700">{{ $u->department->department_name ?? 'N/A' }}</span>
                                     </span>
+
                                     @if($isSelf)
                                     <span class="{{ $chip }}">You</span>
                                     @endif
@@ -231,27 +242,26 @@
                                 <button class="{{ $btnBlk }}" wire:click="openEdit({{ $u->user_id }})"
                                     wire:loading.attr="disabled" wire:target="openEdit({{ $u->user_id }})"
                                     wire:key="btn-edit-{{ $u->user_id }}">
-                                    <span wire:loading.remove wire:target="openEdit({{ $u->user_id }})">Edit</span>
-                                    <span wire:loading wire:target="openEdit({{ $u->user_id }})">Loading…</span>
+                                    <span class="inline-flex items-center gap-1.5"
+                                        wire:loading.remove
+                                        wire:target="openEdit({{ $u->user_id }})">
+                                        <x-heroicon-o-pencil-square class="w-4 h-4" />
+                                        Edit
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5"
+                                        wire:loading
+                                        wire:target="openEdit({{ $u->user_id }})">
+                                        <x-heroicon-o-arrow-path class="w-4 h-4 animate-spin" />
+                                        Loading…
+                                    </span>
                                 </button>
                                 @else
                                 <button class="{{ $btnBlk }} opacity-50 cursor-not-allowed" disabled
                                     title="Anda tidak bisa mengedit akun Admin lain">
-                                    Edit
-                                </button>
-                                @endif
-
-                                @if($canDelete)
-                                <button class="{{ $btnRed }}" wire:click="delete({{ $u->user_id }})"
-                                    onclick="return confirm('Hapus user ini?')" wire:loading.attr="disabled"
-                                    wire:target="delete({{ $u->user_id }})" wire:key="btn-del-{{ $u->user_id }}">
-                                    <span wire:loading.remove wire:target="delete({{ $u->user_id }})">Hapus</span>
-                                    <span wire:loading wire:target="delete({{ $u->user_id }})">Menghapus…</span>
-                                </button>
-                                @else
-                                <button class="{{ $btnRed }} opacity-50 cursor-not-allowed" disabled
-                                    title="Akun Admin tidak bisa dihapus">
-                                    Hapus
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <x-heroicon-o-pencil-square class="w-4 h-4" />
+                                        Edit
+                                    </span>
                                 </button>
                                 @endif
                             </div>
@@ -282,9 +292,7 @@
                 <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 class="text-base font-semibold text-gray-900">Edit User</h3>
                     <button class="text-gray-500 hover:text-gray-700" type="button" wire:click="closeEdit" aria-label="Close">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <x-heroicon-o-x-mark class="w-5 h-5" />
                     </button>
                 </div>
 
@@ -336,16 +344,11 @@
                         <button type="submit" wire:loading.attr="disabled" wire:target="update"
                             class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition active:scale-95 hover:bg-black disabled:opacity-60">
                             <span class="flex items-center gap-2" wire:loading.remove wire:target="update">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                </svg>
+                                <x-heroicon-o-check class="w-4 h-4" />
                                 Simpan Perubahan
                             </span>
                             <span class="flex items-center gap-2" wire:loading wire:target="update">
-                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                                </svg>
+                                <x-heroicon-o-arrow-path class="h-4 w-4 animate-spin" />
                                 Menyimpan…
                             </span>
                         </button>

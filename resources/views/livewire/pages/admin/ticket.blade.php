@@ -6,7 +6,24 @@
     $input = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
     $btnBlk = 'px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition';
     $btnRed = 'px-3 py-2 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600/20 disabled:opacity-60 transition';
-    $chip = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
+
+    // Base chip style (no explicit bg/text colors here)
+    $chip = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs font-medium ring-1 ring-inset';
+
+    // Priority colors
+    $priorityColors = [
+    'low' => 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+    'medium' => 'bg-amber-50 text-amber-700 ring-amber-200',
+    'high' => 'bg-rose-50 text-rose-700 ring-rose-200',
+    ];
+
+    // Status colors
+    $statusColors = [
+    'open' => 'bg-sky-50 text-sky-700 ring-sky-200',
+    'in_progress' => 'bg-indigo-50 text-indigo-700 ring-indigo-200',
+    'resolved' => 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+    'closed' => 'bg-gray-100 text-gray-700 ring-gray-200',
+    ];
     @endphp
 
     <main class="px-4 sm:px-6 py-6 space-y-8">
@@ -24,15 +41,13 @@
                         <!-- LEFT: Icon + Title + Meta -->
                         <div class="flex items-start gap-4 sm:gap-6">
                             <div class="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3M5 11h14M5 19h14M5 11a2 2 0 012-2h10a2 2 0 012 2M5 19a2 2 0 002 2h10a2 2 0 002-2" />
-                                </svg>
+                                {{-- Support-style icon --}}
+                                <x-heroicon-o-lifebuoy class="w-6 h-6 text-white" />
                             </div>
 
                             <div class="space-y-1.5">
                                 <h2 class="text-xl sm:text-2xl font-semibold leading-tight">
-                                    Ticket Management
+                                    Ticket Support
                                 </h2>
                                 <p class="text-sm text-white/80">
                                     Perusahaan: <span class="font-semibold">{{ $company_name }}</span>
@@ -74,40 +89,21 @@
                         <!-- Search (no switcher) -->
                         <div class="w-full lg:w-80 lg:ml-auto">
                             <label class="sr-only">Search</label>
-                            <input
-                                type="text"
-                                wire:model.live.debounce.400ms="search"
-                                placeholder="Cari judul atau catatan…"
-                                class="w-full h-11 px-3 sm:px-3.5 bg-white/10 border border-white/20 rounded-lg text-sm placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white transition">
+                            <div class="relative">
+                                <span class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center">
+                                    <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-300" />
+                                </span>
+                                <input
+                                    type="text"
+                                    wire:model.live.debounce.400ms="search"
+                                    placeholder="Cari judul atau catatan…"
+                                    class="w-full h-11 pl-9 pr-3 sm:pl-9 sm:pr-3.5 bg-white/10 border border-white/20 rounded-lg text-sm placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white transition">
+                            </div>
                         </div>
                         @endif
                     </div>
                 </div>
             </div>
-
-
-
-            @if (session()->has('message'))
-            <div class="p-4 rounded-lg bg-emerald-600 text-white shadow-sm">
-                <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    {{ session('message') }}
-                </div>
-            </div>
-            @endif
-
-            @if (session()->has('error'))
-            <div class="p-4 rounded-lg bg-rose-600 text-white shadow-sm">
-                <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    {{ session('error') }}
-                </div>
-            </div>
-            @endif
 
             {{-- FILTERS --}}
             <section class="{{ $card }}">
@@ -116,7 +112,16 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div class="md:col-span-2">
                                 <label class="{{ $label }}">Search</label>
-                                <input type="text" wire:model.debounce.500ms="search" class="{{ $input }}" placeholder="Subject / description">
+                                <div class="relative">
+                                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center p-">
+                                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-400" />
+                                    </span>
+                                    <input
+                                        type="text"
+                                        wire:model.debounce.500ms="search"
+                                        class="{{ $input }} pl-9"
+                                        placeholder="Subject / description">
+                                </div>
                             </div>
                             <div>
                                 <label class="{{ $label }}">Priority</label>
@@ -141,16 +146,32 @@
 
                         <div class="flex flex-wrap items-center gap-2 pt-1">
                             @if($search)
-                            <span class="{{ $chip }}"><span class="text-gray-600">Search:</span><span class="font-medium text-gray-900">{{ $search }}</span></span>
+                            <span class="{{ $chip }} bg-gray-100 text-gray-700 ring-gray-200">
+                                <span class="opacity-80">Search:</span>
+                                <span class="font-medium">{{ $search }}</span>
+                            </span>
                             @endif
+
                             @if($priority)
-                            <span class="{{ $chip }}"><span class="text-gray-600">Priority:</span><span class="font-medium text-gray-900 capitalize">{{ $priority }}</span></span>
+                            @php $prioKey = strtolower($priority); @endphp
+                            <span class="{{ $chip }} {{ $priorityColors[$prioKey] ?? 'bg-gray-100 text-gray-700 ring-gray-200' }}">
+                                <span class="opacity-80">Priority:</span>
+                                <span class="capitalize">{{ $prioKey }}</span>
+                            </span>
                             @endif
+
                             @if($status)
-                            <span class="{{ $chip }}"><span class="text-gray-600">Status:</span><span class="font-medium text-gray-900 capitalize">{{ str_replace('_',' ',$status) }}</span></span>
+                            @php $statusKey = strtolower($status); @endphp
+                            <span class="{{ $chip }} {{ $statusColors[$statusKey] ?? 'bg-gray-100 text-gray-700 ring-gray-200' }}">
+                                <span class="opacity-80">Status:</span>
+                                <span class="capitalize">{{ str_replace('_',' ', $statusKey) }}</span>
+                            </span>
                             @endif
+
                             @if($search || $priority || $status)
-                            <button wire:click="resetFilters" type="button" class="text-xs underline text-gray-600 hover:text-gray-900 ml-1">Reset filters</button>
+                            <button wire:click="resetFilters" type="button" class="text-xs underline text-gray-600 hover:text-gray-900 ml-1">
+                                Reset filters
+                            </button>
                             @endif
                         </div>
                     </div>
@@ -161,7 +182,11 @@
                     @if($tickets->count())
                     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach ($tickets as $t)
-                        @php $initial = strtoupper(substr(($t->subject ?? "T"), 0, 1)); @endphp
+                        @php
+                        $initial = strtoupper(substr(($t->subject ?? 'T'), 0, 1));
+                        $prioKey = strtolower($t->priority);
+                        $statusKey = strtolower($t->status);
+                        @endphp
 
                         <div class="p-4 rounded-xl bg-gray-50 border border-gray-200 hover:border-gray-300 transition"
                             wire:key="t-{{ $t->ticket_id }}">
@@ -171,19 +196,23 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="flex flex-wrap items-center gap-2 mb-2">
-                                        <h4 class="font-semibold text-gray-900 text-sm truncate">
-                                            #{{ $t->ticket_id }} — {{ $t->subject }}
+                                        <h4 class="font-semibold text-gray-900 text-sm truncate flex items-center gap-1.5">
+                                            {{ $tickets->firstItem() + $loop->index }} — {{ $t->subject }}
                                         </h4>
+                                        <div>
+                                            {{-- Priority chip --}}
+                                            <span class="{{ $chip }} {{ $priorityColors[$prioKey] ?? 'bg-gray-100 text-gray-700 ring-gray-200' }} capitalize">
+                                                <span class="opacity-80">Priority:</span>
+                                                <span>{{ $prioKey }}</span>
+                                            </span>
 
-                                        <span class="{{ $chip }} capitalize font-medium">
-                                            <span class="text-gray-600">Priority:</span>
-                                            <span class="text-gray-900">{{ $t->priority }}</span>
-                                        </span>
+                                            {{-- Status chip --}}
+                                            <span class="{{ $chip }} {{ $statusColors[$statusKey] ?? 'bg-gray-100 text-gray-700 ring-gray-200' }} capitalize">
+                                                <span class="opacity-80">Status:</span>
+                                                <span>{{ str_replace('_', ' ', $statusKey) }}</span>
+                                            </span>
+                                        </div>
 
-                                        <span class="{{ $chip }} capitalize font-medium">
-                                            <span class="text-gray-600">Status:</span>
-                                            <span class="text-gray-900">{{ strtolower($t->status) }}</span>
-                                        </span>
                                     </div>
 
                                     <p class="text-sm text-gray-600 line-clamp-2">{{ $t->description }}</p>
@@ -191,9 +220,17 @@
                             </div>
 
                             <div class="mt-4 flex justify-end gap-2">
-                                <a href="{{ route('admin.ticket.show', $t) }}" class="{{ $btnBlk }}">Open</a>
-                                <button wire:click.stop="deleteTicket({{ $t->ticket_id }})" class="{{ $btnRed }}" title="Move to Trash">
-                                    Delete
+                                <a href="{{ route('admin.ticket.show', $t) }}"
+                                    class="{{ $btnBlk }} flex items-center gap-1.5">
+                                    <x-heroicon-o-eye class="w-4 h-4" />
+                                    <span>Open</span>
+                                </a>
+                                <button
+                                    wire:click.stop="deleteTicket({{ $t->ticket_id }})"
+                                    class="{{ $btnRed }} flex items-center gap-1.5"
+                                    title="Move to Trash">
+                                    <x-heroicon-o-trash class="w-4 h-4" />
+                                    <span>Delete</span>
                                 </button>
                             </div>
                         </div>

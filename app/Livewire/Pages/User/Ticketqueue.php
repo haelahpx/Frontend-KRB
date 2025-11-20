@@ -23,6 +23,15 @@ class Ticketqueue extends Component
     public string $priority = '';
     public string $claimPriority = '';
 
+    /**
+     * Kanban columns for My Claims tab
+     */
+    public array $kanbanColumns = [
+        'OPEN'        => 'Open',
+        'IN_PROGRESS' => 'In Progress',
+        'RESOLVED'    => 'Resolved',
+    ];
+
     protected $queryString = [
         'tab'           => ['except' => 'queue'],
         'search'        => ['except' => ''],
@@ -31,14 +40,38 @@ class Ticketqueue extends Component
         'claimPriority' => ['except' => ''],
     ];
 
-    public function updatingSearch() { $this->resetPage('qpage'); }
-    public function updatingStatus() { $this->resetPage('qpage'); }
-    public function updatingPriority() { $this->resetPage('qpage'); }
-    public function updatingClaimPriority() { $this->resetPage('cpage'); }
-    public function updatedTab()
+    public function updatingSearch(): void
     {
         $this->resetPage('qpage');
-        $this->resetPage('cpage');
+    }
+
+    public function updatingStatus(): void
+    {
+        $this->resetPage('qpage');
+    }
+
+    public function updatingPriority(): void
+    {
+        $this->resetPage('qpage');
+    }
+
+    public function updatedTab(): void
+    {
+        $this->resetPage('qpage');
+    }
+
+    /**
+     * Auto-close tickets:
+     * All tickets with status RESOLVED for >= 1 day become CLOSED
+     */
+    protected function autoCloseResolvedTickets(): void
+    {
+        Ticket::where('status', 'RESOLVED')
+            ->where('updated_at', '<=', now()->subDay())
+            ->update([
+                'status'     => 'CLOSED',
+                'updated_at' => now(),
+            ]);
     }
 
     protected function queueQuery()
@@ -59,8 +92,8 @@ class Ticketqueue extends Component
                         ->orWhere('description', 'like', "%{$this->search}%");
                 });
             })
-            ->when($this->status !== '', fn($q) => $q->where('status', $this->status))
-            ->when($this->priority !== '', fn($q) => $q->where('priority', $this->priority))
+            ->when($this->status !== '', fn ($q) => $q->where('status', $this->status))
+            ->when($this->priority !== '', fn ($q) => $q->where('priority', $this->priority))
             ->orderByDesc('created_at');
     }
 
@@ -72,14 +105,19 @@ class Ticketqueue extends Component
             ->with(['ticket.attachments', 'ticket.requester'])
             ->where('user_id', $user->user_id)
             ->whereNull('deleted_at')
+            // closed tickets are not shown in My Claims
             ->whereRelation('ticket', 'status', '!=', 'CLOSED')
-            ->when($this->claimPriority !== '', fn ($q) =>
-                $q->whereHas('ticket', fn ($qt) => $qt->where('priority', $this->claimPriority))
+            ->when(
+                $this->claimPriority !== '',
+                fn ($q) => $q->whereHas(
+                    'ticket',
+                    fn ($qt) => $qt->where('priority', $this->claimPriority)
+                )
             )
             ->orderByDesc('created_at');
     }
 
-    public function claim(int $ticketId)
+    public function claim(int $ticketId): void
     {
         $user = auth()->user();
 
@@ -105,17 +143,54 @@ class Ticketqueue extends Component
         });
 
         $this->resetPage('qpage');
+
         $this->dispatch('notify', type: 'success', message: 'Tiket berhasil di-claim.');
+    }
+
+    /**
+     * Called by Kanban drag & drop on My Claims tab
+     */
+    public function moveClaim(int $ticketId, string $newStatus): void
+    {
+        $user = auth()->user();
+
+        if (! in_array($newStatus, ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'], true)) {
+            return;
+        }
+
+        $assignment = TicketAssignment::query()
+            ->where('ticket_id', $ticketId)
+            ->where('user_id', $user->user_id)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (! $assignment) {
+            $this->dispatch('notify', type: 'error', message: 'Tiket tidak ditemukan atau bukan milik Anda.');
+            return;
+        }
+
+        DB::transaction(function () use ($ticketId, $newStatus) {
+            Ticket::where('ticket_id', $ticketId)->update([
+                'status'     => $newStatus,
+                'updated_at' => now(),
+            ]);
+        });
+
+        $this->dispatch('notify', type: 'success', message: 'Status tiket diperbarui.');
     }
 
     public function render()
     {
+        // Auto-close old RESOLVED tickets on each page load
+        $this->autoCloseResolvedTickets();
+
         $tickets = $this->tab === 'queue'
             ? $this->queueQuery()->paginate(10, ['*'], 'qpage')
             : collect();
 
+        // Kanban: we use all claimed tickets (no pagination)
         $claims = $this->tab === 'claims'
-            ? $this->claimsQuery()->paginate(12, ['*'], 'cpage')
+            ? $this->claimsQuery()->get()
             : collect();
 
         return view('livewire.pages.user.ticketqueue', compact('tickets', 'claims'));

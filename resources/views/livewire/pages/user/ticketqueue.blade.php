@@ -27,10 +27,17 @@
     </div>
 
     <div class="bg-white rounded-xl border-2 border-black/80 shadow-md p-4">
+        {{-- QUEUE TAB --}}
         @if ($tab === 'queue')
             <div class="flex flex-col md:flex-row md:items-center gap-6 pb-4 mb-4 border-b border-gray-200">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">
-                    <input type="text" wire:model.debounce.400ms="search" placeholder="Search subject/description..." class="px-3 py-2 border border-gray-300 rounded-md text-gray-900 w-full">
+                    <input
+                        type="text"
+                        wire:model.debounce.400ms="search"
+                        placeholder="Search subject/description..."
+                        class="px-3 py-2 border border-gray-300 rounded-md text-gray-900 w-full"
+                    >
+
                     <select wire:model="status" class="px-3 py-2 border border-gray-300 rounded-md text-gray-900">
                         <option value="">All Status</option>
                         <option value="OPEN">OPEN</option>
@@ -38,12 +45,14 @@
                         <option value="RESOLVED">RESOLVED</option>
                         <option value="CLOSED">CLOSED</option>
                     </select>
+
                     <select wire:model="priority" class="px-3 py-2 border border-gray-300 rounded-md text-gray-900">
                         <option value="">All Priority</option>
                         <option value="low">low</option>
                         <option value="medium">medium</option>
                         <option value="high">high</option>
                     </select>
+
                     <div></div>
                 </div>
             </div>
@@ -59,10 +68,17 @@
                             $priority = strtolower($t->priority ?? '');
                             $statusUp = strtoupper($t->status ?? 'OPEN');
                             $statusLabel = ucfirst(strtolower(str_replace('_',' ',$statusUp)));
+
                             $isHigh = $priority === 'high';
                             $isMedium = $priority === 'medium';
                             $isLow = $priority === 'low' || $priority === '';
-                            $priorityBadge = $isHigh ? 'bg-orange-50 text-orange-700 border-2 border-orange-400' : ($isMedium ? 'bg-yellow-50 text-yellow-700 border-2 border-yellow-400' : 'bg-gray-50 text-gray-700 border-2 border-gray-400');
+
+                            $priorityBadge = $isHigh
+                                ? 'bg-orange-50 text-orange-700 border-2 border-orange-400'
+                                : ($isMedium
+                                    ? 'bg-yellow-50 text-yellow-700 border-2 border-yellow-400'
+                                    : 'bg-gray-50 text-gray-700 border-2 border-gray-400');
+
                             $statusBadge = match(true){
                                 $statusUp === 'OPEN' => 'bg-yellow-50 text-yellow-700 border-2 border-yellow-500',
                                 in_array($statusUp, ['ASSIGNED','IN_PROGRESS']) => 'bg-blue-50 text-blue-700 border-2 border-blue-500',
@@ -74,11 +90,15 @@
                         <div class="relative bg-white rounded-xl border-2 border-black/80 shadow-md p-6 hover:shadow-lg hover:-translate-y-0.5 transition">
                             <div class="flex items-start justify-between gap-4 mb-3">
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-2 truncate">#{{ $t->ticket_id }} — {{ $t->subject }}</h3>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2 truncate">
+                                        #{{ $t->ticket_id }} — {{ $t->subject }}
+                                    </h3>
                                     <div class="flex flex-wrap items-center gap-2 text-xs">
                                         <span class="font-mono font-medium text-gray-800">#{{ $t->ticket_id }}</span>
                                         <span class="text-gray-300">•</span>
-                                        <span class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium {{ $priorityBadge }}">{{ $priority ? ucfirst($priority) : 'Low' }}</span>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium {{ $priorityBadge }}">
+                                            {{ $priority ? ucfirst($priority) : 'Low' }}
+                                        </span>
                                         @if($t->requester)
                                             <span class="text-gray-300">•</span>
                                             <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border-2 border-gray-400 bg-gray-50 text-gray-700">
@@ -87,7 +107,9 @@
                                         @endif
                                     </div>
                                 </div>
-                                <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium {{ $statusBadge }}">{{ $statusLabel }}</span>
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium {{ $statusBadge }}">
+                                    {{ $statusLabel }}
+                                </span>
                             </div>
 
                             <p class="text-sm text-gray-600 leading-relaxed">
@@ -102,21 +124,35 @@
 
                             @if($t->attachments->count())
                                 <div class="mt-4 pt-4 border-t border-gray-200">
-                                    <div class="text-xs uppercase tracking-wide text-gray-500 mb-2">Attachments ({{ $t->attachments->count() }})</div>
+                                    <div class="text-xs uppercase tracking-wide text-gray-500 mb-2">
+                                        Attachments ({{ $t->attachments->count() }})
+                                    </div>
                                     <div class="grid grid-cols-3 gap-2">
                                         @foreach ($t->attachments as $a)
-                                            @php $isImage = str_starts_with(strtolower($a->file_type ?? ''), 'image/'); @endphp
+                                            @php
+                                                $isImage = str_starts_with(strtolower($a->file_type ?? ''), 'image/');
+                                            @endphp
                                             <div class="group rounded-lg overflow-hidden border border-gray-200 bg-white">
                                                 @if ($isImage)
                                                     <a href="{{ $a->file_url }}" target="_blank" class="block">
-                                                        <img src="{{ $a->file_url }}" alt="{{ $a->original_filename ?? 'image' }}" class="w-full h-28 object-cover group-hover:opacity-90 transition">
+                                                        <img
+                                                            src="{{ $a->file_url }}"
+                                                            alt="{{ $a->original_filename ?? 'image' }}"
+                                                            class="w-full h-28 object-cover group-hover:opacity-90 transition"
+                                                        >
                                                     </a>
                                                 @else
-                                                    <a href="{{ $a->file_url }}" target="_blank" class="flex items-center gap-2 p-2 text-xs text-gray-700 hover:bg-gray-50">
+                                                    <a
+                                                        href="{{ $a->file_url }}"
+                                                        target="_blank"
+                                                        class="flex items-center gap-2 p-2 text-xs text-gray-700 hover:bg-gray-50"
+                                                    >
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a2.625 2.625 0 00-2.625-2.625h-9.75A2.625 2.625 0 004.5 11.625v6.75A2.625 2.625 0 007.125 21h6.75M9 7.5V6.75A2.25 2.25 0 0111.25 4.5h1.5A2.25 2.25 0 0115 6.75V7.5" />
                                                         </svg>
-                                                        <span class="line-clamp-1">{{ $a->original_filename ?? 'file' }}</span>
+                                                        <span class="line-clamp-1">
+                                                            {{ $a->original_filename ?? 'file' }}
+                                                        </span>
                                                     </a>
                                                 @endif
                                             </div>
@@ -131,7 +167,8 @@
                                     wire:loading.attr="disabled"
                                     wire:target="claim"
                                     type="button"
-                                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200">
+                                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
+                                >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 10.5V6.75A2.25 2.25 0 0014.25 4.5h-6A2.25 2.25 0 006 6.75v10.5A2.25 2.25 0 008.25 19.5h7.5A2.25 2.25 0 0018 17.25V12M12 12l9-9m0 0v6m0-6h-6"></path>
                                     </svg>
@@ -146,67 +183,144 @@
                 <div class="mt-6">
                     {{ $tickets->onEachSide(1)->links() }}
                 </div>
-            @endif>
+            @endif
         @endif
 
+        {{-- CLAIMS TAB (KANBAN) --}}
         @if ($tab === 'claims')
-            <div class="flex flex-col md:flex-row md:items-center gap-6 pb-4 mb-4 border-b border-gray-200">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">
-                    <select wire:model="claimPriority" class="px-3 py-2 border border-gray-300 rounded-md text-gray-900">
-                        <option value="">All Priority</option>
-                        <option value="low">low</option>
-                        <option value="medium">medium</option>
-                        <option value="high">high</option>
-                    </select>
-                    <div></div>
-                    <div></div>
-                    <div></div>
+            <div
+                x-data="{
+                    draggingId: null,
+                    draggingFrom: null,
+                    dragStart(id, fromStatus) {
+                        this.draggingId = id;
+                        this.draggingFrom = fromStatus;
+                    },
+                    drop(toStatus) {
+                        if (!this.draggingId || toStatus === this.draggingFrom) {
+                            this.draggingId = null;
+                            this.draggingFrom = null;
+                            return;
+                        }
+                        $wire.moveClaim(this.draggingId, toStatus);
+                        this.draggingId = null;
+                        this.draggingFrom = null;
+                    }
+                }"
+                class="space-y-4"
+            >
+                {{-- Filter bar --}}
+                <div class="flex flex-col md:flex-row md:items-center gap-6 pb-4 mb-4 border-b border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">
+                        <select wire:model="claimPriority" class="px-3 py-2 border border-gray-300 rounded-md text-gray-900">
+                            <option value="">All Priority</option>
+                            <option value="low">low</option>
+                            <option value="medium">medium</option>
+                            <option value="high">high</option>
+                        </select>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
                 </div>
+
+                @if(!$claims || $claims->isEmpty())
+                    <div class="rounded-lg border-2 border-dashed border-gray-300 p-10 text-center text-gray-600">
+                        Belum ada tiket yang Anda claim.
+                    </div>
+                @else
+                    @php
+                        // Group claims by status for Kanban columns
+                        $groupedClaims = $claims->groupBy(function ($assignment) {
+                            $status = strtoupper(optional($assignment->ticket)->status ?? 'OPEN');
+
+                            return match (true) {
+                                $status === 'OPEN' => 'OPEN',
+                                in_array($status, ['ASSIGNED', 'IN_PROGRESS']) => 'IN_PROGRESS',
+                                in_array($status, ['RESOLVED']) => 'RESOLVED',
+                                default => $status,
+                            };
+                        });
+                    @endphp
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        @foreach ($kanbanColumns as $statusKey => $label)
+                            <div
+                                class="flex flex-col rounded-2xl border-2 border-gray-200 bg-gray-50 p-3"
+                                x-on:dragover.prevent
+                                x-on:drop.prevent="drop('{{ $statusKey }}')"
+                            >
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-sm font-semibold tracking-wide uppercase text-gray-700">
+                                        {{ $label }}
+                                    </h3>
+                                    <span class="text-xs text-gray-500">
+                                        {{ ($groupedClaims[$statusKey] ?? collect())->count() }} tiket
+                                    </span>
+                                </div>
+
+                                <div class="space-y-3 min-h-[80px]">
+                                    @forelse ($groupedClaims[$statusKey] ?? [] as $asgn)
+                                        @php
+                                            $t = $asgn->ticket;
+                                            if (!$t) continue;
+
+                                            $prio = strtolower($t->priority ?? '');
+                                            $priorityBorder = [
+                                                'low'    => 'border-green-300 ring-0',
+                                                'medium' => 'border-yellow-300 ring-0',
+                                                'high'   => 'border-red-500 ring-2 ring-red-300',
+                                            ][$prio] ?? 'border-gray-200 ring-0';
+
+                                            $badgeClass = [
+                                                'low'    => 'bg-green-50 text-green-700 border-2 border-green-400',
+                                                'medium' => 'bg-yellow-50 text-yellow-700 border-2 border-yellow-400',
+                                                'high'   => 'bg-orange-50 text-orange-700 border-2 border-orange-400',
+                                            ][$prio] ?? 'bg-gray-50 text-gray-700 border-2 border-gray-400';
+                                        @endphp
+
+                                        <div
+                                            class="rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition cursor-move {{ $priorityBorder }}"
+                                            draggable="true"
+                                            x-on:dragstart="dragStart({{ $t->ticket_id }}, '{{ strtoupper($t->status ?? 'OPEN') }}')"
+                                            x-on:dragend="draggingId = null; draggingFrom = null"
+                                        >
+                                            <div class="flex items-start justify-between gap-3">
+                                                <a
+                                                    href="{{ route('user.ticket.show', $t) }}"
+                                                    class="text-sm font-semibold text-gray-900 line-clamp-1"
+                                                >
+                                                    {{ $t->subject }}
+                                                </a>
+                                                <span class="text-xs px-2 py-1 rounded-lg {{ $badgeClass }}">
+                                                    {{ strtoupper($t->priority ?? 'LOW') }}
+                                                </span>
+                                            </div>
+
+                                            <p class="mt-2 text-xs text-gray-600">
+                                                {{ \Illuminate\Support\Str::limit($t->description, 160) }}
+                                            </p>
+
+                                            <div class="mt-3 text-[11px] text-gray-500 flex items-center justify-between">
+                                                <span>
+                                                    Claimed {{ \Carbon\Carbon::parse($asgn->created_at)->diffForHumans() }}
+                                                </span>
+                                                <span class="font-medium text-gray-700">
+                                                    {{ strtoupper($t->status ?? 'OPEN') }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="text-xs text-gray-400 italic text-center py-6">
+                                            Belum ada tiket di status ini.
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
-
-            @if(!$claims || $claims->isEmpty())
-                <div class="rounded-lg border-2 border-dashed border-gray-300 p-10 text-center text-gray-600">
-                    Belum ada tiket yang Anda claim.
-                </div>
-            @else
-                <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    @foreach ($claims as $asgn)
-                        @php
-                            $t = $asgn->ticket;
-                            if (!$t) continue;
-                            $prio = strtolower($t->priority ?? '');
-                            $priorityBorder = [
-                                'low' => 'border-green-300 ring-0',
-                                'medium' => 'border-yellow-300 ring-0',
-                                'high' => 'border-red-500 ring-2 ring-red-300',
-                            ][$prio] ?? 'border-gray-200 ring-0';
-                            $badgeClass = [
-                                'low' => 'bg-green-50 text-green-700 border-2 border-green-400',
-                                'medium' => 'bg-yellow-50 text-yellow-700 border-2 border-yellow-400',
-                                'high' => 'bg-orange-50 text-orange-700 border-2 border-orange-400',
-                            ][$prio] ?? 'bg-gray-50 text-gray-700 border-2 border-gray-400';
-                        @endphp
-
-                        <a href="{{ route('user.ticket.show', $t) }}" class="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition {{ $priorityBorder }}">
-                            <div class="flex items-start justify-between gap-3">
-                                <h3 class="text-lg font-semibold text-gray-900 line-clamp-1">{{ $t->subject }}</h3>
-                                <span class="text-xs px-2 py-1 rounded-lg {{ $badgeClass }}">{{ strtoupper($t->priority) }}</span>
-                            </div>
-                            <p class="mt-2 text-sm text-gray-600">
-                                {{ \Illuminate\Support\Str::limit($t->description, 160) }}
-                            </p>
-                            <div class="mt-3 text-xs text-gray-500 flex items-center justify-between">
-                                <span>Claimed {{ \Carbon\Carbon::parse($asgn->created_at)->diffForHumans() }}</span>
-                                <span class="font-medium text-gray-700">{{ $t->status }}</span>
-                            </div>
-                        </a>
-                    @endforeach
-                </div>
-
-                <div class="mt-6">
-                    {{ $claims->onEachSide(1)->links() }}
-                </div>
-            @endif
         @endif
     </div>
 </div>

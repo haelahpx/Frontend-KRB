@@ -39,12 +39,12 @@ class Ticket extends Component
     public array  $deptOptions = [];              // [['id'=>..,'name'=>..], ...]
     public ?int   $selected_department_id = null; // live switch
     public ?int   $primary_department_id  = null; // users.department_id
-    public bool $showSwitcher = false;    
+    public bool $showSwitcher = false;
 
     public function mount(): void
     {
         $user = Auth::user()->loadMissing(['company', 'department', 'role']);
-        $this->company_name = optional($user->company)->company_name ?? '-';
+        $this->company_name        = optional($user->company)->company_name ?? '-';
         $this->primary_department_id = $user->department_id ?: null;
 
         $this->loadUserDepartments();
@@ -67,25 +67,38 @@ class Ticket extends Component
             ->orderBy('d.department_name')
             ->get(['d.department_id as id', 'd.department_name as name']);
 
-        $this->deptOptions = $rows->map(fn($r) => ['id' => (int)$r->id, 'name' => (string)$r->name])->values()->all();
+        $this->deptOptions = $rows
+            ->map(fn($r) => ['id' => (int) $r->id, 'name' => (string) $r->name])
+            ->values()
+            ->all();
 
-
-        $this->showSwitcher = true; 
+        $this->showSwitcher = true;
 
         // fallback: if no pivot but has primary
         if (empty($this->deptOptions) && $this->primary_department_id) {
             $name = Department::where('department_id', $this->primary_department_id)->value('department_name') ?? 'Unknown';
-            $this->deptOptions = [['id' => (int)$this->primary_department_id, 'name' => (string)$name]];
+            $this->deptOptions = [
+                [
+                    'id'   => (int) $this->primary_department_id,
+                    'name' => (string) $name,
+                ],
+            ];
             $this->showSwitcher = false;
         }
     }
 
     protected function resolveDeptName(?int $deptId): string
     {
-        if (!$deptId) return '-';
-        foreach ($this->deptOptions as $opt) {
-            if ($opt['id'] === (int)$deptId) return $opt['name'];
+        if (!$deptId) {
+            return '-';
         }
+
+        foreach ($this->deptOptions as $opt) {
+            if ($opt['id'] === (int) $deptId) {
+                return $opt['name'];
+            }
+        }
+
         return Department::where('department_id', $deptId)->value('department_name') ?? '-';
     }
 
@@ -93,7 +106,7 @@ class Ticket extends Component
     {
         if ($this->primary_department_id) {
             $this->selected_department_id = $this->primary_department_id;
-            $this->department_name = $this->resolveDeptName($this->selected_department_id);
+            $this->department_name        = $this->resolveDeptName($this->selected_department_id);
             $this->resetPage();
         }
     }
@@ -103,30 +116,38 @@ class Ticket extends Component
     {
         $this->updatedSelectedDepartmentId();
     }
+
     public function updatedSelectedDepartmentId(): void
     {
         $allowed = collect($this->deptOptions)->pluck('id')->all();
-        $id = (int) $this->selected_department_id;
+        $id      = (int) $this->selected_department_id;
 
         if (!in_array($id, $allowed, true)) {
-            $this->selected_department_id = $this->primary_department_id ?: ($this->deptOptions[0]['id'] ?? null);
+            $this->selected_department_id = $this->primary_department_id
+                ?: ($this->deptOptions[0]['id'] ?? null);
             $id = (int) $this->selected_department_id;
         }
+
         $this->department_name = $this->resolveDeptName($id);
         $this->resetPage();
     }
 
-    public function tick() {}
+    public function tick(): void
+    {
+        // used for wire:poll
+    }
 
-    public function updatingSearch()
+    public function updatingSearch(): void
     {
         $this->resetPage();
     }
-    public function updatingPriority()
+
+    public function updatingPriority(): void
     {
         $this->resetPage();
     }
-    public function updatingStatus()
+
+    public function updatingStatus(): void
     {
         $this->resetPage();
     }
@@ -134,19 +155,24 @@ class Ticket extends Component
     protected function currentAdmin()
     {
         $user = Auth::user();
-        if ($user && !$user->relationLoaded('role')) $user->load('role');
+        if ($user && !$user->relationLoaded('role')) {
+            $user->load('role');
+        }
+
         return $user;
     }
 
     protected function ensureAdmin(): bool
     {
         $u = $this->currentAdmin();
+
         return $u && $u->role && \in_array($u->role->name, self::ADMIN_ROLE_NAMES, true);
     }
 
     protected function isSuperadmin(): bool
     {
         $u = $this->currentAdmin();
+
         return $u && $u->role && $u->role->name === 'Superadmin';
     }
 
@@ -220,37 +246,59 @@ class Ticket extends Component
             ->withCount('attachments')
             ->orderByDesc('ticket_id');
 
-        $admin = $this->currentAdmin();
+        // Get the authenticated user
+        $user = auth()->user();
 
-        // Company scope for non-superadmin (and superadmin if company_id set)
-        if (Schema::hasColumn('tickets', 'company_id') && isset($admin->company_id)) {
-            $query->where('company_id', $admin->company_id);
+        // If the user has a company_id, we can filter by company
+        if (Schema::hasColumn('tickets', 'company_id') && isset($user->company_id)) {
+            $query->where('company_id', $user->company_id);
         }
 
-        // Department scope: use switcher if set; else fall back to user's dept (non-superadmin)
+        // If the user has selected a department, filter by that department
         $deptId = $this->selected_department_id ?: null;
         if ($deptId) {
             if (Schema::hasColumn('tickets', 'department_id')) {
                 $query->where('department_id', $deptId);
             }
-        } elseif ($admin && !$this->isSuperadmin()) {
-            if (Schema::hasColumn('tickets', 'department_id') && !empty($admin->department_id)) {
-                $query->where('department_id', $admin->department_id);
+        } elseif ($user && !$this->isSuperadmin()) {
+            // Regular users can only see their department's tickets
+            if (Schema::hasColumn('tickets', 'department_id') && !empty($user->department_id)) {
+                $query->where('department_id', $user->department_id);
+            }
+        } elseif ($this->isSuperadmin()) {
+            // Superadmins can see all tickets, no department filtering.
+        }
+
+        // Admins can view all departments within the same company
+        if ($this->ensureAdmin() && !$this->isSuperadmin()) {
+            $query->where(function ($q) use ($user) {
+                // Include tickets from any department within the same company
+                $q->where('company_id', $user->company_id);
+            });
+        }
+
+        // Search functionality
+        if ($this->search) {
+            $s = '%' . $this->search . '%';
+            $query->where(fn($q) => $q
+                ->where('subject', 'like', $s)
+                ->orWhere('description', 'like', $s));
+        }
+
+        // Filter by priority
+        if ($this->priority) {
+            $query->where('priority', $this->priority);
+        }
+
+        // Filter by status
+        if ($this->status) {
+            $dbStatus = self::UI_TO_DB_STATUS_MAP[$this->status] ?? null;
+            if ($dbStatus) {
+                $query->where('status', $dbStatus);
             }
         }
 
-        if ($this->search) {
-            $s = '%' . $this->search . '%';
-            $query->where(fn($q) => $q->where('subject', 'like', $s)->orWhere('description', 'like', $s));
-        }
-
-        if ($this->priority) $query->where('priority', $this->priority);
-
-        if ($this->status) {
-            $dbStatus = self::UI_TO_DB_STATUS_MAP[$this->status] ?? null;
-            if ($dbStatus) $query->where('status', $dbStatus);
-        }
-
+        // Paginate the results
         $tickets = $query->paginate(12);
 
         return view('livewire.pages.admin.ticket', compact('tickets'));

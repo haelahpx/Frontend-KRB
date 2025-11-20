@@ -25,6 +25,8 @@ class Guestbook extends Model
         'instansi',
         'keperluan',
         'petugas_penjaga',
+        'user_id',
+        'department_id',
     ];
 
     // If column `date` is DATE, this is safe. Times are left as string (TIME cast is not native Carbon).

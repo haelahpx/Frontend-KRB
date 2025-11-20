@@ -167,8 +167,10 @@
                     </div>
                 </div>
 
-                {{-- LIST --}}
-                <div class="divide-y divide-gray-200">
+                {{-- LIST (GRID LAYOUT) --}}
+                {{-- Changed from divide-y to grid layout with 2 columns on lg screens --}}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 bg-gray-50/50">
+                    
                     {{-- PENDING TAB --}}
                     @if($activeTab === 'pending')
                         @forelse($pending as $row)
@@ -177,85 +179,86 @@
                                 $rowNo = ($pending->firstItem() ?? 1) + $loop->index;
                             @endphp
 
+                            {{-- Card Item --}}
                             <div wire:key="pend-{{ $row->delivery_id }}"
-                                class="px-4 sm:px-6 py-5 hover:bg-gray-50 transition-colors">
-                                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                                    <div class="flex items-start gap-3 flex-1 min-w-0">
-                                        <div class="{{ $icoAvatar }}">
-                                            @if($row->image)
-                                                <img src="{{ Storage::disk('public')->url($row->image) }}" alt="Bukti foto"
-                                                    class="w-full h-full object-cover rounded-xl">
-                                            @else
-                                                {{ $avatarChar }}
-                                            @endif
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                                <h4 class="font-semibold text-gray-900 text-base truncate">
-                                                    {{ $row->item_name }}
-                                                </h4>
+                                class="flex flex-col justify-between p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
+                                
+                                <div class="flex items-start gap-3 mb-4">
+                                    <div class="{{ $icoAvatar }}">
+                                        @if($row->image)
+                                            <img src="{{ Storage::disk('public')->url($row->image) }}" alt="Bukti foto"
+                                                class="w-full h-full object-cover rounded-xl">
+                                        @else
+                                            {{ $avatarChar }}
+                                        @endif
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                                            <h4 class="font-semibold text-gray-900 text-base truncate max-w-full">
+                                                {{ $row->item_name }}
+                                            </h4>
+                                            <div class="flex gap-1">
                                                 <span
-                                                    class="text-[11px] px-2 py-0.5 rounded-full border border-gray-300 text-gray-700 bg-gray-50">
+                                                    class="text-[10px] px-1.5 py-0.5 rounded border border-gray-300 text-gray-600 bg-gray-50">
                                                     {{ strtoupper($row->type) }}
                                                 </span>
                                                 <span
-                                                    class="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Pending</span>
+                                                    class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">Pending</span>
                                             </div>
+                                        </div>
 
-                                            <div class="flex flex-wrap items-center gap-4 text-[13px] text-gray-600">
-                                                @if($row->nama_pengirim)
-                                                    <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
-                                                        From: {{ $row->nama_pengirim }}
-                                                    </span>
-                                                @endif
-                                                @if($row->nama_penerima)
-                                                    <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
-                                                        To: {{ $row->nama_penerima }}
-                                                    </span>
-                                                @endif
-                                                @if($row->created_at)
-                                                    <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 0 0118 0z" />
-                                                        </svg>
-                                                        {{ fmtDate($row->created_at) }} {{ fmtTime($row->created_at) }}
-                                                    </span>
-                                                @endif
-                                            </div>
+                                        <div class="space-y-1 text-[13px] text-gray-600">
+                                            @if($row->nama_pengirim)
+                                                <div class="flex items-center gap-2">
+                                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                    <span class="truncate">From: {{ $row->nama_pengirim }}</span>
+                                                </div>
+                                            @endif
+                                            @if($row->nama_penerima)
+                                                <div class="flex items-center gap-2">
+                                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                    <span class="truncate">To: {{ $row->nama_penerima }}</span>
+                                                </div>
+                                            @endif
+                                            @if($row->created_at)
+                                                <div class="flex items-center gap-2">
+                                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>{{ fmtDate($row->created_at) }} {{ fmtTime($row->created_at) }}</span>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div class="text-right shrink-0 space-y-2">
-                                        <div class="flex flex-wrap gap-2 justify-end pt-1.5">
-                                            <button type="button" wire:click="openEdit({{ $row->delivery_id }})"
-                                                wire:loading.attr="disabled"
-                                                class="px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition">
-                                                Edit
-                                            </button>
-                                            <button type="button" wire:click="storeItem({{ $row->delivery_id }})"
-                                                wire:loading.attr="disabled"
-                                                class="px-3 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 disabled:opacity-60 transition">
-                                                Mark as Stored
-                                            </button>
-                                        </div>
-                                        <span
-                                            class="inline-block text-[11px] px-2 py-0.5 rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
-                                            No. {{ $rowNo }}
-                                        </span>
+                                <div class="pt-3 mt-auto border-t border-gray-100 flex items-center justify-between">
+                                    <span class="text-[10px] text-gray-400 font-medium">
+                                        #{{ $rowNo }}
+                                    </span>
+                                    <div class="flex gap-2">
+                                        <button type="button" wire:click="openEdit({{ $row->delivery_id }})"
+                                            wire:loading.attr="disabled"
+                                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition">
+                                            Edit
+                                        </button>
+                                        <button type="button" wire:click="storeItem({{ $row->delivery_id }})"
+                                            wire:loading.attr="disabled"
+                                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 shadow-sm transition">
+                                            Store
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         @empty
-                            <div class="px-4 sm:px-6 py-14 text-center text-gray-500 text-sm">Tidak ada data</div>
+                            <div class="col-span-full px-4 py-14 text-center text-gray-500 text-sm">Tidak ada data</div>
                         @endforelse
                     @endif
 
@@ -268,98 +271,90 @@
                                 $dir = $storedDirections[$row->delivery_id] ?? 'taken';
                             @endphp
 
+                            {{-- Card Item --}}
                             <div wire:key="stor-{{ $row->delivery_id }}"
-                                class="px-4 sm:px-6 py-5 hover:bg-gray-50 transition-colors">
-                                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                                    <div class="flex items-start gap-3 flex-1 min-w-0">
-                                        <div class="{{ $icoAvatar }}">
-                                            @if($row->image)
-                                                <img src="{{ Storage::disk('public')->url($row->image) }}" alt="Bukti foto"
-                                                    class="w-full h-full object-cover rounded-xl">
-                                            @else
-                                                {{ $avatarChar }}
-                                            @endif
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                                <h4 class="font-semibold text-gray-900 text-base truncate">
-                                                    {{ $row->item_name }}
-                                                </h4>
+                                class="flex flex-col justify-between p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
+                                
+                                <div class="flex items-start gap-3 mb-4">
+                                    <div class="{{ $icoAvatar }}">
+                                        @if($row->image)
+                                            <img src="{{ Storage::disk('public')->url($row->image) }}" alt="Bukti foto"
+                                                class="w-full h-full object-cover rounded-xl">
+                                        @else
+                                            {{ $avatarChar }}
+                                        @endif
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                                            <h4 class="font-semibold text-gray-900 text-base truncate max-w-full">
+                                                {{ $row->item_name }}
+                                            </h4>
+                                            <div class="flex gap-1">
                                                 <span
-                                                    class="text-[11px] px-2 py-0.5 rounded-full border border-gray-300 text-gray-700 bg-gray-50">
+                                                    class="text-[10px] px-1.5 py-0.5 rounded border border-gray-300 text-gray-600 bg-gray-50">
                                                     {{ strtoupper($row->type) }}
                                                 </span>
                                                 <span
-                                                    class="text-[11px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">Stored</span>
+                                                    class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 font-medium">Stored</span>
                                             </div>
+                                        </div>
 
-                                            <div class="flex flex-wrap items-center gap-4 text-[13px] text-gray-600">
-                                                @if($row->nama_pengirim)
-                                                    <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
-                                                        From: {{ $row->nama_pengirim }}
-                                                    </span>
-                                                @endif
-                                                @if($row->nama_penerima)
-                                                    <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
-                                                        To: {{ $row->nama_penerima }}
-                                                    </span>
-                                                @endif
-                                                <span class="flex items-center gap-1.5">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div class="space-y-1 text-[13px] text-gray-600">
+                                            @if($row->nama_pengirim)
+                                                <div class="flex items-center gap-2">
+                                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                     </svg>
-                                                    Direction: {{ $dir === 'deliver' ? 'Deliver' : 'Taken' }}
-                                                </span>
-                                                @if($row->created_at)
-                                                    <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 0 0118 0z" />
-                                                        </svg>
-                                                        {{ fmtDate($row->created_at) }} {{ fmtTime($row->created_at) }}
-                                                    </span>
-                                                @endif
+                                                    <span class="truncate">From: {{ $row->nama_pengirim }}</span>
+                                                </div>
+                                            @endif
+                                            @if($row->nama_penerima)
+                                                <div class="flex items-center gap-2">
+                                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                    <span class="truncate">To: {{ $row->nama_penerima }}</span>
+                                                </div>
+                                            @endif
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span>Direction: {{ $dir === 'deliver' ? 'Deliver' : 'Taken' }}</span>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div class="text-right shrink-0 space-y-2">
-                                        <div class="flex flex-wrap gap-2 justify-end pt-1.5">
-                                            <button type="button" wire:click="openEdit({{ $row->delivery_id }})"
-                                                wire:loading.attr="disabled"
-                                                class="px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition">
-                                                Edit
-                                            </button>
-                                            <button type="button" wire:click="finalizeItem({{ $row->delivery_id }})"
-                                                wire:loading.attr="disabled"
-                                                class="px-3 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 disabled:opacity-60 transition">
-                                                {{ $dir === 'deliver' ? 'Mark as Delivered' : 'Mark as Taken' }}
-                                            </button>
-                                        </div>
-                                        <span
-                                            class="inline-block text-[11px] px-2 py-0.5 rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
-                                            No. {{ $rowNo }}
-                                        </span>
+                                <div class="pt-3 mt-auto border-t border-gray-100 flex items-center justify-between">
+                                    <span class="text-[10px] text-gray-400 font-medium">
+                                        #{{ $rowNo }}
+                                    </span>
+                                    <div class="flex gap-2">
+                                        <button type="button" wire:click="openEdit({{ $row->delivery_id }})"
+                                            wire:loading.attr="disabled"
+                                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition">
+                                            Edit
+                                        </button>
+                                        <button type="button" wire:click="finalizeItem({{ $row->delivery_id }})"
+                                            wire:loading.attr="disabled"
+                                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 shadow-sm transition">
+                                            {{ $dir === 'deliver' ? 'Delivered' : 'Taken' }}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         @empty
-                            <div class="px-4 sm:px-6 py-14 text-center text-gray-500 text-sm">Tidak ada data</div>
+                            <div class="col-span-full px-4 py-14 text-center text-gray-500 text-sm">Tidak ada data</div>
                         @endforelse
                     @endif
                 </div>
 
                 {{-- Pagination --}}
-                <div class="px-4 sm:px-6 py-5 bg-gray-50 border-t border-gray-200">
+                <div class="px-4 sm:px-6 py-5 bg-white border-t border-gray-200 rounded-b-2xl">
                     <div class="flex justify-center">
                         @if($activeTab === 'pending')
                             {{ $pending->onEachSide(1)->links() }}

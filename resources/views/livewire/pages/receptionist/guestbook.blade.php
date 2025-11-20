@@ -6,6 +6,7 @@
         $tag = 'w-1.5 bg-white rounded-full';
         $label = 'block text-sm font-medium text-gray-700 mb-2';
         $input = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
+        $select = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition disabled:bg-gray-100 disabled:text-gray-400';
         $btnBlk = 'px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition';
         $btnGrn = 'px-3 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 disabled:opacity-60 transition';
         $chip = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
@@ -13,7 +14,6 @@
         $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0';
         $icoDot = 'h-6';
         $sectPad = 'px-6 py-5';
-        $editIn = 'w-full h-10 bg-white border border-gray-300 rounded-lg px-3 text-gray-800 focus:border-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition hover:border-gray-400 placeholder:text-gray-400';
     @endphp
 
     <div class="px-4 sm:px-6 py-6 space-y-8">
@@ -107,9 +107,38 @@
                     </div>
                 </div>
 
-                {{-- Tidak ada lagi input petugas_penjaga --}}
+                {{-- Bertemu Dengan Siapa (Optional) --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                    <div>
+                        <label class="{{ $label }}">Departemen yang Dituju <span class="text-gray-400 font-normal">(Opsional)</span></label>
+                        {{-- Gunakan wire:model.live agar user list terupdate otomatis --}}
+                        <select wire:model.live="department_id" class="{{ $select }}">
+                            <option value="">-- Pilih Departemen --</option>
+                            @foreach($departments_list as $dept)
+                                {{-- SESUAIKAN: Ganti 'name' di sini dengan nama kolom (misal: nama_divisi) di tabel departemen Anda --}}
+                                <option value="{{ $dept->id }}">{{ $dept->name ?? $dept->nama_departemen ?? 'Dept #'.$dept->id }}</option>
+                            @endforeach
+                        </select>
+                        @error('department_id') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                    </div>
+                    
+                    <div>
+                        <label class="{{ $label }}">Bertemu dengan <span class="text-gray-400 font-normal">(Opsional)</span></label>
+                        <select wire:model.defer="user_id" class="{{ $select }}" @if(empty($users_list)) disabled @endif>
+                            <option value="">-- Pilih Pegawai --</option>
+                            @foreach($users_list as $user)
+                                {{-- SESUAIKAN: Ganti 'full_name' di sini dengan nama kolom (misal: nama_lengkap) di tabel user Anda --}}
+                                <option value="{{ $user->id }}">{{ $user->full_name ?? $user->name }}</option>
+                            @endforeach
+                        </select>
+                        @if(empty($users_list) && $department_id)
+                            <p class="mt-1 text-[10px] text-orange-500">Tidak ada user di departemen ini.</p>
+                        @endif
+                        @error('user_id') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                    </div>
+                </div>
 
-                <div class="pt-2 flex items-center gap-3">
+                <div class="pt-4 flex items-center gap-3 border-t border-gray-100 mt-2">
                     <button type="submit" wire:loading.attr="disabled" wire:target="save" aria-busy="true"
                             class="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-gray-900 text-white text-sm font-medium
                                    shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20

@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Models\Guestbook as GuestbookModel;
 
+// TODO: Ganti baris ini dengan Model milik Anda sendiri (Misal: App\Models\Divisi, App\Models\Pegawai)
+use App\Models\Department; 
+use App\Models\User;
+
 #[Layout('layouts.receptionist')]
 #[Title('GuestBook')]
 class Guestbook extends Component
@@ -18,20 +22,28 @@ class Guestbook extends Component
     public $phone_number;
     public $instansi;
     public $keperluan;
+    
+    // Field baru (Nullable / Optional)
+    public $department_id;
+    public $user_id;
 
-    // Field internal (diisi otomatis) – tetap disimpan untuk dipakai saat create
+    // Data Lists untuk Dropdown
+    public $departments_list = [];
+    public $users_list = [];
+
+    // Field internal (diisi otomatis)
     public $date;
     public $jam_in;
     public $petugas_penjaga;
 
-    // ---- Compatibility props (biar snapshot lama nggak crash, kalau masih kepakai di UI lain) ----
-    public int $perLatest  = 5;   // compat only
-    public int $perEntries = 5;   // compat only
-    public $filter_date    = null; // compat only
-    public string $q       = '';   // compat only
-    public bool $showEdit  = false; // compat only
-    public ?int $editId    = null;  // compat only
-    public array $edit = [          // compat only
+    // ---- Compatibility props ----
+    public int $perLatest  = 5; 
+    public int $perEntries = 5; 
+    public $filter_date    = null;
+    public string $q       = '';   
+    public bool $showEdit  = false;
+    public ?int $editId    = null; 
+    public array $edit = [          
         'date'            => null,
         'jam_in'          => null,
         'jam_out'         => null,
@@ -40,26 +52,51 @@ class Guestbook extends Component
         'instansi'        => null,
         'keperluan'       => null,
         'petugas_penjaga' => null,
+        'department_id'   => null,
+        'user_id'         => null,
     ];
 
     public function mount(): void
     {
-        // Boleh tetap set default date, walaupun sekarang otomatis saat save
         $this->date = $this->date ?: now()->format('Y-m-d');
+
+        // Load list departemen saat halaman dibuka (berdasarkan company user yg login)
+        if ($compId = $this->companyId()) {
+            // SESUAIKAN: Pastikan 'Department' di bawah ini match dengan nama Class model yang Anda import di atas
+            $this->departments_list = Department::where('company_id', $compId)->get();
+        } else {
+            $this->departments_list = [];
+        }
+    }
+
+    // Hook: Ketika department_id berubah, load user yang sesuai
+    public function updatedDepartmentId($value)
+    {
+        // Reset user yang dipilih sebelumnya
+        $this->user_id = null; 
+
+        if ($value) {
+            // SESUAIKAN: Pastikan 'User' di bawah ini match dengan nama Class model yang Anda import di atas
+            // Pastikan juga kolom 'department_id' sesuai dengan struktur tabel user Anda
+            $this->users_list = User::where('department_id', $value)->get();
+        } else {
+            $this->users_list = [];
+        }
     }
 
     protected function rules(): array
     {
         return [
-            // Hanya field yang diisi user
-            'name'         => ['required', 'string', 'max:255'],
-            'phone_number' => ['nullable', 'string', 'max:50'],
-            'instansi'     => ['nullable', 'string', 'max:255'],
-            'keperluan'    => ['nullable', 'string', 'max:255'],
+            'name'          => ['required', 'string', 'max:255'],
+            'phone_number'  => ['nullable', 'string', 'max:50'],
+            'instansi'      => ['nullable', 'string', 'max:255'],
+            'keperluan'     => ['nullable', 'string', 'max:255'],
+            // SESUAIKAN: Ganti 'departments' dan 'users' di bawah ini dengan nama TABEL di database Anda
+            'department_id' => ['nullable', 'exists:departments,id'], 
+            'user_id'       => ['nullable', 'exists:users,id'],       
         ];
     }
 
-    // Normalizers (masih disimpan kalau suatu saat kepakai lagi)
     public function updatedDate($v): void  { $this->date   = $this->normalizeDate($v); }
     public function updatedJamIn($v): void { $this->jam_in = $this->normalizeTime($v); }
 
@@ -85,35 +122,21 @@ class Guestbook extends Component
 
     public function save(): void
     {
-        // 1) Ambil waktu server sekarang (pakai timezone app)
         $now = Carbon::now(config('app.timezone', 'Asia/Jakarta'));
         $this->date   = $now->toDateString();
         $this->jam_in = $now->format('H:i');
 
-        // 2) Ambil nama petugas dari akun Receptionist yang login
         $user = Auth::user();
         $this->petugas_penjaga = $user?->full_name ?? $user?->name ?? 'Petugas Receptionist';
 
-        // 3) Validasi hanya field input user
         $this->validate();
 
-        // 4) Simpan ke database
-        GuestbookModel::create([
-            'company_id'      => $this->companyId(),
-            'date'            => $this->date,
-            'jam_in'          => $this->jam_in,
-            'jam_out'         => null,
-            'name'            => $this->name,
-            'phone_number'    => $this->phone_number,
-            'instansi'        => $this->instansi,
-            'keperluan'       => $this->keperluan,
-            'petugas_penjaga' => $this->petugas_penjaga,
-        ]);
+    
+        // Reset form
+        $this->reset(['name', 'phone_number', 'instansi', 'keperluan', 'department_id', 'user_id']);
+        // Reset list user karena dept kosong lagi
+        $this->users_list = []; 
 
-        // 5) Reset hanya field yang diisi user
-        $this->reset(['name', 'phone_number', 'instansi', 'keperluan']);
-
-        // 6) Refresh & toast
         $this->dispatch('$refresh');
         $this->dispatch('toast', type: 'success', title: 'Ditambah', message: 'Guest ditambah.', duration: 3000);
         session()->flash('saved', true);

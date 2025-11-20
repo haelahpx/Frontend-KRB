@@ -105,14 +105,20 @@
                             <label class="{{ $label }}">Status</label>
                             <select wire:model.defer="status" class="{{ $input }}">
                                 <option value="open">Open</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="resolved">Resolved</option>
-                                <option value="closed">Closed</option>
-                                <option value="deleted">Deleted</option>
+                                <option value="in_progress" @disabled(!$agent_id)>In Progress</option>
+                                <option value="resolved" @disabled(!$agent_id)>Resolved</option>
+                                <option value="closed" @disabled(!$agent_id)>Closed</option>
                             </select>
                             @error('status')
                                 <div class="text-xs text-rose-600 mt-1">{{ $message }}</div>
                             @enderror
+
+                            @if (!$agent_id)
+                                <p class="mt-1 text-[11px] text-gray-500">
+                                    Assign ticket ke agent terlebih dahulu untuk mengubah status ke In Progress, Resolved,
+                                    atau Closed.
+                                </p>
+                            @endif
                         </div>
 
                         <div>
@@ -130,8 +136,9 @@
                     </div>
 
                     <div class="pt-2">
-                        <button wire:click="save" class="{{ $btnBlk }}" wire:loading.attr="disabled">Save
-                            Changes</button>
+                        <button wire:click="save" class="{{ $btnBlk }}" wire:loading.attr="disabled">
+                            Save Changes
+                        </button>
                     </div>
                 </div>
             </section>

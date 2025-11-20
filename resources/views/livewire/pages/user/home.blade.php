@@ -1,12 +1,4 @@
-<div class="min-h-screen bg-[#0f0f10] text-white p-6 flex flex-col justify-center">
-    
-    <style>
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #52525b; }
-    </style>
-
+<div class="min-h-screen bg-[#0f0f10] text-black p-6 flex flex-col justify-center">
     <div class="max-w-[1400px] mx-auto w-full">
         
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 auto-rows-[320px]">
@@ -18,7 +10,7 @@
 
                     <div class="relative z-10 flex justify-between items-start mb-6">
                         <div>
-                            <h2 class="text-2xl font-semibold text-white">Ticket Center</h2>
+                            <h2 class="text-2xl font-semibold text-black">Ticket Center</h2>
                             <p class="text-zinc-400 text-sm">Operasional & Antrian</p>
                         </div>
                         <a href="{{ route('user.ticket.queue') }}" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium transition">
@@ -29,7 +21,7 @@
                     <div class="grid grid-cols-2 gap-4 mb-6 relative z-10">
                         <div class="p-4 rounded-xl bg-white/5 border border-white/5 hover:border-blue-500/30 transition">
                             <p class="text-xs text-zinc-400 uppercase tracking-wider">Dept Queue</p>
-                            <p class="text-3xl font-bold text-white mt-1">{{ $ticketQueueCount }}</p>
+                            <p class="text-3xl font-bold text-black mt-1">{{ $ticketQueueCount }}</p>
                         </div>
                         <div class="p-4 rounded-xl bg-white/5 border border-white/5 hover:border-emerald-500/30 transition">
                             <p class="text-xs text-zinc-400 uppercase tracking-wider">My Claims</p>
@@ -66,7 +58,7 @@
                         <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
                             <x-heroicon-o-wifi class="w-5 h-5" />
                         </div>
-                        <h3 class="text-lg font-medium text-white">Wifi Access</h3>
+                        <h3 class="text-lg font-medium text-black">Wifi Access</h3>
                         <p class="text-zinc-400 text-sm mt-1">Gedung Konservasi</p>
                     </div>
 
@@ -77,7 +69,7 @@
                         </div>
                         <div class="p-3 rounded-lg bg-black/40 border border-white/5">
                             <p class="text-[10px] text-zinc-500 uppercase">Password</p>
-                            <p class="text-sm font-mono text-white">kebunraya</p>
+                            <p class="text-sm font-mono text-black">kebunraya</p>
                         </div>
                     </div>
                 </div>
@@ -90,7 +82,7 @@
                     <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 mb-4 relative z-10">
                         <x-heroicon-o-lifebuoy class="w-5 h-5" />
                     </div>
-                    <h3 class="text-lg font-medium text-white relative z-10">Help Center</h3>
+                    <h3 class="text-lg font-medium text-black relative z-10">Help Center</h3>
                     
                     <div class="mt-auto space-y-2 relative z-10">
                         <a href="mailto:support@krbs.id" class="block w-full p-3 rounded-lg bg-white/5 hover:bg-amber-500/10 border border-white/5 hover:border-amber-500/30 transition group/link">
@@ -113,7 +105,7 @@
                 <div class="relative h-full w-full bg-[#18181b] rounded-2xl p-6 flex flex-col">
                     <div class="flex items-center gap-3 mb-4">
                         <x-heroicon-o-megaphone class="w-5 h-5 text-red-400" />
-                        <h3 class="text-base font-medium text-white">Announcement</h3>
+                        <h3 class="text-base font-medium text-black">Announcement</h3>
                     </div>
                     
                     <div class="flex-1 overflow-y-auto custom-scroll pr-2 space-y-3">
@@ -135,7 +127,7 @@
                 <div class="relative h-full w-full bg-[#18181b] rounded-2xl p-6 flex flex-col">
                     <div class="flex items-center gap-3 mb-4">
                         <x-heroicon-o-information-circle class="w-5 h-5 text-blue-400" />
-                        <h3 class="text-base font-medium text-white">Information</h3>
+                        <h3 class="text-base font-medium text-black">Information</h3>
                     </div>
                     
                     <div class="flex-1 overflow-y-auto custom-scroll pr-2 space-y-3">
@@ -157,14 +149,14 @@
             <div class="lg:col-span-6 relative overflow-hidden rounded-2xl bg-[#18181b] border border-white/10">
                 <div class="absolute inset-0 bg-gradient-to-br from-zinc-800 via-[#18181b] to-black opacity-50"></div>
                 <div class="absolute right-0 bottom-0 opacity-30 translate-x-10 translate-y-10">
-                     <x-heroicon-o-building-library class="w-64 h-64 text-white" />
+                     <x-heroicon-o-building-library class="w-64 h-64 text-black" />
                 </div>
 
                 <div class="relative z-10 h-full p-8 flex flex-col justify-center">
-                    <span class="inline-block w-fit px-3 py-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-bold uppercase tracking-wider mb-4 shadow-lg shadow-purple-500/20">
+                    <span class="inline-block w-fit px-3 py-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-black text-[10px] font-bold uppercase tracking-wider mb-4 shadow-lg shadow-purple-500/20">
                         Kebun Raya Bogor System
                     </span>
-                    <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mb-4">
+                    <h1 class="text-4xl md:text-5xl font-bold text-black tracking-tight mb-4">
                         Welcome Back, <br>
                         <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Team Member</span>
                     </h1>
@@ -176,7 +168,7 @@
                         <button class="px-6 py-2.5 bg-white text-black rounded-lg text-sm font-bold hover:bg-zinc-200 transition">
                             View Profile
                         </button>
-                        <button class="px-6 py-2.5 bg-white/5 text-white border border-white/10 rounded-lg text-sm font-bold hover:bg-white/10 transition">
+                        <button class="px-6 py-2.5 bg-white/5 text-black border border-white/10 rounded-lg text-sm font-bold hover:bg-white/10 transition">
                             Documentation
                         </button>
                     </div>
