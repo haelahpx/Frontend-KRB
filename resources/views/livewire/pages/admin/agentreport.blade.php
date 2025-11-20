@@ -42,31 +42,44 @@
                     <p class="text-gray-500 text-sm">No agents found.</p>
                 @else
                     @php
-                        // compute max total among top agents to scale bars
-                        $max = $topAgents->map(fn($a) => $allTicketStatsDetailed[$a->user_id]['total'] ?? 0)->max() ?: 1;
+                        $max = $topAgents
+                            ->map(fn($a) => $allTicketStatsDetailed[$a->user_id]['total'] ?? 0)
+                            ->max() ?: 1;
                     @endphp
 
                     <div class="space-y-4">
                         @foreach($topAgents as $agent)
                             @php
                                 $stats = $allTicketStatsDetailed[$agent->user_id] ?? [];
+
                                 $total = $stats['total'] ?? 0;
                                 $open = $stats['Open'] ?? 0;
                                 $resolved = $stats['Resolved'] ?? 0;
                                 $progress = $stats['IN_PROGRESS'] ?? 0;
                                 $closed = $stats['Closed'] ?? 0;
 
-                                // Fallback: if no stats, recalculate from all tickets
-                                if ($total === 0) {
-                                    $agentTickets = $allTickets->where('user_id', $agent->user_id);
-                                    $total = $agentTickets->count();
-                                    $progress = $agentTickets->where('status', 'IN_PROGRESS')->count();
-                                    $open = $agentTickets->where('status', 'OPEN')->count();
-                                    $closed = $agentTickets->where('status', 'CLOSED')->count();
-                                    $resolved = $agentTickets->where('status', 'RESOLVED')->count();
-                                }
+                                // SLA COUNTS
+                                $agentTickets = $allTickets->where('user_id', $agent->user_id);
 
-                                // width relative to max
+                                $slaCounts = [
+                                    'Open' => [
+                                        'ok' => $agentTickets->where('status', 'OPEN')->where('sla_state.state', 'ok')->count(),
+                                        'expired' => $agentTickets->where('status', 'OPEN')->where('sla_state.state', 'expired')->count(),
+                                    ],
+                                    'IN_PROGRESS' => [
+                                        'ok' => $agentTickets->where('status', 'IN_PROGRESS')->where('sla_state.state', 'ok')->count(),
+                                        'expired' => $agentTickets->where('status', 'IN_PROGRESS')->where('sla_state.state', 'expired')->count(),
+                                    ],
+                                    'Resolved' => [
+                                        'ok' => $agentTickets->where('status', 'RESOLVED')->where('sla_state.state', 'ok')->count(),
+                                        'expired' => $agentTickets->where('status', 'RESOLVED')->where('sla_state.state', 'expired')->count(),
+                                    ],
+                                    'Closed' => [
+                                        'ok' => $agentTickets->where('status', 'CLOSED')->where('sla_state.state', 'ok')->count(),
+                                        'expired' => $agentTickets->where('status', 'CLOSED')->where('sla_state.state', 'expired')->count(),
+                                    ],
+                                ];
+
                                 $barWidth = $max > 0 ? ($total / $max) * 100 : 0;
                             @endphp
 
@@ -78,21 +91,89 @@
                                     <span class="text-sm font-semibold">{{ $total }} tickets</span>
                                 </div>
 
-                                {{-- Single bar measuring total tickets --}}
+                                {{-- Total bar --}}
                                 <div class="w-full h-4 bg-gray-200 rounded overflow-hidden">
-                                    <div x-data="{ width: {{ $barWidth }} }" :style="'width: ' + width + '%'"
-                                         class="bg-gradient-to-r from-gray-900 to-black h-4">
+                                    <div x-data="{ width: {{ $barWidth }} }"
+                                        :style="'width: ' + width + '%'"
+                                        class="bg-gradient-to-r from-gray-900 to-black h-4">
                                     </div>
                                 </div>
 
-                                {{-- Status counts below the bar --}}
+                                {{-- Status counts + SLA pills --}}
                                 <div class="flex flex-wrap gap-4 text-xs text-gray-600 mt-2">
-                                    <div>Open: <span class="font-semibold">{{ $open }}</span></div>
-                                    <div>In Progress: <span class="font-semibold">{{ $progress }}</span></div>
-                                    <div>Resolved: <span class="font-semibold">{{ $resolved }}</span></div>
-                                    <div>Closed: <span class="font-semibold">{{ $closed }}</span></div>
-                                </div>
 
+                                    {{-- OPEN --}}
+                                    <div class="p-1 bg-white shadow rounded-lg border border-gray-200 flex items-center gap-1">
+                                        Open: <span class="font-semibold">{{ $open }}</span>
+
+                                        @php
+                                            $ok = $slaCounts['Open']['ok'];
+                                            $exp = $slaCounts['Open']['expired'];
+                                        @endphp
+
+                                        @if ($ok > 0)
+                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
+                                        @endif
+
+                                        @if ($exp > 0)
+                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
+                                        @endif
+                                    </div>
+
+                                    {{-- IN PROGRESS --}}
+                                    <div class="p-1 bg-white shadow rounded-lg border border-gray-200 flex items-center gap-1">
+                                        In Progress: <span class="font-semibold">{{ $progress }}</span>
+
+                                        @php
+                                            $ok = $slaCounts['IN_PROGRESS']['ok'];
+                                            $exp = $slaCounts['IN_PROGRESS']['expired'];
+                                        @endphp
+
+                                        @if ($ok > 0)
+                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
+                                        @endif
+
+                                        @if ($exp > 0)
+                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
+                                        @endif
+                                    </div>
+
+                                    {{-- RESOLVED --}}
+                                    <div class="p-1 bg-white shadow rounded-lg border border-gray-200 flex items-center gap-1">
+                                        Resolved: <span class="font-semibold">{{ $resolved }}</span>
+
+                                        @php
+                                            $ok = $slaCounts['Resolved']['ok'];
+                                            $exp = $slaCounts['Resolved']['expired'];
+                                        @endphp
+
+                                        @if ($ok > 0)
+                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
+                                        @endif
+
+                                        @if ($exp > 0)
+                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
+                                        @endif
+                                    </div>
+
+                                    {{-- CLOSED --}}
+                                    <div class="p-1 bg-white shadow rounded-lg border border-gray-200 flex items-center gap-1">
+                                        Closed: <span class="font-semibold"> {{ $closed }}</span>
+
+                                        @php
+                                            $ok = $slaCounts['Closed']['ok'];
+                                            $exp = $slaCounts['Closed']['expired'];
+                                        @endphp
+
+                                        @if ($ok > 0)
+                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
+                                        @endif
+
+                                        @if ($exp > 0)
+                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -119,11 +200,15 @@
                                 focus:ring-2 focus:ring-gray-900/10 focus:outline-none">
 
                     {{-- Download Button --}}
-                    <button wire:click="downloadReport"
-                            class="px-3 py-2 rounded-lg bg-gradient-to-r from-gray-900 to-black text-white text-sm shadow cursor-pointer">
+                    <button
+                        wire:click="downloadReport"
+                        wire:loading.attr="disabled"
+                        wire:target="downloadReport"
+                        class="px-3 py-2 rounded-lg bg-gradient-to-r from-gray-900 to-black text-white text-sm shadow cursor-pointer
+                            disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:text-gray-200"
+                    >
                         Download Report
                     </button>
-
                 </div>
             </div>
 

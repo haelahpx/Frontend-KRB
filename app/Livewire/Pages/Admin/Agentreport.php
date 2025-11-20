@@ -104,7 +104,11 @@ class Agentreport extends Component
         // ALL TICKET DATA
         $allTickets = Ticket::whereIn('user_id', $allAgentIds)
             ->with(['company', 'department', 'requesterDepartment'])
-            ->get();
+            ->get()
+            ->map(function ($ticket) {
+                $ticket->sla_state = $this->calculateSLAStatus($ticket);
+                return $ticket;
+            });
 
         // FULL STATS
         $allTicketStatsDetailed = $allTickets->groupBy('user_id')->map(function ($t) {
