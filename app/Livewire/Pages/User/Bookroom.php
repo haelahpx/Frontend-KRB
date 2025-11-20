@@ -21,6 +21,7 @@ class Bookroom extends Component
     public ?Carbon $selectedDate = null;
     public ?Carbon $currentWeek = null;
 
+    // Form Properties
     public string $meeting_title = '';
     public $room_id = '';
     public string $date = '';
@@ -29,9 +30,10 @@ class Bookroom extends Component
     public string $end_time = '';
     public array $requirements = [];
     public string $special_notes = '';
-
-    // NEW: satu checkbox → true = simpan 'request', false = null
     public bool $informInfo = false;
+
+    // Modal State
+    public bool $showQuickModal = false;
 
     public array $rooms = [];
     public array $bookings = [];
@@ -47,7 +49,6 @@ class Bookroom extends Component
     public int $roomPage = 1;
 
     public array $requirementsMaster = [];
-
     public bool $confirmCapacityOverride = false;
 
     public function mount(): void
@@ -80,14 +81,18 @@ class Bookroom extends Component
 
     protected function updateMinStart(): void
     {
+        if ($this->view !== 'form') {
+            return;
+        }
+
         $now = Carbon::now($this->tz);
         if ($this->date === $now->toDateString()) {
             $this->minStart = $now->format('H:i');
-            if ($this->start_time < $this->minStart) {
+            // Only auto-bump time if we are NOT in the modal (to prevent modal jumping)
+            if (!$this->showQuickModal && $this->start_time < $this->minStart) {
                 $bumped = $this->roundUpToSlot($now->copy()->addMinutes($this->leadMinutes));
                 $this->start_time = $bumped->format('H:i');
                 $this->end_time = $bumped->copy()->addMinutes($this->slotMinutes)->format('H:i');
-                $this->dispatch('toast', type: 'info', title: 'Info', message: "Start time diupdate ke {$this->start_time} karena waktu sebelumnya sudah terlewat.", duration: 4000);
             }
         } else {
             $this->minStart = '00:00';
@@ -97,8 +102,12 @@ class Bookroom extends Component
     public function switchView(string $view): void
     {
         $this->view = in_array($view, ['form', 'calendar'], true) ? $view : 'form';
+        if ($this->view === 'form') {
+            $this->updateMinStart();
+        }
     }
 
+    // --- Calendar Navigation ---
     public function previousWeek(): void
     {
         $this->selectedDate = Carbon::parse($this->date, $this->tz)->subWeek();
@@ -133,6 +142,59 @@ class Bookroom extends Component
         $this->currentWeek = $this->selectedDate->copy()->startOfWeek();
         $this->buildWeekDays();
         $this->updateMinStart();
+    }
+
+    public function previousDay(): void
+    {
+        $this->selectedDate = Carbon::parse($this->date, $this->tz)->subDay();
+        $this->date = $this->selectedDate->toDateString();
+        $this->updateMinStart();
+        $this->recalculateAvailability();
+    }
+
+    public function nextDay(): void
+    {
+        $this->selectedDate = Carbon::parse($this->date, $this->tz)->addDay();
+        $this->date = $this->selectedDate->toDateString();
+        $this->updateMinStart();
+        $this->recalculateAvailability();
+    }
+
+    // --- Interaction: Open Modal from Calendar ---
+    public function selectCalendarSlot(int $roomId, string $date, string $startTime): void
+    {
+        // 1. Security: Check if past
+        $slotTime = Carbon::parse("$date $startTime", $this->tz);
+        if ($slotTime->lt(Carbon::now($this->tz)->addMinutes($this->leadMinutes))) {
+            $this->dispatch('toast', type: 'error', title: 'Unavailable', message: 'Cannot book a time slot in the past.', duration: 3000);
+            return;
+        }
+
+        // 2. Pre-fill Form Data
+        $this->room_id = $roomId;
+        $this->date = $date;
+        $this->start_time = $startTime;
+        
+        // Auto-calculate end time (Start + 30 mins)
+        $this->end_time = Carbon::createFromFormat('H:i', $startTime)
+            ->addMinutes($this->slotMinutes)
+            ->format('H:i');
+
+        // 3. Clear specific fields for new booking
+        $this->meeting_title = '';
+        $this->number_of_attendees = '';
+        $this->requirements = [];
+        $this->special_notes = '';
+        $this->informInfo = false;
+        $this->confirmCapacityOverride = false;
+
+        // 4. Open Modal
+        $this->showQuickModal = true;
+    }
+
+    public function closeQuickModal(): void 
+    {
+        $this->showQuickModal = false;
     }
 
     public function selectDate(string $date): void
@@ -274,16 +336,15 @@ class Bookroom extends Component
                     ->whereIn('name', $this->requirements)
                     ->pluck('requirement_id')
                     ->toArray();
-
-                // relasi pivot optional, sesuaikan dengan modelmu
-                // $booking->requirements()->sync($ids);
+                // Attach requirement logic here if using pivot table, otherwise just loop/save
             }
         });
 
         $this->loadRecentBookings();
-        $this->resetForm(true);
         $this->recalculateAvailability();
         $this->confirmCapacityOverride = false;
+        $this->showQuickModal = false; // Close modal
+        $this->resetForm(true);
 
         $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'Booking tersimpan (pending approval).', duration: 4000);
     }
@@ -403,8 +464,8 @@ class Bookroom extends Component
         return $b ? [
             'id' => (int) $b->bookingroom_id,
             'meeting_title' => (string) $b->meeting_title,
-            'start_time' => (string) $b->start_time,
-            'end_time' => (string) $b->end_time,
+            'start_time' => Carbon::parse($b->start_time)->format('H:i'),
+            'end_time' => Carbon::parse($b->end_time)->format('H:i'),
             'status' => (string) ($b->status ?? 'pending'),
         ] : null;
     }

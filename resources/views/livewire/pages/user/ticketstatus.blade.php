@@ -1,29 +1,29 @@
-{{-- resources/views/livewire/pages/user/ticketstatus.blade.php --}}
-<div class="max-w-6xl mx-auto">
-    <div class="bg-white rounded-lg shadow-sm border-2 border-black p-6 mb-8">
-        <div class="flex items-center justify-start gap-3">
-            <h1 class="text-3xl font-bold text-gray-900">Support Ticket System</h1>
+<div class="max-w-7xl mx-auto">
+    {{-- Header --}}
+    <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Support Ticket System</h1>
 
             @php
-            $isCreate = request()->routeIs('create-ticket') || request()->is('create-ticket');
-            $isStatus = request()->routeIs('ticketstatus') || request()->is('ticketstatus');
+                $isCreate = request()->routeIs('create-ticket') || request()->is('create-ticket');
+                $isStatus = request()->routeIs('ticketstatus') || request()->is('ticketstatus');
             @endphp
 
-            {{-- Tabs --}}
-            <div class="ml-auto inline-flex rounded-md overflow-hidden bg-gray-100 border border-gray-200">
+            {{-- Navigation Tabs --}}
+            <div class="inline-flex rounded-lg overflow-hidden bg-gray-100 border border-gray-200 self-start md:self-center">
                 <a href="{{ route('create-ticket') }}"
                    @class([
-                       'px-4 py-2 text-sm font-medium transition-colors inline-flex items-center',
+                       'px-3 md:px-4 py-2 text-sm font-medium transition-colors inline-flex items-center border-r border-gray-200',
                        'bg-gray-900 text-white' => $isCreate,
-                       'text-gray-700 hover:text-gray-900' => !$isCreate,
+                       'text-gray-700 hover:text-gray-900 hover:bg-gray-50' => !$isCreate,
                    ])>
                     Create Ticket
                 </a>
                 <a href="{{ route('ticketstatus') }}"
                    @class([
-                       'px-4 py-2 text-sm font-medium transition-colors border-l border-gray-200 inline-flex items-center',
+                       'px-3 md:px-4 py-2 text-sm font-medium transition-colors inline-flex items-center',
                        'bg-gray-900 text-white' => $isStatus,
-                       'text-gray-700 hover:text-gray-900' => !$isStatus,
+                       'text-gray-700 hover:text-gray-900 hover:bg-gray-50' => !$isStatus,
                    ])>
                     Ticket Status
                 </a>
@@ -31,10 +31,12 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-xl border-2 border-black/80 shadow-md p-4">
-        <div class="flex flex-col md:flex-row md:items-center gap-6 pb-4 mb-4 border-b border-gray-200">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:w-auto">
-                <select wire:model.live="statusFilter" class="px-3 py-2 border border-gray-300 rounded-md text-gray-900 w-full">
+    {{-- Main Content --}}
+    <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
+        {{-- Filters --}}
+        <div class="flex flex-col md:flex-row md:items-center gap-4 pb-4 mb-4 border-b border-gray-100">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 w-full">
+                <select wire:model.live="statusFilter" class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                     <option value="">All Status</option>
                     <option value="open">Open</option>
                     <option value="in_progress">In Progress</option>
@@ -42,21 +44,21 @@
                     <option value="closed">Closed</option>
                 </select>
 
-                <select wire:model.live="priorityFilter" class="px-3 py-2 border border-gray-300 rounded-md text-gray-900 w-full">
+                <select wire:model.live="priorityFilter" class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                     <option value="">All Priority</option>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                 </select>
 
-                <select wire:model.live="departmentFilter" class="px-3 py-2 border border-gray-300 rounded-md text-gray-900 w-full">
+                <select wire:model.live="departmentFilter" class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                     <option value="">All Departments</option>
                     @foreach ($departments as $dept)
                         <option value="{{ $dept->department_id }}">{{ $dept->department_name }}</option>
                     @endforeach
                 </select>
 
-                <select wire:model.live="sortFilter" class="px-3 py-2 border border-gray-300 rounded-md text-gray-900 w-full">
+                <select wire:model.live="sortFilter" class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                     <option value="recent">Recent first</option>
                     <option value="oldest">Oldest first</option>
                     <option value="due">Nearest due</option>
@@ -65,7 +67,7 @@
         </div>
 
         {{-- Cards --}}
-        <div class="space-y-5">
+        <div class="space-y-4">
             @forelse ($tickets as $t)
                 @php
                     $priority = strtolower($t->priority ?? '');
@@ -80,21 +82,20 @@
                     $agents = collect($t->assignments ?? [])->pluck('user.full_name')->filter()->unique()->values();
                 @endphp
 
-                <div class="relative bg-white rounded-xl border-2 border-black/80 shadow-md p-6 hover:shadow-lg hover:-translate-y-0.5 transition">
-                    {{-- IMPORTANT: kirim model / ulid, bukan integer ID --}}
+                <div class="group relative bg-white rounded-xl border-2 border-black p-5 hover:shadow-md transition-shadow duration-200">
+                    {{-- Full Clickable Area --}}
                     <a href="{{ route('user.ticket.show', $t) }}"
-                       class="absolute inset-0 z-20"
+                       class="absolute inset-0 z-20 focus:outline-none focus:ring-2 focus:ring-gray-900 rounded-xl"
                        aria-label="Open ticket #{{ $t->ticket_id }}"></a>
 
-                    <div class="flex items-start justify-between gap-4 mb-3 relative z-0 pointer-events-none">
+                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-3 relative z-0 pointer-events-none">
                         <div class="flex-1 min-w-0">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2 truncate">{{ $t->subject }}</h3>
+                            <h3 class="text-lg font-bold text-gray-900 mb-2 truncate">{{ $t->subject }}</h3>
 
                             <div class="flex flex-wrap items-center gap-2 text-xs">
-                                <span class="font-mono font-medium text-gray-800 inline-flex items-center gap-1">
-                                    <x-heroicon-o-hashtag class="w-3.5 h-3.5" /> {{ $t->ticket_id }}
+                                <span class="font-mono font-medium text-gray-800 inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+                                    <x-heroicon-o-hashtag class="w-3 h-3" /> {{ $t->ticket_id }}
                                 </span>
-                                <span class="text-gray-300">•</span>
 
                                 @php
                                     $isHigh   = $priority === 'high';
@@ -102,122 +103,116 @@
                                     $isLow    = $priority === 'low' || $priority === '';
                                 @endphp
                                 <span @class([
-                                    'inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium',
-                                    'bg-orange-50 text-orange-700 border-2 border-orange-400' => $isHigh,
-                                    'bg-yellow-50 text-yellow-700 border-2 border-yellow-400' => $isMedium,
-                                    'bg-gray-50 text-gray-700 border-2 border-gray-400' => $isLow,
+                                    'inline-flex items-center gap-1 px-2 py-1 rounded-md font-medium border',
+                                    'bg-orange-50 text-orange-800 border-orange-200' => $isHigh,
+                                    'bg-yellow-50 text-yellow-800 border-yellow-200' => $isMedium,
+                                    'bg-gray-50 text-gray-700 border-gray-200' => $isLow,
                                 ])>
-                                    <x-heroicon-o-bolt class="w-3.5 h-3.5" />
+                                    <x-heroicon-o-bolt class="w-3 h-3" />
                                     {{ $priority ? ucfirst($priority) : 'Low' }}
                                 </span>
 
                                 @if ($t->department)
-                                    <span class="text-gray-300">•</span>
-                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border-2 border-gray-400 bg-gray-50 text-gray-700">
-                                        <x-heroicon-o-building-office-2 class="w-3.5 h-3.5" />
-                                        <span class="font-medium">{{ $t->department->department_name }}</span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-gray-200 bg-gray-50 text-gray-700 font-medium">
+                                        <x-heroicon-o-building-office-2 class="w-3 h-3" />
+                                        <span>{{ $t->department->department_name }}</span>
                                     </span>
                                 @endif
 
-                                <span class="text-gray-300">•</span>
-                                <span class="inline-flex items-center gap-2 px-2 py-1 rounded-lg border-2 border-gray-400 bg-gray-50 text-gray-700">
-                                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border border-gray-400 text-[10px] leading-none">
+                                <span class="hidden md:inline text-gray-300">•</span>
+
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-gray-200 bg-gray-50 text-gray-700">
+                                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-[10px] font-bold text-gray-600">
                                         {{ $initial }}
                                     </span>
-                                    <x-heroicon-o-user class="w-3.5 h-3.5" />
                                     <span class="font-medium">{{ $userName }}</span>
                                 </span>
 
-                                <span class="text-gray-300">•</span>
-                                <span @class([
-                                    'inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium',
-                                    'border-2',
-                                    $hasAgent ? 'bg-emerald-50 text-emerald-700 border-emerald-400' : 'bg-red-50 text-red-700 border-red-400'
-                                ])>
-                                    <x-heroicon-o-user-circle class="w-3.5 h-3.5" />
-                                    {{ $hasAgent ? 'Agent assigned' : 'No agent yet' }}
-                                </span>
-
-                                @if($agents->isNotEmpty())
-                                    <span class="text-gray-300">•</span>
-                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border-2 border-blue-400 bg-blue-50 text-blue-700">
-                                        <x-heroicon-o-users class="w-3.5 h-3.5" />
-                                        <span class="font-medium truncate max-w-[220px]">
-                                            {{ $agents->join(', ') }}
-                                        </span>
+                                @if($hasAgent)
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-800 font-medium">
+                                        <x-heroicon-o-user-circle class="w-3 h-3" />
+                                        <span>Agent Assigned</span>
                                     </span>
                                 @endif
                             </div>
                         </div>
 
                         <span @class([
-                            'inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium',
-                            'bg-yellow-50 text-yellow-700 border-2 border-yellow-500' => $isOpen,
-                            'bg-blue-50 text-blue-700 border-2 border-blue-500'   => $isAssignedOrProgress,
-                            'bg-green-50 text-green-700 border-2 border-green-500'=> $isResolvedOrClosed,
-                            'bg-gray-50 text-gray-700 border-2 border-gray-500'   => (!$isOpen && !$isAssignedOrProgress && !$isResolvedOrClosed),
+                            'shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border',
+                            'bg-yellow-100 text-yellow-800 border-yellow-200' => $isOpen,
+                            'bg-blue-100 text-blue-800 border-blue-200'   => $isAssignedOrProgress,
+                            'bg-green-100 text-green-800 border-green-200'=> $isResolvedOrClosed,
+                            'bg-gray-100 text-gray-800 border-gray-200'   => (!$isOpen && !$isAssignedOrProgress && !$isResolvedOrClosed),
                         ])>
-                            <x-heroicon-o-check-badge class="w-4 h-4" />
                             {{ $statusLabel }}
                         </span>
                     </div>
 
-                    <p class="text-sm text-gray-600 leading-relaxed relative z-0 pointer-events-none">
+                    <p class="text-sm text-gray-600 leading-relaxed relative z-0 pointer-events-none line-clamp-2 mb-4">
                         {{ $t->description }}
                     </p>
 
-                    <div class="mt-3 text-[11px] text-gray-500 relative z-0 pointer-events-none inline-flex items-center gap-2">
-                        <x-heroicon-o-clock class="w-3.5 h-3.5" />
-                        <span>Created: {{ optional($t->created_at)->format('Y-m-d H:i') }}</span>
-                        <span class="mx-2">•</span>
-                        <x-heroicon-o-arrow-path class="w-3.5 h-3.5" />
-                        <span>Updated: {{ optional($t->updated_at)->format('Y-m-d H:i') }}</span>
-                    </div>
-
-                    @if (in_array($statusUp, ['OPEN','ASSIGNED','IN_PROGRESS','RESOLVED','CLOSED'], true))
-                        <div class="mt-4 flex flex-col sm:flex-row sm:items-center justify-end gap-2 relative z-30 pointer-events-auto">
-                            @if (in_array($statusUp, ['OPEN','ASSIGNED','IN_PROGRESS'], true))
-                                <button
-                                    @disabled(!$hasAgent)
-                                    @class([
-                                        'inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2',
-                                        $hasAgent
-                                            ? 'text-white bg-black hover:bg-gray-800 focus:ring-gray-500'
-                                            : 'text-gray-400 bg-gray-200 cursor-not-allowed'
-                                    ])
-                                    @if($hasAgent)
-                                        wire:click.stop="markComplete({{ (int) $t->ticket_id }})"
-                                    @endif
-                                    wire:loading.attr="disabled"
-                                    wire:target="markComplete"
-                                    type="button"
-                                    title="{{ $hasAgent ? 'Mark this ticket as Resolved' : 'Cannot resolve: no agent assigned' }}">
-                                    <x-heroicon-o-check-circle class="w-4 h-4" />
-                                    Mark as Resolved
-                                </button>
-                            @elseif ($statusUp === 'RESOLVED')
-                                <button
-                                    wire:click.stop="markComplete({{ (int) $t->ticket_id }})"
-                                    wire:loading.attr="disabled"
-                                    wire:target="markComplete"
-                                    type="button"
-                                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
-                                    title="Close this ticket">
-                                    <x-heroicon-o-lock-closed class="w-4 h-4" />
-                                    Close Ticket
-                                </button>
-                            @elseif ($statusUp === 'CLOSED')
-                                <span class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-200 rounded-lg">
-                                    <x-heroicon-o-lock-closed class="w-4 h-4" />
-                                    Closed
-                                </span>
-                            @endif
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-4 border-t border-gray-100">
+                        <div class="text-[11px] text-gray-500 relative z-0 pointer-events-none flex flex-col gap-1">
+                            <div class="flex items-center gap-1">
+                                <x-heroicon-o-clock class="w-3 h-3" />
+                                <span>Created {{ optional($t->created_at)->format('d M Y, H:i') }}</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <x-heroicon-o-arrow-path class="w-3 h-3" />
+                                <span>Updated {{ optional($t->updated_at)->diffForHumans() }}</span>
+                            </div>
                         </div>
-                    @endif
+
+                        @if (in_array($statusUp, ['OPEN','ASSIGNED','IN_PROGRESS','RESOLVED','CLOSED'], true))
+                            <div class="relative z-30 pointer-events-auto">
+                                @if (in_array($statusUp, ['OPEN','ASSIGNED','IN_PROGRESS'], true))
+                                    <button
+                                        @disabled(!$hasAgent)
+                                        @class([
+                                            'inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors',
+                                            $hasAgent
+                                                ? 'bg-gray-900 text-white hover:bg-gray-800'
+                                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        ])
+                                        @if($hasAgent)
+                                            wire:click.stop="markComplete({{ (int) $t->ticket_id }})"
+                                        @endif
+                                        wire:loading.attr="disabled"
+                                        wire:target="markComplete"
+                                        type="button"
+                                        title="{{ $hasAgent ? 'Mark this ticket as Resolved' : 'Cannot resolve: no agent assigned' }}">
+                                        <x-heroicon-o-check-circle class="w-4 h-4" />
+                                        Mark as Resolved
+                                    </button>
+                                @elseif ($statusUp === 'RESOLVED')
+                                    <button
+                                        wire:click.stop="markComplete({{ (int) $t->ticket_id }})"
+                                        wire:loading.attr="disabled"
+                                        wire:target="markComplete"
+                                        type="button"
+                                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors"
+                                        title="Close this ticket">
+                                        <x-heroicon-o-lock-closed class="w-4 h-4" />
+                                        Close Ticket
+                                    </button>
+                                @elseif ($statusUp === 'CLOSED')
+                                    <span class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 border border-gray-200 rounded-lg uppercase tracking-wide">
+                                        <x-heroicon-o-lock-closed class="w-3 h-3" />
+                                        Closed
+                                    </span>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
                 </div>
             @empty
-                <div class="rounded-lg border-2 border-dashed border-gray-300 p-10 text-center text-gray-600">
-                    No tickets found. Try adjusting filters above.
+                <div class="rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No tickets found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Try adjusting the filters above.</p>
                 </div>
             @endforelse
         </div>

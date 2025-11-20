@@ -48,7 +48,7 @@ class AttachmentController extends Controller
             $path = $file->storeAs($tmpFolder, $filename, 'public');
 
             // Generate URL publik dari disk 'public'
-            $url = Storage::disk('public')->url($path);
+            $url = Storage::url($path);
             Log::info("File berhasil disimpan, URL: {$url}");
 
             return response()->json([
@@ -139,7 +139,7 @@ class AttachmentController extends Controller
                 Storage::disk('public')->move($srcPath, $destPath);
                 Log::info("File dipindahkan: {$srcPath} -> {$destPath}");
                 
-                $finalUrl = Storage::disk('public')->url($destPath);
+                $finalUrl = Storage::url($destPath);
 
                 // Insert ke database
                 DB::table('ticket_attachments')->insert([

@@ -12,228 +12,192 @@
     x-on:password-updated.window="
         passwordSuccess = true;
         setTimeout(() => passwordSuccess = false, 3000);
-    ">
-    <style>
-        .krbs-card {
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, .1)
-        }
-        .krbs-button {
-            background: #1f2937;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            border: none;
-            cursor: pointer;
-            transition: background-color .2s
-        }
-        .krbs-button:hover { background: #374151 }
-        .krbs-button-outline {
-            background: #fff;
-            color: #374151;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            border: 1px solid #d1d5db;
-            cursor: pointer;
-            transition: all .2s
-        }
-        .krbs-button-outline:hover {
-            background: #f9fafb;
-            border-color: #9ca3af
-        }
-        .krbs-input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #fff;
-            transition: border-color .2s
-        }
-        .krbs-input:focus {
-            outline: none;
-            border-color: #1f2937;
-            box-shadow: 0 0 0 1px #1f2937
-        }
-        .success-message {
-            background: #d1fae5;
-            color: #065f46;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 16px
-        }
-        .error-message {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 16px
-        }
-    </style>
+    "
+    class="max-w-7xl mx-auto"
+>
+    {{-- Header --}}
+    <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">User Profile</h1>
+            
+            <a href="{{ route('home') }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Back to Home
+            </a>
+        </div>
+    </div>
 
-    <div class="min-h-screen py-8 px-4 bg-gray-50">
-        <div class="max-w-6xl mx-auto">
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">User Profile</h1>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Profile Info -->
-                <div class="lg:col-span-2">
-                    <div class="krbs-card p-6">
-                        <div class="flex items-center mb-8 p-6 bg-gray-50 rounded-lg">
-                            <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center text-white text-2xl font-bold mr-6"
-                                x-text="initials().toUpperCase()"></div>
-                            <div>
-                                <h2 class="text-2xl font-bold text-gray-900" x-text="profile.fullName"></h2>
-                                <p class="text-gray-600" x-text="profile.email"></p>
-                                <div class="flex items-center mt-1">
-                                    <svg class="w-4 h-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <circle cx="10" cy="10" r="3"></circle>
-                                    </svg>
-                                    <span class="text-sm text-green-600 font-medium">Online</span>
-                                </div>
-                            </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
+                {{-- User Header Card --}}
+                <div class="flex items-center gap-6 p-6 bg-gray-50 rounded-xl border border-gray-200 mb-6">
+                    <div class="shrink-0">
+                        <div class="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center text-white text-2xl font-bold ring-4 ring-white shadow-sm"
+                             x-text="initials().toUpperCase()">
                         </div>
-
-                        <div class="mb-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-1">Profile Information</h3>
-                            <p class="text-gray-600 text-sm">Your account information and details.</p>
-                        </div>
-
-                        <div class="space-y-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                                    <div class="krbs-input bg-gray-50 text-gray-700" x-text="profile.fullName"></div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                                    <div class="krbs-input bg-gray-50 text-gray-700" x-text="profile.email"></div>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                                    <div class="krbs-input bg-gray-50 text-gray-700" x-text="profile.phone_number || 'Not provided'"></div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
-                                    <div class="krbs-input bg-gray-50 text-gray-700" x-text="profile.employeeId || '-'"></div>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                                    <div class="krbs-input bg-gray-50 text-gray-700" x-text="profile.department"></div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Branch</label>
-                                    <div class="krbs-input bg-gray-50 text-gray-700" x-text="profile.company"></div>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                                    <div class="krbs-input bg-gray-50 text-gray-700" x-text="profile.role || '-'"></div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Join Date</label>
-                                    <div class="krbs-input bg-gray-50 text-gray-700" x-text="profile.joinDate || '-'"></div>
-                                </div>
-                            </div>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900" x-text="profile.fullName"></h2>
+                        <p class="text-gray-600 font-medium" x-text="profile.email"></p>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="relative flex h-3 w-3">
+                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                            </span>
+                            <span class="text-xs font-bold text-green-700 uppercase tracking-wide">Active Now</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Change Password -->
-                <div class="lg:col-span-1 space-y-6">
-                    <div class="krbs-card p-6">
-                        <div class="mb-6">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-1">Change Password</h2>
-                            <p class="text-gray-600 text-sm">Ensure your account is using a long, random password to stay secure.</p>
+                <div class="mb-6 border-b border-gray-100 pb-4">
+                    <h3 class="text-lg font-bold text-gray-900">Personal Information</h3>
+                    <p class="text-sm text-gray-500">Manage your personal information, including phone numbers and email address.</p>
+                </div>
+
+                <div class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Full Name</label>
+                            <div class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg" x-text="profile.fullName"></div>
                         </div>
-
-                        <div x-show="passwordSuccess" x-transition class="success-message" style="display:none;">
-                            Password changed successfully!
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Email Address</label>
+                            <div class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg" x-text="profile.email"></div>
                         </div>
-
-                        @error('current_password') <div class="error-message">{{ $message }}</div> @enderror
-                        @error('new_password') <div class="error-message">{{ $message }}</div> @enderror
-
-                        <form wire:submit.prevent="updatePassword">
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
-                                    <input type="password" class="krbs-input" wire:model.defer="current_password" autocomplete="current-password" required>
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                                    <input type="password" class="krbs-input" wire:model.defer="new_password" autocomplete="new-password" required>
-                                    <p class="text-xs text-gray-500 mt-1">Min. 8 characters and must differ from current password.</p>
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-                                    <input type="password" class="krbs-input" wire:model.defer="new_password_confirmation" autocomplete="new-password" required>
-                                </div>
-
-                                <div class="pt-2">
-                                    <button type="submit" class="krbs-button w-full" wire:loading.attr="disabled">
-                                        <span wire:loading.remove>Change Password</span>
-                                        <span wire:loading>Changing...</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
                     </div>
 
-                    <!-- Account Summary -->
-                    <div class="krbs-card p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Account Summary</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                                <span class="text-sm text-gray-600">Open Tickets</span>
-                                <span class="text-sm font-medium text-yellow-600" x-text="stats.openTickets"></span>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Phone Number</label>
+                            <div class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg" x-text="profile.phone_number || 'Not provided'"></div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Employee ID</label>
+                            <div class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg" x-text="profile.employeeId || '-'"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Department</label>
+                            <div class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-2">
+                                <x-heroicon-o-building-office-2 class="w-4 h-4 text-gray-400"/>
+                                <span x-text="profile.department"></span>
                             </div>
-                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                                <span class="text-sm text-gray-600">Active Bookings</span>
-                                <span class="text-sm font-medium text-blue-600" x-text="stats.activeBookings"></span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Branch</label>
+                            <div class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-2">
+                                <x-heroicon-o-map-pin class="w-4 h-4 text-gray-400"/>
+                                <span x-text="profile.company"></span>
                             </div>
-                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                                <span class="text-sm text-gray-600">Packages</span>
-                                <span class="text-sm font-medium text-green-600" x-text="stats.packages"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Role</label>
+                            <div class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-2">
+                                <x-heroicon-o-shield-check class="w-4 h-4 text-gray-400"/>
+                                <span x-text="profile.role || '-'"></span>
                             </div>
-                            <div class="flex justify-between items-center py-2">
-                                <span class="text-sm text-gray-600">Member Since</span>
-                                <span class="text-sm font-medium text-gray-900" x-text="stats.memberSince"></span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Join Date</label>
+                            <div class="w-full px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-2">
+                                <x-heroicon-o-calendar class="w-4 h-4 text-gray-400"/>
+                                <span x-text="profile.joinDate || '-'"></span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Back to Home -->
-            <div class="mt-8">
-                <a href="{{ route('home') }}" class="krbs-button-outline inline-flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                    </svg>
-                    Back to Home
-                </a>
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
+                <div class="mb-4 border-b border-gray-100 pb-4">
+                    <h2 class="text-lg font-bold text-gray-900">Change Password</h2>
+                    <p class="text-xs text-gray-500 mt-1">Use a secure password to protect your account.</p>
+                </div>
+
+                <div x-show="passwordSuccess" x-transition 
+                     class="mb-4 p-3 bg-emerald-50 text-emerald-700 text-sm rounded-lg border border-emerald-200 flex items-center gap-2" 
+                     style="display:none;">
+                    <x-heroicon-o-check-circle class="w-5 h-5"/>
+                    Password updated successfully!
+                </div>
+
+                @error('current_password') 
+                    <div class="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200 flex items-center gap-2">
+                        <x-heroicon-o-exclamation-circle class="w-5 h-5"/> {{ $message }}
+                    </div> 
+                @enderror
+                @error('new_password') 
+                    <div class="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200 flex items-center gap-2">
+                        <x-heroicon-o-exclamation-circle class="w-5 h-5"/> {{ $message }}
+                    </div> 
+                @enderror
+
+                <form wire:submit.prevent="updatePassword" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-900 mb-1.5">Current Password</label>
+                        <input type="password" wire:model.defer="current_password" autocomplete="current-password" required
+                            class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-900 mb-1.5">New Password</label>
+                        <input type="password" wire:model.defer="new_password" autocomplete="new-password" required
+                            class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                        <p class="text-[10px] text-gray-500 mt-1">Min. 8 chars, different from current.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-900 mb-1.5">Confirm New Password</label>
+                        <input type="password" wire:model.defer="new_password_confirmation" autocomplete="new-password" required
+                            class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+
+                    <button type="submit" class="w-full px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors flex justify-center items-center gap-2" wire:loading.attr="disabled">
+                        <span wire:loading.remove>Change Password</span>
+                        <span wire:loading>Processing...</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <x-heroicon-o-chart-bar class="w-5 h-5"/>
+                    Account Summary
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center py-2 border-b border-dashed border-gray-200">
+                        <span class="text-sm text-gray-600 flex items-center gap-2">
+                            <x-heroicon-o-ticket class="w-4 h-4"/> Open Tickets
+                        </span>
+                        <span class="text-sm font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded" x-text="stats.openTickets"></span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-dashed border-gray-200">
+                        <span class="text-sm text-gray-600 flex items-center gap-2">
+                            <x-heroicon-o-calendar-days class="w-4 h-4"/> Active Bookings
+                        </span>
+                        <span class="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded" x-text="stats.activeBookings"></span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-dashed border-gray-200">
+                        <span class="text-sm text-gray-600 flex items-center gap-2">
+                            <x-heroicon-o-cube class="w-4 h-4"/> Packages
+                        </span>
+                        <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded" x-text="stats.packages"></span>
+                    </div>
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-sm text-gray-600 flex items-center gap-2">
+                            <x-heroicon-o-clock class="w-4 h-4"/> Member Since
+                        </span>
+                        <span class="text-xs font-bold text-gray-900 uppercase tracking-wide" x-text="stats.memberSince"></span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

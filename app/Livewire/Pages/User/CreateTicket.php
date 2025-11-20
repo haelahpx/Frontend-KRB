@@ -145,4 +145,4 @@ class CreateTicket extends Component
     {
         return view('livewire.pages.user.createticket');
     }
-}
+} 

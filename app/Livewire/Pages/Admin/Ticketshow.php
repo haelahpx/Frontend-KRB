@@ -55,8 +55,8 @@ class Ticketshow extends Component
     ];
 
     /** ------------------------------
-     *  Helpers
-     *  ------------------------------*/
+     * Helpers
+     * ------------------------------*/
     protected function currentAdmin()
     {
         $user = Auth::user();
@@ -106,8 +106,8 @@ class Ticketshow extends Component
     }
 
     /** ------------------------------
-     *  Lifecycle
-     *  ------------------------------*/
+     * Lifecycle
+     * ------------------------------*/
     public function mount(TicketModel $ticket)
     {
         if (!$this->ensureAdmin()) {
@@ -142,8 +142,8 @@ class Ticketshow extends Component
     }
 
     /** ------------------------------
-     *  Actions
-     *  ------------------------------*/
+     * Actions
+     * ------------------------------*/
     public function save()
     {
         if (!$this->ensureAdmin()) {
@@ -292,8 +292,8 @@ class Ticketshow extends Component
     }
 
     /** ------------------------------
-     *  Render
-     *  ------------------------------*/
+     * Render
+     * ------------------------------*/
     public function render()
     {
         $agents = $this->allowedAgentsQuery()->orderBy('full_name')->get(['user_id', 'full_name']);

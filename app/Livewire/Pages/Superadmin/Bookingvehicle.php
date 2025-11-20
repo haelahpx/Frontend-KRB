@@ -24,13 +24,13 @@ class Bookingvehicle extends Component
 
     public string $q = '';
     public ?int $vehicleFilter = null;
-    public string $statusTab = 'done';      // done|rejected
+    public string $statusTab = 'done';
     public bool $includeDeleted = false;
     public ?string $selectedDate = null;
-    public string $sortFilter = 'recent';   // recent|oldest|nearest
+    public string $sortFilter = 'recent';
     public int $perPage = 5;
 
-    public array $photosByBooking = []; // [bookingId => ['before'=>collect(), 'after'=>collect()]]
+    public array $photosByBooking = [];
 
     protected $queryString = [
         'q'              => ['except' => ''],
@@ -79,6 +79,43 @@ class Bookingvehicle extends Component
     }
     private function refreshPhotosForCurrentPage(): void { $this->q = $this->q; }
 
+    public function editBooking(int $bookingId): void
+    {
+        $this->dispatch('toast', type:'info', title:'Edit Action', message:"Ready to edit Booking #{$bookingId}.", duration:3000);
+    }
+    
+    public function deleteBooking(int $bookingId): void
+    {
+        VehicleBooking::findOrFail($bookingId)->delete();
+        $this->dispatch('toast', type:'success', title:'Deleted', message:"Booking #{$bookingId} soft-deleted.", duration:2500);
+        $this->resetPage();
+    }
+
+    public function restoreBooking(int $bookingId): void
+    {
+        VehicleBooking::withTrashed()->findOrFail($bookingId)->restore();
+        $this->dispatch('toast', type:'success', title:'Restored', message:"Booking #{$bookingId} restored.", duration:2500);
+        $this->resetPage();
+    }
+
+    public function forceDeleteBooking(int $bookingId): void
+    {
+        $booking = VehicleBooking::withTrashed()->findOrFail($bookingId);
+        
+        $photos = VehicleBookingPhoto::withTrashed()->where('vehiclebooking_id', $bookingId)->get();
+        foreach ($photos as $photo) {
+            if ($photo->photo_path && !preg_match('#^https?://#', $photo->photo_path)) {
+                Storage::disk('public')->delete($photo->photo_path);
+            }
+            $photo->forceDelete();
+        }
+        
+        $booking->forceDelete();
+        
+        $this->dispatch('toast', type:'success', title:'Removed', message:"Booking #{$bookingId} permanently deleted.", duration:2500);
+        $this->resetPage();
+    }
+
     public function render()
     {
         $user = Auth::user();
@@ -116,15 +153,10 @@ class Bookingvehicle extends Component
             $v->vehicle_id => ($v->name ?? $v->plate_number ?? ('#'.$v->vehicle_id))
         ])->toArray();
 
-        // -------- Foto per booking (FIXED) --------
-        // Ambil id booking yang tampil DI HALAMAN INI.
-        // Catatan: jika primary key di table booking adalah 'id' dan ada kolom lain 'vehiclebooking_id',
-        // pastikan yang dipakai untuk relasi ke photos adalah yang sama dengan kolom 'vehiclebooking_id' di tabel foto.
         $ids = method_exists($bookings, 'pluck')
             ? $bookings->pluck('vehiclebooking_id')->filter()->values()->all()
             : [];
 
-        // Siapkan bucket default untuk setiap id yang tampil
         $this->photosByBooking = [];
         $photoCounts = [];
         foreach ($ids as $bid) {
@@ -132,7 +164,6 @@ class Bookingvehicle extends Component
             $photoCounts[$bid] = ['before' => 0, 'after' => 0];
         }
 
-        // Kalau tidak ada id di halaman ini → jangan query foto agar tidak memicu undefined key.
         if (!empty($ids)) {
             $photoQuery = VehicleBookingPhoto::select(['id','vehiclebooking_id','photo_type','photo_path','deleted_at'])
                 ->whereIn('vehiclebooking_id', $ids);
@@ -144,7 +175,6 @@ class Bookingvehicle extends Component
             foreach ($allPhotos as $p) {
                 $type = $p->photo_type === 'after' ? 'after' : 'before';
 
-                // Guard: jika ada foto dengan vehiclebooking_id yang tidak ada di $ids, inisialisasi bucket-nya.
                 if (!array_key_exists($p->vehiclebooking_id, $this->photosByBooking)) {
                     $this->photosByBooking[$p->vehiclebooking_id] = ['before' => collect(), 'after' => collect()];
                     $photoCounts[$p->vehiclebooking_id] = ['before' => 0, 'after' => 0];
@@ -162,7 +192,7 @@ class Bookingvehicle extends Component
             'bookings'       => $bookings,
             'vehicleMap'     => $vehicleMap,
             'vehicles'       => $vehicles,
-            'photoCounts'    => $photoCounts,       // <- safe, selalu terdefinisi untuk id di halaman
+            'photoCounts'    => $photoCounts,
             'statusTab'      => $this->statusTab,
             'includeDeleted' => $this->includeDeleted,
             'selectedDate'   => $this->selectedDate,

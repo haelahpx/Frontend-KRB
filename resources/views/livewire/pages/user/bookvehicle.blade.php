@@ -1,368 +1,249 @@
-{{-- resources/views/livewire/pages/user/bookvehicle.blade.php --}}
-<div class="max-w-7xl mx-auto py-6 grid grid-cols-1 lg:grid-cols-3 gap-6 px-4">
-    {{-- LEFT: main form (2/3) --}}
-    <div class="lg:col-span-2">
-        <div class="bg-white border-2 border-black/5 rounded-2xl shadow-sm overflow-hidden">
-            <div class="px-6 py-5 border-b border-black/5">
-                <h2 class="text-2xl font-semibold">
-                    {{-- Judul dinamis berdasarkan state $booking --}}
-                    @if($booking)
-                        Upload Foto - Booking #{{ $booking->vehiclebooking_id }}
-                    @else
-                        Book a Vehicle
-                    @endif
-                </h2>
-                <p class="text-sm text-gray-500 mt-1">
-                    {{-- Deskripsi dinamis --}}
-                    @if($booking)
-                        @if($booking->status === 'approved')
-                            Booking sudah <span class="font-medium text-emerald-700">approved</span>.
-                            Silakan unggah **foto sebelum** penggunaan untuk memulai perjalanan.
-                        @elseif($booking->status === 'returned')
-                            Kendaraan sudah dikembalikan.
-                            Silakan unggah **foto setelah** penggunaan untuk menyelesaikan booking.
-                        @endif
-                    @else
-                        Fill out the form below to request a vehicle booking
-                    @endif
-                </p>
-            </div>
-
-            <div class="p-6">
-                {{-- Session Messages --}}
-                @if(session()->has('success'))
-                    <div class="text-sm bg-green-50 border border-green-100 text-green-800 px-3 py-2 rounded-md mb-4">
-                        {{ session('success') }}
-                    </div>
-                @endif
-                @if(session()->has('error'))
-                    <div class="text-sm bg-red-50 border border-red-100 text-red-800 px-3 py-2 rounded-md mb-4">
-                        {{ session('error') }}
-                    </div>
-                @endif
-
-                {{--
-                KONDISI 1: STATE UPLOAD (jika $booking ada)
-                Tampilkan form untuk upload foto (before/after)
-                --}}
-                @if($booking)
-                    <div class="mb-4 space-y-3 border-b border-gray-200 pb-4">
-                        <div class="text-sm text-gray-700">Nama: <span
-                                class="font-medium">{{ $booking->borrower_name }}</span></div>
-                        <div class="text-sm text-gray-700">Departemen: <span
-                                class="font-medium">{{ $departments->firstWhere('department_id', $booking->department_id)->department_name ?? '-' }}</span>
-                        </div>
-                        <div class="text-sm text-gray-700">Kendaraan: <span
-                                class="font-medium">{{ $vehicles->firstWhere('vehicle_id', $booking->vehicle_id)->name ?? 'N/A' }}
-                                —
-                                {{ $vehicles->firstWhere('vehicle_id', $booking->vehicle_id)->plate_number ?? 'N/A' }}</span>
-                        </div>
-                        <div class="text-sm text-gray-700">Waktu: <span
-                                class="font-medium">{{ \Carbon\Carbon::parse($booking->start_at)->format('d M Y, H:i') }} →
-                                {{ \Carbon\Carbon::parse($booking->end_at)->format('d M Y, H:i') }}</span></div>
-                        <div class="text-sm text-gray-700">Tujuan: <span
-                                class="font-medium">{{ $booking->destination ?? '-' }}</span></div>
-                    </div>
-
-                    <form wire:submit.prevent="handlePhotoUpload" enctype="multipart/form-data" class="space-y-4">
-                        {{-- Tampilkan input 'photo_before' HANYA JIKA status 'approved' --}}
-                        @if($booking->status === 'approved')
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Foto Sebelum <span
-                                        class="text-red-600">*</span></label>
-                                <input wire:model="photo_before" type="file" accept="image/*"
-                                    class="w-full text-sm border border-gray-300 rounded-md p-2">
-                                @error('photo_before') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-                        @endif
-
-                        {{-- Tampilkan input 'photo_after' HANYA JIKA status 'returned' --}}
-                        @if($booking->status === 'returned')
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Foto Setelah <span
-                                        class="text-red-600">*</span></label>
-                                <input wire:model="photo_after" type="file" accept="image/*"
-                                    class="w-full text-sm border border-gray-300 rounded-md p-2">
-                                @error('photo_after') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-                        @endif
-
-                        {{-- Loading indicator --}}
-                        <div wire:loading wire:target="photo_before, photo_after">
-                            <span class="text-sm text-blue-600">Uploading photo...</span>
-                        </div>
-
-                        <div class="flex items-center gap-3 pt-2">
-                            <a href="{{ route('vehiclestatus') }}" wire:navigate
-                                class="px-4 py-2 rounded-md border border-gray-300 bg-white text-sm text-gray-700">Kembali
-                                ke Status</a>
-
-                            @if($booking->status === 'approved')
-                                <button type="submit" class="px-4 py-2 rounded-md bg-emerald-600 text-white text-sm"
-                                    wire:loading.attr="disabled">Upload & Mulai Perjalanan</button>
-                            @elseif($booking->status === 'returned')
-                                <button type="submit" class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm"
-                                    wire:loading.attr="disabled">Upload & Selesaikan Booking</button>
-                            @endif
-                        </div>
-                    </form>
-
-                    {{--
-                    KONDISI 2: STATE CREATE (jika $booking == null)
-                    Tampilkan form untuk membuat booking baru
-                    --}}
-                @else
-                    <form wire:submit.prevent="submitBooking" class="space-y-4" enctype="multipart/form-data">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {{-- Nama --}}
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Nama <span
-                                        class="text-red-600">*</span></label>
-                                @if($name)
-                                    <div
-                                        class="w-full text-sm rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                                        {{ $name }}</div>
-                                    <input type="hidden" wire:model="name" />
-                                @else
-                                    <input wire:model="name" type="text" placeholder="Nama"
-                                        class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
-                                @endif
-                                @error('name') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-
-                            {{-- Departemen --}}
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Departement <span
-                                        class="text-red-600">*</span></label>
-                                @php $dept = $departments->firstWhere('department_id', $department_id); @endphp
-                                @if(isset($dept) && $dept)
-                                    <div
-                                        class="w-full text-sm rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                                        {{ $dept->department_name }}</div>
-                                    <input type="hidden" wire:model="department_id" />
-                                @else
-                                    <select wire:model="department_id"
-                                        class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
-                                        <option value="">Select department</option>
-                                        @foreach($departments as $d)
-                                            <option value="{{ $d->department_id }}">{{ $d->department_name }}</option>
-                                        @endforeach
-                                    </select>
-                                @endif
-                                @error('department_id') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-
-                            {{-- Pukul Mulai --}}
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Pukul Mulai <span
-                                        class="text-red-600">*</span></label>
-                                <input wire:model="start_time" type="time"
-                                    class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
-                                @error('start_time') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-
-                            {{-- Pukul Selesai --}}
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Pukul Selesai <span
-                                        class="text-red-600">*</span></label>
-                                <input wire:model="end_time" type="time"
-                                    class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
-                                @error('end_time') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-
-                            {{-- Tanggal Peminjaman --}}
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Tanggal Peminjaman <span
-                                        class="text-red-600">*</span></label>
-                                <input wire:model.live="date_from" type="date"
-                                    class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
-                                @error('date_from') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-
-                            {{-- Tanggal Pengembalian --}}
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Tanggal Pengembalian <span
-                                        class="text-red-600">*</span></label>
-                                <input wire:model.live="date_to" type="date"
-                                    class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
-                                @error('date_to') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-
-                            {{-- Keperluan --}}
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Keperluan <span
-                                        class="text-red-600">*</span></label>
-                                <input wire:model="purpose" type="text" placeholder="Uraian singkat keperluan"
-                                    class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
-                                @error('purpose') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-
-                            {{-- Tujuan Lokasi --}}
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Tujuan Lokasi</label>
-                                <input wire:model="destination" type="text" placeholder="Contoh: Kantor Cabang Cibubur"
-                                    class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
-                                @error('destination') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-
-                            {{-- Odd/Even --}}
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Masuk Area Ganjil/Genap</label>
-                                <select wire:model="odd_even_area"
-                                    class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
-                                    <option value="tidak">Tidak Masuk</option>
-                                    <option value="ganjil">Ganjil</option>
-                                    <option value="genap">Genap</option>
-                                </select>
-                                @error('odd_even_area') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-
-                            {{-- Jenis Keperluan (diubah valuenya agar sesuai DB) --}}
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Jenis Keperluan</label>
-                                <select wire:model="jenis_keperluan"
-                                    class="w-full text-sm rounded-md border border-gray-300 px-3 py-2">
-                                    <option value="">Pilih Keperluan</option>
-                                    <option value="dinas">Dinas (Visitasi)</option>
-                                    <option value="operasional">Operasional (Logistik Barang)</option>
-                                    <option value="antar_jemput">Antar Jemput</option>
-                                    <option value="lainnya">Lainnya</option>
-                                </select>
-                                @error('jenis_keperluan') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            {{-- Kendaraan --}}
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Kendaraan (opsional)</label>
-                                <select wire:model.live="vehicle_id" @if(!$hasVehicles) disabled @endif
-                                    class="w-full text-sm rounded-md border border-gray-300 px-3 py-2 bg-white">
-                                    @if(!$hasVehicles)
-                                        <option value="">Data kendaraan belum tersedia</option>
-                                    @else
-                                        <option value="">Pilih kendaraan jika tahu</option>
-                                        @foreach($vehicles as $v)
-                                            @php
-                                                $id = $v->vehicle_id ?? $v->id;
-                                                $label = $v->vehicle_name ?? ($v->name ?? 'Kendaraan');
-                                                $plate = $v->plate_number ?? ($v->license_plate ?? '');
-                                            @endphp
-                                            <option value="{{ $id }}">{{ $label }}{{ $plate ? " — $plate" : '' }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                                @error('vehicle_id') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-
-                        {{-- Syarat & Ketentuan --}}
-                        <div class="mt-3 text-sm border-t border-gray-200 pt-4">
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                                <label class="inline-flex items-center">
-                                    <input wire:model="has_sim_a" type="checkbox" class="rounded mr-2 border-gray-400">
-                                    Saya memiliki SIM A (wajib)
-                                </label>
-
-                                <label class="inline-flex items-center">
-                                    <input wire:model="agree_terms" type="checkbox" class="rounded mr-2 border-gray-400">
-                                    Saya Menyetujui Syarat dan Ketentuan <span class="text-red-600">*</span>
-                                </label>
-                            </div>
-                            {{-- INI PERBAIKANNYA --}}
-                            @error('has_sim_a') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                            @error('agree_terms') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                        </div>
-
-                        {{-- Actions --}}
-                        <div class="mt-4 flex items-center gap-3">
-                            <button type="button" wire:click="resetForm"
-                                class="px-4 py-2 rounded-md border border-gray-300 text-sm bg-white text-gray-700">Clear
-                                Form</button>
-                            <button type="submit" class="px-4 py-2 rounded-md bg-slate-900 text-white text-sm"
-                                wire:loading.attr="disabled">
-                                <span wire:loading.remove wire:target="submitBooking">Submit Request</span>
-                                <span wire:loading wire:target="submitBooking">Sending...</span>
-                            </button>
-                        </div>
-                    </form>
-                @endif
+<div class="max-w-7xl mx-auto">
+    {{-- Header --}}
+    <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Vehicle Booking System</h1>
+            <div class="inline-flex rounded-lg overflow-hidden bg-gray-100 border border-gray-200 self-start md:self-center">
+                <span class="px-3 md:px-4 py-2 text-sm font-medium bg-gray-900 text-white cursor-default border-r border-gray-200">
+                    Book Vehicle
+                </span>
+                <a href="{{ route('vehiclestatus') }}" wire:navigate
+                   class="px-3 md:px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+                    Vehicle Status
+                </a>
             </div>
         </div>
     </div>
 
-    {{-- RIGHT: sidebar --}}
-    <div class="space-y-6">
-        {{-- Availability --}}
-        <div class="bg-white border-2 border-black/5 rounded-2xl shadow-sm p-5">
-            <h3 class="text-base font-medium">Vehicle Availability</h3>
-            <div class="text-xs text-gray-500 mt-1 mb-3">
-                @if($date_from && $start_time)
-                    For: {{ \Carbon\Carbon::parse($date_from)->format('d M Y') }}, {{ $start_time }}
-                @else
-                    For: (Pilih tanggal & jam)
-                @endif
-            </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {{-- LEFT: Booking Form --}}
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
+                <h2 class="text-lg font-semibold text-gray-900 mb-2">
+                    @if($booking)
+                        Upload Photo - Booking #{{ $booking->vehiclebooking_id }}
+                    @else
+                        Book a Vehicle
+                    @endif
+                </h2>
 
-            <div class="space-y-3" wire:poll.5000ms="loadAvailability">
-                @forelse($availability as $a)
-                    <div
-                        class="flex items-center justify-between rounded-md px-3 py-2
-                                {{ $a['status'] === 'available' ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100' }}">
-                        <div class="flex items-center gap-3">
-                            <span
-                                class="w-2 h-2 rounded-full {{ $a['status'] === 'available' ? 'bg-emerald-500' : 'bg-red-600' }}"></span>
-                            <div class="text-sm text-gray-700">{{ $a['label'] }}</div>
-                        </div>
-                        <div
-                            class="text-xs font-medium {{ $a['status'] === 'available' ? 'text-emerald-600' : 'text-red-700' }}">
-                            {{ $a['status'] === 'available' ? 'Available' : 'Booked' }}
-                        </div>
+                @if(session()->has('success'))
+                    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800 flex items-center gap-2">
+                        {{ session('success') }}
                     </div>
-                @empty
-                    <div class="text-xs text-gray-500">Pilih tanggal dan jam untuk cek ketersediaan.</div>
-                @endforelse
+                @endif
+                @if(session()->has('error'))
+                    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 flex items-center gap-2">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                @if($booking)
+                    {{-- Upload Mode --}}
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-4 mb-6 text-sm space-y-2">
+                        <div class="flex justify-between"><span class="text-gray-500">Booking ID:</span><span class="font-bold">#{{ $booking->vehiclebooking_id }}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Vehicle:</span><span class="font-bold">{{ $booking->vehicle->name ?? 'N/A' }}</span></div>
+                    </div>
+
+                    <form wire:submit.prevent="handlePhotoUpload" enctype="multipart/form-data" class="space-y-5">
+                        @if($booking->status === 'approved')
+                            <div><label class="block text-xs font-bold mb-1">Photo Before (Check-out) *</label><input wire:model="photo_before" type="file" accept="image/*" class="w-full text-sm border border-gray-300 rounded-md p-2"></div>
+                        @elseif($booking->status === 'returned')
+                            <div><label class="block text-xs font-bold mb-1">Photo After (Check-in) *</label><input wire:model="photo_after" type="file" accept="image/*" class="w-full text-sm border border-gray-300 rounded-md p-2"></div>
+                        @endif
+                        <div class="flex gap-3 pt-2">
+                            <a href="{{ route('vehiclestatus') }}" class="px-4 py-2 border rounded-lg text-sm text-gray-700">Cancel</a>
+                            <button type="submit" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm">Upload Photo</button>
+                        </div>
+                    </form>
+                @else
+                    {{-- Create Mode --}}
+                    <form wire:submit.prevent="submitBooking" class="space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {{-- Name --}}
+                            <div>
+                                <label class="block text-xs font-medium text-gray-900 mb-1.5">Nama <span class="text-red-600">*</span></label>
+                                @if($name)
+                                    <div class="w-full px-3 py-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 rounded-md cursor-not-allowed">{{ $name }}</div>
+                                    <input type="hidden" wire:model="name" />
+                                @else
+                                    <input wire:model="name" type="text" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:outline-none">
+                                @endif
+                                @error('name') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                            </div>
+
+                            {{-- Dept --}}
+                            <div>
+                                <label class="block text-xs font-medium text-gray-900 mb-1.5">Departement <span class="text-red-600">*</span></label>
+                                <select wire:model="department_id" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:outline-none">
+                                    <option value="">Select department</option>
+                                    @foreach($departments as $d) <option value="{{ $d->department_id }}">{{ $d->department_name }}</option> @endforeach
+                                </select>
+                                @error('department_id') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                            </div>
+
+                            {{-- MODE SWITCHER --}}
+                            <div class="md:col-span-2 pt-2">
+                                <label class="block text-xs font-bold text-gray-900 mb-2">Durasi Booking</label>
+                                <div class="grid grid-cols-3 bg-gray-100 p-1 rounded-lg gap-1">
+                                    <button type="button" wire:click="setBookingMode('perday')"
+                                        class="text-sm font-medium py-2 rounded-md transition-all duration-200 {{ $booking_mode === 'perday' ? 'bg-white text-gray-900 shadow ring-1 ring-black/5 font-bold' : 'text-gray-500 hover:text-gray-700' }}">
+                                        Full Day
+                                        <span class="block text-[10px] font-normal opacity-75">08:00 - 17:00</span>
+                                    </button>
+                                    <button type="button" wire:click="setBookingMode('24hours')"
+                                        class="text-sm font-medium py-2 rounded-md transition-all duration-200 {{ $booking_mode === '24hours' ? 'bg-white text-gray-900 shadow ring-1 ring-black/5 font-bold' : 'text-gray-500 hover:text-gray-700' }}">
+                                        24 Hours
+                                        <span class="block text-[10px] font-normal opacity-75">+1 Day</span>
+                                    </button>
+                                    <button type="button" wire:click="setBookingMode('custom')"
+                                        class="text-sm font-medium py-2 rounded-md transition-all duration-200 {{ $booking_mode === 'custom' ? 'bg-white text-gray-900 shadow ring-1 ring-black/5 font-bold' : 'text-gray-500 hover:text-gray-700' }}">
+                                        Custom
+                                        <span class="block text-[10px] font-normal opacity-75">Manual Time</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- DATES & TIMES --}}
+                            <div>
+                                <label class="block text-xs font-medium text-gray-900 mb-1.5">Tanggal Mulai <span class="text-red-600">*</span></label>
+                                <input wire:model.live="date_from" type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:outline-none">
+                                @error('date_from') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-900 mb-1.5">Tanggal Selesai <span class="text-red-600">*</span></label>
+                                {{-- wire:key is crucial for forced updates --}}
+                                <input wire:model.live="date_to" wire:key="to-{{ $booking_mode }}-{{ $date_from }}" type="date"
+                                    @if($booking_mode !== 'custom') readonly @endif
+                                    class="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 {{ $booking_mode !== 'custom' ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'border-gray-300' }}">
+                                @error('date_to') <div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-900 mb-1.5">Jam Mulai <span class="text-red-600">*</span></label>
+                                <input wire:model="start_time" wire:key="start-{{ $booking_mode }}" type="time"
+                                    @if($booking_mode !== 'custom') readonly @endif
+                                    class="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 {{ $booking_mode !== 'custom' ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'border-gray-300' }}">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-900 mb-1.5">Jam Selesai <span class="text-red-600">*</span></label>
+                                <input wire:model="end_time" wire:key="end-{{ $booking_mode }}" type="time"
+                                    @if($booking_mode !== 'custom') readonly @endif
+                                    class="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 {{ $booking_mode !== 'custom' ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'border-gray-300' }}">
+                            </div>
+
+                            {{-- Rest of Form --}}
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-medium text-gray-900 mb-1.5">Keperluan <span class="text-red-600">*</span></label>
+                                <input wire:model="purpose" type="text" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:outline-none">
+                            </div>
+
+                            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-900 mb-1.5">Tujuan Lokasi</label>
+                                    <input wire:model="destination" type="text" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-900 mb-1.5">Area Ganjil/Genap</label>
+                                    <select wire:model="odd_even_area" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:outline-none">
+                                        <option value="tidak">Tidak Masuk Area</option><option value="ganjil">Ganjil</option><option value="genap">Genap</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-900 mb-1.5">Jenis Keperluan</label>
+                                <select wire:model="purpose_type" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:outline-none">
+                                    <option value="dinas">Dinas (Visitasi)</option><option value="operasional">Operasional (Logistik)</option><option value="antar_jemput">Antar Jemput</option><option value="lainnya">Lainnya</option>
+                                </select>
+                            </div>
+
+                            {{-- VEHICLE SELECTOR --}}
+                            <div>
+                                <label class="block text-xs font-medium text-gray-900 mb-1.5">Pilih Kendaraan (Opsional)</label>
+                                <select wire:model.live="vehicle_id" @if(!$hasVehicles) disabled @endif 
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:outline-none disabled:bg-gray-100">
+                                    <option value="">Sembarang Kendaraan</option>
+                                    @foreach($vehicles as $v)
+                                        @php
+                                            $isUnavailable = in_array($v->vehicle_id, $unavailableVehicleIds);
+                                            $label = ($v->vehicle_name ?? $v->name) . ($v->plate_number ? " — " . $v->plate_number : '');
+                                        @endphp
+                                        <option value="{{ $v->vehicle_id }}" @if($isUnavailable) disabled @endif>
+                                            {{ $label }} {{ $isUnavailable ? '(Unavailable)' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Footer --}}
+                        <div class="pt-4 border-t border-gray-100">
+                            <label class="flex items-center gap-2 cursor-pointer"><input wire:model="has_sim_a" type="checkbox" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"><span class="text-sm text-gray-700">Saya memiliki SIM A (Wajib)</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer mt-2"><input wire:model="agree_terms" type="checkbox" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"><span class="text-sm text-gray-700">Saya Menyetujui Syarat & Ketentuan</span></label>
+                        </div>
+                        <div class="flex items-center gap-3 pt-2">
+                            <button type="button" wire:click="resetForm" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Clear</button>
+                            <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm hover:bg-gray-800">Submit Request</button>
+                        </div>
+                    </form>
+                @endif
             </div>
         </div>
 
-        {{-- Recent bookings --}}
-        <div class="bg-white border-2 border-black/5 rounded-2xl shadow-sm p-5">
-            <h3 class="text-base font-medium">My Dept's Recent Bookings</h3>
-            <div class="mt-3 space-y-3 text-sm">
-                @forelse($recentBookings as $rb)
-                    @php
-                        $statusText = str_replace('_', ' ', ucfirst($rb->status));
-                        $statusColorClass = [
-                            'pending' => 'bg-yellow-100 text-yellow-800',
-                            'approved' => 'bg-emerald-100 text-emerald-800',
-                            'on_progress' => 'bg-blue-100 text-blue-800',
-                            'returned' => 'bg-indigo-100 text-indigo-800',
-                            'completed' => 'bg-gray-100 text-gray-700',
-                            'rejected' => 'bg-red-100 text-red-800',
-                            'cancelled' => 'bg-gray-100 text-gray-700',
-                        ][$rb->status] ?? 'bg-gray-100 text-gray-700';
-                    @endphp
-                    <div class="flex items-start gap-3">
-                        <div
-                            class="w-3 h-3 rounded-full {{ $rb->status === 'completed' ? 'bg-gray-300' : 'bg-blue-400' }} mt-1">
+        {{-- RIGHT: Sidebar --}}
+        <div class="space-y-6">
+            {{-- Availability --}}
+            <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-5" wire:poll.5000ms="loadAvailability">
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">Availability</h3>
+                <p class="text-xs text-gray-500 mb-3">Live status for selected date/time</p>
+                <div class="space-y-3">
+                    @forelse($availability as $a)
+                        <div class="flex justify-between p-3 border rounded-lg {{ $a['status'] === 'available' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200' }}">
+                            <span class="font-medium text-sm text-gray-900">{{ $a['label'] }}</span>
+                            <span class="text-xs font-bold uppercase {{ $a['status'] === 'available' ? 'text-green-700' : 'text-red-700' }}">{{ $a['status'] }}</span>
                         </div>
-                        <div class="flex-1">
-                            <div class="font-medium text-gray-800">{{ $rb->borrower_name ?? ($rb->purpose ?? 'Booking') }}
-                            </div>
-                            <div class="text-xs text-gray-500">
-                                {{ \Carbon\Carbon::parse($rb->start_at ?? now())->format('M d, H:i') }}</div>
-                        </div>
-                        <div class="text-xs px-2 py-1 rounded-md {{ $statusColorClass }}">
-                            {{ $statusText }}
-                        </div>
-                    </div>
-                @empty
-                    <div class="text-xs text-gray-500">No recent bookings from your department.</div>
-                @endforelse
+                    @empty
+                        <div class="text-sm text-gray-500 italic">Select valid dates.</div>
+                    @endforelse
+                </div>
             </div>
 
-            <div class="mt-4 text-xs text-gray-500 border-t border-gray-200 pt-3">
-                Catatan: Aksi upload foto akan muncul di halaman <a href="{{ route('vehiclestatus') }}" wire:navigate
-                    class="text-blue-600 hover:underline">Vehicle Status</a>.
+            {{-- Recent Bookings --}}
+            <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Vehicle Usage</h3>
+                <div class="space-y-4">
+                    @forelse($recentBookings as $rb)
+                        <div class="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
+                            {{-- Car Icon --}}
+                            <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200 text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <h4 class="font-bold text-sm text-gray-900 truncate">{{ $rb->vehicle->name ?? 'Unknown' }}</h4>
+                                    @php
+                                        $statusColor = match($rb->status) {
+                                            'approved' => 'bg-green-100 text-green-800', 'pending' => 'bg-yellow-100 text-yellow-800',
+                                            'returned' => 'bg-indigo-100 text-indigo-800', default => 'bg-gray-100 text-gray-800'
+                                        };
+                                    @endphp
+                                    <span class="shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded {{ $statusColor }}">{{ str_replace('_', ' ', $rb->status) }}</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1 leading-tight">
+                                    Booked by <span class="font-medium text-gray-700">{{ $rb->borrower_name }}</span><br>
+                                    <span class="opacity-75">{{ \Carbon\Carbon::parse($rb->start_at)->format('d M, H:i') }}</span>
+                                </p>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-sm text-gray-500 text-center py-2">No recent bookings.</div>
+                    @endforelse
+                </div>
             </div>
         </div>
     </div>

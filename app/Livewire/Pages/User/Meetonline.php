@@ -15,11 +15,19 @@ use Carbon\Carbon;
 class Meetonline extends Component
 {
     public string $view = 'form';
+
+    // Form Properties
     public string $meeting_title = '';
     public string $online_provider = '';
     public string $date = '';
     public string $start_time = '';
     public string $end_time = '';
+    
+    // New Property for Information Dept Request
+    public bool $informInfo = false;
+
+    // Modal State
+    public bool $showQuickModal = false;
 
     public array $timeSlots = [];
     public array $providers = [
@@ -54,6 +62,32 @@ class Meetonline extends Component
         $this->view = in_array($view, ['form', 'calendar'], true) ? $view : 'form';
     }
 
+    public function selectCalendarSlot(string $provider, string $date, string $timeLabel): void
+    {
+        // 1. Check if past
+        $selectedTime = Carbon::parse("$date $timeLabel", $this->tz);
+        if ($selectedTime->lt(Carbon::now($this->tz))) {
+             $this->dispatch('toast', type: 'error', message: 'Cannot book a time in the past.');
+             return;
+        }
+
+        // 2. Set Data
+        $this->online_provider = $provider;
+        $this->date            = $date;
+        $this->start_time      = $timeLabel;
+        $this->end_time        = Carbon::parse($date.' '.$timeLabel, $this->tz)->addMinutes(30)->format('H:i');
+        
+        // 3. Reset Form & Open Modal
+        $this->meeting_title = ''; 
+        $this->informInfo = false; // Reset checkbox
+        $this->showQuickModal = true;
+    }
+
+    public function closeQuickModal(): void 
+    {
+        $this->showQuickModal = false;
+    }
+
     public function submit(): void
     {
         $this->validate([
@@ -62,6 +96,7 @@ class Meetonline extends Component
             'date'            => 'required|date',
             'start_time'      => 'required|date_format:H:i',
             'end_time'        => 'required|date_format:H:i|after:start_time',
+            'informInfo'      => 'boolean',
         ]);
 
         $now     = Carbon::now($this->tz);
@@ -70,10 +105,6 @@ class Meetonline extends Component
 
         if ($startDt->lt($now)) {
             $this->dispatch('toast', type: 'error', message: 'Tidak bisa booking waktu yang sudah lewat.');
-            return;
-        }
-        if ($startDt->isSameDay($now) && $startDt->lt($now->copy()->addMinutes(15))) {
-            $this->dispatch('toast', type: 'warning', title: 'Waktu Terlalu Dekat', message: 'Mulai minimal 15 menit dari sekarang.', duration: 3500);
             return;
         }
 
@@ -89,46 +120,28 @@ class Meetonline extends Component
                 'booking_type'    => 'online_meeting',
                 'status'          => 'pending',
                 'online_provider' => $this->online_provider,
+                // Map boolean true to 'request', false to null
+                'requestinformation' => $this->informInfo ? 'request' : null,
             ]);
         });
 
+        // Reset
         $preset = Carbon::now($this->tz)->addMinutes(15);
-        $this->reset(['meeting_title', 'online_provider']);
+        $this->reset(['meeting_title', 'online_provider', 'informInfo']); // Reset checkbox here too
         $this->start_time = $preset->format('H:i');
         $this->end_time   = $preset->copy()->addMinutes(30)->format('H:i');
+        
+        $this->showQuickModal = false;
 
-        $this->dispatch('toast', type: 'success', message: 'Permintaan online meeting dikirim. Menunggu approval receptionist.', duration: 3000);
-    }
-
-    public function previousWeek(): void
-    {
-        $this->date = Carbon::parse($this->date, $this->tz)->subWeek()->toDateString();
-    }
-    public function nextWeek(): void
-    {
-        $this->date = Carbon::parse($this->date, $this->tz)->addWeek()->toDateString();
-    }
-    public function previousMonth(): void
-    {
-        $this->date = Carbon::parse($this->date, $this->tz)->subMonthNoOverflow()->toDateString();
-    }
-    public function nextMonth(): void
-    {
-        $this->date = Carbon::parse($this->date, $this->tz)->addMonthNoOverflow()->toDateString();
-    }
-    public function selectDate(string $value): void
-    {
-        $this->date = Carbon::parse($value, $this->tz)->toDateString();
+        $this->dispatch('toast', type: 'success', message: 'Permintaan online meeting dikirim.', duration: 3000);
     }
 
-    public function selectCalendarSlot(string $provider, string $date, string $timeLabel): void
-    {
-        $this->online_provider = $provider;
-        $this->date            = $date;
-        $this->start_time      = $timeLabel;
-        $this->end_time        = Carbon::parse($date.' '.$timeLabel, $this->tz)->addMinutes(30)->format('H:i');
-        $this->view            = 'form';
-    }
+    // --- Navigation Helpers (No changes needed here) ---
+    public function previousWeek(): void { $this->date = Carbon::parse($this->date, $this->tz)->subWeek()->toDateString(); }
+    public function nextWeek(): void { $this->date = Carbon::parse($this->date, $this->tz)->addWeek()->toDateString(); }
+    public function previousMonth(): void { $this->date = Carbon::parse($this->date, $this->tz)->subMonthNoOverflow()->toDateString(); }
+    public function nextMonth(): void { $this->date = Carbon::parse($this->date, $this->tz)->addMonthNoOverflow()->toDateString(); }
+    public function selectDate(string $value): void { $this->date = Carbon::parse($value, $this->tz)->toDateString(); }
 
     protected function buildTimeSlots(string $start = '08:00', string $end = '18:00', int $stepMinutes = 30): void
     {

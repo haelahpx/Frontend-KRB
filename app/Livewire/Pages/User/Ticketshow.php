@@ -29,12 +29,12 @@ class Ticketshow extends Component
 
         $this->ticket = $ticket->load([
             'department:department_id,department_name',
+            'requesterDepartment:department_id,department_name', // <--- ADD THIS LINE
             'user:user_id,full_name',
             'attachments',
-            'comments' => fn ($q) => $q->orderBy('created_at', 'asc'),
+            'comments' => fn($q) => $q->orderBy('created_at', 'asc'),
             'comments.user:user_id,full_name',
-            // load assignments with agent user (for showing agent names)
-            'assignments' => fn ($q) => $q->whereNull('deleted_at')->with([
+            'assignments' => fn($q) => $q->whereNull('deleted_at')->with([
                 'user:user_id,full_name'
             ]),
         ]);
@@ -45,13 +45,11 @@ class Ticketshow extends Component
 
     protected function ensureAccess(Ticket $ticket): void
     {
-        $me = Auth::user();
-        $isRequester = $ticket->user_id === $me->user_id;
-        $isAssigned  = $this->isAssignedAgent($ticket->ticket_id, $me->user_id);
-        if (! $isRequester && ! $isAssigned) {
-            abort(403);
-        }
+        // This will automatically check app/Policies/TicketPolicy.php
+        // It checks the 'view' method in that policy.
+        $this->authorize('view', $ticket);
     }
+
 
     protected function isAssignedAgent(int $ticketId, int $userId): bool
     {
@@ -77,9 +75,9 @@ class Ticketshow extends Component
         ]);
 
         $this->ticket->refresh()->load([
-            'comments' => fn ($q) => $q->orderBy('created_at', 'asc'),
+            'comments' => fn($q) => $q->orderBy('created_at', 'asc'),
             'comments.user:user_id,full_name',
-            'assignments' => fn ($q) => $q->whereNull('deleted_at')->with([
+            'assignments' => fn($q) => $q->whereNull('deleted_at')->with([
                 'user:user_id,full_name'
             ]),
         ]);
@@ -105,7 +103,7 @@ class Ticketshow extends Component
             $this->reset('newComment');
 
             $this->ticket->load([
-                'comments' => fn ($q) => $q->orderBy('created_at', 'asc'),
+                'comments' => fn($q) => $q->orderBy('created_at', 'asc'),
                 'comments.user:user_id,full_name',
             ]);
 

@@ -27,7 +27,6 @@ class Ticketqueue extends Component
      * Kanban columns for My Claims tab
      */
     public array $kanbanColumns = [
-        'OPEN'        => 'Open',
         'IN_PROGRESS' => 'In Progress',
         'RESOLVED'    => 'Resolved',
     ];
