@@ -18,7 +18,7 @@
     {{-- Navbar --}}
     @include('livewire.components.partials.navbar')
 
-    <main class="container mx-auto py-8">
+    <main class="container mx-auto pt-9 pb-4">
         {{ $slot }}
     </main>
     
