@@ -31,10 +31,7 @@
             <div class="relative z-10 p-6 sm:p-8">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M8 7V3m8 4V3M5 11h14M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zm7-6v3l2 2"/>
-                        </svg>
+                        <x-heroicon-o-calendar-days class="w-6 h-6 text-white" />
                     </div>
                     <div>
                         <h2 class="text-lg sm:text-xl font-semibold">Meeting Schedule</h2>
@@ -148,9 +145,7 @@
 
                 <div class="pt-5">
                     <button type="submit" class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition active:scale-95 hover:bg-black disabled:opacity-60">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
+                        <x-heroicon-o-check class="w-4 h-4" />
                         Simpan Data
                     </button>
                 </div>
@@ -263,7 +258,7 @@
         </script>
     @endif
 
-    {{-- Toast manager (unchanged) --}}
+    {{-- Toast manager (unchanged, swapped close icon to Heroicon) --}}
     <div x-data="{
             toasts: [],
             addToast(t) {
@@ -314,9 +309,7 @@
                         <p x-show="toast.message" x-text="toast.message" class="text-sm leading-relaxed text-black/70"></p>
                     </div>
                     <button @click="removeToast(toast.id)" class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-black/60 hover:text-black hover:bg:black/5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black/20" aria-label="Close notification">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
+                        <x-heroicon-o-x-mark class="w-4 h-4" />
                     </button>
                 </div>
             </div>

@@ -44,10 +44,7 @@
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197" />
-                            </svg>
+                            <x-heroicon-o-user-group class="w-6 h-6 text-white" />
                         </div>
                         <div>
                             <h1 class="text-lg sm:text-xl font-semibold">Guestbook</h1>
@@ -113,11 +110,7 @@
                                        class="{{ $input }} pl-9"
                                        placeholder="Cari nama, no HP, instansi, petugas, keperluan…"
                                        wire:model.live="q">
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
-                                </svg>
+                                <x-heroicon-o-magnifying-glass class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             </div>
                         </div>
 
@@ -128,11 +121,7 @@
                                 <input type="date"
                                        class="{{ $input }} pl-9"
                                        wire:model.live="filter_date">
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
+                                <x-heroicon-o-calendar-days class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             </div>
                         </div>
 
@@ -195,17 +184,11 @@
 
                                                 <div class="flex flex-wrap gap-1.5 mb-2">
                                                     <span class="{{ $chip }}">
-                                                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                        </svg>
+                                                        <x-heroicon-o-building-office class="w-3.5 h-3.5 text-gray-500" />
                                                         <span class="font-medium text-gray-700">{{ $e->instansi ?? '—' }}</span>
                                                     </span>
                                                     <span class="{{ $chip }}">
-                                                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2" />
-                                                        </svg>
+                                                        <x-heroicon-o-clipboard-document class="w-3.5 h-3.5 text-gray-500" />
                                                         <span class="font-medium text-gray-700">{{ $e->keperluan ?? '—' }}</span>
                                                     </span>
                                                 </div>
@@ -213,34 +196,22 @@
                                                 <div class="flex flex-wrap items-center gap-4 text-[13px] text-gray-600">
                                                     {{-- Date --}}
                                                     <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                        </svg>
+                                                        <x-heroicon-o-calendar-days class="w-4 h-4" />
                                                         {{ fmtDate($e->date) }}
                                                     </span>
 
                                                     {{-- Clock-in & out --}}
                                                     <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
+                                                        <x-heroicon-o-clock class="w-4 h-4 text-emerald-600" />
                                                         {{ fmtTime($e->jam_in) }}
                                                         <span class="mx-1.5">–</span>
-                                                        <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
+                                                        <x-heroicon-o-clock class="w-4 h-4 text-rose-600" />
                                                         {{ fmtTime($e->jam_out) }}
                                                     </span>
 
                                                     {{-- Petugas --}}
                                                     <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
+                                                        <x-heroicon-o-user class="w-4 h-4" />
                                                         <span class="font-medium text-gray-700">{{ $e->petugas_penjaga }}</span>
                                                     </span>
                                                 </div>
@@ -358,47 +329,29 @@
 
                                                 <div class="flex flex-wrap gap-1.5 mb-2">
                                                     <span class="{{ $chip }}">
-                                                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                        </svg>
+                                                        <x-heroicon-o-building-office class="w-3.5 h-3.5 text-gray-500" />
                                                         <span class="font-medium text-gray-700">{{ $r->instansi ?? '—' }}</span>
                                                     </span>
                                                     <span class="{{ $chip }}">
-                                                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2" />
-                                                        </svg>
+                                                        <x-heroicon-o-clipboard-document class="w-3.5 h-3.5 text-gray-500" />
                                                         <span class="font-medium text-gray-700">{{ $r->keperluan ?? '—' }}</span>
                                                     </span>
                                                 </div>
 
                                                 <div class="flex flex-wrap items-center gap-4 text-[13px] text-gray-600">
                                                     <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                        </svg>
+                                                        <x-heroicon-o-calendar-days class="w-4 h-4" />
                                                         {{ fmtDate($r->date) }}
                                                     </span>
                                                     <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
+                                                        <x-heroicon-o-clock class="w-4 h-4 text-emerald-600" />
                                                         {{ fmtTime($r->jam_in) }}
                                                         <span class="mx-1.5">–</span>
-                                                        <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
+                                                        <x-heroicon-o-clock class="w-4 h-4 text-rose-600" />
                                                         {{ fmtTime($r->jam_out) }}
                                                     </span>
                                                     <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
+                                                        <x-heroicon-o-user class="w-4 h-4" />
                                                         <span class="font-medium text-gray-700">{{ $r->petugas_penjaga }}</span>
                                                     </span>
                                                 </div>

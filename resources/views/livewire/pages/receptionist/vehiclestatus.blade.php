@@ -111,7 +111,7 @@
                     </div>
                 </div>
 
-                {{-- LIST BODY – now in 2-column cards like other pages --}}
+                {{-- LIST BODY – 2-column bento cards --}}
                 @if($bookings->isEmpty())
                     <div class="px-4 sm:px-6 py-14 text-center text-gray-500 text-sm">
                         Tidak ada data pada filter ini.
@@ -255,7 +255,6 @@
                                     </div>
                                 </div>
                             @empty
-                                {{-- fallback, should not hit because of outer isEmpty, but just in case --}}
                                 <div class="col-span-full text-center text-gray-500 text-sm py-6">
                                     Tidak ada data pada filter ini.
                                 </div>
@@ -266,7 +265,7 @@
 
                 {{-- Pagination --}}
                 @if(method_exists($bookings, 'links'))
-                    <div class="px-4 sm:px-6 py-5 bg-gray-50 border-t border-gray-200">
+                    <div class="px-4 sm:px-6 py-5 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
                         <div class="flex justify-center">
                             {{ $bookings->links() }}
                         </div>
@@ -434,7 +433,6 @@
                             <p class="text-sm text-gray-500">Tidak ada foto 'after' yang di-upload.</p>
                         @endforelse
                     </div>
-
                 </div>
 
                 {{-- Footer --}}

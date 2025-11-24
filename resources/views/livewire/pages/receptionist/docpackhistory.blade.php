@@ -50,10 +50,7 @@
                     <div class="flex items-center gap-4">
                         <div
                             class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
+                            <x-heroicon-o-document-text class="w-6 h-6 text-white"/>
                         </div>
                         <div>
                             <h2 class="text-lg sm:text-xl font-semibold">Documents & Packages — History</h2>
@@ -65,10 +62,7 @@
                     <button type="button"
                         class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 text-xs font-medium border border-white/30 hover:bg-white/20 md:hidden"
                         wire:click="openFilterModal">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 4h18M4 9h16M6 14h12M9 19h6" />
-                        </svg>
+                        <x-heroicon-o-bars-3 class="w-4 h-4"/>
                         <span>Filter</span>
                     </button>
                 </div>
@@ -119,22 +113,14 @@
                             <div class="relative">
                                 <input type="text" class="{{ $input }} pl-9"
                                     placeholder="Cari nama item / pengirim / penerima…" wire:model.live="q">
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
-                                </svg>
+                                <x-heroicon-o-magnifying-glass class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
                             </div>
                         </div>
                         <div>
                             <label class="{{ $label }}">Tanggal</label>
                             <div class="relative">
                                 <input type="date" class="{{ $input }} pl-9" wire:model.live="selectedDate">
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
+                                <x-heroicon-o-calendar-days class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
                             </div>
                         </div>
                         <div>
@@ -190,27 +176,18 @@
                                     <div class="space-y-1 text-[13px] text-gray-600">
                                         @if($row->nama_pengirim)
                                             <div class="flex items-center gap-2">
-                                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
+                                                <x-heroicon-o-user class="w-3.5 h-3.5 text-gray-400"/>
                                                 <span class="truncate">From: {{ $row->nama_pengirim }}</span>
                                             </div>
                                         @endif
                                         @if($row->nama_penerima)
                                             <div class="flex items-center gap-2">
-                                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
+                                                <x-heroicon-o-user class="w-3.5 h-3.5 text-gray-400"/>
                                                 <span class="truncate">To: {{ $row->nama_penerima }}</span>
                                             </div>
                                         @endif
                                         <div class="flex items-center gap-2">
-                                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 0 0118 0z" />
-                                            </svg>
+                                            <x-heroicon-o-clock class="w-3.5 h-3.5 text-gray-400"/>
                                             <span>
                                                 @if($isDelivered && $row->pengiriman)
                                                     {{ fmtDate($row->pengiriman) }} {{ fmtTime($row->pengiriman) }}
@@ -223,10 +200,7 @@
                                         </div>
                                         @if($row->receptionist?->full_name)
                                             <div class="flex items-center gap-2">
-                                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M5.121 17.804A13.937 13.937 0 0112 15c2.89 0 5.566.915 7.879 2.464M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
+                                                <x-heroicon-o-user-circle class="w-3.5 h-3.5 text-gray-400"/>
                                                 <span class="truncate">Recp: {{ $row->receptionist->full_name }}</span>
                                             </div>
                                         @endif
@@ -322,7 +296,9 @@
                         <h3 class="text-sm font-semibold text-gray-900">Advanced Filters</h3>
                         <p class="text-[11px] text-gray-500">Filter berdasarkan department & user.</p>
                     </div>
-                    <button type="button" class="text-gray-500 hover:text-gray-700" wire:click="closeFilterModal">✕</button>
+                    <button type="button" class="text-gray-500 hover:text-gray-700" wire:click="closeFilterModal">
+                        <x-heroicon-o-x-mark class="w-5 h-5"/>
+                    </button>
                 </div>
 
                 <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
@@ -371,7 +347,9 @@
                     <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                         <h3 class="font-semibold">Edit Item</h3>
                         <button type="button" class="text-gray-500 hover:text-gray-700"
-                            wire:click="$set('showEdit', false)">×</button>
+                            wire:click="$set('showEdit', false)">
+                            <x-heroicon-o-x-mark class="w-5 h-5"/>
+                        </button>
                     </div>
                     <div class="p-5 space-y-4">
                         <div>
@@ -411,12 +389,7 @@
                             class="h-10 px-4 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition shadow-sm">
                             <span wire:loading.remove wire:target="saveEdit">Simpan Perubahan</span>
                             <span wire:loading wire:target="saveEdit" class="flex items-center gap-2">
-                                <svg class="animate-spin -ml-1 mr-1 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4" />
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                </svg>
+                                <x-heroicon-o-arrow-path class="animate-spin -ml-1 mr-1 h-4 w-4 text-white"/>
                                 Menyimpan…
                             </span>
                         </button>

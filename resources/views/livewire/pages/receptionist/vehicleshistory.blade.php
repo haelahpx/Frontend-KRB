@@ -133,9 +133,15 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="{{ $label }}">Search</label>
-                            <input type="text" class="{{ $input }} pl-9"
-                                placeholder="Search purpose, destination, borrower…"
-                                wire:model.live.debounce.400ms="q">
+                            <div class="relative">
+                                <input type="text" class="{{ $input }} pl-9"
+                                    placeholder="Search purpose, destination, borrower…"
+                                    wire:model.live.debounce.400ms="q">
+                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
+                                </svg>
+                            </div>
                         </div>
 
                         <div>
@@ -177,12 +183,11 @@
                                 <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
 
                                     {{-- LEFT PANEL --}}
-                                    <div class="flex items-start gap-3 flex-1 min-w-0 cursor-pointer">
+                                    <div class="flex items-start gap-3 flex-1 min-w-0">
 
                                         <div class="{{ $icoAvatar }}">{{ $avatarChar }}</div>
 
                                         <div class="min-w-0 flex-1">
-
                                             <div class="flex flex-wrap items-center gap-2 mb-1.5">
                                                 <h4 class="font-semibold text-gray-900 text-base truncate">
                                                     {{ $b->purpose ? ucfirst($b->purpose) : 'Vehicle Booking' }}
@@ -193,9 +198,9 @@
                                                 </span>
 
                                                 @if($isTrashed)
-                                                <span class="text-[11px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-800 border border-gray-300">
-                                                    Deleted
-                                                </span>
+                                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-800 border border-gray-300">
+                                                        Deleted
+                                                    </span>
                                                 @endif
 
                                                 <span class="text-[11px] px-2 py-0.5 rounded-full border border-gray-300 text-gray-700 bg-gray-50">
@@ -205,12 +210,24 @@
 
                                             <div class="flex flex-wrap items-center gap-4 text-[13px] text-gray-600">
                                                 <span class="flex items-center gap-1.5">
+                                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7" />
+                                                    </svg>
                                                     {{ $vehicleName }}
                                                 </span>
                                                 <span class="flex items-center gap-1.5">
+                                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                              d="M8 7V3m8 4V3m-9 8h10M5 21h14" />
+                                                    </svg>
                                                     {{ fmtDate($b->start_at) }}
                                                 </span>
                                                 <span class="flex items-center gap-1.5">
+                                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
                                                     {{ fmtTime($b->start_at) }}–{{ fmtTime($b->end_at) }}
                                                 </span>
                                             </div>
@@ -221,40 +238,35 @@
                                                 </div>
                                             @endif
 
-
                                             @if($isRejected && !empty($b->notes))
-                                                <div class="mt-2 text-xs bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+                                                <div class="mt-3 text-xs bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
                                                     <div class="font-semibold text-rose-700 mb-1">
                                                         Reject Reason:
                                                     </div>
                                                     <div class="text-rose-800">{{ $b->notes }}</div>
                                                 </div>
                                             @endif
-
                                         </div>
                                     </div>
 
                                     {{-- RIGHT ACTIONS --}}
                                     <div class="flex items-center gap-2 shrink-0">
-
                                         @if(!$isTrashed)
                                             <button type="button"
-                                                class="px-3 py-1.5 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700"
+                                                class="px-3 py-1.5 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600/20 transition"
                                                 wire:click="softDelete({{ $b->vehiclebooking_id }})">
                                                 Delete
                                             </button>
                                         @else
                                             <button type="button"
-                                                class="px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+                                                class="px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 transition"
                                                 wire:click="restore({{ $b->vehiclebooking_id }})">
                                                 Restore
                                             </button>
                                         @endif
-
                                     </div>
                                 </div>
                             </div>
-
                         @endforeach
                     </div>
                 </div>
@@ -262,7 +274,7 @@
 
                 {{-- Pagination --}}
                 @if(method_exists($bookings, 'links'))
-                    <div class="px-4 sm:px-6 py-5 bg-gray-50 border-t border-gray-200">
+                    <div class="px-4 sm:px-6 py-5 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
                         <div class="flex justify-center">
                             {{ $bookings->links() }}
                         </div>
@@ -270,10 +282,8 @@
                 @endif
             </section>
 
-
             {{-- SIDEBAR --}}
             <aside class="hidden md:flex md:flex-col md:col-span-1 gap-4">
-
                 <section class="{{ $card }}">
                     <div class="px-4 py-4 border-b border-gray-200">
                         <h3 class="text-sm font-semibold text-gray-900">Filter by Vehicle</h3>
@@ -281,7 +291,6 @@
                     </div>
 
                     <div class="px-4 py-3 max-h-64 overflow-y-auto">
-
                         <button type="button" wire:click="$set('vehicleFilter', null)"
                             class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs font-medium {{ is_null($vehicleFilter) ? 'bg-gray-900 text-white' : 'text-gray-800 hover:bg-gray-100' }}">
                             <span class="flex items-center gap-2">
@@ -313,7 +322,6 @@
                                         <span class="text-[10px] uppercase tracking-wide opacity-80">Active</span>
                                     @endif
                                 </button>
-
                             @empty
                                 <p class="text-xs text-gray-500">Tidak ada kendaraan.</p>
                             @endforelse
@@ -336,9 +344,7 @@
                         </div>
                     </div>
                 </section>
-
             </aside>
-
         </div>
     </main>
 </div>
