@@ -44,6 +44,7 @@ class Home extends Component
     public string $serverStatus = 'Checking...';
     public string $networkLatency = '...';
     public string $networkColor = 'text-gray-500 bg-gray-100';
+    public $wifis = [];
 
     public function mount(): void
     {
@@ -52,7 +53,13 @@ class Home extends Component
         $this->isAgent = ($user->is_agent === 'yes');
 
         $this->loadAnnouncementsAndInformations();
+        $this->loadWifis(); // <--- Load Wifi
         $this->checkSystemHealth();
+    }
+
+    public function getUserName(): string
+    {
+        return Auth::user()?->full_name ?? 'Team Member';
     }
 
     public function checkSystemHealth()
@@ -167,6 +174,16 @@ class Home extends Component
         $this->ticketsClosed = $stats->closed ?? 0;
     }
 
+    protected function loadWifis(): void
+    {
+        $user = Auth::user();
+        $companyId = (int) ($user->company_id ?? 0);
+
+        $this->wifis = Wifi::where('company_id', $companyId)
+            ->where('is_active', 1)
+            ->get()
+            ->toArray(); // Ubah ke array agar mudah dibaca AlpineJS
+    }
     protected function loadAnnouncementsAndInformations(): void
     {
         // ... (Kode Announcements & Information tetap sama seperti sebelumnya) ...
