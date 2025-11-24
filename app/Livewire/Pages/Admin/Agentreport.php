@@ -232,7 +232,7 @@ class Agentreport extends Component
             ];
         });
 
-        $pdf = Pdf::loadView('pdf.agent-report', [
+        $pdf = Pdf::loadView('pdf.agentreport-pdf', [
             'agents' => $agents,
             'allTickets' => $allTickets,
             'stats' => $stats,
@@ -241,7 +241,7 @@ class Agentreport extends Component
 
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
-        }, 'agent-report-' . now()->format("Ymd-His") . '.pdf');
+        }, 'Agent Report - ' . now()->locale('id')->translatedFormat('d F Y') . '.pdf');
     }
 
 }

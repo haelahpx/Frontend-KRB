@@ -292,7 +292,7 @@
                                                     {{-- Left side: Ticket ID, Subject, Status, Priority --}}
                                                     <div class="flex items-center flex-wrap gap-2 min-w-0">
                                                         <span>
-                                                            <div class="flex-shrink-0 px-3 py-1 bg-white rounded shadow text-gray-700 font-semibold text-sm font-mono font-semibold">
+                                                            <div class="flex-shrink-0 px-3 py-1 bg-white rounded shadow text-gray-700 text-sm font-mono font-semibold">
                                                                 #{{ $ticket->ticket_id }}
                                                             </div>
                                                         </span>

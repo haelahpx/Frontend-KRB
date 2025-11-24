@@ -38,10 +38,10 @@ class Profile extends Component
         ];
 
         $this->stats = [
-            'openTickets'    => method_exists($user, 'tickets')  ? $user->tickets()->where('status', 'open')->count() : 0,
-            'activeBookings' => method_exists($user, 'bookings') ? $user->bookings()->where('status', 'active')->count() : 0,
-            'packages'       => method_exists($user, 'packages') ? $user->packages()->count() : 0,
-            'memberSince'    => optional($user->created_at)?->format('M Y'),
+            'totalTickets'     => method_exists($user, 'tickets')  ? $user->tickets()->count() : 0,
+            'totalBookRooms'   => method_exists($user, 'rooms') ? $user->rooms()->count() : 0,
+            'totalBookVehicle' => method_exists($user, 'vehicles') ? $user->vehicles()->count() : 0,
+            'memberSince'      => optional($user->created_at)?->format('M Y'),
         ];
     }
 
@@ -84,7 +84,6 @@ class Profile extends Component
 
             // Success toast
             $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'Kata sandi berhasil diperbarui.', duration: 3000);
-
         } catch (ValidationException $e) {
             $this->dispatch('toast', type: 'error', title: 'Validasi Gagal', message: 'Periksa kembali input Anda.', duration: 3000);
             throw $e;

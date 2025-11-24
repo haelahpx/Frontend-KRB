@@ -128,4 +128,21 @@ class User extends Authenticatable
         // Cek di relasi 'departments' (jamak) apakah ada department_id yang cocok
         return $this->departments()->where('departments.department_id', $departmentId)->exists();
     }
+
+    // <--- Relasi Users dengan tickets, ruang bookings, dan Vehicle bookings -->
+
+    public function tickets()
+    {
+        return $this->hasMany(\App\Models\Ticket::class, 'user_id', 'user_id');
+    }
+
+    public function rooms()
+    {
+        return $this->hasMany(\App\Models\BookingRoom::class, 'user_id', 'user_id');
+    }
+
+    public function vehicles()
+    {
+        return $this->hasMany(\App\Models\VehicleBooking::class, 'user_id', 'user_id');
+    }
 }
