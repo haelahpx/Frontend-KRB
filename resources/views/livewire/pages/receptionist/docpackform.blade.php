@@ -28,9 +28,7 @@
             <div class="relative z-10 p-6 sm:p-8">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m-4-4h8M4 6h16v12H4z" />
-                        </svg>
+                        <x-heroicon-o-archive-box class="w-6 h-6 text-white" />
                     </div>
                     <div>
                         <h2 class="text-lg sm:text-xl font-semibold">Doc/Pack Form</h2>
@@ -170,11 +168,7 @@
                             type="button"
                             id="open-camera-btn"
                             class="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M3 7h2l2-3h10l2 3h2v10H3V7z" />
-                                <circle cx="12" cy="12" r="3" />
-                            </svg>
+                            <x-heroicon-o-camera class="w-4 h-4" />
                             Ambil dari kamera
                         </button>
 
@@ -197,10 +191,7 @@
                     <button type="submit" class="{{ $btnBlk }}" wire:loading.attr="disabled" wire:target="save,photo">
                         <span wire:loading.remove wire:target="save,photo">Simpan</span>
                         <span wire:loading wire:target="save,photo" class="inline-flex items-center gap-2">
-                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                            </svg>
+                            <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" />
                             Menyimpan…
                         </span>
                     </button>
@@ -219,10 +210,8 @@
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span class="text-sm font-medium">Kamera</span>
                 </div>
-                <button id="close-camera-btn" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg.white/20">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                <button id="close-camera-btn" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
+                    <x-heroicon-o-x-mark class="w-4 h-4" />
                 </button>
             </div>
             <div class="p-4 space-y-4">
@@ -234,11 +223,7 @@
                         Pastikan browser mengizinkan akses kamera (HTTPS / localhost).
                     </span>
                     <button id="capture-btn" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="12" cy="12" r="3.5" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M3 7h3l2-3h8l2 3h3v12H3z" />
-                        </svg>
+                        <x-heroicon-o-camera class="w-4 h-4" />
                         Ambil Foto
                     </button>
                 </div>

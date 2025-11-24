@@ -27,10 +27,7 @@
                 <div class="flex items-center gap-4">
                     <div
                         class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197" />
-                        </svg>
+                        <x-heroicon-o-user-group class="w-6 h-6 text-white" />
                     </div>
                     <div>
                         <h2 class="text-lg sm:text-xl font-semibold">Guestbook</h2>
@@ -56,10 +53,7 @@
                 {{-- INFO: Tanggal, Jam, & Petugas otomatis --}}
                 <div class="p-4 rounded-xl bg-gray-50 border border-dashed border-gray-300 text-sm text-gray-600 flex items-start gap-3">
                     <div class="mt-0.5">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
-                        </svg>
+                        <x-heroicon-o-information-circle class="w-5 h-5 text-gray-400" />
                     </div>
                     <div>
                         <p class="font-medium text-gray-800">Tanggal, jam, dan petugas dicatat otomatis.</p>
@@ -144,20 +138,12 @@
                                    shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20
                                    transition active:scale-95 hover:bg-black disabled:opacity-60 relative overflow-hidden">
                         <span class="flex items-center gap-2" wire:loading.remove wire:target="save">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M5 13l4 4L19 7" />
-                            </svg>
+                            <x-heroicon-o-check class="w-4 h-4" />
                             Simpan Data
                         </span>
 
                         <span class="flex items-center gap-2" wire:loading wire:target="save">
-                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4" />
-                                <path class="opacity-75" fill="currentColor"
-                                      d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                            </svg>
+                            <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" />
                             Menyimpan…
                         </span>
                     </button>
@@ -165,10 +151,7 @@
                     @if (session('saved'))
                         <span
                             class="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-medium">
-                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M5 13l4 4L19 7" />
-                            </svg>
+                            <x-heroicon-o-check class="w-3.5 h-3.5" />
                             Tersimpan!
                         </span>
                     @endif

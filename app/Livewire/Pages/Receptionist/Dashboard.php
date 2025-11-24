@@ -21,10 +21,18 @@ class Dashboard extends Component
 
     private function asCarbon(null|Carbon|\DateTimeInterface|string $v): ?Carbon
     {
-        if ($v === null) return null;
-        if ($v instanceof Carbon) return $v->timezone($this->tz);
-        if ($v instanceof \DateTimeInterface) return Carbon::instance($v)->timezone($this->tz);
-        try { return Carbon::parse($v)->timezone($this->tz); } catch (\Throwable) { return null; }
+        if ($v === null)
+            return null;
+        if ($v instanceof Carbon)
+            return $v->timezone($this->tz);
+        if ($v instanceof \DateTimeInterface)
+            return Carbon::instance($v)->timezone($this->tz);
+
+        try {
+            return Carbon::parse($v)->timezone($this->tz);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function fmtDate(null|Carbon|\DateTimeInterface|string $v, string $fmt = 'd M Y'): string
@@ -43,70 +51,109 @@ class Dashboard extends Component
     {
         $companyId = optional(Auth::user())->company_id;
 
-        /** Newest Booking Room (limit 5) */
+        // Range 7 hari terakhir (hari ini + 6 hari ke belakang)
+        $startOfRange = Carbon::now($this->tz)->subDays(6)->startOfDay();
+        $endOfRange = Carbon::now($this->tz)->endOfDay();
+
+        /**
+         * Weekly totals (7 hari terakhir) per modul
+         */
+        $weeklyRoomBookingsCount = BookingRoom::query()
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->whereBetween('created_at', [$startOfRange, $endOfRange])
+            ->count();
+
+        $weeklyVehicleBookingsCount = VehicleBooking::query()
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->whereBetween('created_at', [$startOfRange, $endOfRange])
+            ->count();
+
+        $weeklyGuestsCount = Guestbook::query()
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->whereBetween('created_at', [$startOfRange, $endOfRange])
+            ->count();
+
+        $weeklyDocsCount = Delivery::query()
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->whereBetween('created_at', [$startOfRange, $endOfRange])
+            ->count();
+
+        /**
+         * Newest Booking Room (limit 5)
+         */
         $latestBookingRooms = BookingRoom::query()
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
             ->latest('created_at')
             ->take(5)
             ->get()
             ->map(fn($br) => [
-                'id'      => $br->bookingroom_id,
-                'title'   => $br->meeting_title ?? '—',
+                'id' => $br->bookingroom_id,
+                'title' => $br->meeting_title ?? '—',
                 'room_id' => $br->room_id,
-                'time'    => $this->fmtTime($br->start_time) . ' - ' . $this->fmtTime($br->end_time),
-                'date'    => $this->fmtDate($br->date),
-                'status'  => ucfirst($br->status ?? '—'),
+                'time' => $this->fmtTime($br->start_time) . ' - ' . $this->fmtTime($br->end_time),
+                'date' => $this->fmtDate($br->date),
+                'status' => ucfirst($br->status ?? '—'),
             ]);
 
-        /** Newest Vehicle Bookings (limit 5) */
+        /**
+         * Newest Vehicle Bookings (limit 5)
+         */
         $latestVehicleBookings = VehicleBooking::query()
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
             ->latest('created_at')
             ->take(5)
             ->get()
             ->map(fn($vb) => [
-                'id'       => $vb->vehiclebooking_id,
+                'id' => $vb->vehiclebooking_id,
                 'borrower' => $vb->borrower_name ?? '—',
-                'purpose'  => $vb->purpose ?? '—',
+                'purpose' => $vb->purpose ?? '—',
                 'destination' => $vb->destination ?? '—',
-                'time'     => $this->fmtTime($vb->start_at) . ' - ' . $this->fmtTime($vb->end_at),
-                'status'   => ucfirst($vb->status ?? '—'),
+                'time' => $this->fmtTime($vb->start_at) . ' - ' . $this->fmtTime($vb->end_at),
+                'status' => ucfirst($vb->status ?? '—'),
             ]);
 
-        /** Newest Guestbook Entries (limit 5) */
+        /**
+         * Newest Guestbook Entries (limit 5)
+         */
         $latestGuests = Guestbook::query()
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
             ->latest('created_at')
             ->take(5)
             ->get()
             ->map(fn($g) => [
-                'id'       => $g->guestbook_id,
-                'name'     => $g->name ?? '—',
-                'purpose'  => $g->keperluan ?? '—',
-                'time_in'  => $this->fmtTime($g->jam_in),
-                'date'     => $this->fmtDate($g->date),
+                'id' => $g->guestbook_id,
+                'name' => $g->name ?? '—',
+                'purpose' => $g->keperluan ?? '—',
+                'time_in' => $this->fmtTime($g->jam_in),
+                'date' => $this->fmtDate($g->date),
             ]);
 
-        /** Newest Document / Package Deliveries (limit 5) */
+        /**
+         * Newest Document / Package Deliveries (limit 5)
+         */
         $latestDocs = Delivery::query()
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
             ->latest('created_at')
             ->take(5)
             ->get()
             ->map(fn($d) => [
-                'id'       => $d->delivery_id,
-                'item'     => $d->item_name ?? '—',
-                'type'     => ucfirst($d->type ?? '—'),
-                'status'   => ucfirst($d->status ?? '—'),
-                'direction'=> ucfirst($d->direction ?? '—'),
-                'created'  => $this->fmtDate($d->created_at),
+                'id' => $d->delivery_id,
+                'item' => $d->item_name ?? '—',
+                'type' => ucfirst($d->type ?? '—'),
+                'status' => ucfirst($d->status ?? '—'),
+                'direction' => ucfirst($d->direction ?? '—'),
+                'created' => $this->fmtDate($d->created_at),
             ]);
 
         return view('livewire.pages.receptionist.dashboard', [
-            'latestBookingRooms'   => $latestBookingRooms,
-            'latestVehicleBookings'=> $latestVehicleBookings,
-            'latestGuests'         => $latestGuests,
-            'latestDocs'           => $latestDocs,
+            'latestBookingRooms' => $latestBookingRooms,
+            'latestVehicleBookings' => $latestVehicleBookings,
+            'latestGuests' => $latestGuests,
+            'latestDocs' => $latestDocs,
+            'weeklyRoomBookingsCount' => $weeklyRoomBookingsCount,
+            'weeklyVehicleBookingsCount' => $weeklyVehicleBookingsCount,
+            'weeklyGuestsCount' => $weeklyGuestsCount,
+            'weeklyDocsCount' => $weeklyDocsCount,
         ]);
     }
 }

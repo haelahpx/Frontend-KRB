@@ -34,21 +34,9 @@
     @endphp
 
     <style>
-        :root {
-            color-scheme: light;
-        }
-
-        select,
-        option {
-            color: #111827 !important;
-            background: #ffffff !important;
-            -webkit-text-fill-color: #111827 !important;
-        }
-
-        option:checked {
-            background: #e5e7eb !important;
-            color: #111827 !important;
-        }
+        :root { color-scheme: light; }
+        select, option { color:#111827 !important; background:#ffffff !important; -webkit-text-fill-color:#111827 !important; }
+        option:checked { background:#e5e7eb !important; color:#111827 !important; }
     </style>
 
     <main class="px-4 sm:px-6 py-6 space-y-6">
@@ -72,10 +60,7 @@
                         <button type="button"
                             class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 text-xs font-medium border border-white/30 hover:bg-white/20 md:hidden"
                             wire:click="openFilterModal">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 4h18M4 9h16M6 14h12M9 19h6" />
-                            </svg>
+                            <x-heroicon-o-funnel class="w-4 h-4"/>
                             <span>Filter</span>
                         </button>
                     </div>
@@ -117,19 +102,13 @@
                             @if(!is_null($roomFilterId))
                                 @php $activeRoom = collect($roomsOptions)->firstWhere('id', $roomFilterId); @endphp
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-900 text-white border border-gray-800">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
+                                    <x-heroicon-o-building-office class="w-3.5 h-3.5"/>
                                     <span>Room: {{ $activeRoom['label'] ?? 'Unknown' }}</span>
                                     <button type="button" class="ml-1 hover:text-gray-200" wire:click="clearRoomFilter">×</button>
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-dashed border-gray-300">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 4h18M4 9h16M6 14h12M9 19h6" />
-                                    </svg>
+                                    <x-heroicon-o-funnel class="w-3.5 h-3.5"/>
                                     <span>No room filter</span>
                                 </span>
                             @endif
@@ -161,11 +140,7 @@
                                 <input type="text" class="{{ $input }} pl-9"
                                     placeholder="Cari judul meeting…"
                                     wire:model.debounce.500ms="q">
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
-                                </svg>
+                                <x-heroicon-o-magnifying-glass class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
                             </div>
                         </div>
 
@@ -173,11 +148,7 @@
                             <label class="{{ $label }}">Tanggal</label>
                             <div class="relative">
                                 <input type="date" class="{{ $input }} pl-9" wire:model.live="selectedDate">
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
+                                <x-heroicon-o-calendar class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
                             </div>
                         </div>
 
@@ -250,27 +221,17 @@
                                                     <div class="flex flex-col gap-2 text-[13px] text-gray-600">
                                                         <div class="flex flex-wrap items-center gap-4">
                                                             <span class="flex items-center gap-1.5">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                                </svg>
+                                                                <x-heroicon-o-calendar class="w-4 h-4"/>
                                                                 {{ fmtDate($b->date) }}
                                                             </span>
                                                             <span class="flex items-center gap-1.5">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                </svg>
+                                                                <x-heroicon-o-clock class="w-4 h-4"/>
                                                                 {{ fmtTime($b->start_time) }}–{{ fmtTime($b->end_time) }}
                                                             </span>
 
                                                             @if($isRoomType)
                                                                 <span class="{{ $chip }}">
-                                                                    <svg class="w-3.5 h-3.5 text-gray-500"
-                                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                                    </svg>
+                                                                    <x-heroicon-o-building-office class="w-3.5 h-3.5 text-gray-500"/>
                                                                     <span class="font-medium {{ $b->room?->room_name ? 'text-gray-700' : 'text-rose-600' }}">
                                                                         Room: {{ $b->room?->room_name ?? 'Belum dipilih' }}
                                                                     </span>
@@ -285,10 +246,7 @@
                                                             <div class="flex flex-wrap items-center gap-2">
                                                                 @if($platform)
                                                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                                d="M3 4a2 2 0 012-2h3l2 3h6a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4z" />
-                                                                        </svg>
+                                                                        <x-heroicon-o-folder class="w-3.5 h-3.5"/>
                                                                         <span class="font-medium">{{ $platform }}</span>
                                                                     </span>
                                                                 @endif
@@ -296,10 +254,7 @@
                                                                 @if($meetingUrl)
                                                                     <a href="{{ $meetingUrl }}" target="_blank"
                                                                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gray-900 text-white text-[11px] hover:bg-black">
-                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                                d="M5 12h7m0 0l-3-3m3 3l-3 3m5-9h3a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2v-1" />
-                                                                        </svg>
+                                                                        <x-heroicon-o-link class="w-3.5 h-3.5"/>
                                                                         Join link
                                                                     </a>
                                                                 @endif
@@ -356,9 +311,7 @@
                                                         wire:loading.attr="disabled"
                                                         wire:target="approve"
                                                         class="{{ $btnBlk }}">
-                                                        <svg class="w-3.5 h-3.5 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7" />
-                                                        </svg>
+                                                        <x-heroicon-o-check class="w-3.5 h-3.5 inline-block mr-1"/>
                                                         Approve
                                                     </button>
 
@@ -367,9 +320,7 @@
                                                         wire:loading.attr="disabled"
                                                         wire:target="openReject"
                                                         class="{{ $btnGhost }}">
-                                                        <svg class="w-3.5 h-3.5 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12" />
-                                                        </svg>
+                                                        <x-heroicon-o-x-mark class="w-3.5 h-3.5 inline-block mr-1"/>
                                                         Reject
                                                     </button>
                                                 </div>
@@ -441,27 +392,17 @@
                                                     <div class="flex flex-col gap-2 text-[13px] text-gray-600">
                                                         <div class="flex flex-wrap items-center gap-4">
                                                             <span class="flex items-center gap-1.5">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                                </svg>
+                                                                <x-heroicon-o-calendar class="w-4 h-4"/>
                                                                 {{ fmtDate($b->date) }}
                                                             </span>
                                                             <span class="flex items-center gap-1.5">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                </svg>
+                                                                <x-heroicon-o-clock class="w-4 h-4"/>
                                                                 {{ fmtTime($b->start_time) }}–{{ fmtTime($b->end_time) }}
                                                             </span>
 
                                                             @if($isRoomType)
                                                                 <span class="{{ $chip }}">
-                                                                    <svg class="w-3.5 h-3.5 text-gray-500"
-                                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                                    </svg>
+                                                                    <x-heroicon-o-building-office class="w-3.5 h-3.5 text-gray-500"/>
                                                                     <span class="font-medium text-gray-700">
                                                                         Room: {{ $b->room?->room_name ?? '—' }}
                                                                     </span>
@@ -476,10 +417,7 @@
                                                             <div class="flex flex-wrap items-center gap-2">
                                                                 @if($platform)
                                                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                                d="M3 4a2 2 0 012-2h3l2 3h6a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4z" />
-                                                                        </svg>
+                                                                        <x-heroicon-o-folder class="w-3.5 h-3.5"/>
                                                                         <span class="font-medium">{{ $platform }}</span>
                                                                     </span>
                                                                 @endif
@@ -487,10 +425,7 @@
                                                                 @if($meetingUrl)
                                                                     <a href="{{ $meetingUrl }}" target="_blank"
                                                                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gray-900 text-white text-[11px] hover:bg-black">
-                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                                d="M5 12h7m0 0l-3-3m3 3l-3 3m5-9h3a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2v-1" />
-                                                                        </svg>
+                                                                        <x-heroicon-o-link class="w-3.5 h-3.5"/>
                                                                         Join link
                                                                     </a>
                                                                 @endif
@@ -552,9 +487,7 @@
                                                         wire:loading.attr="disabled"
                                                         wire:target="openReschedule"
                                                         class="px-3 py-2 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600/20 disabled:opacity-60 transition">
-                                                        <svg class="w-3.5 h-3.5 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12" />
-                                                        </svg>
+                                                        <x-heroicon-o-x-mark class="w-3.5 h-3.5 inline-block mr-1"/>
                                                         Cancel
                                                     </button>
                                                 </div>
