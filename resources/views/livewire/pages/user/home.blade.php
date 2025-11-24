@@ -226,95 +226,124 @@
                 @endif
             </div>
 
-            {{-- 2. WIFI ACCESS (Carousel Mode) --}}
-            <div class="lg:col-span-3 relative group overflow-hidden rounded-2xl bg-white border-2 border-zinc-100 shadow-sm hover:border-yellow-400 transition-all"
-                x-data="{ 
+            {{-- 2. WIFI ACCESS (REAL DATABASE & CAROUSEL STYLE) --}}
+            <div class="lg:col-span-3 relative group overflow-hidden rounded-[2rem] bg-white border border-zinc-200 shadow-sm hover:shadow-md transition-all h-full flex flex-col"
+                x-data='{ 
                     active: 0, 
-                    wifis: [
-                        { location: 'Gedung Konservasi', ssid: 'EVENT_5G', pass: 'kebunraya' },
-                        { location: 'Lobby Utama', ssid: 'GUEST_KRB', pass: 'tamu2025' },
-                        { location: 'Ruang Meeting Lt.2', ssid: 'MEETING_ROOM', pass: 'presentasi' },
-                        { location: 'Kantin Staff', ssid: 'KRB_SNACK', pass: 'kopi_pagi' }
-                    ],
-                    next() { this.active = (this.active + 1) % this.wifis.length },
-                    prev() { this.active = (this.active - 1 + this.wifis.length) % this.wifis.length },
-                    copy(text) { navigator.clipboard.writeText(text); alert('Password copied!') }
-                }">
+                    wifis: @json($wifis), 
+                    
+                    next() { 
+                        if (this.wifis.length > 0) {
+                            this.active = (this.active + 1) % this.wifis.length 
+                        }
+                    },
+                    prev() { 
+                        if (this.wifis.length > 0) {
+                            this.active = (this.active - 1 + this.wifis.length) % this.wifis.length 
+                        }
+                    },
+                    copy(text) { 
+                        if(!text) return;
+                        navigator.clipboard.writeText(text); 
+                        let el = document.getElementById("copy-feedback");
+                        el.classList.remove("opacity-0", "translate-y-4");
+                        setTimeout(() => el.classList.add("opacity-0", "translate-y-4"), 2000);
+                    }
+                }'>
+                
+                <div class="p-6 flex flex-col h-full relative">
+                    {{-- Copy Feedback --}}
+                    <div id="copy-feedback" class="absolute top-1/2 left-0 right-0 flex justify-center opacity-0 translate-y-4 transition-all duration-300 pointer-events-none z-20">
+                         <span class="bg-zinc-900 text-white text-xs font-bold px-4 py-2 rounded-full shadow-xl flex items-center gap-2">
+                            <x-heroicon-s-check-circle class="w-4 h-4 text-green-400"/> Copied!
+                         </span>
+                    </div>
 
-                <div class="relative h-full w-full p-6 flex flex-col">
-                    {{-- Header --}}
+                    {{-- Header & Controls (Sejajar di atas) --}}
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex items-center gap-3">
-                            <div
-                                class="p-2 bg-yellow-100 rounded-lg border border-yellow-200 group-hover:bg-yellow-500 group-hover:text-white transition-colors text-yellow-600">
-                                <x-heroicon-o-wifi class="w-6 h-6" />
+                            <div class="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center text-yellow-600 ring-1 ring-yellow-100/50">
+                                <x-heroicon-c-wifi class="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 class="text-lg font-bold text-black leading-none">Wifi</h3>
+                                <h3 class="text-lg font-bold text-zinc-900 leading-none">Wifi</h3>
                                 <p class="text-[10px] font-bold text-zinc-400 uppercase mt-1">Access</p>
                             </div>
                         </div>
-                        {{-- Controls --}}
-                        <div class="flex gap-1">
-                            <button @click="prev()"
-                                class="p-1.5 rounded-full bg-zinc-50 hover:bg-black hover:text-white text-zinc-400 transition border border-zinc-100">
-                                <x-heroicon-s-chevron-left class="w-4 h-4" />
+                        
+                        {{-- Controls (Arrows) --}}
+                        <div class="flex gap-1" x-show="wifis.length > 0">
+                            <button @click="prev()" class="p-1.5 rounded-full bg-white border border-zinc-200 text-zinc-400 hover:border-yellow-400 hover:text-yellow-600 hover:bg-yellow-50 transition shadow-sm">
+                                <x-heroicon-m-chevron-left class="w-4 h-4" />
                             </button>
-                            <button @click="next()"
-                                class="p-1.5 rounded-full bg-zinc-50 hover:bg-black hover:text-white text-zinc-400 transition border border-zinc-100">
-                                <x-heroicon-s-chevron-right class="w-4 h-4" />
+                            <button @click="next()" class="p-1.5 rounded-full bg-white border border-zinc-200 text-zinc-400 hover:border-yellow-400 hover:text-yellow-600 hover:bg-yellow-50 transition shadow-sm">
+                                <x-heroicon-m-chevron-right class="w-4 h-4" />
                             </button>
                         </div>
                     </div>
 
-                    {{-- Content --}}
-                    <div class="flex-1 relative mt-2">
-                        <template x-for="(wifi, index) in wifis" :key="index">
-                            <div x-show="active === index" x-transition:enter="transition ease-out duration-300"
-                                x-transition:enter-start="opacity-0 translate-x-4"
-                                x-transition:enter-end="opacity-100 translate-x-0"
-                                x-transition:leave="transition ease-in duration-300 absolute top-0 left-0 w-full"
-                                x-transition:leave-start="opacity-100 translate-x-0"
-                                x-transition:leave-end="opacity-0 -translate-x-4"
-                                class="w-full flex flex-col justify-center h-full">
+                    {{-- Content Area --}}
+                    <div class="flex-1 relative flex flex-col justify-center">
+                        {{-- Jika Data Ada --}}
+                        <template x-if="wifis.length > 0">
+                            <template x-for="(wifi, index) in wifis" :key="index">
+                                <div x-show="active === index"
+                                    x-transition:enter="transition ease-out duration-300"
+                                    x-transition:enter-start="opacity-0 translate-x-4"
+                                    x-transition:enter-end="opacity-100 translate-x-0"
+                                    x-transition:leave="transition ease-in duration-300 absolute top-0 left-0 w-full"
+                                    x-transition:leave-start="opacity-100 translate-x-0"
+                                    x-transition:leave-end="opacity-0 -translate-x-4"
+                                    class="w-full flex flex-col justify-center h-full">
 
-                                <p
-                                    class="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
-                                    <span x-text="wifi.location"></span>
-                                </p>
+                                    {{-- Lokasi --}}
+                                    <p class="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                                        <span x-text="wifi.location"></span>
+                                    </p>
 
-                                <div class="space-y-3">
-                                    <div
-                                        class="p-3 rounded-lg bg-zinc-50 border border-zinc-200 group-hover:border-yellow-200 transition-colors">
-                                        <p class="text-[10px] font-bold text-zinc-400 uppercase">SSID</p>
-                                        <p class="text-sm font-mono font-bold text-black" x-text="wifi.ssid"></p>
-                                    </div>
-                                    <div
-                                        class="p-3 rounded-lg bg-zinc-50 border border-zinc-200 group-hover:border-yellow-200 transition-colors relative">
-                                        <p class="text-[10px] font-bold text-zinc-400 uppercase">Password</p>
-                                        <div class="flex justify-between items-center">
-                                            <p class="text-sm font-mono font-bold text-black" x-text="wifi.pass"></p>
-                                            <button @click="copy(wifi.pass)"
-                                                class="text-zinc-400 hover:text-yellow-600 transition"
-                                                title="Copy Password">
-                                                <x-heroicon-m-clipboard-document class="w-4 h-4" />
+                                    <div class="space-y-3">
+                                        {{-- SSID --}}
+                                        <div class="p-3 rounded-xl bg-zinc-50 border border-zinc-100 group-hover:border-yellow-200 transition-colors">
+                                            <p class="text-[10px] font-bold text-zinc-400 uppercase mb-0.5">SSID</p>
+                                            <p class="text-sm font-bold text-zinc-900 font-mono tracking-wide" x-text="wifi.ssid"></p>
+                                        </div>
+
+                                        {{-- Password --}}
+                                        <div class="group/pass p-3 rounded-xl bg-zinc-50 border border-zinc-100 group-hover:border-yellow-200 transition-colors flex justify-between items-center cursor-pointer"
+                                             @click="copy(wifi.password)">
+                                            <div>
+                                                <p class="text-[10px] font-bold text-zinc-400 uppercase mb-0.5">Password</p>
+                                                <p class="text-sm font-bold text-zinc-900 font-mono tracking-wide" x-text="wifi.password"></p>
+                                            </div>
+                                            <button class="text-zinc-300 group-hover/pass:text-yellow-600 transition">
+                                                <x-heroicon-s-document-duplicate class="w-4 h-4" />
                                             </button>
                                         </div>
                                     </div>
                                 </div>
+                            </template>
+                        </template>
+
+                        {{-- Jika Data Kosong --}}
+                        <template x-if="wifis.length === 0">
+                             <div class="text-center py-8 border-2 border-dashed border-zinc-100 rounded-xl bg-zinc-50/50">
+                                <x-heroicon-o-signal-slash class="w-8 h-8 text-zinc-300 mx-auto mb-2"/>
+                                <p class="text-xs text-zinc-400 font-medium">No Wifi Configured</p>
                             </div>
                         </template>
                     </div>
 
-                    {{-- Dots --}}
-                    <div class="mt-4 flex justify-center gap-1.5">
+                    {{-- Dots Indicator (Di Bawah) --}}
+                    <div class="mt-auto pt-4 flex justify-center gap-1.5" x-show="wifis.length > 0">
                         <template x-for="(wifi, index) in wifis" :key="index">
-                            <button @click="active = index" class="h-1 rounded-full transition-all duration-300"
+                            <button @click="active = index" 
+                                class="h-1 rounded-full transition-all duration-300"
                                 :class="active === index ? 'w-6 bg-yellow-500' : 'w-1.5 bg-zinc-200 hover:bg-zinc-300'">
                             </button>
                         </template>
                     </div>
+
                 </div>
             </div>
 
@@ -479,16 +508,16 @@
                     </span>
                     <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">
                         Welcome Back, <br>
-                        <span class="text-yellow-400">Team Member</span>
+                        <span class="text-yellow-400">{{ $this->getUserName() }}</span>
                     </h1>
                     <p class="text-zinc-400 max-w-md leading-relaxed mb-8 font-medium">
                         Akses cepat ke semua layanan operasional. Pastikan selalu cek pengumuman terbaru hari ini.
                     </p>
                     <div class="flex gap-4">
-                        <button
+                        <a href="{{ route('profile') }}"
                             class="px-6 py-3 bg-white text-black rounded-lg text-sm font-bold hover:bg-zinc-200 transition uppercase tracking-wider">
                             View Profile
-                        </button>
+                        </a>
                         <button
                             class="px-6 py-3 bg-transparent text-yellow-400 border-2 border-yellow-400 rounded-lg text-sm font-bold hover:bg-yellow-400 hover:text-black transition uppercase tracking-wider">
                             Documentation

@@ -21,7 +21,7 @@
             <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
                 <h2 class="text-lg font-semibold text-gray-900 mb-2">
                     @if($booking)
-                        Upload Photo - Booking #{{ $booking->vehiclebooking_id }}
+                        Upload Photos - Booking #{{ $booking->vehiclebooking_id }}
                     @else
                         Book a Vehicle
                     @endif
@@ -39,25 +39,118 @@
                 @endif
 
                 @if($booking)
-                    {{-- Upload Mode --}}
+                    {{-- Upload Mode (QUEUE SYSTEM) --}}
                     <div class="bg-gray-50 rounded-lg border border-gray-200 p-4 mb-6 text-sm space-y-2">
                         <div class="flex justify-between"><span class="text-gray-500">Booking ID:</span><span class="font-bold">#{{ $booking->vehiclebooking_id }}</span></div>
                         <div class="flex justify-between"><span class="text-gray-500">Vehicle:</span><span class="font-bold">{{ $booking->vehicle->name ?? 'N/A' }}</span></div>
                     </div>
 
                     <form wire:submit.prevent="handlePhotoUpload" enctype="multipart/form-data" class="space-y-5">
-                        @if($booking->status === 'approved')
-                            <div><label class="block text-xs font-bold mb-1">Photo Before (Check-out) *</label><input wire:model="photo_before" type="file" accept="image/*" class="w-full text-sm border border-gray-300 rounded-md p-2"></div>
-                        @elseif($booking->status === 'returned')
-                            <div><label class="block text-xs font-bold mb-1">Photo After (Check-in) *</label><input wire:model="photo_after" type="file" accept="image/*" class="w-full text-sm border border-gray-300 rounded-md p-2"></div>
-                        @endif
-                        <div class="flex gap-3 pt-2">
-                            <a href="{{ route('vehiclestatus') }}" class="px-4 py-2 border rounded-lg text-sm text-gray-700">Cancel</a>
-                            <button type="submit" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm">Upload Photo</button>
+                        
+                        {{-- AREA UPLOAD --}}
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex justify-between items-center mb-3">
+                                <label class="block text-sm font-bold text-gray-900">
+                                    @if($booking->status === 'approved') 
+                                        Foto Check-Out (Awal) 
+                                    @else 
+                                        Foto Check-In (Akhir) 
+                                    @endif
+                                    <span class="text-red-600">*</span>
+                                </label>
+                                <span class="text-[10px] font-medium bg-white px-2 py-1 rounded border text-gray-600">
+                                    Total Dipilih: {{ count($collected_photos) }}
+                                </span>
+                            </div>
+
+                            {{-- TOMBOL ADD PHOTOS --}}
+                            <div class="mb-4">
+                                <label for="file-queue-input" class="cursor-pointer group flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg hover:bg-white hover:border-gray-400 transition-all">
+                                    <div class="flex flex-col items-center justify-center pt-2 pb-3">
+                                        <svg class="w-6 h-6 mb-1 text-gray-400 group-hover:text-gray-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                        </svg>
+                                        <p class="text-xs text-gray-500 group-hover:text-gray-700 text-center">
+                                            <span class="font-bold">Klik untuk tambah foto</span><br>
+                                            (Bisa pilih satu-satu atau sekaligus)
+                                        </p>
+                                    </div>
+                                    {{-- INPUT HIDDEN: Mapped to temp_photos --}}
+                                    <input id="file-queue-input" type="file" wire:model="temp_photos" multiple accept="image/*" class="hidden" />
+                                </label>
+
+                                {{-- Loading State saat memilih file --}}
+                                <div wire:loading wire:target="temp_photos" class="w-full text-center mt-2">
+                                    <span class="text-xs text-blue-600 font-medium animate-pulse">Memproses gambar...</span>
+                                </div>
+
+                                @error('temp_photos.*') <span class="text-xs text-red-600 block mt-1">{{ $message }}</span> @enderror
+                                @error('collected_photos') <span class="text-xs text-red-600 block mt-1">{{ $message }}</span> @enderror
+                            </div>
+
+                            {{-- GALLERY PREVIEW GRID --}}
+                            @if(!empty($collected_photos))
+                                <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                    @foreach($collected_photos as $index => $photo)
+                                        <div class="relative group aspect-square bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                                            {{-- Image --}}
+                                            @php
+                                                $tempUrl = null;
+                                                try {
+                                                    $tempUrl = $photo->temporaryUrl();
+                                                } catch (\Exception $e) {
+                                                    // Silent error
+                                                }
+                                            @endphp
+
+                                            @if($tempUrl)
+                                                <img src="{{ $tempUrl }}" class="w-full h-full object-cover">
+                                            @else
+                                                <div class="flex items-center justify-center h-full bg-gray-100 text-[10px] text-red-500">
+                                                    Error Loading
+                                                </div>
+                                            @endif
+                                            
+                                            {{-- Remove Button (X) --}}
+                                            <button type="button" wire:click="removePhoto({{ $index }})" 
+                                                class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 transition-colors z-10"
+                                                title="Hapus foto ini">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="text-center py-4 bg-white border rounded-lg text-gray-400 text-xs italic">
+                                    Belum ada foto yang ditambahkan.
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="flex gap-3 pt-2 justify-end">
+                            <a href="{{ route('vehiclestatus') }}" class="px-4 py-2 border rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</a>
+                            
+                            <button type="submit" 
+                                class="bg-gray-900 text-white px-6 py-2 rounded-lg text-sm hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                @if(empty($collected_photos)) disabled @endif>
+                                
+                                <span wire:loading.remove wire:target="handlePhotoUpload">
+                                    Upload {{ count($collected_photos) }} Foto
+                                </span>
+                                <span wire:loading wire:target="handlePhotoUpload" class="flex items-center gap-2">
+                                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Uploading...
+                                </span>
+                            </button>
                         </div>
                     </form>
                 @else
-                    {{-- Create Mode --}}
+                    {{-- Create Mode Form --}}
                     <form wire:submit.prevent="submitBooking" class="space-y-5">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {{-- Name --}}

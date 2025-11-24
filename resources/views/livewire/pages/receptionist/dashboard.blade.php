@@ -5,7 +5,9 @@
             {{-- Greeting --}}
             <div class="rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white p-6 shadow-2xl">
                 <h2 class="text-lg font-semibold">Selamat Datang di Dashboard Receptionist</h2>
-                <p class="text-sm text-gray-300">Berikut 5 data terbaru dari setiap modul</p>
+                <p class="text-sm text-gray-300">
+                    Berikut total data 7 hari terakhir dari setiap modul
+                </p>
             </div>
 
             {{-- Statistics Cards --}}
@@ -14,15 +16,14 @@
                 <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-600 mb-1">Room Bookings</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ count($latestBookingRooms) }}</p>
+                            <p class="text-sm text-gray-600 mb-1">Room Bookings (7 hari)</p>
+                            <p class="text-2xl font-bold text-gray-900">
+                                {{ $weeklyRoomBookingsCount }}
+                            </p>
                             <p class="text-xs text-green-600 mt-1">+12% vs last week</p>
                         </div>
                         <div class="p-3 bg-gray-100 rounded-lg">
-                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
+                            <x-heroicon-o-calendar-days class="w-6 h-6 text-gray-700" />
                         </div>
                     </div>
                 </div>
@@ -31,15 +32,14 @@
                 <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-600 mb-1">Vehicle Bookings</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ count($latestVehicleBookings) }}</p>
+                            <p class="text-sm text-gray-600 mb-1">Vehicle Bookings (7 hari)</p>
+                            <p class="text-2xl font-bold text-gray-900">
+                                {{ $weeklyVehicleBookingsCount }}
+                            </p>
                             <p class="text-xs text-green-600 mt-1">+8% vs last week</p>
                         </div>
                         <div class="p-3 bg-gray-100 rounded-lg">
-                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
+                            <x-heroicon-o-bolt class="w-6 h-6 text-gray-700" />
                         </div>
                     </div>
                 </div>
@@ -48,15 +48,14 @@
                 <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-600 mb-1">Guest Visits</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ count($latestGuests) }}</p>
+                            <p class="text-sm text-gray-600 mb-1">Guest Visits (7 hari)</p>
+                            <p class="text-2xl font-bold text-gray-900">
+                                {{ $weeklyGuestsCount }}
+                            </p>
                             <p class="text-xs text-green-600 mt-1">+15% vs last week</p>
                         </div>
                         <div class="p-3 bg-gray-100 rounded-lg">
-                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
+                            <x-heroicon-o-user-group class="w-6 h-6 text-gray-700" />
                         </div>
                     </div>
                 </div>
@@ -65,15 +64,14 @@
                 <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-600 mb-1">Documents/Packages</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ count($latestDocs) }}</p>
+                            <p class="text-sm text-gray-600 mb-1">Documents/Packages (7 hari)</p>
+                            <p class="text-2xl font-bold text-gray-900">
+                                {{ $weeklyDocsCount }}
+                            </p>
                             <p class="text-xs text-green-600 mt-1">+5% vs last week</p>
                         </div>
                         <div class="p-3 bg-gray-100 rounded-lg">
-                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                            </svg>
+                            <x-heroicon-o-archive-box class="w-6 h-6 text-gray-700" />
                         </div>
                     </div>
                 </div>
@@ -85,7 +83,6 @@
                 <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-base font-semibold text-gray-900 flex items-center gap-2">
-                            {{-- pakai heroicon kalau ada, kalau tidak bisa ganti svg biasa --}}
                             <x-heroicon-o-chart-bar class="h-5 w-5 text-gray-900" />
                             Weekly Activity – Room / Vehicle / DocPac / Guestbook
                         </h3>
@@ -139,7 +136,6 @@
                 </div>
             </div>
 
-        
         </div>
     </main>
 

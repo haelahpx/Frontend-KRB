@@ -43,10 +43,7 @@ $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center 
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <x-heroicon-o-clock class="w-6 h-6 text-white"/>
                         </div>
                         <div>
                             <h2 class="text-lg sm:text-xl font-semibold">Booking History</h2>
@@ -69,10 +66,7 @@ $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center 
                         <button type="button"
                                 class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 text-xs font-medium border border-white/30 hover:bg-white/20 md:hidden"
                                 wire:click="openFilterModal">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M3 4h18M4 9h16M6 14h12M9 19h6" />
-                            </svg>
+                            <x-heroicon-o-funnel class="w-4 h-4"/>
                             <span>Filter</span>
                         </button>
                     </div>
@@ -121,19 +115,13 @@ $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center 
                             @if(!is_null($roomFilterId))
                                 @php $activeRoom = collect($roomsOptions)->firstWhere('id', $roomFilterId); @endphp
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-900 text-white border border-gray-800">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
+                                    <x-heroicon-o-building-office class="w-3.5 h-3.5"/>
                                     <span>Room: {{ $activeRoom['label'] ?? 'Unknown' }}</span>
                                     <button type="button" class="ml-1 hover:text-gray-200" wire:click="clearRoomFilter">×</button>
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-dashed border-gray-300">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M3 4h18M4 9h16M6 14h12M9 19h6" />
-                                    </svg>
+                                    <x-heroicon-o-funnel class="w-3.5 h-3.5"/>
                                     <span>No room filter</span>
                                 </span>
                             @endif
@@ -178,11 +166,7 @@ $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center 
                                        class="{{ $input }} pl-9"
                                        placeholder="Cari judul…"
                                        wire:model.live="q">
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
-                                </svg>
+                                <x-heroicon-o-magnifying-glass class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
                             </div>
                         </div>
 
@@ -192,11 +176,7 @@ $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center 
                                 <input type="date"
                                        class="{{ $input }} pl-9"
                                        wire:model.live="selectedDate">
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
+                                <x-heroicon-o-calendar class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
                             </div>
                         </div>
 
@@ -253,123 +233,107 @@ $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center 
                                         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                                             {{-- LEFT: info --}}
                                             <div class="flex items-start gap-3 flex-1 min-w-0">
-                                                <div class="{{ $icoAvatar }}">{{ $avatarChar }}</div>
-                                                <div class="min-w-0 flex-1">
-                                                    <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                                        <h4 class="font-semibold text-gray-900 text-base truncate">
-                                                            {{ $row->meeting_title ?? '—' }}
-                                                        </h4>
-                                                        <span class="text-[11px] px-2 py-0.5 rounded-full border {{ $isOnline ? 'border-emerald-300 text-emerald-700 bg-emerald-50' : 'border-blue-300 text-blue-700 bg-blue-50' }}">
-                                                            {{ $isOnline ? 'Online Meeting' : 'Offline Room' }}
-                                                        </span>
-                                                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-green-100 text-green-800">Done</span>
-                                                        @if($row->deleted_at)
-                                                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Deleted</span>
-                                                        @endif
-                                                    </div>
+                            <div class="{{ $icoAvatar }}">{{ $avatarChar }}</div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                                    <h4 class="font-semibold text-gray-900 text-base truncate">
+                                        {{ $row->meeting_title ?? '—' }}
+                                    </h4>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full border {{ $isOnline ? 'border-emerald-300 text-emerald-700 bg-emerald-50' : 'border-blue-300 text-blue-700 bg-blue-50' }}">
+                                        {{ $isOnline ? 'Online Meeting' : 'Offline Room' }}
+                                    </span>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-green-100 text-green-800">Done</span>
+                                    @if($row->deleted_at)
+                                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Deleted</span>
+                                    @endif
+                                </div>
 
-                                                    <div class="flex flex-col gap-2 text-[13px] text-gray-600">
-                                                        <div class="flex flex-wrap items-center gap-4">
-                                                            <span class="flex items-center gap-1.5">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                                </svg>
-                                                                {{ fmtDate($row->date) }}
-                                                            </span>
+                                <div class="flex flex-col gap-2 text-[13px] text-gray-600">
+                                    <div class="flex flex-wrap items-center gap-4">
+                                        <span class="flex items-center gap-1.5">
+                                            <x-heroicon-o-calendar class="w-4 h-4"/>
+                                            {{ fmtDate($row->date) }}
+                                        </span>
 
-                                                            <span class="flex items-center gap-1.5">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                </svg>
-                                                                {{ fmtTime($row->start_time) }}–{{ fmtTime($row->end_time) }}
-                                                            </span>
+                                        <span class="flex items-center gap-1.5">
+                                            <x-heroicon-o-clock class="w-4 h-4"/>
+                                            {{ fmtTime($row->start_time) }}–{{ fmtTime($row->end_time) }}
+                                        </span>
 
-                                                            @if($isRoomType)
-                                                                <span class="{{ $chip }}">
-                                                                    <svg class="w-3.5 h-3.5 text-gray-500"
-                                                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                                    </svg>
-                                                                    <span class="font-medium text-gray-700">
-                                                                        Room: {{ optional($row->room)->room_name ?? '—' }}
-                                                                    </span>
-                                                                </span>
-                                                            @endif
-                                                        </div>
-                                                    </div>
+                                        @if($isRoomType)
+                                            <span class="{{ $chip }}">
+                                                <x-heroicon-o-building-office class="w-3.5 h-3.5 text-gray-500"/>
+                                                <span class="font-medium text-gray-700">
+                                                    Room: {{ optional($row->room)->room_name ?? '—' }}
+                                                </span>
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
 
-                                                    {{-- ONLINE extras --}}
-                                                    @if($isOnline && ($platform || $meetingUrl || $meetingCode || $meetingPassword))
-                                                        <div class="mt-2 space-y-1 text-[12px]">
-                                                            <div class="flex flex-wrap items-center gap-2">
-                                                                @if($platform)
-                                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                                  d="M3 4a2 2 0 012-2h3l2 3h6a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4z" />
-                                                                        </svg>
-                                                                        <span class="font-medium">{{ $platform }}</span>
-                                                                    </span>
-                                                                @endif
+                                {{-- ONLINE extras --}}
+                                @if($isOnline && ($platform || $meetingUrl || $meetingCode || $meetingPassword))
+                                    <div class="mt-2 space-y-1 text-[12px]">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            @if($platform)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                    <x-heroicon-o-folder class="w-3.5 h-3.5"/>
+                                                    <span class="font-medium">{{ $platform }}</span>
+                                                </span>
+                                            @endif
 
-                                                                @if($meetingUrl)
-                                                                    <a href="{{ $meetingUrl }}" target="_blank"
-                                                                       class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gray-900 text-white text-[11px] hover:bg-black">
-                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                                  d="M5 12h7m0 0l-3-3m3 3l-3 3m5-9h3a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2v-1" />
-                                                                        </svg>
-                                                                        Join link
-                                                                    </a>
-                                                                @endif
-                                                            </div>
+                                            @if($meetingUrl)
+                                                <a href="{{ $meetingUrl }}" target="_blank"
+                                                   class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gray-900 text-white text-[11px] hover:bg-black">
+                                                    <x-heroicon-o-link class="w-3.5 h-3.5"/>
+                                                    Join link
+                                                </a>
+                                            @endif
+                                        </div>
 
-                                                            @if($meetingCode || $meetingPassword)
-                                                                <div class="flex flex-wrap items-center gap-2">
-                                                                    @if($meetingCode)
-                                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                                                                            Code:
-                                                                            <span class="font-mono text-[11px]">{{ $meetingCode }}</span>
-                                                                        </span>
-                                                                    @endif
-                                                                    @if($meetingPassword)
-                                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                                                                            Password:
-                                                                            <span class="font-mono text-[11px]">{{ $meetingPassword }}</span>
-                                                                        </span>
-                                                                    @endif
-                                                                </div>
-                                                            @endif
-                                                        </div>
-                                                    @endif
+                                        @if($meetingCode || $meetingPassword)
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                @if($meetingCode)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                                                        Code:
+                                                        <span class="font-mono text-[11px]">{{ $meetingCode }}</span>
+                                                    </span>
+                                                @endif
+                                                @if($meetingPassword)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                                                        Password:
+                                                        <span class="font-mono text-[11px]">{{ $meetingPassword }}</span>
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
 
-                                                    {{-- REQUESTER --}}
-                                                    @if($requesterName || $requesterDept)
-                                                        <div class="mt-2 text-[12px] text-gray-600 flex flex-wrap items-center gap-2">
-                                                            @if($requesterName)
-                                                                <span>
-                                                                    Requested by
-                                                                    <span class="font-medium text-gray-800">{{ $requesterName }}</span>
-                                                                </span>
-                                                            @endif
-                                                            @if($requesterDept)
-                                                                <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                                                                    {{ $requesterDept }}
-                                                                </span>
-                                                            @endif
-                                                        </div>
-                                                    @endif
+                                {{-- REQUESTER --}}
+                                @if($requesterName || $requesterDept)
+                                    <div class="mt-2 text-[12px] text-gray-600 flex flex-wrap items-center gap-2">
+                                        @if($requesterName)
+                                            <span>
+                                                Requested by
+                                                <span class="font-medium text-gray-800">{{ $requesterName }}</span>
+                                            </span>
+                                        @endif
+                                        @if($requesterDept)
+                                            <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                                                {{ $requesterDept }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
 
-                                                    {{-- Notes / other info (optional) --}}
-                                                    @if($row->notes)
-                                                        <div class="mt-2 text-[12px] text-gray-600">
-                                                            <span class="font-medium">Notes:</span> {{ $row->notes }}
-                                                        </div>
-                                                    @endif
-                                                </div>
+                                {{-- Notes / other info (optional) --}}
+                                @if($row->notes)
+                                    <div class="mt-2 text-[12px] text-gray-600">
+                                        <span class="font-medium">Notes:</span> {{ $row->notes }}
+                                    </div>
+                                @endif
+                            </div>
                                             </div>
 
                                             {{-- RIGHT: actions --}}
@@ -471,28 +435,18 @@ $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center 
                                                     <div class="flex flex-col gap-2 text-[13px] text-gray-600">
                                                         <div class="flex flex-wrap items-center gap-4">
                                                             <span class="flex items-center gap-1.5">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                                </svg>
+                                                                <x-heroicon-o-calendar class="w-4 h-4"/>
                                                                 {{ fmtDate($row->date) }}
                                                             </span>
 
                                                             <span class="flex items-center gap-1.5">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                </svg>
+                                                                <x-heroicon-o-clock class="w-4 h-4"/>
                                                                 {{ fmtTime($row->start_time) }}–{{ fmtTime($row->end_time) }}
                                                             </span>
 
                                                             @if($isRoomType)
                                                                 <span class="{{ $chip }}">
-                                                                    <svg class="w-3.5 h-3.5 text-gray-500"
-                                                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                                    </svg>
+                                                                    <x-heroicon-o-building-office class="w-3.5 h-3.5 text-gray-500"/>
                                                                     <span class="font-medium text-gray-700">
                                                                         Room: {{ optional($row->room)->room_name ?? '—' }}
                                                                     </span>
@@ -507,10 +461,7 @@ $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center 
                                                             <div class="flex flex-wrap items-center gap-2">
                                                                 @if($platform)
                                                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                                  d="M3 4a2 2 0 012-2h3l2 3h6a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4z" />
-                                                                        </svg>
+                                                                        <x-heroicon-o-folder class="w-3.5 h-3.5"/>
                                                                         <span class="font-medium">{{ $platform }}</span>
                                                                     </span>
                                                                 @endif
@@ -518,10 +469,7 @@ $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center 
                                                                 @if($meetingUrl)
                                                                     <a href="{{ $meetingUrl }}" target="_blank"
                                                                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gray-900 text-white text-[11px] hover:bg-black">
-                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                                  d="M5 12h7m0 0l-3-3m3 3l-3 3m5-9h3a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2v-1" />
-                                                                        </svg>
+                                                                        <x-heroicon-o-link class="w-3.5 h-3.5"/>
                                                                         Join link
                                                                     </a>
                                                                 @endif
@@ -546,7 +494,6 @@ $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center 
                                                         </div>
                                                     @endif
 
-                                                    {{-- REQUESTER --}}
                                                     @if($requesterName || $requesterDept)
                                                         <div class="mt-2 text-[12px] text-gray-600 flex flex-wrap items-center gap-2">
                                                             @if($requesterName)
