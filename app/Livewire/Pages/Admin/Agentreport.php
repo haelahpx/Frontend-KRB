@@ -244,4 +244,14 @@ class Agentreport extends Component
         }, 'Agent Report - ' . now()->locale('id')->translatedFormat('d F Y') . '.pdf');
     }
 
+    public function openToast($userId)
+    {
+        $this->openAgent = $userId;
+    }
+
+    public function closeToast()
+    {
+        $this->openAgent = null;
+    }
+
 }

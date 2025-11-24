@@ -3,6 +3,24 @@
     @php
         // reusable design classes
         $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
+
+        // Base chip style (no explicit bg/text colors here)
+        $chip = 'inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium ring-1 ring-inset';
+
+        // Priority colors
+        $priorityColors = [
+            'Low' => 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+            'Medium' => 'bg-amber-50 text-amber-700 ring-amber-200',
+            'High' => 'bg-rose-50 text-rose-700 ring-rose-200',
+        ];
+
+        // Status colors
+        $statusColors = [
+            'Open' => 'bg-sky-50 text-sky-700 ring-sky-200',
+            'In Progress' => 'bg-indigo-50 text-indigo-700 ring-indigo-200',
+            'Resolved' => 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+            'Closed' => 'bg-gray-100 text-gray-700 ring-gray-200',
+        ];
     @endphp
 
     <script>
@@ -20,11 +38,13 @@
     <main class="px-4 sm:px-6 py-6 space-y-5">
 
         {{-- Header --}}
-        <header class="rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-xl px-5 py-4 flex items-center gap-4">
-            <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 shrink-0">
+        <header
+            class="rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-xl px-5 py-4 flex items-center gap-4">
+            <div
+                class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 6V4m0 16v-2m0-10v2m0 6v2M6 12H4m16 0h-2m-10 0h2m6 0h2M9 17l-2 2M15 7l2-2M7 7l-2-2M17 17l2 2" />
+                        d="M12 6V4m0 16v-2m0-10v2m0 6v2M6 12H4m16 0h-2m-10 0h2m6 0h2M9 17l-2 2M15 7l2-2M7 7l-2-2M17 17l2 2" />
                 </svg>
             </div>
             <div class="min-w-0">
@@ -87,14 +107,13 @@
 
                                 {{-- Agent name + total --}}
                                 <div class="flex items-center justify-between">
-                                    <span class="font-medium">{{ $agent->full_name }}</span>
-                                    <span class="text-sm font-semibold">{{ $total }} tickets</span>
+                                    <span class="text-gray-900 font-medium">{{ $agent->full_name }}</span>
+                                    <span class="text-sm text-gray-900 font-semibold">{{ $total }} tickets</span>
                                 </div>
 
                                 {{-- Total bar --}}
                                 <div class="w-full h-4 bg-gray-200 rounded overflow-hidden">
-                                    <div x-data="{ width: {{ $barWidth }} }"
-                                        :style="'width: ' + width + '%'"
+                                    <div x-data="{ width: {{ $barWidth }} }" :style="'width: ' + width + '%'"
                                         class="bg-gradient-to-r from-gray-900 to-black h-4">
                                     </div>
                                 </div>
@@ -112,11 +131,13 @@
                                         @endphp
 
                                         @if ($ok > 0)
-                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
+                                            <span
+                                                class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
                                         @endif
 
                                         @if ($exp > 0)
-                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
+                                            <span
+                                                class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
                                         @endif
                                     </div>
 
@@ -130,11 +151,13 @@
                                         @endphp
 
                                         @if ($ok > 0)
-                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
+                                            <span
+                                                class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
                                         @endif
 
                                         @if ($exp > 0)
-                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
+                                            <span
+                                                class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
                                         @endif
                                     </div>
 
@@ -148,11 +171,13 @@
                                         @endphp
 
                                         @if ($ok > 0)
-                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
+                                            <span
+                                                class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
                                         @endif
 
                                         @if ($exp > 0)
-                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
+                                            <span
+                                                class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
                                         @endif
                                     </div>
 
@@ -166,11 +191,13 @@
                                         @endphp
 
                                         @if ($ok > 0)
-                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
+                                            <span
+                                                class="px-1.5 py-0.5 ml-1 text-white rounded bg-green-600 text-[10px]">{{ $ok }}</span>
                                         @endif
 
                                         @if ($exp > 0)
-                                            <span class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
+                                            <span
+                                                class="px-1.5 py-0.5 ml-1 text-white rounded bg-red-600 text-[10px]">{{ $exp }}</span>
                                         @endif
                                     </div>
                                 </div>
@@ -181,7 +208,7 @@
             </div>
         </section>
 
-        {{-- Main Agent Card --}}
+        {{-- Main Agent Card (GRID) --}}
         <section class="{{ $card }}">
 
             {{-- Header --}}
@@ -193,20 +220,14 @@
                 <div class="flex items-center gap-3">
 
                     {{-- Search --}}
-                    <input type="text"
-                        wire:model.live.debounce.100ms="search"
-                        placeholder="Search agent by name or ID..."
-                        class="w-64 rounded-lg bg-white/50 border border-gray-200 px-3 py-2
+                    <input type="text" wire:model.live.debounce.100ms="search"
+                        placeholder="Search agent by name or ID..." class="w-64 rounded-lg bg-white/50 border border-gray-200 px-3 py-2 text-gray-500 text-sm
                                 focus:ring-2 focus:ring-gray-900/10 focus:outline-none">
 
                     {{-- Download Button --}}
-                    <button
-                        wire:click="downloadReport"
-                        wire:loading.attr="disabled"
-                        wire:target="downloadReport"
+                    <button wire:click="downloadReport" wire:loading.attr="disabled" wire:target="downloadReport"
                         class="px-3 py-2 rounded-lg bg-gradient-to-r from-gray-900 to-black text-white text-sm shadow cursor-pointer
-                            disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:text-gray-200"
-                    >
+                            disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:text-gray-200">
                         Download Report
                     </button>
                 </div>
@@ -215,7 +236,7 @@
             {{-- Search Chip --}}
             @if(!empty($search))
                 <div class="px-5 py-2 bg-white border-b border-gray-200 flex items-center gap-2">
-                    <span class="text-sm">
+                    <span class="text-sm text-gray-800">
                         Search:
                         <span class="px-2 py-1 bg-gray-100 rounded-lg text-gray-800 font-medium">
                             {{ $search }}
@@ -224,139 +245,42 @@
                 </div>
             @endif
 
-            {{-- Agent List --}}
-            <div class="divide-y divide-gray-100">
+            {{-- Agent Grid List --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-5 py-4">
                 @forelse ($agents as $agent)
-                    @php
-                        $isOpen = (string) $openAgent === (string) $agent->user_id;
-                    @endphp
+                    <div wire:key="agent-{{ $agent->user_id }}"
+                        class="cursor-pointer rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition p-4"
+                        wire:click="openToast('{{ $agent->user_id }}')" role="button" tabindex="0"
+                        onkeypress="if(event.key === 'Enter') { @this.openToast('{{ $agent->user_id }}') }">
 
-                    <div class="px-5 py-4" wire:key="agent-{{ $agent->user_id }}">
-                        <div class="space-y-2">
-
-                            {{-- Compact Bar --}}
-                            <div wire:click="toggleAgent('{{ $agent->user_id }}')"
-                                 class="flex items-center justify-between gap-3 rounded-lg px-3 py-2 cursor-pointer transition-shadow duration-150
-                                    {{ $isOpen ? 'bg-gradient-to-r from-gray-900 to-black text-white shadow-lg' : 'bg-white shadow-sm hover:shadow-md' }}">
-
-                                {{-- LEFT SIDE --}}
-                                <div class="flex items-center gap-3 truncate min-w-0">
-
-                                    {{-- Slim White Agent ID Box --}}
-                                    <div class="flex-shrink-0 px-3 py-1 bg-white rounded shadow text-gray-700 font-semibold text-sm">
-                                        {{ $loop->iteration }}
-                                    </div>
-
-                                    {{-- Agent Name --}}
-                                    <div class="truncate font-semibold text-sm max-w-xl">
-                                        {{ $agent->full_name }}
-                                        <span class="{{ $isOpen ? 'text-white/90' : 'text-gray-500' }} text-xs">
-                                            - {{ $agent->company_name ?? '-' }} | {{ $agent->department_name ?? '-' }}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {{-- RIGHT SIDE: Arrow --}}
-                                <div class="flex items-center gap-3 flex-shrink-0">
-                                    <div class="ml-2 transform transition-transform duration-200 {{ $isOpen ? 'rotate-90' : '' }}">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </div>
-                                </div>
-
+                        <div class="flex items-center gap-3">
+                            {{-- Agent Avatar Icon --}}
+                            <div
+                                class="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold text-lg">
+                                {{ strtoupper(substr($agent->full_name, 0, 1)) }}
                             </div>
 
-                            {{-- Expanded Section: Tickets for this Agent --}}
-                            @if ($isOpen)
-                                @if (!empty($agent->tickets) && $agent->tickets->isNotEmpty())
-                                    <div class="mt-2 space-y-2">
-                                        @foreach ($agent->tickets as $ticket)
-                                            @php
-                                                // SLA data is already calculated in PHP backend
-                                                $slaData = $ticket->sla_state ?? [];
-                                                $slaState = $slaData['state'] ?? null;
-                                                $slaLabel = $slaData['label'] ?? null;
-                                                $slaClasses = $slaData['classes'] ?? '';
-                                                $hoursElapsed = $slaData['hours_elapsed'] ?? 0;
-                                                $createdAt = $ticket->created_at;
-                                                $updatedAt = $ticket->updated_at;
-                                                $ticketStatus = ucwords(strtolower(str_replace('_', ' ', trim((string) ($ticket->status ?? '')))));
-                                                $ticketPriority = ucwords(strtolower(str_replace('_', ' ', trim((string) ($ticket->priority ?? '')))));
-                                            @endphp
+                            <div class="min-w-0">
+                                <p class="font-semibold text-sm text-gray-900 truncate">{{ $agent->full_name }}</p>
+                                <p class="text-xs text-gray-500 truncate">
+                                    {{ $agent->company_name ?? '-' }} • {{ $agent->department_name ?? '-' }}
+                                </p>
+                            </div>
+                        </div>
 
-                                            <a href="{{ url('/admin/tickets/' . $ticket->ulid) }}" class="block">
-                                                <div class="px-3 py-2 bg-white rounded shadow flex flex-wrap items-center justify-between text-sm text-gray-700 hover:bg-gray-100 transition">
+                        <div class="mt-3 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">Assigned Tickets</p>
+                                <div class="text-xl font-bold text-gray-900">
+                                    {{ $agent->tickets_count ?? ($agent->tickets?->count() ?? 0) }}
+                                </div>
+                            </div>
 
-                                                    {{-- Left side: Ticket ID, Subject, Status, Priority --}}
-                                                    <div class="flex items-center flex-wrap gap-2 min-w-0">
-                                                        <span>
-                                                            <div class="flex-shrink-0 px-3 py-1 bg-white rounded shadow text-gray-700 text-sm font-mono font-semibold">
-                                                                #{{ $ticket->ticket_id }}
-                                                            </div>
-                                                        </span>
-
-                                                        <span class="font-semibold truncate max-w-[40ch]">{{ $ticket->subject ?? 'No Subject' }}</span>
-
-                                                        {{-- Status Badge --}}
-                                                        @if(!empty($ticket->status))
-                                                            <span class="px-1.5 py-0.5 text-[10px] text-white font-semibold rounded bg-gradient-to-r from-gray-900 to-black">
-                                                                {{ $ticketStatus }}
-                                                            </span>
-                                                        @endif
-
-                                                        {{-- Priority Badge --}}
-                                                        @if(!empty($ticket->priority))
-                                                            <span class="px-1.5 py-0.5 text-[10px] text-white font-semibold rounded bg-gradient-to-r from-gray-900 to-black">
-                                                                {{ $ticketPriority }}
-                                                            </span>
-                                                        @endif
-                                                    </div>
-
-                                                    {{-- Right side: Created date + Time elapsed + SLA (inline) --}}
-                                                    <div class="ml-auto flex flex-col items-end gap-1">
-                                                        {{-- Time elapsed + SLA in one row --}}
-                                                        <div class="flex items-center gap-2">
-                                                            {{-- Time Elapsed Box --}}
-                                                            <div class="px-2 py-0.5 bg-white rounded-lg shadow text-[10px] text-gray-700 border border-gray-100">
-                                                                @php
-                                                                    $h = $hoursElapsed ?? 0;
-                                                                @endphp
-                                                                @if ($h > 0)
-                                                                    @if ($h < 1)
-                                                                        Updated: {{ floor($h * 60) }}m ago
-                                                                    @elseif ($h < 24)
-                                                                        Updated: {{ floor($h) }}h ago
-                                                                    @elseif ($h < 24 * 30)
-                                                                        Updated: {{ floor($h / 24) }}d ago
-                                                                    @elseif ($h < 24 * 30 * 12)
-                                                                        Updated: {{ floor($h / (24 * 30)) }}mo ago
-                                                                    @else
-                                                                        Updated: {{ floor($h / (24 * 365)) }}y ago
-                                                                    @endif
-                                                                @endif
-                                                            </div>
-
-                                                            {{-- SLA Solid Gradient Badge (no icon) --}}
-                                                            @if($slaState)
-                                                                <div class="px-2 py-0.5 rounded-md text-[10px] font-semibold {{ $slaClasses }}">
-                                                                    {{ $slaLabel }}
-                                                                </div>
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </a>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <div class="mt-2 p-2 text-gray-500 text-sm">
-                                        No tickets assigned to this agent.
-                                    </div>
-                                @endif
-                            @endif
-
+                            {{-- Quick status summary --}}
+                            <div class="text-right text-xs text-gray-500">
+                                <div>Open: {{ $allTicketStatsDetailed[$agent->user_id]['Open'] ?? 0 }}</div>
+                                <div>In Progress: {{ $allTicketStatsDetailed[$agent->user_id]['IN_PROGRESS'] ?? 0 }}</div>
+                            </div>
                         </div>
                     </div>
                 @empty
@@ -376,6 +300,121 @@
             @endif
 
         </section>
+
+        {{-- Center Popup Modal --}}
+        @if($openAgent)
+            @php
+                $selectedAgent = $agents->where('user_id', $openAgent)->first() ?? null;
+            @endphp
+
+            @if($selectedAgent)
+                <div class="fixed inset-0 z-[999] flex items-center justify-center" aria-modal="true" role="dialog">
+                    {{-- Overlay --}}
+                    <div class="absolute inset-0 bg-black/50" wire:click="closeToast" aria-hidden="true"></div>
+
+                    {{-- Modal container --}}
+                    <div class="relative w-[95%] max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+
+                        {{-- Modal header --}}
+                        <div class="px-4 py-3 bg-gray-900 text-white flex items-center justify-between">
+                            <div class="min-w-0">
+                                <h4 class="text-sm font-semibold truncate">Tickets for {{ $selectedAgent->full_name }}</h4>
+                                <p class="text-xs text-white/80 truncate">Showing assigned tickets and SLA status</p>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button wire:click="closeToast" class="p-2 rounded-md hover:bg-white/5">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Modal body: tickets --}}
+                        <div class="max-h-[60vh] overflow-auto p-4 space-y-3 bg-gray-50">
+
+                            @if(!empty($selectedAgent->tickets) && $selectedAgent->tickets->isNotEmpty())
+                                @foreach($selectedAgent->tickets as $ticket)
+                                    @php
+                                        $slaData = $ticket->sla_state ?? [];
+                                        $slaState = $slaData['state'] ?? null;
+                                        $slaLabel = $slaData['label'] ?? null;
+                                        $slaClasses = $slaData['classes'] ?? '';
+                                        $hoursElapsed = $slaData['hours_elapsed'] ?? 0;
+                                        $ticketStatus = ucwords(strtolower(str_replace('_', ' ', trim((string) ($ticket->status ?? '')))));
+                                        $ticketPriority = ucwords(strtolower(str_replace('_', ' ', trim((string) ($ticket->priority ?? '')))));
+                                    @endphp
+
+                                    <a href="{{ url('/admin/tickets/' . $ticket->ulid) }}" class="block">
+                                        <div class="p-3 bg-white rounded-lg border hover:shadow transition">
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div class="min-w-0">
+                                                    <div class="flex items-center gap-2">
+                                                        <div
+                                                            class="flex-shrink-0 px-3 py-1 bg-white rounded shadow text-gray-700 text-sm font-mono font-semibold">
+                                                            #{{ $ticket->ticket_id }}
+                                                        </div>
+
+                                                        <div class="truncate">
+                                                            <div class="font-semibold text-sm text-gray-900 truncate max-w-[40ch]">
+                                                                {{ $ticket->subject ?? 'No Subject' }}</div>
+                                                            <div class="mt-2 flex flex-wrap gap-2 text-[10px]">
+                                                                @if(!empty($ticket->status))
+                                                                    <span 
+                                                                        class="{{ $chip }} {{ $statusColors[$ticketStatus] ?? 'bg-gray-100 text-gray-700 ring-gray-200' }} capitalize">
+                                                                        <span>{{ $ticketStatus }}</span>
+                                                                    </span>
+                                                                @endif
+
+                                                                @if(!empty($ticket->priority))
+                                                                    <span
+                                                                        class="{{ $chip }} {{ $priorityColors[$ticketPriority] ?? 'bg-gray-100 text-gray-700 ring-gray-200' }} capitalize">
+                                                                        <span>{{ $ticketPriority }}</span>
+                                                                    </span>
+                                                                @endif
+
+                                                                @if($slaState)
+                                                                    <span
+                                                                        class="px-2 py-0.5 rounded {{ $slaClasses }} text-[11px] font-semibold">{{ $slaLabel }}</span>
+                                                                @endif
+
+                                                                {{-- Time elapsed --}}
+                                                                @php $h = $hoursElapsed ?? 0; @endphp
+                                                                @if ($h > 0)
+                                                                    <div class="px-2 py-0.5 bg-gray-100 rounded text-[10px] text-gray-700">
+                                                                        @if ($h < 1)
+                                                                            Updated: {{ floor($h * 60) }}m ago
+                                                                        @elseif ($h < 24)
+                                                                            Updated: {{ floor($h) }}h ago
+                                                                        @elseif ($h < 24 * 30)
+                                                                            Updated: {{ floor($h / 24) }}d ago
+                                                                        @elseif ($h < 24 * 30 * 12)
+                                                                            Updated: {{ floor($h / (24 * 30)) }}mo ago
+                                                                        @else
+                                                                            Updated: {{ floor($h / (24 * 365)) }}y ago
+                                                                        @endif
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                @endforeach
+                            @else
+                                <div class="p-4 text-center text-gray-500">No tickets assigned to this agent.</div>
+                            @endif
+
+                        </div>
+
+                    </div>
+                </div>
+            @endif
+        @endif
 
     </main>
 
