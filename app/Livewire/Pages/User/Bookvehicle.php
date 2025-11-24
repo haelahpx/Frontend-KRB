@@ -39,16 +39,16 @@ class Bookvehicle extends Component
     // Booking Mode: 'perday', '24hours', 'custom'
     public $booking_mode = 'perday';
 
-    // File Uploads
-    public $photo_before;
-    public $photo_after;
+    // --- FILE UPLOAD QUEUE SYSTEM ---
+    public $collected_photos = []; // Wadah penampung semua foto
+    public $temp_photos = [];      // Pintu masuk sementara (input file)
 
     // UI Data
     public $departments;
     public $vehicles;
     public $hasVehicles = false;
     public $availability = [];
-    public $unavailableVehicleIds = []; 
+    public $unavailableVehicleIds = [];
     public $recentBookings = [];
 
     public $booking = null;
@@ -66,10 +66,10 @@ class Bookvehicle extends Component
 
         // Default: Today
         $this->date_from = Carbon::today()->format('Y-m-d');
-        
+
         // Calculate initial dates/times
         $this->calculateDates();
-        
+
         $this->loadAvailability();
         $this->loadRecentBookings();
 
@@ -79,9 +79,36 @@ class Bookvehicle extends Component
         }
     }
 
+    // --- LOGIC "ANTRIAN" FOTO ---
+
     /**
-     * Triggered when Switcher is clicked
+     * Dijalankan otomatis saat user memilih file di input
      */
+    public function updatedTempPhotos()
+    {
+        $this->validate([
+            'temp_photos.*' => 'image|max:5120', // Max 5MB per file
+        ]);
+
+        // Pindahkan dari temp ke collected (Append)
+        foreach ($this->temp_photos as $photo) {
+            $this->collected_photos[] = $photo;
+        }
+
+        // Reset input agar bisa pilih file lagi
+        $this->reset('temp_photos');
+    }
+
+    /**
+     * Menghapus satu foto dari antrian
+     */
+    public function removePhoto($index)
+    {
+        array_splice($this->collected_photos, $index, 1);
+    }
+
+    // ------------------------------
+
     public function setBookingMode($mode)
     {
         $this->booking_mode = $mode;
@@ -89,38 +116,30 @@ class Bookvehicle extends Component
         $this->loadAvailability();
     }
 
-    /**
-     * Triggered when Start Date is changed manually
-     */
     public function updatedDateFrom()
     {
         $this->calculateDates();
         $this->loadAvailability();
     }
 
-    /**
-     * Core Logic to sync dates and times
-     */
     private function calculateDates()
     {
-        if (!$this->date_from) return;
+        if (!$this->date_from)
+            return;
 
         if ($this->booking_mode === 'perday') {
             $this->start_time = '08:00';
             $this->end_time = '17:00';
             $this->date_to = $this->date_from;
-        } 
-        elseif ($this->booking_mode === '24hours') {
+        } elseif ($this->booking_mode === '24hours') {
             $this->start_time = '08:00';
             $this->end_time = '08:00';
-            // Force next day
             try {
                 $this->date_to = Carbon::parse($this->date_from)->addDay()->format('Y-m-d');
             } catch (\Exception $e) {
                 $this->date_to = $this->date_from;
             }
         }
-        // Custom mode: do nothing
     }
 
     public function loadBooking($id, $user)
@@ -204,25 +223,48 @@ class Bookvehicle extends Component
 
     public function handlePhotoUpload()
     {
-        if (!$this->booking) return;
+        if (!$this->booking)
+            return;
+
+        // Cek apakah ada foto di antrian
+        if (empty($this->collected_photos)) {
+            $this->addError('collected_photos', 'Mohon upload minimal 1 foto.');
+            return;
+        }
+
         $user = Auth::user();
         $bookingId = $this->booking->vehiclebooking_id;
         $userId = $user->user_id ?? Auth::id();
 
         try {
             if ($this->booking->status == 'approved') {
-                $this->validate(['photo_before' => 'required|image|max:5120']);
-                $this->uploadToLocalStorageAndSave($this->photo_before, 'before', $bookingId, $userId);
+                // LOOP SEMUA FOTO DI ANTRIAN
+                foreach ($this->collected_photos as $photo) {
+                    $this->uploadToLocalStorageAndSave($photo, 'before', $bookingId, $userId);
+                }
+
                 $this->booking->update(['status' => 'on_progress']);
-                session()->flash('success', 'Check-out photo uploaded.');
+                session()->flash('success', 'Check-out photos uploaded successfully.');
+
             } elseif ($this->booking->status == 'returned') {
-                $this->validate(['photo_after' => 'required|image|max:5120']);
-                $this->uploadToLocalStorageAndSave($this->photo_after, 'after', $bookingId, $userId);
-                session()->flash('success', 'Check-in photo uploaded.');
+                // LOOP SEMUA FOTO DI ANTRIAN
+                foreach ($this->collected_photos as $photo) {
+                    $this->uploadToLocalStorageAndSave($photo, 'after', $bookingId, $userId);
+                }
+
+                // Update status logic (sesuaikan kebutuhan)
+                // $this->booking->update(['status' => 'finished']); 
+
+                session()->flash('success', 'Check-in photos uploaded successfully.');
             }
+
+            // Reset setelah sukses
+            $this->reset(['collected_photos', 'temp_photos']);
+
         } catch (\Exception $e) {
             session()->flash('error', 'Upload failed: ' . $e->getMessage());
         }
+
         return redirect()->route('vehiclestatus');
     }
 
@@ -235,8 +277,11 @@ class Bookvehicle extends Component
     private function uploadToLocalStorageAndSave($file, $type, $bookingId, $userId)
     {
         $ext = $file->getClientOriginalExtension() ?: 'jpg';
-        $filename = "booking_{$bookingId}_{$type}_" . time() . '_' . Str::random(4) . '.' . $ext;
+        // Generate nama unik
+        $filename = "booking_{$bookingId}_{$type}_" . time() . '_' . Str::random(6) . '.' . $ext;
+
         $file->storeAs('vehicle_photos', $filename, 'public');
+
         VehicleBookingPhoto::create([
             'vehiclebooking_id' => $bookingId,
             'user_id' => $userId,
@@ -284,7 +329,8 @@ class Bookvehicle extends Component
     public function loadRecentBookings()
     {
         $user = Auth::user();
-        if (!$user) return;
+        if (!$user)
+            return;
         $this->recentBookings = VehicleBooking::with('vehicle')
             ->where('company_id', $user->company_id ?? 1)
             ->where('department_id', $user->department_id)
@@ -305,6 +351,9 @@ class Bookvehicle extends Component
         $this->has_sim_a = false;
         $this->agree_terms = false;
         $this->booking = null;
+        // Reset Antrian Foto
+        $this->collected_photos = [];
+        $this->temp_photos = [];
     }
 
     public function render()
