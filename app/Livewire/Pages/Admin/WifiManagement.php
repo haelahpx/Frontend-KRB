@@ -79,7 +79,8 @@ class WifiManagement extends Component
             'is_active' => $this->is_active ? 1 : 0,
         ]);
 
-        session()->flash('message', 'WiFi berhasil ditambahkan.');
+        // **MODIFIED:** Menggunakan dispatch toast
+        $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'WiFi berhasil ditambahkan.', duration: 2500); 
         $this->resetInputFields();
     }
 
@@ -124,7 +125,9 @@ class WifiManagement extends Component
                     'location' => $this->edit_location,
                     'is_active' => $this->edit_is_active ? 1 : 0,
                 ]);
-                session()->flash('message', 'WiFi berhasil diperbarui.');
+                
+                // **MODIFIED:** Menggunakan dispatch toast
+                $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'WiFi berhasil diperbarui.', duration: 2500);
                 $this->closeEdit();
             }
         }
@@ -136,7 +139,8 @@ class WifiManagement extends Component
         
         if ($wifi) {
             $wifi->delete();
-            session()->flash('message', 'WiFi berhasil dihapus.');
+            // **MODIFIED:** Menggunakan dispatch toast
+            $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'WiFi berhasil dihapus.', duration: 2500);
         }
     }
 

@@ -11,14 +11,6 @@
     @endphp
 
     <main class="px-4 sm:px-6 py-6 space-y-8">
-        
-        {{-- Flash Message --}}
-        @if (session()->has('message'))
-        <div class="rounded-xl bg-green-50 border border-green-200 p-4 flex items-center gap-3">
-            <x-heroicon-o-check-circle class="w-5 h-5 text-green-600" />
-            <p class="text-sm font-medium text-green-700">{{ session('message') }}</p>
-        </div>
-        @endif
 
         {{-- HERO SECTION --}}
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
