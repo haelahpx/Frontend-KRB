@@ -109,7 +109,6 @@
                         <select wire:model.live="department_id" class="{{ $select }}">
                             <option value="">-- Pilih Departemen --</option>
                             @foreach($departments_list as $dept)
-                                {{-- SESUAIKAN: Ganti 'name' di sini dengan nama kolom (misal: nama_divisi) di tabel departemen Anda --}}
                                 <option value="{{ $dept->id }}">{{ $dept->name ?? $dept->nama_departemen ?? 'Dept #'.$dept->id }}</option>
                             @endforeach
                         </select>
@@ -118,13 +117,13 @@
                     
                     <div>
                         <label class="{{ $label }}">Bertemu dengan <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                        <select wire:model.defer="user_id" class="{{ $select }}" @if(empty($users_list)) disabled @endif>
+                        <select wire:model.defer="user_id" class="{{ $select }}" @if(empty($users_list) && $department_id) disabled @endif>
                             <option value="">-- Pilih Pegawai --</option>
                             @foreach($users_list as $user)
-                                {{-- SESUAIKAN: Ganti 'full_name' di sini dengan nama kolom (misal: nama_lengkap) di tabel user Anda --}}
                                 <option value="{{ $user->id }}">{{ $user->full_name ?? $user->name }}</option>
                             @endforeach
                         </select>
+                        {{-- This message confirms if the user list is empty --}}
                         @if(empty($users_list) && $department_id)
                             <p class="mt-1 text-[10px] text-orange-500">Tidak ada user di departemen ini.</p>
                         @endif
