@@ -164,6 +164,23 @@ class Ticketshow extends Component
                 return;
             }
 
+            // -------------------------------------------------------------
+            // MODIFICATION START: Auto-set status to IN_PROGRESS upon assignment
+            // -------------------------------------------------------------
+            // Jika ada agent_id yang dipilih di UI, dan status ticket saat ini di DB adalah 'OPEN',
+            // maka secara otomatis ubah status UI menjadi 'in_progress'.
+            if (
+                $this->agent_id // Agent is selected
+                && $ticket->status === 'OPEN' // Ticket is currently OPEN in DB
+                && $this->status === 'open' // UI selection is still 'open' (user didn't change it manually)
+            ) {
+                $this->status = 'in_progress';
+                // Note: The UI status is now 'in_progress', which will be saved below.
+            }
+            // -------------------------------------------------------------
+            // MODIFICATION END
+            // -------------------------------------------------------------
+
             // Cek: status tertentu butuh assignment agent
             if (
                 \in_array($this->status, self::UI_STATUS_NEED_ASSIGNMENT, true)
@@ -203,6 +220,7 @@ class Ticketshow extends Component
 
             // Status
             $oldStatus      = $ticket->status;
+            // $this->status now reflects 'in_progress' if auto-updated above.
             $ticket->status = self::UI_TO_DB_STATUS_MAP[$this->status] ?? 'OPEN';
             $statusChanged  = $oldStatus !== $ticket->status;
 
@@ -216,13 +234,18 @@ class Ticketshow extends Component
                 'comments.user:user_id,full_name',
             ]);
 
-            // Toaster ringkas per perubahan
-            if ($assignmentChanged && $statusChanged) {
-                $this->toast('success', 'Tersimpan', "Assignment & status Ticket #{$ticket->ticket_id} diperbarui.");
-            } elseif ($assignmentChanged) {
-                $this->toast('success', 'Tersimpan', "Assignment Ticket #{$ticket->ticket_id} diperbarui.");
-            } elseif ($statusChanged) {
-                $this->toast('success', 'Tersimpan', "Status Ticket #{$ticket->ticket_id} diperbarui.");
+            // Toaster ringkas per perubahan dan reload halaman jika ada perubahan
+            if ($assignmentChanged || $statusChanged) {
+                if ($assignmentChanged && $statusChanged) {
+                    $this->toast('success', 'Tersimpan', "Assignment & status Ticket #{$ticket->ticket_id} diperbarui.");
+                } elseif ($assignmentChanged) {
+                    $this->toast('success', 'Tersimpan', "Assignment Ticket #{$ticket->ticket_id} diperbarui.");
+                } elseif ($statusChanged) {
+                    $this->toast('success', 'Tersimpan', "Status Ticket #{$ticket->ticket_id} diperbarui.");
+                }
+                
+                // Reload the page after successful save
+                $this->js('window.location.reload()');
             } else {
                 $this->toast('info', 'Tidak Ada Perubahan', 'Tidak ada perubahan yang disimpan.');
             }

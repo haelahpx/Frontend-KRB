@@ -173,7 +173,7 @@ class Vehiclestatus extends Component
             report($e);
             $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal menyetujui: ' . $e->getMessage());
         }
-    }
+    } 
 
     /** Open modal to ask for reject reason */
     public function confirmReject(int $id): void
@@ -213,6 +213,7 @@ class Vehiclestatus extends Component
                 // Store reason in `notes` (adjust if you have a dedicated reject column)
                 $prefix = '[Rejected] ';
                 $reason = trim($data['rejectNote']);
+                // Check if notes already exists to append it nicely
                 $b->notes = trim(($b->notes ? $b->notes . "\n" : '') . $prefix . $reason);
                 $b->status = 'rejected';
                 $b->save();
@@ -224,6 +225,9 @@ class Vehiclestatus extends Component
 
             $this->dispatch('toast', type: 'info', title: 'Rejected', message: 'Booking ditolak dengan alasan.');
             $this->resetPage();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Re-throw validation errors to be caught by Livewire/Blade error messages
+            throw $e;
         } catch (\RuntimeException $e) {
             $this->dispatch('toast', type: 'warning', title: 'Tidak Bisa Ditolak', message: $e->getMessage());
         } catch (\Throwable $e) {
@@ -294,6 +298,7 @@ class Vehiclestatus extends Component
                 ->findOrFail($id);
 
             $photos = VehicleBookingPhoto::where('vehiclebooking_id', $id)
+                ->with('user') // Pastikan relasi user ada di model VehicleBookingPhoto
                 ->orderBy('created_at')
                 ->get();
 

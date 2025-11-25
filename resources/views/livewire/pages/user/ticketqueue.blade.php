@@ -158,34 +158,6 @@
                         </div>
 
                         <div class="w-full sm:w-auto flex flex-col sm:flex-row items-end sm:items-center gap-3">
-                            {{-- Attachments --}}
-                            @if($t->attachments->count())
-                            <div class="flex -space-x-2 overflow-hidden p-1">
-                                @foreach($t->attachments->take(3) as $a)
-                                @php $isImage = str_starts_with(strtolower($a->file_type ?? ''), 'image/'); @endphp
-                                <a 
-                                    href="{{ $a->file_url }}" 
-                                    target="_blank" 
-                                    onclick="event.stopPropagation()"
-                                    class="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center overflow-hidden text-[8px] text-gray-500 hover:scale-110 transition-transform" 
-                                    title="{{ $a->original_filename }}">
-                                    @if($isImage)
-                                    <img src="{{ $a->file_url }}" class="h-full w-full object-cover">
-                                    @else
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
-                                    </svg>
-                                    @endif
-                                </a>
-                                @endforeach
-                                @if($t->attachments->count() > 3)
-                                <span class="inline-flex items-center justify-center h-6 w-6 rounded-full ring-2 ring-white bg-gray-100 text-[8px] font-medium text-gray-600">
-                                    +{{ $t->attachments->count() - 3 }}
-                                </span>
-                                @endif
-                            </div>
-                            @endif
-
                             {{-- Claim Button --}}
                             <button
                                 onclick="event.stopPropagation()"

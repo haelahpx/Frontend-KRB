@@ -6,7 +6,7 @@
             try { return $v ? Carbon::parse($v)->format('d M Y') : '—'; }
             catch (\Throwable) { return '—'; }
         }
-    }
+    } 
     if (!function_exists('fmtTime')) {
         function fmtTime($v) {
             try { return $v ? Carbon::parse($v)->format('H.i') : '—'; }
@@ -443,6 +443,82 @@
                         Tutup
                     </button>
                 </div>
+            </div>
+        </div>
+    @endif
+    
+    {{-- REJECT MODAL --}}
+    @if($showRejectModal && $rejectId)
+        <div x-data="{ show: @entangle('showRejectModal') }"
+             x-show="show"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style="display: none;">
+
+            {{-- Backdrop --}}
+            <div class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm" wire:click="cancelReject"></div>
+
+            {{-- Modal Content --}}
+            <div x-show="show"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden">
+                 
+                <form wire:submit.prevent="submitReject">
+                    {{-- Header --}}
+                    <div class="flex items-start justify-between p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            Tolak Booking #{{ $rejectId }}
+                        </h3>
+                        <button type="button" wire:click="cancelReject" class="p-1 text-gray-400 hover:text-gray-700 transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {{-- Body --}}
+                    <div class="p-6 space-y-4">
+                        <p class="text-sm text-gray-600">
+                            Masukkan alasan penolakan untuk booking kendaraan ini. Alasan ini akan dicatat.
+                        </p>
+                        
+                        <div>
+                            <label for="reject-note" class="{{ $label }}">Alasan Penolakan <span class="text-red-500">*</span></label>
+                            <textarea id="reject-note"
+                                      wire:model.defer="rejectNote"
+                                      rows="4"
+                                      placeholder="Contoh: Kendaraan sedang perbaikan, atau tanggal bentrok."
+                                      class="{{ $input }} !h-auto @error('rejectNote') border-red-500 @enderror"></textarea>
+                            @error('rejectNote')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- Footer --}}
+                    <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-right space-x-2">
+                        <button type="button"
+                                wire:click="cancelReject"
+                                class="px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300/20 transition">
+                            Batal
+                        </button>
+                        <button type="submit"
+                                wire:loading.attr="disabled"
+                                class="px-3 py-2 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600/20 disabled:opacity-60 transition">
+                            Tolak Booking
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     @endif
