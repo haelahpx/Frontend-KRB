@@ -6,108 +6,119 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+
+// Import Models based on your schema images
+use App\Models\Ticket;
+use App\Models\BookingRoom;
+use App\Models\Information;
+use App\Models\TicketAssignment; // Based on the ticket_assignments table
 
 #[Layout('layouts.admin')]
 #[Title('Admin - Dashboard')]
 class Dashboard extends Component
 {
-    // Properties for data displayed on the dashboard
-    public $admin_name;
-    public $stats; // KPI strip data
-    public $ticketStatusDistribution;
-    public $weeklyTicketActivity; // <-- This holds the chart data
+    protected string $tz = 'Asia/Jakarta';
 
-    /**
-     * Mount method to set initial data on component load.
-     */
-    public function mount()
+    private function asCarbon(null|Carbon|\DateTimeInterface|string $v): ?Carbon
     {
-        $this->admin_name = Auth::check() ? (Auth::user()->name ?? 'Administrator') : 'Guest Admin';
-        $this->loadDashboardData();
-    }
+        if ($v === null)
+            return null;
+        if ($v instanceof Carbon)
+            return $v->timezone($this->tz);
+        if ($v instanceof \DateTimeInterface)
+            return Carbon::instance($v)->timezone($this->tz);
 
-    /**
-     * Custom method to fetch all dashboard data.
-     * Called on mount and by the wire:poll update.
-     */
-    public function loadDashboardData()
-    {
-        // 1. Fetch KPI Strip Data (using dummy/placeholder logic)
-        $this->stats = $this->getKpiStats();
-
-        // 2. Fetch Ticket Status Distribution (using dummy/placeholder logic)
-        $this->ticketStatusDistribution = $this->getTicketStatusDistribution();
-
-        // 3. Fetch Weekly Ticket Activity (using dummy/placeholder logic)
-        $this->weeklyTicketActivity = $this->getWeeklyTicketActivity();
-    }
-
-    /**
-     * A Livewire poll action to refresh data periodically.
-     */
-    public function tick()
-    {
-        $this->loadDashboardData();
-
-        // Dispatching the event with the updated chart data
-        $this->dispatch('admin-chart-updated', ['weeklyData' => $this->weeklyTicketActivity]);
-    }
-
-    // ... (getKpiStats, getTicketStatusDistribution, getWeeklyTicketActivity methods remain the same) ...
-    // Note: I will use a different event name ('admin-chart-updated') to avoid conflict.
-
-    protected function getKpiStats()
-    { /* ... unchanged ... */
-        $totalTickets = 1500;
-        $openTickets = 350;
-        $unassignedTickets = 80;
-        $ticketsClosedToday = 25;
-        return [
-            ['label' => 'Total Tickets', 'value' => number_format($totalTickets)],
-            ['label' => 'Open Tickets', 'value' => number_format($openTickets)],
-            ['label' => 'Unassigned Tickets', 'value' => number_format($unassignedTickets)],
-            ['label' => 'Closed Today', 'value' => number_format($ticketsClosedToday)],
-        ];
-    }
-    protected function getTicketStatusDistribution()
-    { /* ... unchanged ... */
-        $openCount = 350;
-        $inProgressCount = 180;
-        $closedCount = 970;
-        $totalCount = $openCount + $inProgressCount + $closedCount;
-        if ($totalCount === 0) return ['Open' => ['count' => 0, 'percent' => 0], 'In Progress' => ['count' => 0, 'percent' => 0], 'Closed' => ['count' => 0, 'percent' => 0], 'total_count' => 0,];
-        $calcPercent = fn($count) => round(($count / $totalCount) * 100);
-        return [
-            'Open' => ['count' => $openCount, 'percent' => $calcPercent($openCount)],
-            'In Progress' => ['count' => $inProgressCount, 'percent' => $calcPercent($inProgressCount)],
-            'Closed' => ['count' => $closedCount, 'percent' => $calcPercent($closedCount)],
-            'total_count' => $totalCount,
-        ];
-    }
-    protected function getWeeklyTicketActivity()
-    { /* ... unchanged ... */
-        $days = [];
-        $newTickets = [];
-        $closedTickets = [];
-        $inProgressTickets = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i);
-            $days[] = $date->format('D');
-            $newTickets[] = rand(10, 30);
-            $closedTickets[] = rand(8, 25);
-            $inProgressTickets[] = rand(3, 15);
+        try {
+            return Carbon::parse($v)->timezone($this->tz);
+        } catch (\Throwable) {
+            return null;
         }
-        return [
-            'labels' => $days,
-            'new' => $newTickets,
-            'closed' => $closedTickets,
-            'in_progress' => $inProgressTickets,
-        ];
     }
 
     public function render()
     {
-        return view('livewire.pages.admin.dashboard');
+        $user = Auth::user();
+        $companyId = optional($user)->company_id;
+        $departmentId = optional($user)->department_id;
+
+        // Range 7 hari terakhir (hari ini + 6 hari ke belakang)
+        $startOfRange = Carbon::now($this->tz)->subDays(6)->startOfDay();
+        $endOfRange = Carbon::now($this->tz)->endOfDay();
+
+        // --- Weekly Statistics (7 days) ---
+
+        // 1. Tickets
+        $weeklyTicketsCount = Ticket::query()
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->whereBetween('created_at', [$startOfRange, $endOfRange])
+            ->count();
+
+        // 2. Booking Rooms
+        $weeklyRoomBookingsCount = BookingRoom::query()
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->whereBetween('created_at', [$startOfRange, $endOfRange])
+            ->count();
+
+        // 3. Information
+        $weeklyInformationCount = Information::query()
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->whereBetween('created_at', [$startOfRange, $endOfRange])
+            ->count();
+
+        // --- Ticket Status Distribution ---
+        $totalTicketsThisMonth = Ticket::query()
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->whereBetween('created_at', [Carbon::now($this->tz)->startOfMonth(), Carbon::now($this->tz)->endOfMonth()])
+            ->count();
+
+        $ticketStatuses = Ticket::query()
+            ->select('priority', DB::raw('count(*) as count')) // Using 'priority' as a proxy for status distribution as seen in your view structure
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->groupBy('priority')
+            ->get()
+            ->keyBy('priority');
+
+        $approvedCount = $ticketStatuses['high']->count ?? 0;
+        $pendingCount = $ticketStatuses['medium']->count ?? 0;
+        $rejectedCount = $ticketStatuses['low']->count ?? 0; // Using low as proxy for 'rejected' or lowest priority
+
+        $totalStatusTickets = $approvedCount + $pendingCount + $rejectedCount;
+
+        $approvedPercent = $totalStatusTickets > 0 ? round(($approvedCount / $totalStatusTickets) * 100) : 0;
+        $pendingPercent = $totalStatusTickets > 0 ? round(($pendingCount / $totalStatusTickets) * 100) : 0;
+        $rejectedPercent = $totalStatusTickets > 0 ? round(($rejectedCount / $totalStatusTickets) * 100) : 0;
+
+        // --- Top Agent (Solved Tickets) ---
+        $topAgent = TicketAssignment::query()
+            ->join('tickets', 'ticket_assignments.ticket_id', '=', 'tickets.ticket_id')
+            ->join('users', 'ticket_assignments.user_id', '=', 'users.user_id')
+            ->select('users.full_name', DB::raw('count(tickets.ticket_id) as solved_count'))
+            // Filter by solved status - assuming a status column exists in 'tickets' table, adjust as needed.
+            // Based on your tables, let's assume 'status' column exists in `tickets` table and 'closed' means solved.
+            ->where('tickets.status', 'closed')
+            ->when($companyId, fn($q) => $q->where('tickets.company_id', $companyId))
+            ->when($departmentId, fn($q) => $q->where('tickets.department_id', $departmentId))
+            ->groupBy('users.full_name')
+            ->orderByDesc('solved_count')
+            ->first();
+
+
+        return view('livewire.pages.admin.dashboard', [
+            'weeklyTicketsCount' => $weeklyTicketsCount,
+            'weeklyRoomBookingsCount' => $weeklyRoomBookingsCount,
+            'weeklyInformationCount' => $weeklyInformationCount,
+            'topAgent' => $topAgent,
+            'totalTicketsThisMonth' => $totalTicketsThisMonth,
+            'approvedPercent' => $approvedPercent,
+            'pendingPercent' => $pendingPercent,
+            'rejectedPercent' => $rejectedPercent,
+        ]);
     }
 }

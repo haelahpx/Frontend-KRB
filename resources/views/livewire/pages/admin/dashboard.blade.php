@@ -1,210 +1,259 @@
-<div class="bg-gray-50" wire:poll.3500ms="tick">
-    <main class="px-4 sm:px-6 py-6 space-y-5">
+<div class="bg-gray-50" wire:poll.2000ms.keep-alive>
+    <main class="px-4 sm:px-6 py-6">
+        <div class="space-y-8">
 
-        {{-- HERO --}}
-        <header class="rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-xl px-5 py-4 flex items-center gap-4">
-            <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 6V4m0 16v-2m0-10v2m0 6v2M6 12H4m16 0h-2m-10 0h2m6 0h2M9 17l-2 2M15 7l2-2M7 7l-2-2M17 17l2 2" />
-                </svg>
+            {{-- Greeting --}}
+            <div class="rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white p-6 shadow-2xl">
+                <h2 class="text-lg font-semibold">Selamat Datang di Dashboard Admin</h2>
+                <p class="text-sm text-gray-300">
+                    Berikut total data 7 hari terakhir dari modul **Tiket, Room Bookings, dan Information**
+                    yang terkait dengan **Perusahaan** dan **Departemen** Anda.
+                </p>
             </div>
-            <div class="min-w-0">
-                <h2 class="text-base sm:text-lg font-semibold truncate">Welcome, {{ $admin_name }}!</h2>
-                <p class="text-xs text-white/80 truncate">Overview of ticketing and system activity.</p>
-            </div>
-        </header>
 
-        {{-- KPI STRIP - 4 columns for tickets --}}
-        <section>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                @foreach($stats as $s)
-                <div class="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
-                    <p class="text-[12px] text-gray-500 truncate">{{ $s['label'] }}</p>
-                    <h3 class="text-xl font-semibold text-gray-900 mt-1 leading-none">{{ $s['value'] }}</h3>
+            {{-- Statistics Cards --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {{-- Total Tickets --}}
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">Tickets Created (7 hari)</p>
+                            <p class="text-2xl font-bold text-gray-900">
+                                {{ $weeklyTicketsCount }}
+                            </p>
+                            <p class="text-xs text-green-600 mt-1">Status change vs last week (dummy)</p>
+                        </div>
+                        <div class="p-3 bg-gray-100 rounded-lg">
+                            <x-heroicon-o-ticket class="w-6 h-6 text-gray-700" />
+                        </div>
+                    </div>
                 </div>
-                @endforeach
+
+                {{-- Total Room Bookings --}}
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">Room Bookings (7 hari)</p>
+                            <p class="text-2xl font-bold text-gray-900">
+                                {{ $weeklyRoomBookingsCount }}
+                            </p>
+                            <p class="text-xs text-green-600 mt-1">Status change vs last week (dummy)</p>
+                        </div>
+                        <div class="p-3 bg-gray-100 rounded-lg">
+                            <x-heroicon-o-calendar-days class="w-6 h-6 text-gray-700" />
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Total Information Entries --}}
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">Information Entries (7 hari)</p>
+                            <p class="text-2xl font-bold text-gray-900">
+                                {{ $weeklyInformationCount }}
+                            </p>
+                            <p class="text-xs text-green-600 mt-1">Status change vs last week (dummy)</p>
+                        </div>
+                        <div class="p-3 bg-gray-100 rounded-lg">
+                            <x-heroicon-o-document-text class="w-6 h-6 text-gray-700" />
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Top Agent --}}
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">Top Agent (Solved Tickets)</p>
+                            <p class="text-xl font-bold text-gray-900 truncate" title="{{ $topAgent->full_name ?? 'N/A' }}">
+                                {{ $topAgent->full_name ?? 'N/A' }}
+                            </p>
+                            <p class="text-sm text-gray-700 mt-1">
+                                Solved: <span class="font-semibold text-gray-900">{{ $topAgent->solved_count ?? 0 }}</span>
+                            </p>
+                        </div>
+                        <div class="p-3 bg-gray-100 rounded-lg">
+                            <x-heroicon-o-star class="w-6 h-6 text-gray-700" />
+                        </div>
+                    </div>
+                </div>
             </div>
-        </section>
 
-        {{-- MAIN LAYOUT: Full Width Content --}}
-        <section class="space-y-5"> {{-- This section now holds all content below KPIs --}}
-
-            {{-- CHART & STATUS ROW (from Receptionist) --}}
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {{-- Charts Section --}}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {{-- Activity Chart --}}
-                <div class="lg:col-span-2 rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
+                <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            Weekly Ticket Activity
+                        <h3 class="text-base font-semibold text-gray-900 flex items-center gap-2">
+                            <x-heroicon-o-chart-bar class="h-5 w-5 text-gray-900" />
+                            Weekly Activity – Ticket / Room Bookings / Information
                         </h3>
                         <p class="text-xs text-gray-500">
-                            Last 7 days (New, Closed, In Progress)
+                            7 hari terakhir (dummy data)
                         </p>
                     </div>
-                    {{-- wire:ignore is crucial for Chart.js --}}
-                    <div class="h-[180px]" wire:ignore>
-                        <canvas id="adminActivityChart" class="w-full" style="max-height:180px"></canvas>
+
+                    <div class="h-[320px]" wire:ignore>
+                        <canvas id="activityChart" class="w-full" style="max-height:320px"></canvas>
                     </div>
                 </div>
 
-                {{-- Status Distribution --}}
-                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
-                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Ticket Status Distribution</h3>
+                {{-- Status Distribution (Tickets Priority) --}}
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                    <h3 class="text-base font-semibold text-gray-900 mb-4">Ticket Priority Distribution</h3>
                     <div class="space-y-4">
-                        @php
-                        $totalTickets = $ticketStatusDistribution['total_count'] ?? 0;
-                        @endphp
-                        @foreach(['Open', 'In Progress', 'Closed'] as $status)
-                        @php
-                        $data = $ticketStatusDistribution[$status] ?? ['percent' => 0];
-                        $color = match($status) {
-                        'Open' => 'bg-red-500',
-                        'In Progress' => 'bg-blue-500',
-                        'Closed' => 'bg-green-500',
-                        default => 'bg-gray-400',
-                        };
-                        @endphp
                         <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-xs font-medium text-gray-700">{{ $status }}</span>
-                                <span class="text-xs font-bold text-gray-900">{{ $data['percent'] }}%</span>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-700">High Priority</span>
+                                <span class="text-sm font-bold text-gray-900">{{ $approvedPercent }}%</span>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                <div class="{{ $color }} h-1.5 rounded-full" style="width: {{ $data['percent'] }}%"></div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-red-600 h-2 rounded-full" style="width: {{ $approvedPercent }}%"></div>
                             </div>
                         </div>
-                        @endforeach
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-700">Medium Priority</span>
+                                <span class="text-sm font-bold text-gray-900">{{ $pendingPercent }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ $pendingPercent }}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-700">Low Priority</span>
+                                <span class="text-sm font-bold text-gray-900">{{ $rejectedPercent }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: {{ $rejectedPercent }}%"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mt-4 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                        <p class="text-xs text-gray-600 mb-0.5">Total Active Tickets</p>
-                        <p class="text-lg font-bold text-gray-900">{{ number_format($totalTickets) }}</p>
+                    <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <p class="text-xs text-gray-600 mb-1">Total Tickets This Month</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $totalTicketsThisMonth }}</p>
+                        <p class="text-xs text-gray-600 mt-1">↑ % from last month (dummy)</p>
                     </div>
                 </div>
             </div>
 
-        </section>
+        </div>
     </main>
 
-    {{-- Chart.js v4 integration for Admin Activity --}}
+    {{-- Chart.js v4 like in report page --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     @verbatim
-    <script>
-        let __adminActivityChart;
+        <script>
+            let __activityChart;
 
-        function rebuildAdminActivityChart(weeklyData) {
-            const canvas = document.getElementById('adminActivityChart');
-            if (!canvas) return;
+            function rebuildActivityChart() {
+                const canvas = document.getElementById('activityChart');
+                if (!canvas) return;
 
-            const ctx = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d');
 
-            const defaultWeekly = {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                new: [15, 20, 18, 25, 22, 10, 14],
-                closed: [12, 15, 16, 20, 18, 9, 11],
-                in_progress: [5, 8, 7, 10, 9, 4, 6],
-            };
-            const weekly = weeklyData && weeklyData.labels ? weeklyData : defaultWeekly;
+                // Dummy weekly data – replace with dynamic data later
+                const weekly = {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    ticket: [8, 10, 7, 15, 12, 5, 9],
+                    room: [3, 5, 4, 8, 6, 2, 5],
+                    information: [2, 3, 1, 5, 4, 1, 3],
+                };
 
-            if (__adminActivityChart) {
-                __adminActivityChart.destroy();
-            }
+                if (__activityChart) {
+                    __activityChart.destroy();
+                }
 
-            const paletteLine = {
-                new: '#1d4ed8',
-                closed: '#059669',
-                in_progress: '#f59e0b',
-            };
+                const paletteLine = {
+                    ticket: '#1d4ed8', // blue
+                    room: '#059669', // emerald
+                    information: '#f59e0b', // amber
+                };
 
-            const datasets = [{
-                    label: 'New',
-                    data: weekly.new,
-                    borderColor: paletteLine.new,
-                    tension: 0.35,
-                    pointRadius: 3,
-                    fill: false,
-                },
-                {
-                    label: 'Closed',
-                    data: weekly.closed,
-                    borderColor: paletteLine.closed,
-                    tension: 0.35,
-                    pointRadius: 3,
-                    fill: false,
-                },
-                {
-                    label: 'In Progress',
-                    data: weekly.in_progress,
-                    borderColor: paletteLine.in_progress,
-                    tension: 0.35,
-                    pointRadius: 3,
-                    fill: false,
-                },
-            ];
+                const datasets = [
+                    {
+                        label: 'Tickets',
+                        data: weekly.ticket,
+                        borderColor: paletteLine.ticket,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        fill: false,
+                    },
+                    {
+                        label: 'Room Bookings',
+                        data: weekly.room,
+                        borderColor: paletteLine.room,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        fill: false,
+                    },
+                    {
+                        label: 'Information',
+                        data: weekly.information,
+                        borderColor: paletteLine.information,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        fill: false,
+                    },
+                ];
 
-            __adminActivityChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: weekly.labels,
-                    datasets: datasets,
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 10,
+                __activityChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: weekly.labels,
+                        datasets: datasets,
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
                             },
                         },
-                        tooltip: {
-                            mode: 'index',
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0,
+                                    stepSize: 1,
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)',
+                                },
+                            },
+                            x: {
+                                grid: {
+                                    display: false,
+                                },
+                            },
+                        },
+                        interaction: {
+                            mode: 'nearest',
                             intersect: false,
                         },
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0,
-                                stepSize: 5,
-                            },
-                            grid: {
-                                color: 'rgba(0,0,0,0.05)',
-                            },
-                        },
-                        x: {
-                            grid: {
-                                display: false,
-                            },
-                        },
-                    },
-                    interaction: {
-                        mode: 'nearest',
-                        intersect: false,
-                    },
-                },
-            });
-        }
-
-        // Listen for the Livewire custom event `admin-chart-updated`
-        document.addEventListener('admin-chart-updated', function(event) {
-            const weeklyData = event.detail.weeklyData;
-            rebuildAdminActivityChart(weeklyData);
-        });
-
-        // Initial render when the page is loaded or after Livewire navigated
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof Livewire !== 'undefined' && !Livewire.firstVisit) {
-                rebuildAdminActivityChart(@json($weeklyTicketActivity));
+                });
             }
-        });
-    </script>
 
+            document.addEventListener('DOMContentLoaded', () => {
+                rebuildActivityChart();
+            });
+
+            document.addEventListener('livewire:load', () => {
+                rebuildActivityChart();
+            });
+
+            document.addEventListener('livewire:navigated', () => {
+                rebuildActivityChart();
+            });
+        </script>
     @endverbatim
 </div>
