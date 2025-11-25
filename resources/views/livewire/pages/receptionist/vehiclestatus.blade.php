@@ -1,4 +1,5 @@
-@php
+<div class="min-h-screen bg-gray-50" wire:poll.1000ms.keep-alive>
+    @php
     use Carbon\Carbon;
 
     if (!function_exists('fmtDate')) {
@@ -25,9 +26,14 @@
     $input = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
     $chip  = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
     $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0';
-@endphp
+    @endphp
 
-<div class="min-h-screen bg-gray-50" wire:poll.1000ms.keep-alive>
+    <style>
+        :root { color-scheme: light; }
+        select, option { color:#111827 !important; background:#ffffff !important; -webkit-text-fill-color:#111827 !important; }
+        option:checked { background:#e5e7eb !important; color:#111827 !important; }
+    </style>
+
     <main class="px-4 sm:px-6 py-6 space-y-6">
         {{-- HERO --}}
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
@@ -136,124 +142,150 @@
                                     $statusStyle = $statusColors[$b->status] ?? ['bg'=>'bg-gray-100','text'=>'text-gray-800','label'=>ucfirst($b->status)];
                                 @endphp
 
+                                {{-- START: MODIFIED VEHICLE BOOKING CARD DESIGN --}}
                                 <div wire:key="booking-{{ $b->vehiclebooking_id }}"
-                                     class="bg-white border border-gray-200 rounded-xl px-4 sm:px-5 py-4 hover:shadow-sm hover:border-gray-300 transition">
-                                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                                        {{-- LEFT: info (clickable) --}}
-                                        <div class="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
-                                             wire:click="showDetails({{ $b->vehiclebooking_id }})">
-                                            <div class="{{ $icoAvatar }}">{{ $avatarChar }}</div>
-                                            <div class="min-w-0 flex-1">
-                                                <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                                    <h4 class="font-semibold text-gray-900 text-base truncate">
-                                                        {{ $b->purpose ? ucfirst($b->purpose) : 'Vehicle Booking' }}
-                                                    </h4>
-                                                    <span class="text-[11px] px-2 py-0.5 rounded-full {{ $statusStyle['bg'] }} {{ $statusStyle['text'] }}">
+                                     class="bg-white border border-gray-200 rounded-xl p-4 space-y-3 hover:shadow-sm hover:border-gray-300 transition">
+                                    
+                                    <div class="flex items-start gap-4">
+                                        {{-- 1. Avatar/Initial on the left --}}
+                                        <div class="{{ $icoAvatar }} mt-0.5">{{ $avatarChar }}</div>
+                                        
+                                        <div class="flex-1 min-w-0">
+                                            {{-- 2. TOP ROW: Title, Status, ID --}}
+                                            <div class="flex items-center justify-between gap-3 min-w-0 mb-2">
+                                                <h4 class="font-semibold text-gray-900 text-base truncate pr-2 cursor-pointer"
+                                                    wire:click="showDetails({{ $b->vehiclebooking_id }})">
+                                                    {{ $b->purpose ? ucfirst($b->purpose) : 'Vehicle Booking' }}
+                                                </h4>
+                                                <div class="flex-shrink-0 flex items-center gap-2">
+                                                    {{-- Status Badge --}}
+                                                    <span class="text-[11px] px-2 py-0.5 rounded-full flex-shrink-0 {{ $statusStyle['bg'] }} {{ $statusStyle['text'] }}">
                                                         {{ $statusStyle['label'] }}
                                                     </span>
-                                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 border border-gray-200">
+                                                    {{-- ID Chip --}}
+                                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 border border-gray-200 flex-shrink-0">
                                                         #{{ $b->vehiclebooking_id }}
                                                     </span>
                                                 </div>
+                                            </div>
 
-                                                <div class="flex flex-wrap items-center gap-4 text-[13px] text-gray-600">
-                                                    <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            {{-- 3. MIDDLE SECTION: Vehicle, Date, Time, Borrower --}}
+                                            <div class="space-y-2 text-[13px] text-gray-600 mb-3 border-y border-gray-100 py-2">
+                                                
+                                                {{-- Vehicle and Borrower --}}
+                                                <div class="flex flex-wrap items-center gap-4">
+                                                    <span class="{{ $chip }} text-xs px-2.5 py-0.5 bg-gray-100">
+                                                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                   d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                                                         </svg>
-                                                        {{ $vehicleName }}
+                                                        <span class="font-medium text-gray-700">{{ $vehicleName }}</span>
                                                     </span>
-
+                                                    
                                                     @if(!empty($b->borrower_name))
-                                                        <span class="flex items-center gap-1.5 text-xs">
-                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-                                                                 viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                        <span class="{{ $chip }} text-xs px-2.5 py-0.5 bg-gray-100">
+                                                            <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                             </svg>
-                                                            Borrower:
-                                                            <span class="font-medium">{{ $b->borrower_name }}</span>
+                                                            <span class="font-medium text-gray-700">{{ $b->borrower_name }}</span>
                                                         </span>
                                                     @endif
+                                                </div>
 
-                                                    <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                {{-- Dates and Times --}}
+                                                <div class="flex flex-wrap items-center gap-4">
+                                                    <span class="flex items-center gap-1.5 font-medium text-gray-800">
+                                                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                         </svg>
                                                         {{ fmtDate($b->start_at) }}
                                                     </span>
-                                                    <span class="flex items-center gap-1.5">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <span class="flex items-center gap-1.5 font-medium text-gray-800">
+                                                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                         </svg>
                                                         {{ fmtTime($b->start_at) }}–{{ fmtTime($b->end_at) }}
                                                     </span>
                                                 </div>
+                                            </div>
 
-                                                <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600">
-                                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 border border-gray-200">
-                                                        Before: {{ $beforeC }}
+                                            {{-- 4. BOTTOM LEFT: Photo Counts & Created Timestamp --}}
+                                            <div class="text-[12px] text-gray-600 space-y-1">
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 border border-gray-200 text-[11px]">
+                                                        Foto Before: <span class="font-medium text-gray-800">{{ $beforeC }}</span>
                                                     </span>
-                                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 border border-gray-200">
-                                                        After: {{ $afterC }}
+                                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 border border-gray-200 text-[11px]">
+                                                        Foto After: <span class="font-medium text-gray-800">{{ $afterC }}</span>
                                                     </span>
                                                 </div>
-                                            </div>
-                                        </div>
-
-                                        {{-- RIGHT: actions --}}
-                                        <div class="text-right shrink-0 space-y-2">
-                                            <div class="flex flex-wrap gap-2 justify-end pt-1.5">
-                                                @if($b->status === 'pending')
-                                                    <button type="button"
-                                                            wire:click.stop="confirmReject({{ $b->vehiclebooking_id }})"
-                                                            wire:loading.attr="disabled"
-                                                            wire:target="confirmReject({{ $b->vehiclebooking_id }})"
-                                                            class="px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300/20 disabled:opacity-60 transition">
-                                                        Reject
-                                                    </button>
-
-                                                    <button type="button"
-                                                            wire:click.stop="approve({{ $b->vehiclebooking_id }})"
-                                                            wire:loading.attr="disabled"
-                                                            wire:target="approve({{ $b->vehiclebooking_id }})"
-                                                            class="px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition">
-                                                        Approve
-                                                    </button>
-                                                @elseif($b->status === 'on_progress')
-                                                    <button type="button"
-                                                            wire:click.stop="markReturned({{ $b->vehiclebooking_id }})"
-                                                            wire:loading.attr="disabled"
-                                                            wire:target="markReturned({{ $b->vehiclebooking_id }})"
-                                                            class="px-3 py-2 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 disabled:opacity-60 transition">
-                                                        Mark Returned
-                                                    </button>
-                                                @elseif($b->status === 'returned')
-                                                    <button type="button"
-                                                            wire:click.stop="markDone({{ $b->vehiclebooking_id }})"
-                                                            wire:loading.attr="disabled"
-                                                            wire:target="markDone({{ $b->vehiclebooking_id }})"
-                                                            class="px-3 py-2 text-xs font-medium rounded-lg {{ $afterC === 0 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600/20' }}"
-                                                            @disabled($afterC === 0)>
-                                                        Mark Done
-                                                    </button>
-                                                    @if($afterC === 0)
-                                                        <span class="text-[11px] text-gray-500 block mt-1">
-                                                            Waiting for after photos
-                                                        </span>
-                                                    @endif
-                                                @endif
+                                                <span class="inline-block text-[10px] text-gray-500 mt-1">
+                                                    Created: {{ optional($b->created_at)->timezone('Asia/Jakarta')->format('d M Y H:i') }}
+                                                </span>
                                             </div>
 
-                                            <span class="inline-block text-[11px] px-2 py-0.5 rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
-                                                {{ optional($b->created_at)->timezone('Asia/Jakarta')->format('d M Y H:i') }}
-                                            </span>
+                                            {{-- Rejected Note --}}
+                                            @if($b->reject_note && $b->status === 'rejected')
+                                                <div class="mt-2 text-xs text-rose-700 bg-rose-50 border border-rose-100 rounded-lg p-2">
+                                                    <span class="font-medium">Rejected Reason:</span> {{ $b->reject_note }}
+                                                </div>
+                                            @endif
+                                            
                                         </div>
                                     </div>
+
+                                    {{-- 5. BOTTOM ACTIONS (Horizontally aligned and right justified) --}}
+                                    <div class="pt-3 border-t border-gray-100 flex justify-end gap-3 items-center">
+                                        
+                                        {{-- Actions based on Status --}}
+                                        @if($b->status === 'pending')
+                                            {{-- Reject Button (Ghost Style) --}}
+                                            <button type="button"
+                                                    wire:click.stop="confirmReject({{ $b->vehiclebooking_id }})"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="confirmReject({{ $b->vehiclebooking_id }})"
+                                                    class="px-4 py-2 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300/20 disabled:opacity-60 transition">
+                                                Reject
+                                            </button>
+
+                                            {{-- Approve Button (Primary Style) --}}
+                                            <button type="button"
+                                                    wire:click.stop="approve({{ $b->vehiclebooking_id }})"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="approve({{ $b->vehiclebooking_id }})"
+                                                    class="px-4 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition">
+                                                Approve
+                                            </button>
+                                        @elseif($b->status === 'on_progress')
+                                            {{-- Mark Returned Button --}}
+                                            <button type="button"
+                                                    wire:click.stop="markReturned({{ $b->vehiclebooking_id }})"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="markReturned({{ $b->vehiclebooking_id }})"
+                                                    class="px-4 py-2 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 disabled:opacity-60 transition">
+                                                Mark Returned
+                                            </button>
+                                        @elseif($b->status === 'returned')
+                                            {{-- Mark Done Button (Conditional styling based on after photos) --}}
+                                            <button type="button"
+                                                    wire:click.stop="markDone({{ $b->vehiclebooking_id }})"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="markDone({{ $b->vehiclebooking_id }})"
+                                                    class="px-4 py-2 text-xs font-medium rounded-lg {{ $afterC === 0 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600/20' }}"
+                                                    @disabled($afterC === 0)>
+                                                Mark Done
+                                            </button>
+                                            @if($afterC === 0)
+                                                <span class="text-[11px] text-gray-500 block">
+                                                    Waiting for after photos
+                                                </span>
+                                            @endif
+                                        @endif
+                                    </div>
                                 </div>
+                                {{-- END: MODIFIED VEHICLE BOOKING CARD DESIGN --}}
                             @empty
                                 <div class="col-span-full text-center text-gray-500 text-sm py-6">
                                     Tidak ada data pada filter ini.

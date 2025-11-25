@@ -1,4 +1,5 @@
-@php
+<div class="min-h-screen bg-gray-50" wire:poll.1000ms.keep-alive>
+    @php
     use Carbon\Carbon;
     use Illuminate\Support\Facades\Storage;
 
@@ -35,9 +36,8 @@
     $input = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
     $chip = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
     $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0';
-@endphp
+    @endphp
 
-<div class="min-h-screen bg-gray-50" wire:poll.1000ms.keep-alive>
     <main class="px-4 sm:px-6 py-6 space-y-6">
         {{-- HERO --}}
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
@@ -154,10 +154,9 @@
                 </div>
 
                 {{-- LIST (GRID LAYOUT) --}}
-                {{-- Changed from divide-y to grid layout with 2 columns on lg screens --}}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 bg-gray-50/50">
                     
-                    {{-- PENDING TAB --}}
+                    {{-- PENDING TAB (MODIFIED) --}}
                     @if($activeTab === 'pending')
                         @forelse($pending as $row)
                             @php
@@ -165,12 +164,13 @@
                                 $rowNo = ($pending->firstItem() ?? 1) + $loop->index;
                             @endphp
 
-                            {{-- Card Item --}}
+                            {{-- START: MODIFIED PENDING CARD DESIGN --}}
                             <div wire:key="pend-{{ $row->delivery_id }}"
-                                class="flex flex-col justify-between p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
+                                class="bg-white border border-gray-200 rounded-xl p-4 space-y-3 hover:shadow-sm hover:border-gray-300 transition-all duration-200">
                                 
-                                <div class="flex items-start gap-3 mb-4">
-                                    <div class="{{ $icoAvatar }}">
+                                <div class="flex items-start gap-4">
+                                    {{-- 1. Avatar/Image on the left --}}
+                                    <div class="{{ $icoAvatar }} mt-0.5">
                                         @if($row->image)
                                             <img src="{{ Storage::disk('public')->url($row->image) }}" alt="Bukti foto"
                                                 class="w-full h-full object-cover rounded-xl">
@@ -178,82 +178,91 @@
                                             {{ $avatarChar }}
                                         @endif
                                     </div>
+
                                     <div class="min-w-0 flex-1">
-                                        <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                            <h4 class="font-semibold text-gray-900 text-base truncate max-w-full">
+                                        {{-- 2. TOP ROW: Title, Type, Status --}}
+                                        <div class="flex items-center justify-between gap-3 min-w-0 mb-2">
+                                            <h4 class="font-semibold text-gray-900 text-base truncate pr-2 max-w-full">
                                                 {{ $row->item_name }}
                                             </h4>
-                                            <div class="flex gap-1">
-                                                <span
-                                                    class="text-[10px] px-1.5 py-0.5 rounded border border-gray-300 text-gray-600 bg-gray-50">
+                                            <div class="flex-shrink-0 flex items-center gap-2">
+                                                {{-- Type Chip --}}
+                                                <span class="text-[11px] px-2 py-0.5 rounded border border-gray-300 text-gray-600 bg-gray-50 flex-shrink-0">
                                                     {{ strtoupper($row->type) }}
                                                 </span>
-                                                <span
-                                                    class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">Pending</span>
+                                                {{-- Status Chip --}}
+                                                <span class="text-[11px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-medium flex-shrink-0">
+                                                    Pending
+                                                </span>
                                             </div>
                                         </div>
 
-                                        <div class="space-y-1 text-[13px] text-gray-600">
+                                        {{-- 3. MIDDLE SECTION: Sender, Receiver, Received Date --}}
+                                        <div class="space-y-2 text-[13px] text-gray-600 mb-3 border-y border-gray-100 py-2">
                                             @if($row->nama_pengirim)
                                                 <div class="flex items-center gap-2">
-                                                    <x-heroicon-o-user class="w-3.5 h-3.5 text-gray-400"/>
-                                                    <span class="truncate">From: {{ $row->nama_pengirim }}</span>
+                                                    <x-heroicon-o-user class="w-4 h-4 text-gray-400"/>
+                                                    <span class="truncate font-medium text-gray-800">From: {{ $row->nama_pengirim }}</span>
                                                 </div>
                                             @endif
                                             @if($row->nama_penerima)
                                                 <div class="flex items-center gap-2">
-                                                    <x-heroicon-o-user class="w-3.5 h-3.5 text-gray-400"/>
-                                                    <span class="truncate">To: {{ $row->nama_penerima }}</span>
+                                                    <x-heroicon-o-user class="w-4 h-4 text-gray-400"/>
+                                                    <span class="truncate font-medium text-gray-800">To: {{ $row->nama_penerima }}</span>
                                                 </div>
                                             @endif
                                             @if($row->created_at)
-                                                <div class="flex items-center gap-2">
+                                                <div class="flex items-center gap-2 text-[12px] text-gray-600">
                                                     <x-heroicon-o-clock class="w-3.5 h-3.5 text-gray-400"/>
-                                                    <span>{{ fmtDate($row->created_at) }} {{ fmtTime($row->created_at) }}</span>
+                                                    <span>Received: {{ fmtDate($row->created_at) }} {{ fmtTime($row->created_at) }}</span>
                                                 </div>
                                             @endif
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="pt-3 mt-auto border-t border-gray-100 flex items-center justify-between">
-                                    <span class="text-[10px] text-gray-400 font-medium">
+                                {{-- 4. BOTTOM ACTIONS --}}
+                                <div class="pt-3 mt-auto border-t border-gray-100 flex items-center justify-end gap-3">
+                                    <span class="text-[11px] text-gray-500 mr-auto">
                                         #{{ $rowNo }}
                                     </span>
-                                    <div class="flex gap-2">
-                                        <button type="button" wire:click="openEdit({{ $row->delivery_id }})"
-                                            wire:loading.attr="disabled"
-                                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition">
-                                            Edit
-                                        </button>
-                                        <button type="button" wire:click="storeItem({{ $row->delivery_id }})"
-                                            wire:loading.attr="disabled"
-                                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 shadow-sm transition">
-                                            Store
-                                        </button>
-                                    </div>
+                                    
+                                    <button type="button" wire:click="openEdit({{ $row->delivery_id }})"
+                                        wire:loading.attr="disabled"
+                                        class="px-4 py-2 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition">
+                                        Edit
+                                    </button>
+                                    <button type="button" wire:click="storeItem({{ $row->delivery_id }})"
+                                        wire:loading.attr="disabled"
+                                        class="px-4 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 shadow-sm transition">
+                                        Store
+                                    </button>
                                 </div>
                             </div>
+                            {{-- END: MODIFIED PENDING CARD DESIGN --}}
                         @empty
                             <div class="col-span-full px-4 py-14 text-center text-gray-500 text-sm">Tidak ada data</div>
                         @endforelse
                     @endif
 
-                    {{-- STORED TAB --}}
+                    {{-- STORED TAB (MODIFIED) --}}
                     @if($activeTab === 'stored')
                         @forelse($stored as $row)
                             @php
                                 $avatarChar = strtoupper(substr($row->item_name ?? 'S', 0, 1));
                                 $rowNo = ($stored->firstItem() ?? 1) + $loop->index;
                                 $dir = $storedDirections[$row->delivery_id] ?? 'taken';
+                                $dirLabel = $dir === 'deliver' ? 'Deliver' : 'Taken';
+                                $actionLabel = $dir === 'deliver' ? 'Delivered' : 'Taken';
                             @endphp
 
-                            {{-- Card Item --}}
+                            {{-- START: MODIFIED STORED CARD DESIGN --}}
                             <div wire:key="stor-{{ $row->delivery_id }}"
-                                class="flex flex-col justify-between p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
+                                class="bg-white border border-gray-200 rounded-xl p-4 space-y-3 hover:shadow-sm hover:border-gray-300 transition-all duration-200">
                                 
-                                <div class="flex items-start gap-3 mb-4">
-                                    <div class="{{ $icoAvatar }}">
+                                <div class="flex items-start gap-4">
+                                    {{-- 1. Avatar/Image on the left --}}
+                                    <div class="{{ $icoAvatar }} mt-0.5">
                                         @if($row->image)
                                             <img src="{{ Storage::disk('public')->url($row->image) }}" alt="Bukti foto"
                                                 class="w-full h-full object-cover rounded-xl">
@@ -261,60 +270,66 @@
                                             {{ $avatarChar }}
                                         @endif
                                     </div>
+
                                     <div class="min-w-0 flex-1">
-                                        <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                            <h4 class="font-semibold text-gray-900 text-base truncate max-w-full">
+                                        {{-- 2. TOP ROW: Title, Type, Status --}}
+                                        <div class="flex items-center justify-between gap-3 min-w-0 mb-2">
+                                            <h4 class="font-semibold text-gray-900 text-base truncate pr-2 max-w-full">
                                                 {{ $row->item_name }}
                                             </h4>
-                                            <div class="flex gap-1">
-                                                <span
-                                                    class="text-[10px] px-1.5 py-0.5 rounded border border-gray-300 text-gray-600 bg-gray-50">
+                                            <div class="flex-shrink-0 flex items-center gap-2">
+                                                {{-- Type Chip --}}
+                                                <span class="text-[11px] px-2 py-0.5 rounded border border-gray-300 text-gray-600 bg-gray-50 flex-shrink-0">
                                                     {{ strtoupper($row->type) }}
                                                 </span>
-                                                <span
-                                                    class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 font-medium">Stored</span>
+                                                {{-- Status Chip --}}
+                                                <span class="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-medium flex-shrink-0">
+                                                    Stored
+                                                </span>
                                             </div>
                                         </div>
 
-                                        <div class="space-y-1 text-[13px] text-gray-600">
+                                        {{-- 3. MIDDLE SECTION: Sender, Receiver, Direction --}}
+                                        <div class="space-y-2 text-[13px] text-gray-600 mb-3 border-y border-gray-100 py-2">
                                             @if($row->nama_pengirim)
                                                 <div class="flex items-center gap-2">
-                                                    <x-heroicon-o-user class="w-3.5 h-3.5 text-gray-400"/>
-                                                    <span class="truncate">From: {{ $row->nama_pengirim }}</span>
+                                                    <x-heroicon-o-user class="w-4 h-4 text-gray-400"/>
+                                                    <span class="truncate font-medium text-gray-800">From: {{ $row->nama_pengirim }}</span>
                                                 </div>
                                             @endif
                                             @if($row->nama_penerima)
                                                 <div class="flex items-center gap-2">
-                                                    <x-heroicon-o-user class="w-3.5 h-3.5 text-gray-400"/>
-                                                    <span class="truncate">To: {{ $row->nama_penerima }}</span>
+                                                    <x-heroicon-o-user class="w-4 h-4 text-gray-400"/>
+                                                    <span class="truncate font-medium text-gray-800">To: {{ $row->nama_penerima }}</span>
                                                 </div>
                                             @endif
-                                            <div class="flex items-center gap-2">
-                                                <x-heroicon-o-calendar-days class="w-3.5 h-3.5 text-gray-400"/>
-                                                <span>Direction: {{ $dir === 'deliver' ? 'Deliver' : 'Taken' }}</span>
+                                            <div class="flex items-center gap-2 text-[12px] text-gray-600">
+                                                <x-heroicon-o-arrow-up-right class="w-3.5 h-3.5 text-gray-400"/>
+                                                <span>Direction: {{ $dirLabel }}</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="pt-3 mt-auto border-t border-gray-100 flex items-center justify-between">
-                                    <span class="text:[10px] text-gray-400 font-medium">
+                                {{-- 4. BOTTOM ACTIONS --}}
+                                <div class="pt-3 mt-auto border-t border-gray-100 flex items-center justify-end gap-3">
+                                    <span class="text-[11px] text-gray-500 mr-auto">
                                         #{{ $rowNo }}
                                     </span>
-                                    <div class="flex gap-2">
-                                        <button type="button" wire:click="openEdit({{ $row->delivery_id }})"
-                                            wire:loading.attr="disabled"
-                                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition">
-                                            Edit
-                                        </button>
-                                        <button type="button" wire:click="finalizeItem({{ $row->delivery_id }})"
-                                            wire:loading.attr="disabled"
-                                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 shadow-sm transition">
-                                            {{ $dir === 'deliver' ? 'Delivered' : 'Taken' }}
-                                        </button>
-                                    </div>
+                                    
+                                    <button type="button" wire:click="openEdit({{ $row->delivery_id }})"
+                                        wire:loading.attr="disabled"
+                                        class="px-4 py-2 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition">
+                                        Edit
+                                    </button>
+                                    <button type="button" wire:click="finalizeItem({{ $row->delivery_id }})"
+                                        wire:loading.attr="disabled"
+                                        class="px-4 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 shadow-sm transition">
+                                        {{ $actionLabel }}
+                                    </button>
                                 </div>
                             </div>
+                            {{-- END: MODIFIED STORED CARD DESIGN --}}
                         @empty
                             <div class="col-span-full px-4 py-14 text-center text-gray-500 text-sm">Tidak ada data</div>
                         @endforelse

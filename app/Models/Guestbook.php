@@ -17,6 +17,8 @@ class Guestbook extends Model
 
     protected $fillable = [
         'company_id',
+        'department_id',
+        'user_id',
         'date',
         'jam_in',
         'jam_out',
@@ -25,8 +27,8 @@ class Guestbook extends Model
         'instansi',
         'keperluan',
         'petugas_penjaga',
-        'user_id',
-        'department_id',
+        'created_at', // If you explicitly set these, though usually handled by timestamps
+        'updated_at',
     ];
 
     // If column `date` is DATE, this is safe. Times are left as string (TIME cast is not native Carbon).

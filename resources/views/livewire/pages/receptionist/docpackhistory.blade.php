@@ -141,14 +141,24 @@
                             $avatarChar = strtoupper(substr($row->item_name ?? 'D', 0, 1));
                             $rowNo = ($done->firstItem() ?? 1) + $loop->index;
                             $isDelivered = $row->status === 'delivered';
+                            $statusLabel = $isDelivered ? 'Delivered' : 'Taken';
+                            $statusBg = $isDelivered ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800';
+
+                            $completionDate = $row->created_at; // Default to created_at
+                            if ($isDelivered && $row->pengiriman) {
+                                $completionDate = $row->pengiriman;
+                            } elseif (!$isDelivered && $row->pengambilan) {
+                                $completionDate = $row->pengambilan;
+                            }
                         @endphp
 
-                        {{-- Card Item --}}
+                        {{-- START: MODIFIED HISTORY CARD DESIGN --}}
                         <div wire:key="done-{{ $row->delivery_id }}"
-                            class="flex flex-col justify-between p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
+                            class="bg-white border border-gray-200 rounded-xl p-4 space-y-3 hover:shadow-sm hover:border-gray-300 transition-all duration-200">
                             
-                            <div class="flex items-start gap-3 mb-4">
-                                <div class="{{ $icoAvatar }}">
+                            <div class="flex items-start gap-4">
+                                {{-- 1. Avatar/Image on the left --}}
+                                <div class="{{ $icoAvatar }} mt-0.5">
                                     @if($row->image)
                                         <img src="{{ Storage::disk('public')->url($row->image) }}" alt="Bukti foto"
                                             class="w-full h-full object-cover rounded-xl">
@@ -156,50 +166,47 @@
                                         {{ $avatarChar }}
                                     @endif
                                 </div>
+
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                        <h4 class="font-semibold text-gray-900 text-base truncate max-w-full">
+                                    {{-- 2. TOP ROW: Title, Type, Status --}}
+                                    <div class="flex items-center justify-between gap-3 min-w-0 mb-2">
+                                        <h4 class="font-semibold text-gray-900 text-base truncate pr-2 max-w-full">
                                             {{ $row->item_name }}
                                         </h4>
-                                        <div class="flex gap-1">
-                                            <span
-                                                class="text-[10px] px-1.5 py-0.5 rounded border border-gray-300 text-gray-600 bg-gray-50">
+                                        <div class="flex-shrink-0 flex items-center gap-2">
+                                            {{-- Type Chip --}}
+                                            <span class="text-[11px] px-2 py-0.5 rounded border border-gray-300 text-gray-600 bg-gray-50 flex-shrink-0">
                                                 {{ strtoupper($row->type) }}
                                             </span>
-                                            <span
-                                                class="text-[10px] px-1.5 py-0.5 rounded font-medium {{ $isDelivered ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800' }}">
-                                                {{ $isDelivered ? 'Delivered' : 'Taken' }}
+                                            {{-- Status Chip --}}
+                                            <span class="text-[11px] px-2 py-0.5 rounded font-medium {{ $statusBg }} flex-shrink-0">
+                                                {{ $statusLabel }}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div class="space-y-1 text-[13px] text-gray-600">
+                                    {{-- 3. MIDDLE SECTION: Sender, Receiver, Completion Date --}}
+                                    <div class="space-y-2 text-[13px] text-gray-600 mb-3 border-y border-gray-100 py-2">
                                         @if($row->nama_pengirim)
                                             <div class="flex items-center gap-2">
-                                                <x-heroicon-o-user class="w-3.5 h-3.5 text-gray-400"/>
-                                                <span class="truncate">From: {{ $row->nama_pengirim }}</span>
+                                                <x-heroicon-o-user class="w-4 h-4 text-gray-400"/>
+                                                <span class="truncate font-medium text-gray-800">From: {{ $row->nama_pengirim }}</span>
                                             </div>
                                         @endif
                                         @if($row->nama_penerima)
                                             <div class="flex items-center gap-2">
-                                                <x-heroicon-o-user class="w-3.5 h-3.5 text-gray-400"/>
-                                                <span class="truncate">To: {{ $row->nama_penerima }}</span>
+                                                <x-heroicon-o-user class="w-4 h-4 text-gray-400"/>
+                                                <span class="truncate font-medium text-gray-800">To: {{ $row->nama_penerima }}</span>
                                             </div>
                                         @endif
-                                        <div class="flex items-center gap-2">
+                                        <div class="flex items-center gap-2 text-[12px] text-gray-600">
                                             <x-heroicon-o-clock class="w-3.5 h-3.5 text-gray-400"/>
                                             <span>
-                                                @if($isDelivered && $row->pengiriman)
-                                                    {{ fmtDate($row->pengiriman) }} {{ fmtTime($row->pengiriman) }}
-                                                @elseif(!$isDelivered && $row->pengambilan)
-                                                    {{ fmtDate($row->pengambilan) }} {{ fmtTime($row->pengambilan) }}
-                                                @else
-                                                    {{ fmtDate($row->created_at) }} {{ fmtTime($row->created_at) }}
-                                                @endif
+                                                {{ $statusLabel }}: {{ fmtDate($completionDate) }} {{ fmtTime($completionDate) }}
                                             </span>
                                         </div>
                                         @if($row->receptionist?->full_name)
-                                            <div class="flex items-center gap-2">
+                                            <div class="flex items-center gap-2 text-[12px] text-gray-600">
                                                 <x-heroicon-o-user-circle class="w-3.5 h-3.5 text-gray-400"/>
                                                 <span class="truncate">Recp: {{ $row->receptionist->full_name }}</span>
                                             </div>
@@ -208,25 +215,27 @@
                                 </div>
                             </div>
 
-                            <div class="pt-3 mt-auto border-t border-gray-100 flex items-center justify-between">
-                                <span class="text-[10px] text-gray-400 font-medium">
+                            {{-- 4. BOTTOM ACTIONS --}}
+                            <div class="pt-3 mt-auto border-t border-gray-100 flex items-center justify-end gap-3">
+                                <span class="text-[11px] text-gray-500 mr-auto">
                                     #{{ $rowNo }}
                                 </span>
                                 <div class="flex gap-2">
                                     <button type="button" wire:click="openEdit({{ $row->delivery_id }})"
                                         wire:loading.attr="disabled"
-                                        class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-black text-whitefocus:outline-none focus:ring-2 focus:ring-gray-500/20 transition">
+                                        class="px-4 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition">
                                         Edit
                                     </button>
                                     <button type="button" wire:click="softDelete({{ $row->delivery_id }})"
                                         wire:loading.attr="disabled"
                                         wire:confirm="Are you sure you want to delete this item?"
-                                        class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-rose-700 text-white hover:bg-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 transition">
+                                        class="px-4 py-2 text-xs font-medium rounded-lg bg-rose-700 text-white hover:bg-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-700/20 transition">
                                         Delete
                                     </button>
                                 </div>
                             </div>
                         </div>
+                        {{-- END: MODIFIED HISTORY CARD DESIGN --}}
                     @empty
                         <div class="col-span-full px-4 py-14 text-center text-gray-500 text-sm">Tidak ada data</div>
                     @endforelse
