@@ -40,20 +40,20 @@ class Guestbook extends Component
     public int $perLatest  = 5; 
     public int $perEntries = 5; 
     public $filter_date    = null;
-    public string $q       = '';   
+    public string $q       = '';  
     public bool $showEdit  = false;
     public ?int $editId    = null; 
     public array $edit = [          
-        'date'            => null,
-        'jam_in'          => null,
-        'jam_out'         => null,
-        'name'            => null,
-        'phone_number'    => null,
-        'instansi'        => null,
-        'keperluan'       => null,
-        'petugas_penjaga' => null,
-        'department_id'   => null,
-        'user_id'         => null,
+        'date'              => null,
+        'jam_in'            => null,
+        'jam_out'           => null,
+        'name'              => null,
+        'phone_number'      => null,
+        'instansi'          => null,
+        'keperluan'         => null,
+        'petugas_penjaga'   => null,
+        'department_id'     => null,
+        'user_id'           => null,
     ];
 
     public function mount(): void
@@ -93,7 +93,7 @@ class Guestbook extends Component
             'keperluan'     => ['nullable', 'string', 'max:255'],
             // SESUAIKAN: Ganti 'departments' dan 'users' di bawah ini dengan nama TABEL di database Anda
             'department_id' => ['nullable', 'exists:departments,id'], 
-            'user_id'       => ['nullable', 'exists:users,id'],       
+            'user_id'       => ['nullable', 'exists:users,id'],      
         ];
     }
 
@@ -131,7 +131,8 @@ class Guestbook extends Component
 
         $this->validate();
 
-    
+        // GuestbookModel::create($this->all()); // <-- Uncomment and adjust this line to save to the database
+
         // Reset form
         $this->reset(['name', 'phone_number', 'instansi', 'keperluan', 'department_id', 'user_id']);
         // Reset list user karena dept kosong lagi

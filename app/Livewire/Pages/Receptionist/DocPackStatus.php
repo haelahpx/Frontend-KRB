@@ -34,8 +34,8 @@ class DocPackStatus extends Component
     public string $activeTab = 'pending';
 
     // Pagination per box
-    public int $perPending = 12;
-    public int $perStored = 12;
+    public int $perPending = 6;
+    public int $perStored = 6;
 
     // Mobile filter modal
     public bool $showFilterModal = false;
