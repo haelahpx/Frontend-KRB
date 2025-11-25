@@ -29,6 +29,7 @@ use App\Livewire\Pages\Admin\Ticketshow as AdminTicketshow;
 use App\Livewire\Pages\Admin\RoomMonitoring as RoomMonitoringPage;
 use App\Livewire\Pages\Admin\Information as InformationPage;
 use App\Livewire\Pages\Admin\Agentreport as AgentreportPage;
+use App\Livewire\Pages\Admin\WifiManagement;
 
 // ========== Livewire Pages (Superadmin) ==========
 use App\Livewire\Pages\Superadmin\Dashboard as SuperadminDashboard;
@@ -196,6 +197,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin-usermanagement', \App\Livewire\Pages\Admin\Usermanagement::class)->name('admin.usermanagement');
         Route::get('/admin/information', InformationPage::class)->name('admin.information');
         Route::get('/admin/agentreport', AgentreportPage::class)->name('admin.agentreport');
+        Route::get('/admin/wifimanagement', WifiManagement::class)->name('admin.wifimanagement');
     });
 
     // ---------- Superadmin routes ----------

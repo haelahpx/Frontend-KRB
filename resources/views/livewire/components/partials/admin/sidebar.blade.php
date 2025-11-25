@@ -54,6 +54,7 @@
         >
             Ticket
         </flux:sidebar.item>
+
         <flux:sidebar.item
             icon="users"
             href="{{ route('admin.usermanagement') }}"
@@ -61,6 +62,19 @@
         >
             User Management
         </flux:sidebar.item>
+
+        {{-- MENU KHUSUS IT: WiFi Management --}}
+        {{-- Hanya tampil jika user memiliki departemen 'IT' --}}
+        @if(auth()->user()->department && auth()->user()->department->department_name === 'IT')
+            <flux:sidebar.item
+                icon="wifi" 
+                href="{{ route('admin.wifimanagement') }}"
+                :current="request()->routeIs('admin.wifimanagement')"
+            >
+                WiFi Management
+            </flux:sidebar.item>
+        @endif
+
         <flux:sidebar.item
             icon="chart-bar"
             href="{{ route('admin.agentreport') }}"
