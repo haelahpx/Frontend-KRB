@@ -49,6 +49,7 @@ use App\Livewire\Pages\Superadmin\Documentsmanagement as Documentsmanagement;
 use App\Livewire\Pages\Superadmin\Guestbookmanagement as Guestbookmanagement;
 use App\Livewire\Pages\Superadmin\Bookingvehicle as SuperadminBookingvehicle;
 use App\Livewire\Pages\Superadmin\Adminmanagement as AdminmanagementPage;
+use App\Livewire\Pages\Superadmin\WifiManagement as SuperadminWifiManagement;
 
 // ========== Livewire Pages (Receptionist) ==========
 use App\Livewire\Pages\Receptionist\Dashboard as ReceptionistDashboard;
@@ -219,6 +220,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/superadmin-documentsmanagement', Documentsmanagement::class)->name('superadmin.documentsmanagement');
         Route::get('/superadmin-guestbookmanagement', Guestbookmanagement::class)->name('superadmin.guestbookmanagement');
         Route::get('/superadmin-adminmanagement', AdminmanagementPage::class)->name('superadmin.adminmanagement');
+        Route::get('/superadmin-wifimanagement', SuperadminWifiManagement::class)->name('superadmin.wifimanagement');
     });
 
     // ---------- Receptionist routes ----------

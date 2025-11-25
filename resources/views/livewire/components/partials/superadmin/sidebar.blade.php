@@ -1,7 +1,4 @@
-<flux:sidebar
-    sticky
-    collapsible="mobile"
-    class="
+<flux:sidebar sticky collapsible="mobile" class="
         fixed inset-y-0 left-0 z-40
         bg-zinc-900 border-r border-zinc-800
         lg:w-64 w-full max-w-[19rem]
@@ -9,11 +6,7 @@
         box-border
     ">
     <flux:sidebar.header>
-        <flux:sidebar.brand
-            href="#"
-            logo="{{ $brandLogo }}"
-            name="{{ $brandName }}"
-            class="text-white"
+        <flux:sidebar.brand href="#" logo="{{ $brandLogo }}" name="{{ $brandName }}" class="text-white"
             style="{{ $invertStyle }}" />
         <flux:sidebar.collapse class="lg:hidden" />
     </flux:sidebar.header>
@@ -22,68 +15,87 @@
 
     <flux:sidebar.nav>
         {{-- ------- Core ------- --}}
-        <flux:sidebar.item icon="home" href="{{ route('superadmin.dashboard') }}" :current="request()->routeIs('superadmin.dashboard')">
+        <flux:sidebar.item icon="home" href="{{ route('superadmin.dashboard') }}"
+            :current="request()->routeIs('superadmin.dashboard')">
             Dashboard
         </flux:sidebar.item>
 
-        <flux:sidebar.item icon="building-office" href="{{ route('superadmin.department') }}" :current="request()->routeIs('superadmin.department')">
+        <flux:sidebar.item icon="building-office" href="{{ route('superadmin.department') }}"
+            :current="request()->routeIs('superadmin.department')">
             Departments
         </flux:sidebar.item>
 
-        <flux:sidebar.item icon="users" href="{{ route('superadmin.user') }}" :current="request()->routeIs('superadmin.user')">
+        <flux:sidebar.item icon="users" href="{{ route('superadmin.user') }}"
+            :current="request()->routeIs('superadmin.user')">
             Users
         </flux:sidebar.item>
 
-        <flux:sidebar.item icon="shield-check" href="{{ route('superadmin.adminmanagement') }}" :current="request()->routeIs('superadmin.adminmanagement')">
+        <flux:sidebar.item icon="shield-check" href="{{ route('superadmin.adminmanagement') }}"
+            :current="request()->routeIs('superadmin.adminmanagement')">
             Admins
         </flux:sidebar.item>
 
-        <flux:sidebar.item icon="chart-bar" href="{{ route('superadmin.reports') }}" :current="request()->routeIs('superadmin.reports')">
+        <flux:sidebar.item icon="chart-bar" href="{{ route('superadmin.reports') }}"
+            :current="request()->routeIs('superadmin.reports')">
             Reports
+        </flux:sidebar.item>
+        <flux:sidebar.item icon="wifi" href="{{ route('superadmin.wifimanagement') }}"
+            :current="request()->routeIs('superadmin.wifimanagement')">
+            WiFi Management
         </flux:sidebar.item>
 
         {{-- ------- Communication ------- --}}
         <flux:sidebar.group expandable heading="Communication" class="grid">
-            <flux:sidebar.item icon="megaphone" href="{{ route('superadmin.announcement') }}" :current="request()->routeIs('superadmin.announcement')">
+            <flux:sidebar.item icon="megaphone" href="{{ route('superadmin.announcement') }}"
+                :current="request()->routeIs('superadmin.announcement')">
                 Announcements
             </flux:sidebar.item>
-            <flux:sidebar.item icon="document-text" href="{{ route('superadmin.information') }}" :current="request()->routeIs('superadmin.information')">
+            <flux:sidebar.item icon="document-text" href="{{ route('superadmin.information') }}"
+                :current="request()->routeIs('superadmin.information')">
                 Info Center
             </flux:sidebar.item>
-            <flux:sidebar.item icon="user" href="{{ route('superadmin.guestbookmanagement') }}" :current="request()->routeIs('superadmin.guestbookmanagement')">
+            <flux:sidebar.item icon="user" href="{{ route('superadmin.guestbookmanagement') }}"
+                :current="request()->routeIs('superadmin.guestbookmanagement')">
                 Guestbook
             </flux:sidebar.item>
         </flux:sidebar.group>
 
         {{-- ------- Vehicles ------- --}}
         <flux:sidebar.group expandable heading="Vehicles" class="grid">
-            <flux:sidebar.item icon="truck" href="{{ route('superadmin.vehicle') }}" :current="request()->routeIs('superadmin.vehicle')">
+            <flux:sidebar.item icon="truck" href="{{ route('superadmin.vehicle') }}"
+                :current="request()->routeIs('superadmin.vehicle')">
                 Fleet
             </flux:sidebar.item>
-            <flux:sidebar.item icon="calendar" href="{{ route('superadmin.bookingvehicle') }}" :current="request()->routeIs('superadmin.bookingvehicle')">
+            <flux:sidebar.item icon="calendar" href="{{ route('superadmin.bookingvehicle') }}"
+                :current="request()->routeIs('superadmin.bookingvehicle')">
                 Bookings
             </flux:sidebar.item>
         </flux:sidebar.group>
 
         {{-- ------- Rooms ------- --}}
         <flux:sidebar.group expandable heading="Rooms" class="grid">
-            <flux:sidebar.item icon="calendar" href="{{ route('superadmin.bookingroom') }}" :current="request()->routeIs('superadmin.bookingroom')">
+            <flux:sidebar.item icon="calendar" href="{{ route('superadmin.bookingroom') }}"
+                :current="request()->routeIs('superadmin.bookingroom')">
                 Bookings
             </flux:sidebar.item>
-            <flux:sidebar.item icon="archive-box" href="{{ route('superadmin.storage') }}" :current="request()->routeIs('superadmin.storage')">
+            <flux:sidebar.item icon="archive-box" href="{{ route('superadmin.storage') }}"
+                :current="request()->routeIs('superadmin.storage')">
                 Storage
             </flux:sidebar.item>
-            <flux:sidebar.item icon="building-office" href="{{ route('superadmin.manageroom') }}" :current="request()->routeIs('superadmin.manageroom')">
+            <flux:sidebar.item icon="building-office" href="{{ route('superadmin.manageroom') }}"
+                :current="request()->routeIs('superadmin.manageroom')">
                 Manage Rooms
             </flux:sidebar.item>
         </flux:sidebar.group>
 
         {{-- ------- Ticketing ------- --}}
         <flux:sidebar.group expandable heading="Ticketing" class="grid">
-            <flux:sidebar.item icon="inbox" href="{{ route('superadmin.ticketsupport') }}" :current="request()->routeIs('superadmin.ticketsupport')">
+            <flux:sidebar.item icon="inbox" href="{{ route('superadmin.ticketsupport') }}"
+                :current="request()->routeIs('superadmin.ticketsupport')">
                 Ticket List
             </flux:sidebar.item>
-            <flux:sidebar.item icon="check-badge" href="{{ route('superadmin.managerequirements') }}" :current="request()->routeIs('superadmin.managerequirements')">
+            <flux:sidebar.item icon="check-badge" href="{{ route('superadmin.managerequirements') }}"
+                :current="request()->routeIs('superadmin.managerequirements')">
                 Requirements
             </flux:sidebar.item>
         </flux:sidebar.group>
@@ -94,7 +106,8 @@
     <flux:sidebar.nav>
         <flux:sidebar.item icon="cog-6-tooth" href="#">Settings</flux:sidebar.item>
         <flux:sidebar.item icon="information-circle" href="#">Help</flux:sidebar.item>
-        <flux:sidebar.item class="lg:hidden" icon="arrow-right-start-on-rectangle" as="button" type="submit" form="logout-form">
+        <flux:sidebar.item class="lg:hidden" icon="arrow-right-start-on-rectangle" as="button" type="submit"
+            form="logout-form">
             Logout
         </flux:sidebar.item>
     </flux:sidebar.nav>
