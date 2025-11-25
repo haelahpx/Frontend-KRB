@@ -30,11 +30,16 @@
         }
     }
 
-    $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
-    $label = 'block text-sm font-medium text-gray-700 mb-2';
-    $input = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
+    // Theme tokens adopted from guestbookhistory original
+    $card    = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
+    $label   = 'block text-sm font-medium text-gray-700 mb-2';
+    $input   = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
+    $btnBlk = 'px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition';
+    $btnGrn = 'px-3 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 disabled:opacity-60 transition';
+    
     $chip = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
     $icoAvatar = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0';
+    $editIn    = 'w-full h-10 bg-white border border-gray-300 rounded-lg px-3 text-gray-800 focus:border-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition hover:border-gray-400 placeholder:text-gray-400';
 @endphp
 
 <div class="min-h-screen bg-gray-50" wire:poll.1000ms.keep-alive>
@@ -56,6 +61,16 @@
                             <h2 class="text-lg sm:text-xl font-semibold">Documents & Packages — History</h2>
                             <p class="text-sm text-white/80">Pantau status document & package yang sudah selesai.</p>
                         </div>
+                    </div>
+
+                    {{-- ADDED: Include deleted checkbox --}}
+                    <div class="flex items-center gap-3">
+                        <label class="inline-flex items-center gap-2 text-sm text-white/90">
+                            <input type="checkbox"
+                                       wire:model.live="withTrashed"
+                                       class="rounded border-white/30 bg-white/10 focus:ring-white/40">
+                            <span>Include deleted</span>
+                        </label>
                     </div>
 
                     {{-- MOBILE FILTER BUTTON --}}
@@ -84,21 +99,21 @@
                         {{-- Type scope: All / Document / Package --}}
                         <div class="inline-flex items-center bg-gray-100 rounded-full p-1 text-[11px] font-medium">
                             <button type="button" wire:click="$set('type', 'all')" class="px-3 py-1 rounded-full transition
-                                        {{ $type === 'all'
-    ? 'bg-gray-900 text-white shadow-sm'
-    : 'text-gray-700 hover:bg-gray-200' }}">
+                                            {{ $type === 'all'
+                                ? 'bg-gray-900 text-white shadow-sm'
+                                : 'text-gray-700 hover:bg-gray-200' }}">
                                 All
                             </button>
                             <button type="button" wire:click="$set('type', 'document')" class="px-3 py-1 rounded-full transition
-                                        {{ $type === 'document'
-    ? 'bg-gray-900 text-white shadow-sm'
-    : 'text-gray-700 hover:bg-gray-200' }}">
+                                            {{ $type === 'document'
+                                ? 'bg-gray-900 text-white shadow-sm'
+                                : 'text-gray-700 hover:bg-gray-200' }}">
                                 Document
                             </button>
                             <button type="button" wire:click="$set('type', 'package')" class="px-3 py-1 rounded-full transition
-                                        {{ $type === 'package'
-    ? 'bg-gray-900 text-white shadow-sm'
-    : 'text-gray-700 hover:bg-gray-200' }}">
+                                            {{ $type === 'package'
+                                ? 'bg-gray-900 text-white shadow-sm'
+                                : 'text-gray-700 hover:bg-gray-200' }}">
                                 Package
                             </button>
                         </div>
@@ -170,6 +185,12 @@
                                                 class="text-[10px] px-1.5 py-0.5 rounded font-medium {{ $isDelivered ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800' }}">
                                                 {{ $isDelivered ? 'Delivered' : 'Taken' }}
                                             </span>
+                                            {{-- ADDED: Deleted Status Tag --}}
+                                            @if($row->deleted_at)
+                                                <span class="text-[10px] px-1.5 py-0.5 rounded font-medium bg-rose-100 text-rose-800">
+                                                    Deleted
+                                                </span>
+                                            @endif
                                         </div>
                                     </div>
 
@@ -215,15 +236,32 @@
                                 <div class="flex gap-2">
                                     <button type="button" wire:click="openEdit({{ $row->delivery_id }})"
                                         wire:loading.attr="disabled"
-                                        class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-black text-whitefocus:outline-none focus:ring-2 focus:ring-gray-500/20 transition">
+                                        class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-black text-white focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition">
                                         Edit
                                     </button>
-                                    <button type="button" wire:click="softDelete({{ $row->delivery_id }})"
-                                        wire:loading.attr="disabled"
-                                        wire:confirm="Are you sure you want to delete this item?"
-                                        class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-rose-700 text-white hover:bg-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 transition">
-                                        Delete
-                                    </button>
+                                    @if(!$row->deleted_at)
+                                        <button type="button" wire:click="softDelete({{ $row->delivery_id }})"
+                                            wire:loading.attr="disabled"
+                                            wire:confirm="Are you sure you want to delete this item?"
+                                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-rose-700 text-white hover:bg-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-700/20 transition">
+                                            Delete
+                                        </button>
+                                    @else
+                                        {{-- ADDED: Restore & Permanent Delete for soft-deleted items --}}
+                                        <button wire:click="restore({{ $row->delivery_id }})"
+                                                wire:loading.attr="disabled"
+                                                wire:target="restore({{ $row->delivery_id }})"
+                                                class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 disabled:opacity-60 transition">
+                                            Restore
+                                        </button>
+                                        <button wire:click="destroyForever({{ $row->delivery_id }})"
+                                                onclick="return confirm('Hapus permanen entri ini? Tindakan tidak bisa dibatalkan!')"
+                                                wire:loading.attr="disabled"
+                                                wire:target="destroyForever({{ $row->delivery_id }})"
+                                                class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-rose-700 text-white hover:bg-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-700/20 disabled:opacity-60 transition">
+                                            Perm. Delete
+                                        </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>

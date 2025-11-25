@@ -35,20 +35,21 @@ class BookingRoom extends Model
         'user_id',
         'department_id',
         'meeting_title',
-        'date',                   // DATE
+        'date',              // DATE
         'number_of_attendees',
-        'start_time',             // TIME (HH:MM:SS)
-        'end_time',               // TIME (HH:MM:SS)
+        'start_time',        // TIME (HH:MM:SS)
+        'end_time',          // TIME (HH:MM:SS)
         'special_notes',
         'status',
         'approved_by',
         'is_approve',
-        'booking_type',           // meeting | online_meeting | hybrid | etc
-        'online_provider',        // zoom | google_meet
+        'booking_type',      // meeting | online_meeting | hybrid | etc
+        'online_provider',   // zoom | google_meet
         'online_meeting_url',
         'online_meeting_code',
         'online_meeting_password',
-        'requestinformation'
+        'requestinformation',
+        'book_reject' // Assuming this is also fillable for reschedule/reject logic
     ];
 
     protected $casts = [
@@ -62,7 +63,7 @@ class BookingRoom extends Model
 
     /* ==========================
     | Relationships
-     ========================== */
+      ========================== */
 
     public function room(): BelongsTo
     {
@@ -86,6 +87,8 @@ class BookingRoom extends Model
 
     public function requirements(): BelongsToMany
     {
+        // Links BookingRoom (bookingroom_id) to Requirement (requirement_id) via pivot table booking_requirements
+        // Assumes there is a model `App\Models\Requirement`
         return $this->belongsToMany(
             Requirement::class,
             'booking_requirements',
@@ -96,7 +99,7 @@ class BookingRoom extends Model
 
     /* ==========================
     | Scopes
-     ========================== */
+      ========================== */
 
     /** Filter by company (no-op if null) */
     public function scopeCompany($query, $companyId)
@@ -147,10 +150,11 @@ class BookingRoom extends Model
             ->whereRaw("CONCAT(date, ' ', end_time) < ?", [$now])
             ->update(['status' => self::ST_DONE]);
     }
+    
 
     /* ==========================
     | Helpers (optional)
-     ========================== */
+      ========================== */
 
     /**
      * Fallback URL generator when Zoom/Google services aren’t bound or creds missing.

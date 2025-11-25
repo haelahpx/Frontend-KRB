@@ -20,15 +20,15 @@ class GuestbookHistory extends Component
 
     // --- Pagination Controls ---
     // Set default data per page to 12
-    public int $perLatest  = 12; // for "Kunjungan Terbaru"
-    public int $perEntries = 12; // for "Riwayat Kunjungan"
-    
+    public int $perLatest = 6; // for "Kunjungan Terbaru"
+    public int $perEntries = 6; // for "Riwayat Kunjungan"
+
     // Shared property for the dropdown control in Blade
-    public int $selectedPerPage = 12; // Default selection
+    public int $selectedPerPage = 6; // Default selection
 
     // Filters for history box
-    public ?string $filter_date  = null; // YYYY-MM-DD (used in Blade as wire:model="filter_date")
-    public ?string $selectedDate  = null;
+    public ?string $filter_date = null; // YYYY-MM-DD (used in Blade as wire:model="filter_date")
+    public ?string $selectedDate = null;
     public string $q = '';
 
     // Sorting (follow BookingsApproval pattern)
@@ -39,33 +39,33 @@ class GuestbookHistory extends Component
 
     // Edit modal state
     public bool $showEdit = false;
-    public ?int $editId   = null;
+    public ?int $editId = null;
 
     // Active tab: entries | latest
     public string $activeTab = 'entries';
 
     public array $edit = [
-        'date'               => null,
-        'jam_in'             => null,
-        'jam_out'            => null,
-        'name'               => null,
-        'phone_number'       => null,
-        'instansi'           => null,
-        'keperluan'          => null,
-        'petugas_penjaga'    => null,
+        'date' => null,
+        'jam_in' => null,
+        'jam_out' => null,
+        'name' => null,
+        'phone_number' => null,
+        'instansi' => null,
+        'keperluan' => null,
+        'petugas_penjaga' => null,
     ];
 
     protected function rulesEdit(): array
     {
         return [
-            'edit.date'              => ['required', 'date'],
-            'edit.jam_in'            => ['required', 'date_format:H:i'],
-            'edit.jam_out'           => ['nullable', 'date_format:H:i'],
-            'edit.name'              => ['required', 'string', 'max:255'],
-            'edit.phone_number'      => ['nullable', 'string', 'max:50'],
-            'edit.instansi'          => ['nullable', 'string', 'max:255'],
-            'edit.keperluan'         => ['nullable', 'string', 'max:255'],
-            'edit.petugas_penjaga'   => ['required', 'string', 'max:255'],
+            'edit.date' => ['required', 'date'],
+            'edit.jam_in' => ['required', 'date_format:H:i'],
+            'edit.jam_out' => ['nullable', 'date_format:H:i'],
+            'edit.name' => ['required', 'string', 'max:255'],
+            'edit.phone_number' => ['nullable', 'string', 'max:50'],
+            'edit.instansi' => ['nullable', 'string', 'max:255'],
+            'edit.keperluan' => ['nullable', 'string', 'max:255'],
+            'edit.petugas_penjaga' => ['required', 'string', 'max:255'],
         ];
     }
 
@@ -150,7 +150,7 @@ class GuestbookHistory extends Component
     {
         $this->resetPage('entriesPage');
     }
-    
+
     // Bind shared property to the list-specific pagination properties
     public function updatedSelectedPerPage($value): void
     {
@@ -232,7 +232,7 @@ class GuestbookHistory extends Component
 
         // Sort by date+jam_in / jam_out similar to BookingsApproval (dateMode)
         $dir = $this->sortingDirection();
-        
+
         // MySQL/MariaDB only: Order by a calculated datetime based on jam_out (if present) or jam_in
         // Note: For other DBs (Postgres/SQLite) this raw query must be adapted.
         $dtExpr = "COALESCE(
@@ -241,7 +241,7 @@ class GuestbookHistory extends Component
         )";
 
         $q->orderByRaw("$dtExpr $dir")
-          ->orderByDesc('created_at');
+            ->orderByDesc('created_at');
 
         return $q->paginate($this->perEntries, ['*'], 'entriesPage');
     }
@@ -253,14 +253,14 @@ class GuestbookHistory extends Component
 
         $this->editId = $row->getKey();
         $this->edit = [
-            'date'               => $row->date ? Carbon::parse($row->date)->format('Y-m-d') : null,
-            'jam_in'             => $row->jam_in ? Carbon::parse($row->jam_in)->format('H:i') : null,
-            'jam_out'            => $row->jam_out ? Carbon::parse($row->jam_out)->format('H:i') : null,
-            'name'               => $row->name,
-            'phone_number'       => $row->phone_number,
-            'instansi'           => $row->instansi,
-            'keperluan'          => $row->keperluan,
-            'petugas_penjaga'    => $row->petugas_penjaga,
+            'date' => $row->date ? Carbon::parse($row->date)->format('Y-m-d') : null,
+            'jam_in' => $row->jam_in ? Carbon::parse($row->jam_in)->format('H:i') : null,
+            'jam_out' => $row->jam_out ? Carbon::parse($row->jam_out)->format('H:i') : null,
+            'name' => $row->name,
+            'phone_number' => $row->phone_number,
+            'instansi' => $row->instansi,
+            'keperluan' => $row->keperluan,
+            'petugas_penjaga' => $row->petugas_penjaga,
         ];
 
         $this->resetValidation();
@@ -274,14 +274,14 @@ class GuestbookHistory extends Component
         $row = $this->findOwnedOrFail($this->editId);
 
         $row->update([
-            'date'               => $this->edit['date'],
-            'jam_in'             => $this->edit['jam_in'],
-            'jam_out'            => $this->edit['jam_out'] ?: null,
-            'name'               => $this->edit['name'],
-            'phone_number'       => $this->edit['phone_number'],
-            'instansi'           => $this->edit['instansi'],
-            'keperluan'          => $this->edit['keperluan'],
-            'petugas_penjaga'    => $this->edit['petugas_penjaga'],
+            'date' => $this->edit['date'],
+            'jam_in' => $this->edit['jam_in'],
+            'jam_out' => $this->edit['jam_out'] ?: null,
+            'name' => $this->edit['name'],
+            'phone_number' => $this->edit['phone_number'],
+            'instansi' => $this->edit['instansi'],
+            'keperluan' => $this->edit['keperluan'],
+            'petugas_penjaga' => $this->edit['petugas_penjaga'],
         ]);
 
         $this->showEdit = false;
@@ -394,7 +394,7 @@ class GuestbookHistory extends Component
     public function render()
     {
         return view('livewire.pages.receptionist.guestbookhistory', [
-            'latest'  => $this->latest,
+            'latest' => $this->latest,
             'entries' => $this->entries,
         ]);
     }
