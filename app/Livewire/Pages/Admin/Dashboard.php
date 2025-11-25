@@ -13,23 +13,23 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Ticket;
 use App\Models\BookingRoom;
 use App\Models\Information;
-use App\Models\TicketAssignment; // Based on the ticket_assignments table
+use App\Models\TicketAssignment;
 
 #[Layout('layouts.admin')]
 #[Title('Admin - Dashboard')]
 class Dashboard extends Component
 {
+    // Mengatur Timezone secara eksplisit
     protected string $tz = 'Asia/Jakarta';
 
+    /**
+     * Helper untuk mengubah nilai ke Carbon instance (tidak digunakan di render, tapi dipertahankan)
+     */
     private function asCarbon(null|Carbon|\DateTimeInterface|string $v): ?Carbon
     {
-        if ($v === null)
-            return null;
-        if ($v instanceof Carbon)
-            return $v->timezone($this->tz);
-        if ($v instanceof \DateTimeInterface)
-            return Carbon::instance($v)->timezone($this->tz);
-
+        if ($v === null) return null;
+        if ($v instanceof Carbon) return $v->timezone($this->tz);
+        if ($v instanceof \DateTimeInterface) return Carbon::instance($v)->timezone($this->tz);
         try {
             return Carbon::parse($v)->timezone($this->tz);
         } catch (\Throwable) {
@@ -37,77 +37,173 @@ class Dashboard extends Component
         }
     }
 
+    /**
+     * Mengambil data aktivitas harian untuk 7 hari terakhir
+     */
+    private function getWeeklyActivityData($companyId, $departmentId): array
+    {
+        // Pastikan rentang waktu menggunakan timezone yang sama
+        $now = Carbon::now($this->tz);
+        $startOfRange = $now->copy()->subDays(6)->startOfDay();
+        $endOfRange = $now->copy()->endOfDay();
+
+        $days = [];
+        $dayLabels = [];
+
+        // 1. Inisialisasi array untuk 7 hari terakhir
+        for ($i = 6; $i >= 0; $i--) {
+            $date = $now->copy()->subDays($i);
+            // Label harus sesuai urutan (D)
+            $dayLabels[] = $date->format('D');
+            // Kunci array adalah string Y-m-d
+            $days[$date->toDateString()] = [
+                'date' => $date->toDateString(),
+                'ticket' => 0,
+                'room' => 0,
+                'information' => 0,
+            ];
+        }
+
+        // --- 2. Tickets Data ---
+        $ticketsData = Ticket::query()
+            // Mengambil tanggal (Y-m-d) dari created_at, di-cast ke date
+            ->select(DB::raw('DATE(created_at) as date_key'), DB::raw('count(*) as count'))
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->whereBetween('created_at', [$startOfRange, $endOfRange])
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->get();
+
+        foreach ($ticketsData as $data) {
+            // Gunakan 'date_key' yang sudah di-select
+            $dateKey = $data->date_key;
+
+            if (isset($days[$dateKey])) {
+                $days[$dateKey]['ticket'] = (int)$data->count;
+            }
+        }
+
+        // --- 3. Room Bookings Data ---
+        $roomData = BookingRoom::query()
+            ->select(DB::raw('DATE(created_at) as date_key'), DB::raw('count(*) as count'))
+            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->whereBetween('created_at', [$startOfRange, $endOfRange])
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->get();
+
+        foreach ($roomData as $data) {
+            $dateKey = $data->date_key;
+
+            if (isset($days[$dateKey])) {
+                $days[$dateKey]['room'] = (int)$data->count;
+            }
+        }
+
+        // --- 4. Information Data ---
+        // --- 4. Information Data (FIXED) ---
+        $infoData = Information::query()
+            ->select(DB::raw('DATE(created_at) as date_key'), DB::raw('count(*) as count'))
+            // REMOVED: ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            // REMOVED: ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->whereBetween('created_at', [$startOfRange, $endOfRange])
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->get();
+
+        foreach ($infoData as $data) {
+            $dateKey = $data->date_key;
+
+            if (isset($days[$dateKey])) {
+                $days[$dateKey]['information'] = (int)$data->count;
+            }
+        }
+
+        // 5. Format data untuk Chart.js (Mengambil values berdasarkan urutan inisialisasi)
+        return [
+            'labels' => $dayLabels,
+            // array_values digunakan untuk memastikan urutan sesuai dengan inisialisasi $days
+            'ticket' => array_column(array_values($days), 'ticket'),
+            'room' => array_column(array_values($days), 'room'),
+            'information' => array_column(array_values($days), 'information'),
+        ];
+    }
+
+
     public function render()
     {
         $user = Auth::user();
         $companyId = optional($user)->company_id;
         $departmentId = optional($user)->department_id;
 
-        // Range 7 hari terakhir (hari ini + 6 hari ke belakang)
+        // Range 7 hari terakhir
         $startOfRange = Carbon::now($this->tz)->subDays(6)->startOfDay();
         $endOfRange = Carbon::now($this->tz)->endOfDay();
 
-        // --- Weekly Statistics (7 days) ---
+        // Range Bulan Ini
+        $startOfMonth = Carbon::now($this->tz)->startOfMonth();
+        $endOfMonth = Carbon::now($this->tz)->endOfMonth();
 
-        // 1. Tickets
+        // --- Weekly Statistics (7 days) ---
         $weeklyTicketsCount = Ticket::query()
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
             ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
             ->whereBetween('created_at', [$startOfRange, $endOfRange])
             ->count();
 
-        // 2. Booking Rooms
         $weeklyRoomBookingsCount = BookingRoom::query()
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
             ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
             ->whereBetween('created_at', [$startOfRange, $endOfRange])
             ->count();
 
-        // 3. Information
         $weeklyInformationCount = Information::query()
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
             ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
             ->whereBetween('created_at', [$startOfRange, $endOfRange])
             ->count();
 
-        // --- Ticket Status Distribution ---
+        // --- Ticket Priority Distribution (This Month) ---
         $totalTicketsThisMonth = Ticket::query()
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
             ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
-            ->whereBetween('created_at', [Carbon::now($this->tz)->startOfMonth(), Carbon::now($this->tz)->endOfMonth()])
+            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
             ->count();
 
-        $ticketStatuses = Ticket::query()
-            ->select('priority', DB::raw('count(*) as count')) // Using 'priority' as a proxy for status distribution as seen in your view structure
+        $ticketPriorities = Ticket::query()
+            ->select('priority', DB::raw('count(*) as count'))
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
             ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
             ->groupBy('priority')
             ->get()
             ->keyBy('priority');
 
-        $approvedCount = $ticketStatuses['high']->count ?? 0;
-        $pendingCount = $ticketStatuses['medium']->count ?? 0;
-        $rejectedCount = $ticketStatuses['low']->count ?? 0; // Using low as proxy for 'rejected' or lowest priority
+        $highCount = $ticketPriorities['high']->count ?? 0;
+        $mediumCount = $ticketPriorities['medium']->count ?? 0;
+        $lowCount = $ticketPriorities['low']->count ?? 0;
 
-        $totalStatusTickets = $approvedCount + $pendingCount + $rejectedCount;
+        $totalPriorityTickets = $highCount + $mediumCount + $lowCount;
 
-        $approvedPercent = $totalStatusTickets > 0 ? round(($approvedCount / $totalStatusTickets) * 100) : 0;
-        $pendingPercent = $totalStatusTickets > 0 ? round(($pendingCount / $totalStatusTickets) * 100) : 0;
-        $rejectedPercent = $totalStatusTickets > 0 ? round(($rejectedCount / $totalStatusTickets) * 100) : 0;
+        // Calculate percentages safely
+        $highPercent = $totalTicketsThisMonth > 0 ? round(($highCount / $totalTicketsThisMonth) * 100) : 0;
+        $mediumPercent = $totalTicketsThisMonth > 0 ? round(($mediumCount / $totalTicketsThisMonth) * 100) : 0;
+        $lowPercent = 100 - $highPercent - $mediumPercent;
+        if ($lowPercent < 0) $lowPercent = 0;
 
         // --- Top Agent (Solved Tickets) ---
         $topAgent = TicketAssignment::query()
             ->join('tickets', 'ticket_assignments.ticket_id', '=', 'tickets.ticket_id')
             ->join('users', 'ticket_assignments.user_id', '=', 'users.user_id')
             ->select('users.full_name', DB::raw('count(tickets.ticket_id) as solved_count'))
-            // Filter by solved status - assuming a status column exists in 'tickets' table, adjust as needed.
-            // Based on your tables, let's assume 'status' column exists in `tickets` table and 'closed' means solved.
-            ->where('tickets.status', 'closed')
+            ->where('tickets.status', 'closed') // Asumsi status 'closed' berarti solved
             ->when($companyId, fn($q) => $q->where('tickets.company_id', $companyId))
             ->when($departmentId, fn($q) => $q->where('tickets.department_id', $departmentId))
             ->groupBy('users.full_name')
             ->orderByDesc('solved_count')
             ->first();
+
+        // --- Weekly Activity Data for Chart ---
+        $weeklyActivityData = $this->getWeeklyActivityData($companyId, $departmentId);
 
 
         return view('livewire.pages.admin.dashboard', [
@@ -116,9 +212,10 @@ class Dashboard extends Component
             'weeklyInformationCount' => $weeklyInformationCount,
             'topAgent' => $topAgent,
             'totalTicketsThisMonth' => $totalTicketsThisMonth,
-            'approvedPercent' => $approvedPercent,
-            'pendingPercent' => $pendingPercent,
-            'rejectedPercent' => $rejectedPercent,
+            'highPercent' => $highPercent,
+            'mediumPercent' => $mediumPercent,
+            'lowPercent' => $lowPercent,
+            'weeklyActivityData' => $weeklyActivityData, // Pass the data
         ]);
     }
 }

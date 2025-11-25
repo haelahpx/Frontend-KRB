@@ -27,6 +27,8 @@ $invertStyle = 'filter: brightness(0) invert(1);';
     @vite('resources/css/app.css')
     @livewireStyles
     @fluxAppearance
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 

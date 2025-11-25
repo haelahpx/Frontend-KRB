@@ -65,7 +65,7 @@ class Agentreport extends Component
                 });
             });
 
-        $agents = $query->orderBy('full_name')->paginate(5);
+        $agents = $query->orderBy('full_name')->paginate(6);
         $agentIds = $agents->pluck('user_id')->toArray();
 
         // LOAD TICKETS FOR CURRENT PAGE

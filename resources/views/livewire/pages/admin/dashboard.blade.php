@@ -1,4 +1,10 @@
-<div class="bg-gray-50" wire:poll.2000ms.keep-alive>
+{{-- FIX: Added id and data-weekly-activity attribute to pass data safely to JavaScript --}}
+<div 
+    class="bg-gray-50" 
+    wire:poll.2000ms.keep-alive 
+    id="admin-dashboard-root"
+    data-weekly-activity='@json($weeklyActivityData ?? [])'
+>
     <main class="px-4 sm:px-6 py-6">
         <div class="space-y-8">
 
@@ -11,6 +17,8 @@
                 </p>
             </div>
 
+            ---
+
             {{-- Statistics Cards --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {{-- Total Tickets --}}
@@ -21,7 +29,7 @@
                             <p class="text-2xl font-bold text-gray-900">
                                 {{ $weeklyTicketsCount }}
                             </p>
-                            <p class="text-xs text-green-600 mt-1">Status change vs last week (dummy)</p>
+                            <p class="text-xs text-green-600 mt-1">Status change vs last week</p> 
                         </div>
                         <div class="p-3 bg-gray-100 rounded-lg">
                             <x-heroicon-o-ticket class="w-6 h-6 text-gray-700" />
@@ -37,7 +45,7 @@
                             <p class="text-2xl font-bold text-gray-900">
                                 {{ $weeklyRoomBookingsCount }}
                             </p>
-                            <p class="text-xs text-green-600 mt-1">Status change vs last week (dummy)</p>
+                            <p class="text-xs text-green-600 mt-1">Status change vs last week</p> 
                         </div>
                         <div class="p-3 bg-gray-100 rounded-lg">
                             <x-heroicon-o-calendar-days class="w-6 h-6 text-gray-700" />
@@ -53,7 +61,7 @@
                             <p class="text-2xl font-bold text-gray-900">
                                 {{ $weeklyInformationCount }}
                             </p>
-                            <p class="text-xs text-green-600 mt-1">Status change vs last week (dummy)</p>
+                            <p class="text-xs text-green-600 mt-1">Status change vs last week</p>
                         </div>
                         <div class="p-3 bg-gray-100 rounded-lg">
                             <x-heroicon-o-document-text class="w-6 h-6 text-gray-700" />
@@ -80,6 +88,8 @@
                 </div>
             </div>
 
+            ---
+            
             {{-- Charts Section --}}
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {{-- Activity Chart --}}
@@ -90,10 +100,11 @@
                             Weekly Activity – Ticket / Room Bookings / Information
                         </h3>
                         <p class="text-xs text-gray-500">
-                            7 hari terakhir (dummy data)
+                            7 hari terakhir (Data Real-Time)
                         </p>
                     </div>
 
+                    {{-- wire:ignore is crucial to prevent Livewire from re-rendering the canvas --}}
                     <div class="h-[320px]" wire:ignore>
                         <canvas id="activityChart" class="w-full" style="max-height:320px"></canvas>
                     </div>
@@ -101,40 +112,43 @@
 
                 {{-- Status Distribution (Tickets Priority) --}}
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                    <h3 class="text-base font-semibold text-gray-900 mb-4">Ticket Priority Distribution</h3>
+                    <h3 class="text-base font-semibold text-gray-900 mb-4">Ticket Priority Distribution (Bulan Ini)</h3>
                     <div class="space-y-4">
+                        {{-- High Priority --}}
                         <div>
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-sm font-medium text-gray-700">High Priority</span>
-                                <span class="text-sm font-bold text-gray-900">{{ $approvedPercent }}%</span>
+                                <span class="text-sm font-bold text-gray-900">{{ $highPercent }}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-red-600 h-2 rounded-full" style="width: {{ $approvedPercent }}%"></div>
+                                <div class="bg-red-600 h-2 rounded-full" style="width: {{ $highPercent }}%"></div>
                             </div>
                         </div>
+                        {{-- Medium Priority --}}
                         <div>
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-sm font-medium text-gray-700">Medium Priority</span>
-                                <span class="text-sm font-bold text-gray-900">{{ $pendingPercent }}%</span>
+                                <span class="text-sm font-bold text-gray-900">{{ $mediumPercent }}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ $pendingPercent }}%"></div>
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ $mediumPercent }}%"></div>
                             </div>
                         </div>
+                        {{-- Low Priority --}}
                         <div>
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-sm font-medium text-gray-700">Low Priority</span>
-                                <span class="text-sm font-bold text-gray-900">{{ $rejectedPercent }}%</span>
+                                <span class="text-sm font-bold text-gray-900">{{ $lowPercent }}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-green-500 h-2 rounded-full" style="width: {{ $rejectedPercent }}%"></div>
+                                <div class="bg-green-500 h-2 rounded-full" style="width: {{ $lowPercent }}%"></div>
                             </div>
                         </div>
                     </div>
                     <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <p class="text-xs text-gray-600 mb-1">Total Tickets This Month</p>
+                        <p class="text-xs text-gray-600 mb-1">Total Tickets Bulan Ini</p>
                         <p class="text-2xl font-bold text-gray-900">{{ $totalTicketsThisMonth }}</p>
-                        <p class="text-xs text-gray-600 mt-1">↑ % from last month (dummy)</p>
+                        <p class="text-xs text-gray-600 mt-1">↑ % from last month</p>
                     </div>
                 </div>
             </div>
@@ -142,31 +156,51 @@
         </div>
     </main>
 
-    {{-- Chart.js v4 like in report page --}}
+    {{-- Chart.js v4 CDN --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     @verbatim
         <script>
             let __activityChart;
+            const rootId = 'admin-dashboard-root';
 
-            function rebuildActivityChart() {
+            function getWeeklyData() {
+                const root = document.getElementById(rootId);
+                if (!root) {
+                    console.error("Livewire root element not found.");
+                    return null;
+                }
+                const dataAttr = root.dataset.weeklyActivity;
+                try {
+                    return JSON.parse(dataAttr || '{"labels": [], "ticket": [], "room": [], "information": []}');
+                } catch (e) {
+                    console.error("Failed to parse weekly activity data:", e, dataAttr);
+                    return null;
+                }
+            }
+
+            function rebuildActivityChart(weekly) { 
                 const canvas = document.getElementById('activityChart');
-                if (!canvas) return;
+                if (!canvas) {
+                    console.error("Canvas element #activityChart not found.");
+                    return;
+                }
 
                 const ctx = canvas.getContext('2d');
 
-                // Dummy weekly data – replace with dynamic data later
-                const weekly = {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    ticket: [8, 10, 7, 15, 12, 5, 9],
-                    room: [3, 5, 4, 8, 6, 2, 5],
-                    information: [2, 3, 1, 5, 4, 1, 3],
-                };
-
+                // Hancurkan chart lama jika ada
                 if (__activityChart) {
                     __activityChart.destroy();
                 }
 
+                console.log("Data diterima untuk chart:", weekly);
+
+                // Tambahkan pengecekan data
+                if (!weekly || !weekly.labels || weekly.labels.length === 0) {
+                    console.warn("Weekly activity data is empty or invalid. Chart not rendered.");
+                    return;
+                }
+                
                 const paletteLine = {
                     ticket: '#1d4ed8', // blue
                     room: '#059669', // emerald
@@ -222,8 +256,11 @@
                             y: {
                                 beginAtZero: true,
                                 ticks: {
-                                    precision: 0,
+                                    precision: 0, 
                                     stepSize: 1,
+                                    callback: function(value) {
+                                        return Number.isInteger(value) ? value : null;
+                                    }
                                 },
                                 grid: {
                                     color: 'rgba(0,0,0,0.05)',
@@ -242,17 +279,33 @@
                     },
                 });
             }
-
+            
+            // 1. Initial Load
             document.addEventListener('DOMContentLoaded', () => {
-                rebuildActivityChart();
+                rebuildActivityChart(getWeeklyData());
+                console.log("DOMContentLoaded: Chart initialized.");
             });
 
-            document.addEventListener('livewire:load', () => {
-                rebuildActivityChart();
-            });
-
+            // 2. Livewire Navigation
             document.addEventListener('livewire:navigated', () => {
-                rebuildActivityChart();
+                 rebuildActivityChart(getWeeklyData());
+                 console.log("livewire:navigated: Chart re-initialized.");
+            });
+            
+            // 3. Livewire Polling/Update Hook (Crucial for wire:poll)
+            Livewire.hook('message.processed', (message, component) => {
+                // Pastikan hanya komponen dashboard yang diproses
+                if (component.name === 'pages.admin.dashboard') {
+                    // Get the data attribute value after the Livewire DOM patch
+                    const newData = getWeeklyData();
+                    
+                    if (newData && newData.labels && newData.labels.length > 0) {
+                        console.log("Livewire Hook: Updating chart with new data.");
+                        rebuildActivityChart(newData);
+                    } else {
+                        console.warn("Livewire Hook: No data received for chart update.");
+                    }
+                }
             });
         </script>
     @endverbatim
