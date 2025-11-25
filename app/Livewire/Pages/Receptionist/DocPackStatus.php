@@ -47,14 +47,12 @@ class DocPackStatus extends Component
         'item_name' => null,
         'nama_pengirim' => null,
         'nama_penerima' => null,
-        'catatan' => null,
     ];
 
     protected $rules = [
         'edit.item_name' => 'nullable|string|max:255',
         'edit.nama_pengirim' => 'nullable|string|max:255',
         'edit.nama_penerima' => 'nullable|string|max:255',
-        'edit.catatan' => 'nullable|string|max:5000',
     ];
 
     public function updated($name): void
@@ -179,7 +177,6 @@ class DocPackStatus extends Component
             'item_name' => $row->item_name,
             'nama_pengirim' => $row->nama_pengirim,
             'nama_penerima' => $row->nama_penerima,
-            'catatan' => $row->catatan,
         ];
         $this->showEdit = true;
     }
@@ -196,7 +193,6 @@ class DocPackStatus extends Component
             'item_name' => $this->edit['item_name'],
             'nama_pengirim' => $this->edit['nama_pengirim'],
             'nama_penerima' => $this->edit['nama_penerima'],
-            'catatan' => $this->edit['catatan'],
         ])->save();
 
         $this->showEdit = false;

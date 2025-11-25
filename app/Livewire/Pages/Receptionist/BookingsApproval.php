@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\BookingRoom;
 use App\Models\Room;
+use App\Models\Requirement; // ADDED: Required for the temporary bug workaround in Blade
 use App\Services\GoogleMeetService;
 use App\Services\ZoomService;
 use Carbon\Carbon;
@@ -62,6 +63,11 @@ class BookingsApproval extends Component
     public array $roomsOptions = [];
     public bool $rescheduleRoomEnabled = false; // tidak dipakai di Blade, tapi boleh tetap ada
     public ?int $rescheduleRoomId = null;
+
+    // Detail modal (NEW)
+    public bool $showDetailModal = false;
+    public ?int $selectedBookingId = null;
+    public ?BookingRoom $selectedBookingDetail = null;
 
     private string $tz = 'Asia/Jakarta';
 
@@ -257,6 +263,54 @@ class BookingsApproval extends Component
         return app(GoogleMeetService::class)->isConnected(Auth::id());
     }
 
+    // ─────────────────── Detail Modal ────────────────────
+
+    /**
+     * Computed property to retrieve the selected BookingRoom model instance with requirements and room.
+     */
+    public function getBookingDetailProperty(): ?BookingRoom
+    {
+        if ($this->selectedBookingId) {
+            // Include soft-deleted for robustness, although usually unnecessary for approvals
+            return BookingRoom::with(['room', 'requirements'])
+                ->find($this->selectedBookingId);
+        }
+        return null;
+    }
+
+    /**
+     * Open the detail modal and fetch the selected booking detail.
+     */
+    public function openDetailModal(int $id): void
+    {
+        $this->selectedBookingId = $id;
+        $this->selectedBookingDetail = $this->getBookingDetailProperty();
+
+        if ($this->selectedBookingDetail) {
+            $this->showDetailModal = true;
+        } else {
+            $this->dispatch(
+                'toast',
+                type: 'error',
+                title: 'Error',
+                message: 'Gagal memuat detail booking (ID: ' . $id . ' tidak ditemukan).',
+                duration: 5000
+            );
+            $this->showDetailModal = false;
+        }
+    }
+
+
+    /**
+     * Close the detail modal.
+     */
+    public function closeDetailModal(): void
+    {
+        $this->showDetailModal = false;
+        $this->selectedBookingId = null;
+        $this->selectedBookingDetail = null;
+    }
+
     // ─────────────────── Reject ────────────────────
 
     public function openReject(int $id): void
@@ -264,6 +318,16 @@ class BookingsApproval extends Component
         $this->rejectId        = $id;
         $this->rejectReason    = '';
         $this->showRejectModal = true;
+    }
+    
+    /**
+     * FIX: Added the missing public method.
+     */
+    public function closeReject(): void
+    {
+        $this->showRejectModal = false;
+        $this->rejectId        = null;
+        $this->rejectReason    = '';
     }
 
     public function confirmReject(): void
@@ -564,19 +628,21 @@ class BookingsApproval extends Component
             'bookingroom_id', 'meeting_title', 'booking_type', 'online_provider',
             'online_meeting_url', 'online_meeting_code', 'online_meeting_password',
             'status', 'date', 'start_time', 'end_time', 'room_id',
-            'user_id', 'approved_by', 'book_reject', 'company_id', 'created_at', 'updated_at'
+            'user_id', 'approved_by', 'book_reject', 'company_id', 'created_at', 'updated_at',
+            // Added for detail modal context:
+            'number_of_attendees', 'special_notes',
         ];
 
         $companyId = Auth::user()->company_id ?? null;
 
         $pending = BookingRoom::query()
-            ->with('room')
+            ->with(['room', 'requirements'])
             ->where('status', 'pending')
             ->tap(fn($q) => $this->applyCommonFilters($q, $companyId))
             ->paginate($this->perPending, $cols, 'pendingPage');
 
         $ongoing = BookingRoom::query()
-            ->with('room')
+            ->with(['room', 'requirements'])
             ->where('status', 'approved')
             ->tap(fn($q) => $this->applyCommonFilters($q, $companyId))
             ->paginate($this->perOngoing, $cols, 'ongoingPage');

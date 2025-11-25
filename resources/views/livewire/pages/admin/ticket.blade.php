@@ -30,7 +30,6 @@
         <div class="space-y-6">
             {{-- HERO --}}
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
-                <!-- Soft glow background -->
                 <div class="pointer-events-none absolute inset-0 opacity-10">
                     <div class="absolute top-0 -right-6 w-28 h-28 bg-white/20 rounded-full blur-xl"></div>
                     <div class="absolute bottom-0 -left-6 w-20 h-20 bg-white/10 rounded-full blur-lg"></div>
@@ -38,7 +37,6 @@
 
                 <div class="relative z-10 p-6 sm:p-8">
                     <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                        <!-- LEFT: Icon + Title + Meta -->
                         <div class="flex items-start gap-4 sm:gap-6">
                             <div class="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
                                 {{-- Support-style icon --}}
@@ -60,7 +58,6 @@
                             </div>
                         </div>
 
-                        <!-- RIGHT: Switcher or Search -->
                         @if ($showSwitcher)
                         <div class="w-full lg:w-[32rem] lg:ml-6">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -86,7 +83,6 @@
                             </div>
                         </div>
                         @else
-                        <!-- Search (no switcher) -->
                         <div class="w-full lg:w-80 lg:ml-auto">
                             <label class="sr-only">Search</label>
                             <div class="relative">
@@ -110,7 +106,7 @@
                 <div class="px-5 py-4 border-b border-gray-200">
                     <div class="flex flex-col gap-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div class="md:col-span-2">
+                            <div>
                                 <label class="{{ $label }}">Search</label>
                                 <div class="relative">
                                     <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center p-">
@@ -123,6 +119,18 @@
                                         placeholder="Subject / description">
                                 </div>
                             </div>
+                            
+                            {{-- NEW ASSIGNMENT FILTER --}}
+                            <div>
+                                <label class="{{ $label }}">Assignment</label>
+                                <select wire:model="assignment" class="{{ $input }}">
+                                    <option value="">All assignments</option>
+                                    <option value="unassigned">Unassigned</option>
+                                    <option value="assigned">Assigned</option>
+                                </select>
+                            </div>
+                            {{-- END NEW ASSIGNMENT FILTER --}}
+
                             <div>
                                 <label class="{{ $label }}">Priority</label>
                                 <select wire:model="priority" class="{{ $input }}">
@@ -167,8 +175,17 @@
                                 <span class="capitalize">{{ str_replace('_',' ', $statusKey) }}</span>
                             </span>
                             @endif
+                            
+                            {{-- NEW ASSIGNMENT CHIP --}}
+                            @if($assignment)
+                            <span class="{{ $chip }} bg-purple-50 text-purple-700 ring-purple-200">
+                                <span class="opacity-80">Assignment:</span>
+                                <span class="capitalize">{{ $assignment }}</span>
+                            </span>
+                            @endif
+                            {{-- END NEW ASSIGNMENT CHIP --}}
 
-                            @if($search || $priority || $status)
+                            @if($search || $priority || $status || $assignment)
                             <button wire:click="resetFilters" type="button" class="text-xs underline text-gray-600 hover:text-gray-900 ml-1">
                                 Reset filters
                             </button>

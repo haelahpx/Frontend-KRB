@@ -21,6 +21,7 @@ class Ticket extends Component
     public ?string $search   = null;
     public ?string $priority = null;  // low|medium|high
     public ?string $status   = null;  // open|in_progress|resolved|closed
+    public ?string $assignment = null; // unassigned|assigned
 
     protected string $paginationTheme = 'tailwind';
 
@@ -152,6 +153,11 @@ class Ticket extends Component
         $this->resetPage();
     }
 
+    public function updatingAssignment(): void
+    {
+        $this->resetPage();
+    }
+
     protected function currentAdmin()
     {
         $user = Auth::user();
@@ -178,7 +184,7 @@ class Ticket extends Component
 
     public function resetFilters(): void
     {
-        $this->search = $this->priority = $this->status = null;
+        $this->search = $this->priority = $this->status = $this->assignment = null;
         $this->resetPage();
     }
 
@@ -295,6 +301,15 @@ class Ticket extends Component
             $dbStatus = self::UI_TO_DB_STATUS_MAP[$this->status] ?? null;
             if ($dbStatus) {
                 $query->where('status', $dbStatus);
+            }
+        }
+
+        // Filter by assignment
+        if ($this->assignment) {
+            if ($this->assignment === 'unassigned') {
+                $query->whereDoesntHave('assignment');
+            } elseif ($this->assignment === 'assigned') {
+                $query->whereHas('assignment');
             }
         }
 

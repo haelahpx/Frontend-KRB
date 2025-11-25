@@ -32,13 +32,14 @@ class MeetingSchedule extends Component
         'time_end'      => null,
         'participant'   => null,
         'notes'         => null,
-        'requirements'  => [],
+        'requirements'  => [], 
     ];
 
-    /** OFFLINE user dropdown + search */
+    /** OFFLINE specific state */
     public ?int $offline_user_id = null;
     public array $usersByDeptOffline = [];
     public string $userQueryOffline = '';
+    public bool $informInfoOffline = false; // Property for Offline Info Dept Request
 
     /** ONLINE form state */
     public string $online_meeting_title = '';
@@ -48,6 +49,7 @@ class MeetingSchedule extends Component
     public ?string $online_end_time = null;
     public ?int $online_department_id = null;
     public ?int $online_user_id = null;
+    public bool $informInfoOnline = false; // Property for Online Info Dept Request
     public array $usersByDept = [];
     public string $userQueryOnline = '';
 
@@ -60,12 +62,12 @@ class MeetingSchedule extends Component
     /** Department search inputs (front-end filtered) */
     public string $deptQueryOffline = '';
     public string $deptQueryOnline  = '';
+    
+    public ?int $otherRequirementId = null;
 
-    private ?int $otherRequirementId = null;
 
     public function mount(): void
     {
-        // Optional seeding helper
         if (Requirement::count() === 0 && method_exists(Requirement::class, 'upsertByName')) {
             Requirement::upsertByName(['Video Conference', 'Projector', 'Whiteboard', 'Catering', 'Other']);
         }
@@ -73,8 +75,8 @@ class MeetingSchedule extends Component
         $this->loadDepartments();
         $this->loadRooms();
         $this->loadRequirements();
+        $this->otherRequirementId = $this->getOtherRequirementId();
 
-        $this->otherRequirementId = $this->findOtherRequirementId();
         $this->googleConnected    = $this->detectGoogleConnected();
 
         if ($this->online_department_id) {
@@ -85,8 +87,16 @@ class MeetingSchedule extends Component
         }
     }
 
-    /* ===================== Lookups ===================== */
+    /* ===================== Lookups & Helpers ===================== */
 
+    protected function pickColumn(string $table, array $candidates, string $fallback): string
+    {
+        foreach ($candidates as $col) {
+            if (Schema::hasColumn($table, $col)) return $col;
+        }
+        return $fallback;
+    }
+    
     protected function loadDepartments(): void
     {
         $nameCol = $this->pickColumn('departments', ['department_name', 'name'], 'department_name');
@@ -107,7 +117,6 @@ class MeetingSchedule extends Component
     protected function loadRooms(): void
     {
         $pkCol    = $this->pickColumn('rooms', ['room_id', 'id'], 'room_id');
-        // your table has room_name, not room_number
         $labelCol = $this->pickColumn('rooms', ['room_name', 'room_number', 'name'], 'room_name');
 
         $rooms = DB::table('rooms')
@@ -129,17 +138,30 @@ class MeetingSchedule extends Component
 
         $cid = Auth::user()?->company_id;
 
-        // Update the query to include the company_id filter
         $this->requirementOptions = DB::table('requirements')
             ->selectRaw("$idCol as id, $nmCol as name")
-            ->when($cid, fn($q) => $q->where('company_id', $cid)) // Ensure only company-specific requirements are fetched
+            ->when($cid, fn($q) => $q->where('company_id', $cid))
             ->orderBy($nmCol)
             ->get()
             ->map(fn($r) => ['id' => (int)$r->id, 'name' => (string)$r->name])
             ->all();
     }
+    
+    protected function getOtherRequirementId(): ?int
+    {
+        $idCol = $this->pickColumn('requirements', ['requirement_id', 'id'], 'requirement_id');
+        $nmCol = $this->pickColumn('requirements', ['name', 'requirement_name'], 'name');
+        $cid = Auth::user()?->company_id;
 
-    /* ===================== Users loading ===================== */
+        $row = DB::table('requirements')
+            ->select($idCol . ' as id', $nmCol . ' as name')
+            ->when($cid, fn($q) => $q->where('company_id', $cid))
+            ->whereRaw('LOWER(' . $nmCol . ') = ?', ['other'])
+            ->first();
+
+        return $row ? (int) $row->id : null;
+    }
+
 
     protected function loadUsersForDept(?int $deptId): void
     {
@@ -184,9 +206,8 @@ class MeetingSchedule extends Component
             ->map(fn($u) => ['id' => (int)$u->id, 'name' => (string)$u->label])
             ->all();
     }
-
-    /* ===================== Livewire watchers ===================== */
-
+    
+    // Livewire Watchers (updated* methods)
     public function updatedOnlineDepartmentId($val): void
     {
         $deptId = (int) ($val ?: 0);
@@ -244,8 +265,20 @@ class MeetingSchedule extends Component
         }
     }
 
-    /* ===================== Validation & helpers ===================== */
+    public function updated($name): void
+    {
+        if ($name === 'online_department_id') {
+            $this->updatedOnlineDepartmentId($this->online_department_id);
+        }
+        if ($name === 'form.department_id') {
+            $this->updatedFormDepartmentId($this->form['department_id']);
+        }
+        if ($name === 'form.requirements') {
+            $this->resetValidation('form.notes');
+        }
+    }
 
+    // Validation helpers
     protected function rules(): array
     {
         $deptPk = $this->pickColumn('departments', ['department_id', 'id'], 'department_id');
@@ -261,20 +294,26 @@ class MeetingSchedule extends Component
             'form.participant'   => ['required', 'integer', 'min:1'],
             'form.notes'         => ['nullable', 'string', 'max:1000'],
             'form.requirements'  => ['array'],
-            'form.requirements.*' => ['integer'],
+            'form.requirements.*' => ['nullable', 'sometimes', 'distinct', function ($attribute, $value, $fail) {
+                // Check if it's a numeric ID (for a requirement) or the string 'Other'
+                if (!is_numeric($value) && $value !== 'Other') {
+                    $fail('The selected requirement is invalid.');
+                }
+            }],
         ];
     }
 
     protected function hasRoomOverlap(int $roomId, string $ymd, string $startAt, string $endAt, ?int $excludeId = null): bool
     {
         $pendingApproved = ['pending', 'approved', 0, 1, '0', '1', 'PENDING', 'APPROVED'];
+        $pkCol = $this->pickColumn('booking_rooms', ['bookingroom_id', 'id'], 'bookingroom_id'); // Assuming the PK column name
 
         return DB::table('booking_rooms')
             ->where('room_id', $roomId)
             ->where('date', $ymd)
             ->whereIn('status', $pendingApproved)
-            ->when($excludeId, fn($q) => $q->where('bookingroom_id', '!=', $excludeId))
-            ->where('start_time', '<', $endAt)
+            ->when($excludeId, fn($q) => $q->where($pkCol, '!=', $excludeId))
+            ->where('start_time', '<', $endAt) 
             ->where('end_time',   '>', $startAt)
             ->exists();
     }
@@ -284,64 +323,134 @@ class MeetingSchedule extends Component
         return Carbon::createFromFormat('Y-m-d H:i', "$ymd $hm", $this->tz)->format('Y-m-d H:i:s');
     }
 
+    private function validateNotesIfOther(): void
+    {
+        if (in_array('Other', $this->form['requirements'] ?? [], true)) {
+            $this->validate(['form.notes' => 'required|string|min:2|max:1000']);
+        }
+    }
+    
+    /**
+     * @param array $ids - Array of requirement IDs (numeric) and the string 'Other'.
+     * @param string $notes - The free-text notes.
+     * @return array{0: array<int>, 1: string} - [0] is a clean array of numeric IDs, [1] is the cleaned special notes string.
+     */
+    private function parseRequirementsForSave(array $ids, string $notes): array
+    {
+        $requirementIds = [];
+        $specialNotes = trim((string) $notes); // Notes are now just the 'Other' text
+
+        foreach ($ids as $id) {
+            if (is_numeric($id)) {
+                $requirementIds[] = (int)$id;
+            }
+            // The 'Other' text is already in $specialNotes, no need to include 'Other' ID here if we are attaching all to pivot
+            // The frontend uses the string 'Other', which we ignore for the pivot table if we assume the model handles it.
+        }
+
+        // Check if 'Other' was checked, and if so, include its ID
+        if (in_array('Other', $ids, true) && $this->otherRequirementId) {
+            $requirementIds[] = $this->otherRequirementId;
+        }
+
+        $requirementIds = array_values(array_unique(array_filter($requirementIds, fn($v) => $v !== null)));
+        
+        return [$requirementIds, $specialNotes];
+    }
+
+
+    /* ===================== Save Methods ===================== */
+
     public function saveOffline(): void
     {
+        // 1. Validation
         $this->validate();
         $this->validateNotesIfOther();
+        $this->validate(['informInfoOffline' => ['nullable', 'boolean']]); // Validate new property
 
         $cid = Auth::user()?->company_id;
 
-        // 👇 use selected user as owner of booking (shown in BookingStatus)
         $targetUserId = $this->offline_user_id
             ? (int) $this->offline_user_id
             : (Auth::user()?->user_id ?? Auth::id());
 
+        // 2. Date/Time Parsing & Checks
         try {
             $startAt = $this->toDateTime((string)$this->form['date'], (string)$this->form['time']);
             $endAt   = $this->toDateTime((string)$this->form['date'], (string)$this->form['time_end']);
         } catch (\Throwable) {
-            $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'Information berhasil dibuat.', duration: 3000);
-            $this->js('window.location.reload()');
+            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Invalid date or time format.', duration: 3000);
             return;
         }
 
         if ($endAt <= $startAt) {
             $this->dispatch('toast', type: 'error', title: 'Waktu salah', message: 'Jam selesai harus setelah jam mulai.', duration: 3000);
-            $this->js('window.location.reload()');
             return;
         }
 
+        // 3. Overlap Check
         if ($this->hasRoomOverlap((int)$this->form['room_id'], (string)$this->form['date'], $startAt, $endAt, $this->editingId)) {
             $humanStart = Carbon::parse($startAt, $this->tz)->format('d M Y H:i');
             $humanEnd   = Carbon::parse($endAt,   $this->tz)->format('H:i');
             $this->dispatch('toast', type: 'error', title: 'Jadwal bentrok', message: "Ruangan sudah dibooking pada waktu {$humanStart} - {$humanEnd}. Silakan pilih waktu lain.", duration: 5000);
-            $this->js('window.location.reload()');
+            return;
+        }
+        
+        // 4. Prepare Data & **Separate Requirements**
+        [$reqIds, $specialNotes] = $this->parseRequirementsForSave($this->form['requirements'], (string)($this->form['notes'] ?? ''));
+
+        // 5. Database Insertion (in transaction for atomicity)
+        DB::beginTransaction();
+        try {
+            $bookingRoomPk = $this->pickColumn('booking_rooms', ['bookingroom_id', 'id'], 'bookingroom_id');
+
+            $bookingId = DB::table('booking_rooms')->insertGetId([ // Use insertGetId to get the PK
+                'room_id'              => (int)$this->form['room_id'],
+                'company_id'           => $cid,
+                'user_id'              => $targetUserId,
+                'department_id'        => (int)$this->form['department_id'],
+                'meeting_title'        => (string)$this->form['meeting_title'],
+                'date'                 => (string)$this->form['date'],
+                'start_time'           => $startAt,
+                'end_time'             => $endAt,
+                // Attendees
+                ...(Schema::hasColumn('booking_rooms', 'number_of_attendees')
+                    ? ['number_of_attendees' => (int)$this->form['participant']]
+                    : (Schema::hasColumn('booking_rooms', 'participant') ? ['participant' => (int)$this->form['participant']] : [])
+                ),
+                // Notes (Now only includes 'Other' text)
+                ...(Schema::hasColumn('booking_rooms', 'special_notes')
+                    ? ['special_notes' => $specialNotes]
+                    : (Schema::hasColumn('booking_rooms', 'notes') ? ['notes' => $specialNotes] : [])
+                ),
+                'booking_type'         => 'meeting',
+                'status'               => self::INITIAL_STATUS,
+                'requestinformation'   => $this->informInfoOffline ? 'request' : null,
+                ...(Schema::hasColumn('booking_rooms', 'is_approve') ? ['is_approve' => 0] : []),
+                'created_at'           => now(),
+                'updated_at'           => now(),
+            ], $bookingRoomPk); // Pass the primary key column name for insertGetId
+
+            // 6. **Attach Requirements** to the pivot table
+            if (!empty($reqIds)) {
+                $pivotData = collect($reqIds)->map(fn($reqId) => [
+                    $bookingRoomPk => $bookingId, // Assumes booking_rooms PK is a foreign key on pivot table
+                    $this->pickColumn('requirements', ['requirement_id', 'id'], 'requirement_id') => $reqId,
+                ])->all();
+                
+                // Assuming the pivot table is named 'booking_requirements'
+                DB::table('booking_requirements')->insert($pivotData); 
+            }
+            
+            DB::commit();
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            // Log the error
+            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal menyimpan booking. ' . $e->getMessage(), duration: 5000);
             return;
         }
 
-        DB::table('booking_rooms')->insert([
-            'room_id'              => (int)$this->form['room_id'],
-            'company_id'           => $cid,
-            'user_id'              => $targetUserId,   // 👈 owner of booking
-            'department_id'        => (int)$this->form['department_id'],
-            'meeting_title'        => (string)$this->form['meeting_title'],
-            'date'                 => (string)$this->form['date'],
-            'start_time'           => $startAt,
-            'end_time'             => $endAt,
-            ...(Schema::hasColumn('booking_rooms', 'number_of_attendees')
-                ? ['number_of_attendees' => (int)$this->form['participant']]
-                : (Schema::hasColumn('booking_rooms', 'number_of_attendees') ? ['participant' => (int)$this->form['participant']] : [])
-            ),
-            ...(Schema::hasColumn('booking_rooms', 'special_notes')
-                ? ['special_notes' => $this->composeSpecialNotes($this->form['requirements'], (string)($this->form['notes'] ?? ''))]
-                : (Schema::hasColumn('booking_rooms', 'notes') ? ['notes' => $this->composeSpecialNotes($this->form['requirements'], (string)($this->form['notes'] ?? ''))] : [])
-            ),
-            'booking_type'         => 'meeting',
-            'status'               => self::INITIAL_STATUS,
-            ...(Schema::hasColumn('booking_rooms', 'is_approve') ? ['is_approve' => 0] : []),
-            'created_at'           => now(),
-            'updated_at'           => now(),
-        ]);
 
         $this->resetOfflineForm();
 
@@ -351,6 +460,7 @@ class MeetingSchedule extends Component
 
     public function saveOnline(): void
     {
+        // 1. Validation
         $data = $this->validate([
             'online_meeting_title' => ['required', 'string', 'max:255'],
             'online_platform'      => ['required', Rule::in(['google_meet', 'zoom'])],
@@ -359,33 +469,33 @@ class MeetingSchedule extends Component
             'online_end_time'      => ['required', 'date_format:H:i', 'after:online_start_time'],
             'online_department_id' => ['nullable', 'integer'],
             'online_user_id'       => ['nullable', 'integer'],
+            'informInfoOnline'     => ['nullable', 'boolean'], // Validate new property
         ]);
 
         $cid = Auth::user()?->company_id;
 
-        // 👇 owner is selected user if any
         $targetUserId = $this->online_user_id
             ? (int) $this->online_user_id
             : (Auth::user()?->user_id ?? Auth::id());
 
+        // 2. Date/Time Parsing & Checks
         try {
             $startAt = $this->toDateTime($data['online_date'], $data['online_start_time']);
             $endAt   = $this->toDateTime($data['online_date'], $data['online_end_time']);
         } catch (\Throwable) {
-            $this->dispatch('toast', type: 'success', title: 'Dibuat', message: 'Information berhasil dibuat.', duration: 3000);
-            $this->js('window.location.reload()');
+            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Invalid date or time format.', duration: 3000);
             return;
         }
 
         if ($endAt <= $startAt) {
             $this->dispatch('toast', type: 'error', title: 'Waktu salah', message: 'Jam selesai harus setelah jam mulai.', duration: 3000);
-            $this->js('window.location.reload()');
             return;
         }
 
+        // 3. Database Insertion
         DB::table('booking_rooms')->insert([
             'company_id'             => $cid,
-            'user_id'                => $targetUserId,   // 👈 owner of booking
+            'user_id'                => $targetUserId,
             'department_id'          => $this->online_department_id,
             'meeting_title'          => $data['online_meeting_title'],
             'booking_type'           => 'online_meeting',
@@ -398,6 +508,7 @@ class MeetingSchedule extends Component
             'online_meeting_url'     => null,
             'online_meeting_code'    => null,
             'online_meeting_password' => null,
+            'requestinformation'     => $this->informInfoOnline ? 'request' : null,
             'created_at'             => now(),
             'updated_at'             => now(),
         ]);
@@ -408,25 +519,7 @@ class MeetingSchedule extends Component
         $this->js('window.location.reload()');
     }
 
-    public function updated($name): void
-    {
-        if ($name === 'online_department_id') {
-            $this->updatedOnlineDepartmentId($this->online_department_id);
-        }
-        if ($name === 'form.department_id') {
-            $this->updatedFormDepartmentId($this->form['department_id']);
-        }
-    }
-
-    /* ===================== Utilities ===================== */
-
-    protected function pickColumn(string $table, array $candidates, string $fallback): string
-    {
-        foreach ($candidates as $col) {
-            if (Schema::hasColumn($table, $col)) return $col;
-        }
-        return $fallback;
-    }
+    /* ===================== Utilities & Rendering ===================== */
 
     protected function detectGoogleConnected(): bool
     {
@@ -439,33 +532,6 @@ class MeetingSchedule extends Component
         } catch (\Throwable) {
         }
         return false;
-    }
-
-    private function composeSpecialNotes(array $ids, string $notes): string
-    {
-        $cleanIds = array_values(array_unique(array_map('intval', array_filter($ids, fn($v) => $v !== null))));
-        $tag = $cleanIds ? '[REQID=' . implode(',', $cleanIds) . ']' : '';
-        return trim($tag . "\n" . trim($notes));
-    }
-
-    private function findOtherRequirementId(): ?int
-    {
-        $idCol = $this->pickColumn('requirements', ['requirement_id', 'id'], 'requirement_id');
-        $nmCol = $this->pickColumn('requirements', ['name', 'requirement_name'], 'name');
-
-        $row = DB::table('requirements')
-            ->select($idCol . ' as id', $nmCol . ' as name')
-            ->whereRaw('LOWER(' . $nmCol . ') = ?', ['other'])
-            ->first();
-
-        return $row ? (int) $row->id : null;
-    }
-
-    private function validateNotesIfOther(): void
-    {
-        if ($this->otherRequirementId && in_array($this->otherRequirementId, $this->form['requirements'] ?? [], true)) {
-            $this->validate(['form.notes' => 'required|string|min:2|max:1000']);
-        }
     }
 
     private function resetOfflineForm(): void
@@ -485,6 +551,7 @@ class MeetingSchedule extends Component
         $this->offline_user_id    = null;
         $this->usersByDeptOffline = [];
         $this->userQueryOffline   = '';
+        $this->informInfoOffline  = false;
         $this->resetValidation();
     }
 
@@ -497,6 +564,7 @@ class MeetingSchedule extends Component
         $this->online_end_time      = null;
         $this->online_department_id = null;
         $this->online_user_id       = null;
+        $this->informInfoOnline     = false;
         $this->usersByDept          = [];
         $this->userQueryOnline      = '';
         $this->resetValidation();
@@ -538,6 +606,7 @@ class MeetingSchedule extends Component
             'googleConnected'    => $this->googleConnected,
             'editingId'          => $this->editingId,
             'form'               => $this->form,
+            'otherRequirementId' => $this->otherRequirementId,
             'online_platform'    => $this->online_platform,
         ]);
     }

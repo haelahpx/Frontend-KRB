@@ -314,7 +314,8 @@ class Bookroom extends Component
         }
 
         DB::transaction(function () use ($startDt, $endDt, $companyId) {
-            BookingRoom::create([
+            // 1. Create the booking and capture the model instance
+            $booking = BookingRoom::create([ 
                 'room_id' => (int) $this->room_id,
                 'company_id' => $companyId,
                 'user_id' => Auth::id(),
@@ -322,6 +323,7 @@ class Bookroom extends Component
                 'meeting_title' => $this->meeting_title,
                 'date' => $this->date,
                 'number_of_attendees' => (int) $this->number_of_attendees,
+                // Use Carbon objects for saving DateTime consistency
                 'start_time' => $startDt,
                 'end_time' => $endDt,
                 'special_notes' => $this->special_notes,
@@ -332,11 +334,16 @@ class Bookroom extends Component
             ]);
 
             if (!empty($this->requirements)) {
+                // 2. Get the IDs of the requirements based on their names
                 $ids = Requirement::where('company_id', $companyId)
                     ->whereIn('name', $this->requirements)
                     ->pluck('requirement_id')
                     ->toArray();
-                // Attach requirement logic here if using pivot table, otherwise just loop/save
+                
+                // 3. ATTACH the requirement IDs to the newly created booking
+                if (!empty($ids)) {
+                    $booking->requirements()->attach($ids); // <-- FIX APPLIED HERE
+                }
             }
         });
 

@@ -1,4 +1,4 @@
-<div class="bg-gray-50">
+<div class="bg-gray-50 text-gray-900">
     @php
     $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
     $label = 'block text-sm font-medium text-gray-700 mb-2';
@@ -192,10 +192,8 @@
     {{-- MODAL EDIT --}}
     @if($showEditModal)
     <div class="fixed inset-0 z-[60] flex items-center justify-center" wire:keydown.escape.window="closeEdit">
-        <!-- Backdrop -->
         <button type="button" class="absolute inset-0 bg-black/50" wire:click="closeEdit"></button>
 
-        <!-- Dialog -->
         <div class="relative w-full max-w-2xl mx-4 {{ $card }}">
             <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                 <h3 class="text-base font-semibold text-gray-900">Edit Admin</h3>

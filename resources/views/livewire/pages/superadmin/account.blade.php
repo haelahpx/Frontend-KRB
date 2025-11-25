@@ -173,6 +173,22 @@
                                 d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.284-1.255-.778-1.664M6 18H2v-2a3 3 0 015.356-1.857M14 5a3 3 0 11-6 0 3 3 0 016 0zM4.5 8.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0z" />
                         </svg>
                     </div>
+
+                    {{-- DEPARTMENT FILTER (NEWLY ADDED) --}}
+                    <div class="relative">
+                        <select wire:model.live="departmentFilter" class="{{ $input }} pl-10 w-full lg:w-60">
+                            <option value="">Semua Department</option>
+                            @foreach ($departments as $d)
+                                <option value="{{ $d->department_id }}">{{ $d->department_name }}</option>
+                            @endforeach
+                        </select>
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                    </div>
+
                 </div>
             </div>
 

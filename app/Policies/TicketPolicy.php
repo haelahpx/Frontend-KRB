@@ -15,34 +15,17 @@ class TicketPolicy
      */
     public function view(User $user, Ticket $ticket)
     {
-        // ---------------------------------------------------------
-        // 1. CHECK YOUR 'is_agent' COLUMN (ENUM: 'yes' or 'no')
-        // ---------------------------------------------------------
+        // make a validation policy for ticket system with these rules:
         if ($user->is_agent === 'yes') {
             return true;
         }
 
-        // ---------------------------------------------------------
-        // 2. OPTIONAL: CHECK role_id FOR SUPERADMINS
-        // ---------------------------------------------------------
-        // If your Superadmin has 'is_agent' set to 'no', but has role_id = 1,
-        // uncomment the lines below:
-        /*
-        if ($user->role_id === 1) {
-            return true;
-        }
-        */
-
-        // ---------------------------------------------------------
-        // 3. ALLOW OWNER (The Customer who created it)
-        // ---------------------------------------------------------
+        // allow ticket creator to view their own tickets
         if ($user->id === $ticket->user_id) {
             return true;
         }
 
-        // ---------------------------------------------------------
-        // 4. ALLOW ASSIGNED AGENT (Specific assignment)
-        // ---------------------------------------------------------
+        // allow assigned agent to view the ticket
         if ($user->id === $ticket->assigned_to_user_id) {
             return true;
         }

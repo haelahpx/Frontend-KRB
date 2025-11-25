@@ -1,19 +1,19 @@
-{{-- resources/views/livewire/pages/superadmin/manageroom.blade.php --}}
 <div class="bg-gray-50">
+    {{-- Style Variables (from announcement page) --}}
     @php
         $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
-        $label = 'block text-sm font-semibold text-gray-700 mb-2';
-        $input = 'w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-700 focus:border-black focus:ring-4 focus:ring-black/10 bg-gray-50 focus:bg-white transition';
-        $btnBlk = 'px-4 py-2 text-sm rounded-xl bg-black text-white hover:bg-gray-800 disabled:opacity-60 font-semibold shadow-lg hover:shadow-xl transition';
-        $btnRed = 'px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 font-semibold shadow-lg hover:shadow-xl transition';
-        $btnLite = 'px-4 py-2 text-sm rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-60 font-semibold transition';
+        $label = 'block text-sm font-medium text-gray-700 mb-2';
+        $input = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
+        $btnBlk = 'px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition';
+        $btnRed = 'px-3 py-2 text-xs font-medium rounded-lg bg-rose-600 text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600/20 disabled:opacity-60 transition';
+        $btnLite = 'px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-900/10 disabled:opacity-60 transition';
         $chip = 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 text-xs';
         $mono = 'text-[10px] font-mono text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md';
         $ico = 'w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0';
     @endphp
 
     <main class="px-4 sm:px-6 py-6 space-y-8">
-        {{-- Header --}}
+        {{-- HERO --}}
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
             <div class="pointer-events-none absolute inset-0 opacity-10">
                 <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
@@ -38,17 +38,22 @@
             </div>
         </div>
 
-        {{-- Card --}}
+        {{-- FORM + LIST CARD --}}
         <section class="{{ $card }}">
             {{-- Top bar --}}
             <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between gap-3">
                 <h3 class="text-base font-semibold text-gray-900">Add New Room</h3>
-                <div class="w-72">
+                <div class="w-full sm:w-72 relative">
                     <input
                         type="text"
                         wire:model.debounce.400ms="search"
-                        class="{{ $input }} h-10"
-                        placeholder="Cari room…">
+                        class="{{ $input }} pl-10"
+                        placeholder="Search room…">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
+                    </svg>
                 </div>
             </div>
 
@@ -73,7 +78,7 @@
                         @enderror
                     </div>
 
-                    <div>
+                    <div class="md:col-span-1">
                         <label class="{{ $label }}">Capacity (people)</label>
                         <input
                             type="number"
@@ -89,7 +94,7 @@
 
                 <div class="pt-5">
                     <button type="submit" wire:loading.attr="disabled" wire:target="roomStore"
-                            class="{{ $btnBlk }} relative overflow-hidden">
+                            class="{{ $btnBlk }} inline-flex items-center gap-2 relative overflow-hidden">
                         <span wire:loading.remove wire:target="roomStore">Save Room</span>
                         <span class="inline-flex items-center gap-2" wire:loading wire:target="roomStore">
                             <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -120,16 +125,16 @@
                                     </h4>
                                     <div class="flex flex-wrap items-center gap-2 mt-2">
                                         <span class="{{ $chip }}">
+                                            <span class="text-gray-500">Capacity:</span>
+                                            <span class="font-medium text-gray-700">{{ $room->capacity ?? '—' }}</span>
+                                        </span>
+                                        <span class="{{ $chip }}">
                                             <span class="text-gray-500">Created:</span>
                                             <span class="font-medium text-gray-700">{{ $room->created_at?->format('d M Y, H:i') }}</span>
                                         </span>
                                         <span class="{{ $chip }}">
                                             <span class="text-gray-500">Updated:</span>
                                             <span class="font-medium text-gray-700">{{ $room->updated_at?->format('d M Y, H:i') }}</span>
-                                        </span>
-                                        <span class="{{ $chip }}">
-                                            <span class="text-gray-500">Capacity:</span>
-                                            <span class="font-medium text-gray-700">{{ $room->capacity ?? '—' }}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -213,7 +218,7 @@
 
                         <div class="mt-6 flex items-center justify-end gap-3 border-t border-gray-200 pt-4">
                             <button type="button" class="{{ $btnLite }}" wire:click="roomCloseEdit">Cancel</button>
-                            <button type="submit" wire:loading.attr="disabled" wire:target="roomUpdate" class="{{ $btnBlk }}">
+                            <button type="submit" wire:loading.attr="disabled" wire:target="roomUpdate" class="{{ $btnBlk }} inline-flex items-center gap-2">
                                 <span wire:loading.remove wire:target="roomUpdate">Save Changes</span>
                                 <span class="inline-flex items-center gap-2" wire:loading wire:target="roomUpdate">
                                     <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">

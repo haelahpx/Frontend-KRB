@@ -432,7 +432,7 @@
             <div class="absolute inset-0 flex items-center justify-center p-4">
                 <div class="w-full max-w-lg bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-                        <h3 class="font-semibold">Edit Item</h3>
+                        <h3 class="font-semibold text-black">Edit Item</h3>
                         <button type="button" class="text-gray-500 hover:text-gray-700"
                             wire:click="$set('showEdit', false)">
                             <x-heroicon-o-x-mark class="w-5 h-5"/>
@@ -457,13 +457,6 @@
                                 @error('edit.nama_penerima') <p class="text-sm text-rose-600 mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-                        <div>
-                            <label class="{{ $label }}">Catatan</label>
-                            <textarea rows="4"
-                                class="w-full min-h-[100px] px-3 py-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition resize-none"
-                                wire:model.defer="edit.catatan"></textarea>
-                            @error('edit.catatan') <p class="text-sm text-rose-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
 

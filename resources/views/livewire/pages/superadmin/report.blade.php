@@ -16,29 +16,20 @@
 
         {{-- Header with company --}}
         <div class="rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white p-6 sm:p-8 shadow-2xl">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                     @if(!empty($company['image']))
                         <img src="{{ $company['image'] }}" alt="Logo" class="h-10 w-10 rounded-full object-cover border border-white/20">
-                    @else
-                        <div class="h-10 w-10 rounded-full bg-white/10 border border-white/20 grid place-items-center">
-                            <x-heroicon-o-building-office-2 class="h-5 w-5" />
-                        </div>
                     @endif
                     <div>
-                        <h2 class="text-lg sm:text-xl font-semibold tracking-wide">
-                            {{ $company['company_name'] ?? '—' }} — Reports &amp; Evaluation
+                        <h2 class="text-lg sm:text-xl font-semibold">
+                            {{ $company['company_name'] ?? '—' }} — Reports & Evaluation
                         </h2>
-                        <p class="text-xs text-white/70 flex items-center gap-1">
-                            <x-heroicon-o-calendar class="h-4 w-4" />
-                            Tahun aktif: {{ $year }}
-                        </p>
                     </div>
                 </div>
-
                 <div class="flex items-center gap-3">
                     <select wire:model.live="year"
-                            class="h-10 rounded-xl border-2 border-white/20 bg-white/10 text-white px-3">
+                        class="h-10 rounded-xl border-2 border-white/20 bg-white/10 text-white px-3">
                         @for($y = now()->year; $y >= now()->year - 9; $y--)
                             <option value="{{ $y }}" class="text-gray-900">{{ $y }}</option>
                         @endfor
@@ -50,138 +41,55 @@
                             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity=".25" stroke-width="4"></circle>
                             <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4"></path>
                         </svg>
-                        <x-heroicon-o-arrow-down-tray id="btnIcon" class="h-4 w-4" />
                         <span id="btnLabel">Download PDF</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        {{-- KPI Summary --}}
+        {{-- Summary --}}
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                <div class="flex items-center gap-2 text-gray-600">
-                    <x-heroicon-o-sparkles class="h-5 w-5 text-gray-900" />
-                    <p class="text-sm">Tahun Dipilih</p>
-                </div>
-                <h3 class="text-2xl font-semibold text-gray-900 mt-1">{{ $summary['selected_year'] }}</h3>
+                <p class="text-sm text-gray-500">Selected Year</p>
+                <h3 class="text-2xl font-semibold text-gray-900">{{ $summary['selected_year'] }}</h3>
             </div>
-
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                <div class="flex items-center gap-2 text-gray-600">
-                    <x-heroicon-o-presentation-chart-line class="h-5 w-5 text-emerald-600" />
-                    <p class="text-sm">Total Aktivitas</p>
-                </div>
-                <h3 class="text-2xl font-semibold text-gray-900 mt-1">{{ number_format($summary['total_activity']) }}</h3>
+                <p class="text-sm text-gray-500">Total Activity (Room + Vehicle + Ticket + Guestbook + Delivery)</p>
+                <h3 class="text-2xl font-semibold text-gray-900">{{ number_format($summary['total_activity']) }}</h3>
             </div>
-
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                <div class="flex items-center gap-2 text-gray-600">
-                    <x-heroicon-o-arrow-trending-up class="h-5 w-5 text-indigo-600" />
-                    <p class="text-sm">Bulan Tersibuk</p>
-                </div>
-                <h3 class="text-2xl font-semibold text-gray-900 mt-1">
+                <p class="text-sm text-gray-500">Busiest Month</p>
+                <h3 class="text-2xl font-semibold text-gray-900">
                     {{ $summary['busiest_month'] }} ({{ number_format($summary['busiest_total']) }})
                 </h3>
             </div>
         </section>
 
-        {{-- SLA Snapshot (Blade Icons + warna) --}}
-        @php
-            $prio = $ticketPerf['by_priority'] ?? [];
-            $cards = [
-                'high' => ['label'=>'High','bg'=>'bg-red-50','text'=>'text-red-700','ring'=>'ring-red-200','icon'=>'exclamation-triangle','iconClass'=>'text-red-600'],
-                'medium' => ['label'=>'Medium','bg'=>'bg-yellow-50','text'=>'text-yellow-700','ring'=>'ring-yellow-200','icon'=>'clock','iconClass'=>'text-yellow-600'],
-                'low' => ['label'=>'Low','bg'=>'bg-emerald-50','text'=>'text-emerald-700','ring'=>'ring-emerald-200','icon'=>'check-circle','iconClass'=>'text-emerald-600'],
-            ];
-            $badge = fn($label,$bg,$text) => "<span class='px-2 py-0.5 rounded-full text-xs font-semibold {$bg} {$text}'>$label</span>";
-        @endphp
-
+        {{-- Quick Evaluation --}}
         <section class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <div class="flex items-center justify-between">
-                <h3 class="text-base font-semibold text-gray-900 flex items-center gap-2">
-                    <x-heroicon-o-clock class="h-5 w-5 text-gray-900" />
-                    SLA Snapshot (Tahun {{ $year }})
-                </h3>
-                <div class="text-xs text-gray-500 flex items-center gap-3">
-                    <span class="inline-flex items-center gap-1">
-                        <span class="h-2.5 w-2.5 rounded-full bg-red-500"></span> High
-                    </span>
-                    <span class="inline-flex items-center gap-1">
-                        <span class="h-2.5 w-2.5 rounded-full bg-yellow-400"></span> Medium
-                    </span>
-                    <span class="inline-flex items-center gap-1">
-                        <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Low
-                    </span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                @foreach($cards as $key => $sty)
-                    @php $st = $prio[$key] ?? null; @endphp
-                    <div class="rounded-xl border {{ $sty['ring'] }} {{ $sty['bg'] }} p-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                @if($sty['icon']==='exclamation-triangle')
-                                    <x-heroicon-o-exclamation-triangle class="h-5 w-5 {{ $sty['iconClass'] }}" />
-                                @elseif($sty['icon']==='clock')
-                                    <x-heroicon-o-clock class="h-5 w-5 {{ $sty['iconClass'] }}" />
-                                @else
-                                    <x-heroicon-o-check-circle class="h-5 w-5 {{ $sty['iconClass'] }}" />
-                                @endif
-                                <span class="font-semibold text-gray-900">{{ $sty['label'] }}</span>
-                            </div>
-                            {!! $badge($st['grade'] ?? '—', 'bg-white/70', 'text-gray-900') !!}
-                        </div>
-
-                        <div class="mt-3 grid grid-cols-3 gap-2 text-sm">
-                            <div class="bg-white/70 rounded-lg p-2 text-gray-800">
-                                <div class="flex items-center gap-1">
-                                    <x-heroicon-o-presentation-chart-line class="h-4 w-4" />
-                                    <span>Avg</span>
-                                </div>
-                                <div class="font-semibold">{{ is_null($st['avg_hours'] ?? null) ? '—' : number_format($st['avg_hours'],2) }} j</div>
-                            </div>
-                            <div class="bg-white/70 rounded-lg p-2 text-gray-800">
-                                <div class="flex items-center gap-1">
-                                    <x-heroicon-o-adjustments-vertical class="h-4 w-4" />
-                                    <span>Median</span>
-                                </div>
-                                <div class="font-semibold">{{ is_null($st['median_hours'] ?? null) ? '—' : number_format($st['median_hours'],2) }} j</div>
-                            </div>
-                            <div class="bg-white/70 rounded-lg p-2 text-gray-800">
-                                <div class="flex items-center gap-1">
-                                    <x-heroicon-o-arrow-trending-up class="h-4 w-4" />
-                                    <span>P90</span>
-                                </div>
-                                <div class="font-semibold">{{ is_null($st['p90_hours'] ?? null) ? '—' : number_format($st['p90_hours'],2) }} j</div>
-                            </div>
-                        </div>
-
-                        <div class="mt-3 flex items-center justify-between text-sm">
-                            <div class="text-gray-700">
-                                SLA: <span class="font-semibold">{{ is_null($st['sla_hours'] ?? null) ? 'n/a' : number_format($st['sla_hours'],0).' j' }}</span>
-                            </div>
-                            <div class="flex items-center gap-1 text-gray-700">
-                                <x-heroicon-o-check-circle class="h-4 w-4" />
-                                Tepat SLA: <span class="font-semibold">{{ is_null($st['sla_hit_rate'] ?? null) ? 'n/a' : number_format($st['sla_hit_rate'],0).'%' }}</span>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <p class="text-xs text-gray-500 mt-3">
-                Penilaian: <span class="font-semibold">Cepat</span> (≥90% tepat SLA), <span class="font-semibold">Sedang</span> (70–89%), <span class="font-semibold">Perlu Perbaikan</span> (&lt;70%).
-            </p>
+            <h3 class="text-base font-semibold text-gray-900 mb-3">Quick Evaluation</h3>
+            <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                <li>Company: <strong>{{ $company['company_name'] ?? '—' }}</strong></li>
+                <li>
+                    Year {{ $summary['selected_year'] }} recorded
+                    <strong>{{ number_format($summary['total_activity']) }}</strong> combined activities.
+                </li>
+                <li>Peak month is <strong>{{ $summary['busiest_month'] }}</strong>.</li>
+                <li>
+                    Ticket growth vs previous year:
+                    <strong>
+                        @php $g = $summary['growth_yoy']['ticket'] ?? null; @endphp
+                        {{ is_null($g) ? 'n/a' : ($g . '%') }}
+                    </strong>.
+                </li>
+            </ul>
         </section>
 
         {{-- Charts --}}
         <section class="grid grid-cols-1 2xl:grid-cols-2 gap-6">
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                <h3 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <x-heroicon-o-chart-bar class="h-5 w-5 text-gray-900" />
-                    Tren Bulanan – {{ $year }}
+                <h3 class="text-base font-semibold text-gray-900 mb-4">
+                    Monthly Activity – {{ $year }}
                 </h3>
                 <div wire:ignore>
                     <canvas id="monthlyChart" wire:key="monthly-{{ $year }}" class="w-full" style="max-height:420px"></canvas>
@@ -189,9 +97,8 @@
             </div>
 
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                <h3 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <x-heroicon-o-presentation-chart-line class="h-5 w-5 text-gray-900" />
-                    Total Tahunan – {{ $yearsBack }} Tahun
+                <h3 class="text-base font-semibold text-gray-900 mb-4">
+                    Yearly Totals – Last {{ $yearsBack }} Years
                 </h3>
                 <div wire:ignore>
                     <canvas id="yearlyChart" wire:key="yearly-{{ $year }}" class="w-full" style="max-height:420px"></canvas>
@@ -201,15 +108,12 @@
 
         {{-- Data Table --}}
         <section class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <x-heroicon-o-bars-3 class="h-5 w-5 text-gray-900" />
-                Angka Bulanan
-            </h3>
+            <h3 class="text-base font-semibold text-gray-900 mb-4">Numbers (Monthly)</h3>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
                     <thead>
                         <tr class="text-left text-gray-600">
-                            <th class="py-2 pr-4">Bulan</th>
+                            <th class="py-2 pr-4">Month</th>
                             <th class="py-2 pr-4">Room</th>
                             <th class="py-2 pr-4">Vehicle</th>
                             <th class="py-2 pr-4">Ticket</th>
@@ -256,7 +160,13 @@
                 guestbook: '#7c3aed',
                 delivery: '#f59e0b',
             };
-            const paletteFill = { ...paletteLine };
+            const paletteFill = {
+                room: '#1d4ed8',
+                vehicle: '#059669',
+                ticket: '#dc2626',
+                guestbook: '#7c3aed',
+                delivery: '#f59e0b',
+            };
 
             // Monthly
             const mctx = document.getElementById('monthlyChart')?.getContext('2d');
@@ -302,25 +212,30 @@
             }
         }
 
+        // Initial render
         document.addEventListener('DOMContentLoaded', () => {
             rebuildCharts(@json($monthly), @json($yearly));
         });
 
+        // Livewire payload
         document.addEventListener('report-data-updated', (e) => {
             const { monthly, yearly } = e.detail || {};
             if (monthly && yearly) rebuildCharts(monthly, yearly);
         });
 
+        // PDF helpers
         function canvasToDataURL(id) {
             const c = document.getElementById(id);
             if (!c) return null;
             try { return c.toDataURL('image/png', 1.0); } catch (e) { return null; }
         }
 
+        // ——— LOADING STATE HELPERS ———
         const dlBtn = document.getElementById('downloadPdfBtn');
         const dlOverlay = document.getElementById('downloadOverlay');
         const btnSpinner = document.getElementById('btnSpinner');
         const btnLabel = document.getElementById('btnLabel');
+        const hideOverlayBtn = document.getElementById('hideOverlay');
 
         function setDownloading(state) {
             if (!dlBtn) return;
@@ -336,8 +251,9 @@
                 dlOverlay?.classList.add('hidden');
             }
         }
-        document.getElementById('hideOverlay')?.addEventListener('click', () => setDownloading(false));
+        hideOverlayBtn?.addEventListener('click', () => setDownloading(false));
 
+        // PDF button
         dlBtn?.addEventListener('click', async () => {
             const monthly_img = canvasToDataURL('monthlyChart');
             const yearly_img  = canvasToDataURL('yearlyChart');
@@ -348,10 +264,12 @@
             } catch (e) {
                 console.error(e);
             } finally {
+                // beri jeda kecil supaya dialog download sempat tampil
                 setTimeout(() => setDownloading(false), 1200);
             }
         });
 
+        // Pastikan overlay tertutup jika ada error global dari Livewire
         window.addEventListener('livewire:error', () => setDownloading(false));
     </script>
 </div>

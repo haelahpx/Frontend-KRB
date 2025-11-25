@@ -447,7 +447,7 @@
                                 type="checkbox"
                                 wire:model.live="informInfo"
                                 class="rounded border-gray-300 text-gray-900 focus:ring-gray-900 h-4 w-4">
-                        </div>
+                        </div> 
                         <div class="ml-3 text-sm">
                             <label for="notify_info" class="font-medium text-gray-700 cursor-pointer">Notify Information Dept</label>
                             <p class="text-gray-500 text-xs">Request support from the information department.</p>

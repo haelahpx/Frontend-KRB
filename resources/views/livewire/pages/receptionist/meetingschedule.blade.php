@@ -1,32 +1,15 @@
-@php
-    use Carbon\Carbon;
+<div class="bg-gray-50 min-h-screen">
+    @php
+    $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
+    $label = 'block text-sm font-medium text-gray-700 mb-2';
+    $input = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
+    $btnBlk = 'px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition active:scale-95 hover:bg-black disabled:opacity-60';
 
-    if (!function_exists('fmtDate')) {
-        function fmtDate($v) {
-            try { return $v ? Carbon::parse($v)->format('d M Y') : '—'; }
-            catch (\Throwable) { return '—'; }
-        }
-    }
-    if (!function_exists('fmtTime')) {
-        function fmtTime($v) {
-            try { return $v ? Carbon::parse($v)->format('H:i') : '—'; }
-            catch (\Throwable) { return (is_string($v) && preg_match('/^\d{2}:\d{2}/',$v)) ? substr($v,0,5) : '—'; }
-        }
-    }
+    $otherId = $otherRequirementId ?? null;
+    @endphp
 
-    $card   = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
-    $label  = 'block text-sm font-medium text-gray-700 mb-2';
-    $input  = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
-    $btnBlk = 'px-3 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900/20 disabled:opacity-60 transition';
-
-    $otherId = null;
-    foreach ($requirementOptions as $o) {
-        if (strtolower($o['name']) === 'other') { $otherId = $o['id']; break; }
-    }
-@endphp
-
-<div class="bg-gray-50">
-    <main class="px-4 sm:px-6 py-6 space-y-8">
+    <main class="px-4 sm:px-6 py-6 space-y-6">
+        {{-- Header Card --}}
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
             <div class="relative z-10 p-6 sm:p-8">
                 <div class="flex items-center gap-4">
@@ -44,7 +27,7 @@
         {{-- FORM: BOOKING ROOM (OFFLINE) --}}
         <section class="{{ $card }}">
             <div class="px-5 py-4 border-b border-gray-200">
-                <h3 class="text-base font-semibold text-gray-900">Tambah Booking Room</h3>
+                <h3 class="text-base font-semibold text-gray-900">Tambah Booking Room (Offline)</h3>
                 <p class="text-sm text-gray-500">Saat disimpan akan masuk <b>Pending</b> (menunggu approval).</p>
             </div>
 
@@ -61,7 +44,7 @@
                         <select wire:model.defer="form.room_id" class="{{ $input }}">
                             <option value="" hidden>Pilih room</option>
                             @foreach ($rooms as $r)
-                                <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
+                            <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
                             @endforeach
                         </select>
                         @error('form.room_id') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
@@ -74,9 +57,9 @@
                         <select wire:model.live="form.department_id" class="{{ $input }} mt-2">
                             <option value="" hidden>Pilih departemen</option>
                             @forelse ($departmentsOffline as $d)
-                                <option value="{{ $d['id'] }}">{{ $d['name'] }}</option>
+                            <option value="{{ $d['id'] }}">{{ $d['name'] }}</option>
                             @empty
-                                <option value="" disabled>Tidak ada hasil</option>
+                            <option value="" disabled>Tidak ada hasil</option>
                             @endforelse
                         </select>
                         @error('form.department_id') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
@@ -89,9 +72,9 @@
                         <select wire:model.live="offline_user_id" class="{{ $input }} mt-2">
                             <option value="">— Select User —</option>
                             @forelse ($usersByDeptOffline as $u)
-                                <option wire:key="off-u-{{ $u['id'] }}" value="{{ $u['id'] }}">{{ $u['name'] }}</option>
+                            <option wire:key="off-u-{{ $u['id'] }}" value="{{ $u['id'] }}">{{ $u['name'] }}</option>
                             @empty
-                                <option value="" disabled>— No users found —</option>
+                            <option value="" disabled>— No users found —</option>
                             @endforelse
                         </select>
                         @error('offline_user_id') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
@@ -125,28 +108,49 @@
                         <label class="{{ $label }}">Kebutuhan Ruangan</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 text-sm text-gray-700">
                             @foreach ($requirementOptions as $opt)
-                                <label class="inline-flex items-center gap-2 cursor-pointer" wire:key="req-{{ $opt['id'] }}">
-                                    <input type="checkbox" value="{{ $opt['id'] }}" wire:model="form.requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
-                                    <span>{{ $opt['name'] }}</span>
-                                </label>
+                            @if ($opt['id'] !== $otherId)
+                            <label class="inline-flex items-center gap-2 cursor-pointer" wire:key="req-{{ $opt['id'] }}">
+                                <input type="checkbox" value="{{ $opt['id'] }}" wire:model.live="form.requirements" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                <span>{{ $opt['name'] }}</span>
+                            </label>
+                            @endif
                             @endforeach
+                            <label class="inline-flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" wire:model.live="form.requirements" value="Other"
+                                    class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                                <span class="text-sm text-gray-700">Other</span>
+                            </label>
                         </div>
                         @error('form.requirements.*') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                     </div>
+                </div>
 
-                    @if ($otherId && in_array($otherId, ($form['requirements'] ?? []), true))
-                        <div class="md:col-span-3">
-                            <label class="{{ $label }}">Catatan</label>
-                            <textarea rows="4" wire:model.defer="form.notes" class="{{ $input }} !h-auto resize-none" placeholder="Jelaskan kebutuhan lainnya (wajib jika memilih 'Other')"></textarea>
-                            @error('form.notes') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
-                        </div>
-                    @endif
+                {{-- Conditional display: Show notes if the string 'Other' is in the requirements array --}}
+                @if (in_array('Other', $form['requirements'] ?? [], true))
+                    <div class="mt-4">
+                        <label class="block text-xs font-medium text-gray-900 mb-1.5">Special Notes</label>
+                        <textarea wire:model.defer="form.notes" rows="3" placeholder="Please specify your other requirement…"
+                            class="w-full px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"></textarea>
+                        @error('form.notes') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                @endif
+                
+                {{-- Inform Information Dept Checkbox for OFFLINE --}}
+                <div class="pt-4">
+                    <label class="inline-flex items-start gap-3">
+                        <input type="checkbox" wire:model.defer="informInfoOffline"
+                            class="mt-0.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                        <span class="text-sm text-gray-700">
+                            Minta Information Dept menginformasikan meeting ini (<span class="font-semibold text-gray-900">request</span>)
+                        </span>
+                    </label>
+                    @error('informInfoOffline') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="pt-5">
-                    <button type="submit" class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition active:scale-95 hover:bg-black disabled:opacity-60">
+                    <button type="submit" class="inline-flex items-center gap-2 {{ $btnBlk }}" wire:loading.attr="disabled">
                         <x-heroicon-o-check class="w-4 h-4" />
-                        Simpan Data
+                        Simpan Data Booking Room
                     </button>
                 </div>
             </form>
@@ -154,7 +158,7 @@
 
         {{-- FORM: ONLINE MEETING --}}
         <section class="{{ $card }}">
-            <div class="px-6 py-4 border-b border-gray-200">
+            <div class="px-5 py-4 border-b border-gray-200">
                 <div class="flex items-center gap-3">
                     <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
                     <div>
@@ -175,7 +179,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="{{ $label }}">Platform</label>
-                            <select wire:model.defer="online_platform" class="{{ $input }}">
+                            <select wire:model.live="online_platform" class="{{ $input }}">
                                 <option value="google_meet">Google Meet</option>
                                 <option value="zoom">Zoom</option>
                             </select>
@@ -183,9 +187,9 @@
                         </div>
                         <div class="flex items-end">
                             @if($online_platform === 'google_meet')
-                                <span class="text-[11px] px-2 py-1 rounded bg-yellow-100 text-yellow-800">
-                                    {{ $googleConnected ? 'Google connected' : 'Google NOT connected' }}
-                                </span>
+                            <span class="text-[11px] px-2 py-1 rounded {{ $googleConnected ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
+                                {{ $googleConnected ? 'Google connected' : 'Google NOT connected' }}
+                            </span>
                             @endif
                         </div>
                     </div>
@@ -195,11 +199,11 @@
                         <label class="{{ $label }}">Department</label>
                         <input type="text" wire:model.live="deptQueryOnline" class="{{ $input }}" placeholder="Search department…">
                         <select wire:model.live="online_department_id" class="{{ $input }} mt-2">
-                            <option value="">— Select Department —</option>
+                            <option value="">— Select Department (Optional) —</option>
                             @forelse($departmentsOnline as $d)
-                                <option value="{{ $d['id'] }}">{{ $d['name'] }}</option>
+                            <option value="{{ $d['id'] }}">{{ $d['name'] }}</option>
                             @empty
-                                <option value="" disabled>No results</option>
+                            <option value="" disabled>No results</option>
                             @endforelse
                         </select>
                         @error('online_department_id') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
@@ -207,14 +211,14 @@
 
                     {{-- User with SEARCH (ONLINE) --}}
                     <div>
-                        <label class="{{ $label }}">User (filtered by department)</label>
-                        <input type="text" wire:model.live="userQueryOnline" class="{{ $input }}" placeholder="Search user…">
+                        <label class="{{ $label }}">User (filtered by department, Optional)</label>
+                        <input type="text" wire:model.live="userQueryOnline" class="{{ $input }}" placeholder="Cari user…">
                         <select wire:model.live="online_user_id" class="{{ $input }} mt-2">
                             <option value="">— Select User —</option>
                             @forelse($usersByDept as $u)
-                                <option wire:key="on-u-{{ $u['id'] }}" value="{{ $u['id'] }}">{{ $u['name'] }}</option>
+                            <option wire:key="on-u-{{ $u['id'] }}" value="{{ $u['id'] }}">{{ $u['name'] }}</option>
                             @empty
-                                <option value="" disabled>— No users found —</option>
+                            <option value="" disabled>— No users found —</option>
                             @endforelse
                         </select>
                         @error('online_user_id') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
@@ -240,8 +244,21 @@
                         </div>
                     </div>
 
-                    <div class="lg:sticky lg:top-5 pt-1">
-                        <button type="submit" class="{{ $btnBlk }} h-10" wire:loading.attr="disabled">
+                    {{-- Inform Information Dept Checkbox for ONLINE --}}
+                    <div class="pt-2">
+                        <label class="inline-flex items-start gap-3">
+                            <input type="checkbox" wire:model.defer="informInfoOnline"
+                                class="mt-0.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                            <span class="text-sm text-gray-700">
+                                Minta Information Dept menginformasikan meeting ini (<span class="font-semibold text-gray-900">request</span>)
+                            </span>
+                        </label>
+                        @error('informInfoOnline') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="pt-5 lg:pt-1">
+                        <button type="submit" class="inline-flex items-center gap-2 {{ $btnBlk }}" wire:loading.attr="disabled">
+                            <x-heroicon-o-link class="w-4 h-4" />
                             Submit Online Meeting
                         </button>
                     </div>
@@ -249,70 +266,4 @@
             </form>
         </section>
     </main>
-
-    @if (session('toast'))
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                window.dispatchEvent(new CustomEvent('toast', { detail: @json(session('toast')) }));
-            });
-        </script>
-    @endif
-
-    {{-- Toast manager (unchanged, swapped close icon to Heroicon) --}}
-    <div x-data="{
-            toasts: [],
-            addToast(t) {
-                t.id = crypto.randomUUID ? crypto.randomUUID() : Date.now() + Math.random();
-                t.type = t.type || 'info';
-                t.message = t.message || '';
-                t.title = t.title || '';
-                t.duration = Number(t.duration ?? 3500);
-                this.toasts.push(t);
-                if (t.duration > 0) { setTimeout(() => this.removeToast(t.id), t.duration); }
-            },
-            removeToast(id) { this.toasts = this.toasts.filter(tt => tt.id !== id); },
-            getToastClasses(type) {
-                const base = 'relative overflow-hidden rounded-xl p-4 border border-black/15 bg-white/95 text-black shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-all duration-500 ease-out';
-                const v = { success:'border-black/20', error:'border-black/25', warning:'border-black/20', info:'border-black/15', neutral:'border-black/15' };
-                return base + ' ' + (v[type] || v.info);
-            },
-            getAccentClasses(type) {
-                const v = { success:'bg-gradient-to-r from-black/90 to-black/70', error:'bg-gradient-to-r from-black/90 to-black/70', warning:'bg-gradient-to-r from-black/90 to-black/70', info:'bg-gradient-to-r from-black/90 to-black/70', neutral:'bg-gradient-to-r from-black/90 to-black/70' };
-                return v[type] || v.info;
-            },
-            getIconClasses(type) {
-                const base = 'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg';
-                const v = { success:'bg-black text-white', error:'bg-black text-white', warning:'bg-black text-white', info:'bg-black text-white', neutral:'bg-black text-white' };
-                return base + ' ' + (v[type] || v.info);
-            },
-            getIcon(type) { const i = { success:'✓', error:'✕', warning:'⚠', info:'ⓘ', neutral:'•' }; return i[type] || i.info; }
-        }"
-        x-on:toast.window="addToast($event.detail)"
-        class="fixed top-6 right-6 z-50 flex flex-col gap-4 w-[calc(100vw-3rem)] max-w-sm pointer-events-none"
-        aria-live="polite">
-
-        <template x-for="toast in toasts" :key="toast.id">
-            <div x-transition:enter="transition ease-out duration-300 transform"
-                 x-transition:enter-start="translate-x-full opacity-0 scale-95"
-                 x-transition:enter-end="translate-x-0 opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-200 transform"
-                 x-transition:leave-start="translate-x-0 opacity-100 scale-100"
-                 x-transition:leave-end="translate-x-full opacity-0 scale-95"
-                 class="pointer-events-auto"
-                 :class="getToastClasses(toast.type)">
-                <div class="absolute top-0 left-0 right-0 h-1" :class="getAccentClasses(toast.type)"></div>
-                <div class="absolute top-0 left-0 right-0 h-1 opacity-50 animate-pulse" :class="getAccentClasses(toast.type)"></div>
-                <div class="flex items-start gap-4">
-                    <div :class="getIconClasses(toast.type)"><span x-text="getIcon(toast.type)"></span></div>
-                    <div class="flex-1 min-w-0 pt-1">
-                        <h4 x-show="toast.title" x-text="toast.title" class="font-semibold text_base mb-1 leading-tight tracking-tight"></h4>
-                        <p x-show="toast.message" x-text="toast.message" class="text-sm leading-relaxed text-black/70"></p>
-                    </div>
-                    <button @click="removeToast(toast.id)" class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-black/60 hover:text-black hover:bg:black/5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black/20" aria-label="Close notification">
-                        <x-heroicon-o-x-mark class="w-4 h-4" />
-                    </button>
-                </div>
-            </div>
-        </template>
-    </div>
 </div>

@@ -1,4 +1,3 @@
-{{-- resources/views/livewire/pages/admin/dashboard.blade.php --}}
 <div class="bg-gray-50" wire:poll.3500ms="tick">
     <main class="px-4 sm:px-6 py-6 space-y-5">
 
@@ -7,158 +6,205 @@
             <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 6V4m0 16v-2m0-10v2m0 6v2M6 12H4m16 0h-2m-10 0h2m6 0h2M9 17l-2 2M15 7l2-2M7 7l-2-2M17 17l2 2"/>
+                        d="M12 6V4m0 16v-2m0-10v2m0 6v2M6 12H4m16 0h-2m-10 0h2m6 0h2M9 17l-2 2M15 7l2-2M7 7l-2-2M17 17l2 2" />
                 </svg>
             </div>
             <div class="min-w-0">
                 <h2 class="text-base sm:text-lg font-semibold truncate">Welcome, {{ $admin_name }}!</h2>
-                <p class="text-xs text-white/80 truncate">Overview of tickets, comments, bookings, and activity.</p>
+                <p class="text-xs text-white/80 truncate">Overview of ticketing and system activity.</p>
             </div>
         </header>
 
-        {{-- KPI STRIP - Always visible, 3 columns on mobile, 3 columns on desktop --}}
+        {{-- KPI STRIP - 4 columns for tickets --}}
         <section>
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                 @foreach($stats as $s)
-                    <div class="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
-                        <p class="text-[12px] text-gray-500 truncate">{{ $s['label'] }}</p>
-                        <h3 class="text-xl font-semibold text-gray-900 mt-1 leading-none">{{ $s['value'] }}</h3>
-                    </div>
+                <div class="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+                    <p class="text-[12px] text-gray-500 truncate">{{ $s['label'] }}</p>
+                    <h3 class="text-xl font-semibold text-gray-900 mt-1 leading-none">{{ $s['value'] }}</h3>
+                </div>
                 @endforeach
             </div>
         </section>
 
-        {{-- MAIN LAYOUT: Mobile stacks, Desktop has left sidebar + right content --}}
-        <section class="grid grid-cols-1 gap-5 lg:grid-cols-[310px_1fr]">
+        {{-- MAIN LAYOUT: Full Width Content --}}
+        <section class="space-y-5"> {{-- This section now holds all content below KPIs --}}
 
-            {{-- LEFT COLUMN: Recent Activity (tall) --}}
-            <aside class="rounded-2xl border border-gray-200 bg-white shadow-sm h-full">
-                <div class="px-4 sm:px-5 py-3 border-b border-gray-200">
-                    <h3 class="text-sm font-semibold text-gray-900">Recent Activity</h3>
-                    <p class="text-xs text-gray-500">Latest 10 items</p>
-                </div>
-                <ul class="divide-y divide-gray-100 max-h-[78vh] overflow-y-auto">
-                    @forelse($recentActivities as $a)
-                        <li class="px-4 sm:px-5 py-3">
-                            <div class="flex items-start gap-3">
-                                <div class="w-7 h-7 rounded-lg bg-gray-900 text-white flex items-center justify-center text-[11px] font-bold shrink-0">
-                                    {{ $a['icon'] }}
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <div class="flex flex-wrap items-center gap-2 text-[13px] leading-tight">
-                                        <span class="font-semibold text-gray-900">{{ $a['title'] }}</span>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[11px]">{{ $a['type'] }}</span>
-                                        <span class="text-[11px] text-gray-500">{{ $a['when'] }}</span>
-                                    </div>
-                                    @if(!empty($a['desc']))
-                                        <p class="text-[12.5px] text-gray-700 mt-0.5 line-clamp-2">{{ $a['desc'] }}</p>
-                                    @endif
-                                    @if(!empty($a['url']))
-                                        <a href="{{ $a['url'] }}" class="text-[12px] underline font-medium mt-1 inline-block">Open</a>
-                                    @endif
-                                </div>
-                            </div>
-                        </li>
-                    @empty
-                        <li class="px-5 py-12 text-center text-sm text-gray-500">No activity yet.</li>
-                    @endforelse
-                </ul>
-            </aside>
-
-            {{-- RIGHT COLUMN: one wide + two half cards --}}
-            <div class="space-y-5">
-
-                {{-- WIDE CARD (Recent Tickets) --}}
-                <section class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div class="px-5 py-3 border-b border-gray-200">
-                        <h3 class="text-sm font-semibold text-gray-900">Recent Tickets</h3>
-                        <p class="text-xs text-gray-500">Latest 6 tickets</p>
+            {{-- CHART & STATUS ROW (from Receptionist) --}}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                {{-- Activity Chart --}}
+                <div class="lg:col-span-2 rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Weekly Ticket Activity
+                        </h3>
+                        <p class="text-xs text-gray-500">
+                            Last 7 days (New, Closed, In Progress)
+                        </p>
                     </div>
-                    <ul class="divide-y divide-gray-100 max-h-[34vh] overflow-y-auto">
-                        @forelse($recentTickets as $t)
-                            <li class="px-5 py-3">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div class="min-w-0">
-                                        <p class="font-medium text-gray-900 text-[14px] truncate">#{{ $t['id'] }} — {{ $t['subject'] }}</p>
-                                        <p class="mt-0.5 text-[12px] text-gray-600">
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100">
-                                                <span class="text-gray-500">Pri:</span><span class="font-medium capitalize">{{ $t['priority'] }}</span>
-                                            </span>
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 ml-2">
-                                                <span class="text-gray-500">Status:</span>
-                                                <span class="font-medium capitalize">{{ str_replace('_',' ',$t['status']) }}</span>
-                                            </span>
-                                        </p>
-                                        <p class="text-[11.5px] text-gray-500 mt-0.5">
-                                            {{ $t['user'] }} • {{ $t['dept'] }} • {{ $t['when'] }}
-                                        </p>
-                                    </div>
-                                    <a href="{{ $t['url'] }}" class="px-3 py-1.5 text-[12px] font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none shrink-0">
-                                        Open
-                                    </a>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="px-5 py-10 text-center text-sm text-gray-500">No tickets found.</li>
-                        @endforelse
-                    </ul>
-                </section>
+                    {{-- wire:ignore is crucial for Chart.js --}}
+                    <div class="h-[180px]" wire:ignore>
+                        <canvas id="adminActivityChart" class="w-full" style="max-height:180px"></canvas>
+                    </div>
+                </div>
 
-                {{-- TWO HALF CARDS --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {{-- Notifications --}}
-                    <section class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                        <div class="px-5 py-3 border-b border-gray-200">
-                            <h3 class="text-sm font-semibold text-gray-900">Notifications</h3>
-                            <p class="text-xs text-gray-500">Latest 3 ticket comments</p>
+                {{-- Status Distribution --}}
+                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Ticket Status Distribution</h3>
+                    <div class="space-y-4">
+                        @php
+                        $totalTickets = $ticketStatusDistribution['total_count'] ?? 0;
+                        @endphp
+                        @foreach(['Open', 'In Progress', 'Closed'] as $status)
+                        @php
+                        $data = $ticketStatusDistribution[$status] ?? ['percent' => 0];
+                        $color = match($status) {
+                        'Open' => 'bg-red-500',
+                        'In Progress' => 'bg-blue-500',
+                        'Closed' => 'bg-green-500',
+                        default => 'bg-gray-400',
+                        };
+                        @endphp
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs font-medium text-gray-700">{{ $status }}</span>
+                                <span class="text-xs font-bold text-gray-900">{{ $data['percent'] }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="{{ $color }} h-1.5 rounded-full" style="width: {{ $data['percent'] }}%"></div>
+                            </div>
                         </div>
-                        <ul class="divide-y divide-gray-100 max-h-[28vh] overflow-y-auto">
-                            @forelse($latestComments as $n)
-                                <li class="px-5 py-3">
-                                    <div class="text-[11px] text-gray-500 mb-0.5">{{ $n['when'] }}</div>
-                                    <div class="text-[13px]">
-                                        <span class="font-semibold">{{ $n['by'] }}</span> commented on
-                                        <span class="font-medium">#{{ $n['ticket_id'] }} — {{ $n['ticket_subject'] }}</span>
-                                    </div>
-                                    <p class="text-[12px] text-gray-600 mt-0.5 line-clamp-2">{{ $n['text'] }}</p>
-                                    <a href="{{ $n['url'] }}" class="px-3 py-1.5 text-[12px] font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none mt-1 inline-block">
-                                        Open
-                                    </a>
-                                </li>
-                            @empty
-                                <li class="px-5 py-8 text-center text-sm text-gray-500">No comments.</li>
-                            @endforelse
-                        </ul>
-                    </section>
-
-                    {{-- Recent Bookings --}}
-                    <section class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                        <div class="px-5 py-3 border-b border-gray-200">
-                            <h3 class="text-sm font-semibold text-gray-900">Recent Room Bookings</h3>
-                            <p class="text-xs text-gray-500">Latest 5 bookings</p>
-                        </div>
-                        <ul class="divide-y divide-gray-100 max-h-[28vh] overflow-y-auto">
-                            @forelse($recentBookings as $b)
-                                <li class="px-5 py-3">
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div class="min-w-0">
-                                            <p class="font-medium text-gray-900 text-[14px] truncate">
-                                                {{ $b['meeting_title'] }} — {{ $b['room_label'] }}
-                                            </p>
-                                            <p class="text-[12px] text-gray-500 mt-0.5">{{ $b['by'] }} • {{ $b['when'] }}</p>
-                                        </div>
-                                        <a href="{{ $b['url'] }}" class="px-3 py-1.5 text-[12px] font-medium rounded-lg bg-gray-900 text-white hover:bg-black focus:outline-none shrink-0">
-                                            Open
-                                        </a>
-                                    </div>
-                                </li>
-                            @empty
-                                <li class="px-5 py-8 text-center text-sm text-gray-500">No recent bookings.</li>
-                            @endforelse
-                        </ul>
-                    </section>
+                        @endforeach
+                    </div>
+                    <div class="mt-4 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                        <p class="text-xs text-gray-600 mb-0.5">Total Active Tickets</p>
+                        <p class="text-lg font-bold text-gray-900">{{ number_format($totalTickets) }}</p>
+                    </div>
                 </div>
             </div>
+
         </section>
     </main>
+
+    {{-- Chart.js v4 integration for Admin Activity --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    @verbatim
+    <script>
+        let __adminActivityChart;
+
+        function rebuildAdminActivityChart(weeklyData) {
+            const canvas = document.getElementById('adminActivityChart');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+
+            const defaultWeekly = {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                new: [15, 20, 18, 25, 22, 10, 14],
+                closed: [12, 15, 16, 20, 18, 9, 11],
+                in_progress: [5, 8, 7, 10, 9, 4, 6],
+            };
+            const weekly = weeklyData && weeklyData.labels ? weeklyData : defaultWeekly;
+
+            if (__adminActivityChart) {
+                __adminActivityChart.destroy();
+            }
+
+            const paletteLine = {
+                new: '#1d4ed8',
+                closed: '#059669',
+                in_progress: '#f59e0b',
+            };
+
+            const datasets = [{
+                    label: 'New',
+                    data: weekly.new,
+                    borderColor: paletteLine.new,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    fill: false,
+                },
+                {
+                    label: 'Closed',
+                    data: weekly.closed,
+                    borderColor: paletteLine.closed,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    fill: false,
+                },
+                {
+                    label: 'In Progress',
+                    data: weekly.in_progress,
+                    borderColor: paletteLine.in_progress,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    fill: false,
+                },
+            ];
+
+            __adminActivityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: weekly.labels,
+                    datasets: datasets,
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 10,
+                            },
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                                stepSize: 5,
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)',
+                            },
+                        },
+                        x: {
+                            grid: {
+                                display: false,
+                            },
+                        },
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false,
+                    },
+                },
+            });
+        }
+
+        // Listen for the Livewire custom event `admin-chart-updated`
+        document.addEventListener('admin-chart-updated', function(event) {
+            const weeklyData = event.detail.weeklyData;
+            rebuildAdminActivityChart(weeklyData);
+        });
+
+        // Initial render when the page is loaded or after Livewire navigated
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Livewire !== 'undefined' && !Livewire.firstVisit) {
+                rebuildAdminActivityChart(@json($weeklyTicketActivity));
+            }
+        });
+    </script>
+
+    @endverbatim
 </div>

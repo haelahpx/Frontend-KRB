@@ -9,7 +9,6 @@ use Livewire\WithPagination;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 use Carbon\Carbon;
 
@@ -30,45 +29,42 @@ class Information extends Component
     // ====== PAGINATION ======
     protected string $paginationTheme = 'tailwind';
     public int $perPageInfo = 12;  // information list
-    public int $perPageReq  = 5;   // requests (offline/online)
+    public int $perPageReq  = 3;   // requests (offline/online)
 
-    // ====== FILTERS (information list) ======
+    // ====== FILTERS ======
     public ?string $search = null;
 
-    // ====== FORM FIELDS ======
+    // ====== FORM FIELDS (used by Create/Edit Modal) ======
     public string $description = '';
     public string $event_at   = ''; // Y-m-d\TH:i
 
-    // ====== BROADCAST (own department only; now uses selected dept) ======
-    public string $broadcast_description = '';
-    public string $broadcast_event_at    = '';
-
-    // ====== REQUEST→INFORM MODAL ======
+    // ====== REQUEST→INFORM MODAL (UPDATED FOR EDITING) ======
     public bool  $informModal = false;
     public ?int  $informBookingId = null;
+    public ?string $informDescription = null; // Holds the editable description
 
-    // ====== HEADER (hero) & DEPT SWITCHER ======
+    // ====== HEADER & DEPT SWITCHER ======
     public string $company_name    = '-';
-    public string $department_name = '-'; // resolved from selected
-    public array  $deptOptions     = [];  // [ ['id'=>1,'name'=>'...'], ... ]
-    public ?int   $selected_department_id = null; // live switch
-    public ?int   $primary_department_id  = null; // users.department_id
-
+    public string $department_name = '-';
+    public array  $deptOptions     = [];
+    public ?int   $selected_department_id = null;
+    public ?int   $primary_department_id  = null;
     public bool $showSwitcher = false;
+
+    // ====== REJECT MODAL ======
+    public bool $rejectModal = false;
+    public ?int $rejectBookingId = null;
+    public string $rejectionReason = '';
 
     public function mount(): void
     {
         try {
             $auth = Auth::user()->loadMissing(['company', 'department']);
             $this->company_name = optional($auth->company)->company_name ?? '-';
-
-            // Primary dari users.department_id
             $this->primary_department_id = $auth->department_id ?: null;
 
-            // Muat daftar departemen yang dimiliki user (pivot user_departments)
             $this->loadUserDepartments();
 
-            // Set selected: prioritas primary; fallback ke pertama di list
             if (!$this->selected_department_id) {
                 $this->selected_department_id = $this->primary_department_id
                     ?: ($this->deptOptions[0]['id'] ?? null);
@@ -77,10 +73,9 @@ class Information extends Component
             $this->department_name = $this->resolveDeptName($this->selected_department_id);
 
             $this->resetForm();
-            $this->resetBroadcastForm();
+            $this->resetBroadcastForm(); // Assuming this was for a separate broadcast component
         } catch (Throwable $e) {
             $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal memuat header.', duration: 5000);
-            Log::error('Information mount error', ['m' => $e->getMessage()]);
         }
     }
 
@@ -90,7 +85,7 @@ class Information extends Component
 
         $rows = DB::table('user_departments as ud')
             ->join('departments as d', 'd.department_id', '=', 'ud.department_id')
-            ->where('ud.user_id', $user->user_id) // PK kamu pakai user_id
+            ->where('ud.user_id', $user->user_id)
             ->orderBy('d.department_name')
             ->get(['d.department_id as id', 'd.department_name as name']);
 
@@ -98,7 +93,6 @@ class Information extends Component
 
         $this->showSwitcher = true;
 
-        // kalau user tidak punya pivot apapun, tetapi punya primary, masukkan primary supaya tetap bisa jalan
         if (empty($this->deptOptions) && $this->primary_department_id) {
             $name = Department::where('department_id', $this->primary_department_id)->value('department_name') ?? 'Unknown';
             $this->deptOptions = [['id' => (int)$this->primary_department_id, 'name' => (string)$name]];
@@ -115,24 +109,11 @@ class Information extends Component
                 return $opt['name'];
             }
         }
-        // fallback query (kalau tidak ada di list karena perubahan data)
         return Department::where('department_id', $deptId)->value('department_name') ?? '-';
-    }
-
-    public function resetToPrimaryDepartment(): void
-    {
-        if ($this->primary_department_id) {
-            $this->selected_department_id = $this->primary_department_id;
-            $this->department_name = $this->resolveDeptName($this->selected_department_id);
-            $this->resetPaginationForAll();
-            $this->dispatch('toast', type: 'success', title: 'Switched', message: 'Kembali ke primary department.', duration: 2000);
-        }
     }
 
     public function updatedSelectedDepartment_id(): void
     {
-        // Livewire camelCase <-> snakeCase guard; jika method ini tidak terpanggil di versimu,
-        // gunakan updatedSelectedDepartmentId() di bawah
         $this->updatedSelectedDepartmentId();
     }
 
@@ -140,10 +121,8 @@ class Information extends Component
     {
         $id = (int) $this->selected_department_id;
 
-        // Validasi: hanya boleh memilih dari deptOptions
         $allowed = collect($this->deptOptions)->pluck('id')->all();
         if (!in_array($id, $allowed, true)) {
-            // fallback ke primary atau first
             $this->selected_department_id = $this->primary_department_id ?: ($this->deptOptions[0]['id'] ?? null);
             $id = (int) $this->selected_department_id;
         }
@@ -173,6 +152,7 @@ class Information extends Component
 
     private function resetBroadcastForm(): void
     {
+        // Keeping this for consistency, assuming a separate broadcast feature exists
         $this->broadcast_description = '';
         $this->broadcast_event_at    = now()->format('Y-m-d\TH:i');
     }
@@ -185,36 +165,31 @@ class Information extends Component
         ];
     }
 
-    private function broadcastRules(): array
-    {
-        return [
-            'broadcast_description' => ['required', 'string'],
-            'broadcast_event_at'    => ['required', 'date'],
-        ];
-    }
+    // ========= Information CRUD (Modal) =========
 
-    // ========= CRUD (Information table) =========
-    public function create(): void
+    public function openCreateEditModal(string $mode, ?int $id = null): void
     {
         $this->resetForm();
-        $this->mode = 'create';
-    }
+        $this->mode = $mode;
 
-    public function edit(int $id): void
-    {
-        $user = Auth::user();
-        $deptId = $this->currentDeptId();
+        if ($mode === 'edit' && $id) {
+            $user = Auth::user();
+            $deptId = $this->currentDeptId();
 
-        $row = InformationModel::where('information_id', $id)
-            ->where('company_id', $user->company_id)
-            ->where('department_id', $deptId)
-            ->firstOrFail();
+            try {
+                $row = InformationModel::where('information_id', $id)
+                    ->where('company_id', $user->company_id)
+                    ->where('department_id', $deptId)
+                    ->firstOrFail();
 
-        $this->editingId   = $row->information_id;
-        $this->description = (string) $row->description;
-        $this->event_at    = optional($row->event_at)->format('Y-m-d\TH:i') ?? now()->format('Y-m-d\TH:i');
-
-        $this->mode = 'edit';
+                $this->editingId   = $row->information_id;
+                $this->description = (string) $row->description;
+                $this->event_at    = optional($row->event_at)->format('Y-m-d\TH:i') ?? now()->format('Y-m-d\TH:i');
+            } catch (Throwable $e) {
+                $this->dispatch('toast', type: 'error', title: 'Error', message: 'Data tidak ditemukan atau tidak memiliki akses.', duration: 5000);
+                $this->cancel();
+            }
+        }
     }
 
     public function store(): void
@@ -254,8 +229,6 @@ class Information extends Component
             ->firstOrFail();
 
         $row->fill([
-            'company_id'    => $user->company_id,
-            'department_id' => $deptId,
             'description'   => $this->description,
             'event_at'      => Carbon::parse($this->event_at),
         ])->save();
@@ -263,6 +236,7 @@ class Information extends Component
         $this->dispatch('toast', type: 'success', title: 'Updated', message: 'Information updated.', duration: 3500);
         $this->mode = 'index';
         $this->resetForm();
+        $this->resetPage('infoPage');
     }
 
     public function destroy(int $id): void
@@ -270,15 +244,19 @@ class Information extends Component
         $user   = Auth::user();
         $deptId = $this->currentDeptId();
 
-        $row = InformationModel::where('information_id', $id)
-            ->where('company_id', $user->company_id)
-            ->where('department_id', $deptId)
-            ->firstOrFail();
+        try {
+            $row = InformationModel::where('information_id', $id)
+                ->where('company_id', $user->company_id)
+                ->where('department_id', $deptId)
+                ->firstOrFail();
 
-        $row->delete();
+            $row->delete();
 
-        $this->dispatch('toast', type: 'success', title: 'Deleted', message: 'Information deleted.', duration: 3500);
-        $this->resetPage('infoPage');
+            $this->dispatch('toast', type: 'success', title: 'Deleted', message: 'Information deleted.', duration: 3500);
+            $this->resetPage('infoPage');
+        } catch (Throwable $e) {
+            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal menghapus data.', duration: 5000);
+        }
     }
 
     public function cancel(): void
@@ -288,50 +266,25 @@ class Information extends Component
         $this->resetBroadcastForm();
         $this->informModal = false;
         $this->informBookingId = null;
+        $this->informDescription = null; // Reset the editable field on close
     }
 
-    public function openBroadcast(): void
-    {
-        $this->resetBroadcastForm();
-    }
+    // ========= Inform Modal Logic (EDITABLE) =========
 
-    public function submitBroadcast(): void
-    {
-        $data  = $this->validate($this->broadcastRules());
-        $user  = Auth::user();
-        $deptId = $this->currentDeptId();
-
-        if (!$deptId) {
-            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Tidak ada departemen terpilih.', duration: 5000);
-            return;
-        }
-
-        try {
-            InformationModel::create([
-                'company_id'    => $user->company_id,
-                'department_id' => $deptId,
-                'description'   => $data['broadcast_description'],
-                'event_at'      => Carbon::parse($data['broadcast_event_at'])->format('Y-m-d H:i:s'),
-            ]);
-
-            $this->dispatch('toast', type: 'success', title: 'Broadcast Sent', message: 'Information broadcast ke departemen terpilih.', duration: 3500);
-            $this->resetBroadcastForm();
-            $this->resetPage('infoPage');
-        } catch (Throwable $e) {
-            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal mengirim broadcast.', duration: 5000);
-            Log::error('Information submitBroadcast error', ['m' => $e->getMessage()]);
-        }
-    }
-
-    // ========= REQUEST → INFORM =========
     public function openInformModal(int $bookingId): void
     {
         try {
+            $booking = BookingRoom::query()
+                ->with(['user', 'room', 'department'])
+                ->where('bookingroom_id', $bookingId)
+                ->firstOrFail();
+
             $this->informBookingId = $bookingId;
+            // Populate the editable description property
+            $this->informDescription = $this->composeDescription($booking); 
             $this->informModal = true;
         } catch (Throwable $e) {
-            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal membuka modal.', duration: 5000);
-            Log::error('Information openInformModal error', ['m' => $e->getMessage()]);
+            $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal memuat detail booking.', duration: 5000);
         }
     }
 
@@ -339,12 +292,15 @@ class Information extends Component
     {
         $this->informModal = false;
         $this->informBookingId = null;
+        $this->informDescription = null;
     }
 
     public function submitInform(): void
     {
+        // Validate the editable field
         $this->validate([
             'informBookingId' => 'required|integer',
+            'informDescription' => 'required|string|min:10', // Ensure edited content is valid
         ]);
 
         $user    = Auth::user();
@@ -362,21 +318,19 @@ class Information extends Component
 
         $companyId = $user->company_id;
 
-        // --- FIX HERE ---
-        $date = Carbon::parse($booking->date)->toDateString();               // "2025-11-17"
-        $time = Carbon::parse($booking->start_time)->format('H:i:s');        // "14:00:00"
-        $eventAt = Carbon::createFromFormat('Y-m-d H:i:s', "$date $time")
-            ->format('Y-m-d H:i:s');
-        // -----------------
+        $date = Carbon::parse($booking->date)->toDateString();
+        $time = Carbon::parse($booking->start_time)->format('H:i:s');
+        $eventAt = Carbon::createFromFormat('Y-m-d H:i:s', "$date $time")->format('Y-m-d H:i:s');
 
-        $desc = $this->composeDescription($booking);
+        // Use the potentially edited description from the modal
+        $desc = $this->informDescription; 
 
         try {
             DB::transaction(function () use ($companyId, $deptId, $eventAt, $desc, $booking) {
                 InformationModel::create([
                     'company_id'    => $companyId,
                     'department_id' => $deptId,
-                    'description'   => $desc,
+                    'description'   => $desc, // SAVING THE EDITED CONTENT
                     'event_at'      => $eventAt,
                 ]);
                 $booking->requestinformation = 'inform';
@@ -386,11 +340,9 @@ class Information extends Component
             $this->closeInformModal();
             $this->resetPage('offlinePage');
             $this->resetPage('onlinePage');
-
             $this->dispatch('toast', type: 'success', title: 'Sent', message: 'Information dikirim ke departemen terpilih.', duration: 3500);
         } catch (Throwable $e) {
             $this->dispatch('toast', type: 'error', title: 'Error', message: 'Gagal mengirim informasi.', duration: 5000);
-            Log::error('Information submitInform error', ['m' => $e->getMessage()]);
         }
     }
 
@@ -405,34 +357,72 @@ class Information extends Component
         $notes  = trim((string) $b->special_notes) ?: '-';
         $attend = (string) ($b->number_of_attendees ?? '-');
 
+        $base = [
+            "Tanggal/Jam : {$date} {$start}-{$end}",
+            "Requester   : {$by} (Dept: {$dept})",
+            "Peserta     : {$attend}",
+            "Catatan     : {$notes}",
+        ];
+
         if ($b->booking_type === 'online_meeting') {
             $provider = strtoupper((string) $b->online_provider ?: '-');
             $url      = trim((string) $b->online_meeting_url ?: '-');
             $code     = trim((string) $b->online_meeting_code ?: '-');
             $pass     = trim((string) $b->online_meeting_password ?: '-');
 
-            return implode("\n", [
-                "{$title} — ONLINE MEETING",
-                "Tanggal/Jam : {$date} {$start}-{$end}",
-                "Requester    : {$by} (Dept: {$dept})",
-                "Peserta      : {$attend}",
-                "Provider     : {$provider}",
-                "Join Link    : {$url}",
-                "Meeting Code : {$code}",
-                "Password     : {$pass}",
-                "Catatan      : {$notes}",
-            ]);
+            return implode("\n", array_merge(["{$title} — ONLINE MEETING"], [
+                $base[0], $base[1], $base[2],
+                "Provider    : {$provider}",
+                "Join Link   : {$url}",
+                "Meeting Code: {$code}",
+                "Password    : {$pass}",
+                $base[3]
+            ]));
         }
 
-        $room = optional($b->room)->name ?: 'Room';
-        return implode("\n", [
-            "{$title} — OFFLINE MEETING",
-            "Tanggal/Jam : {$date} {$start}-{$end}",
+        $room = optional($b->room)->room_name ?: 'Room';
+        return implode("\n", array_merge(["{$title} — OFFLINE MEETING"], [
+            $base[0],
             "Ruangan     : {$room}",
-            "Requester   : {$by} (Dept: {$dept})",
-            "Peserta     : {$attend}",
-            "Catatan     : {$notes}",
+            $base[1], $base[2], $base[3]
+        ]));
+    }
+
+    // ========= Reject Modal Logic (No change) =========
+
+    public function openRejectModal(int $bookingId): void
+    {
+        $this->rejectBookingId = $bookingId;
+        $this->rejectModal = true;
+    }
+
+    public function closeRejectModal(): void
+    {
+        $this->rejectModal = false;
+        $this->rejectBookingId = null;
+        $this->rejectionReason = '';
+    }
+
+    public function submitReject(): void
+    {
+        $this->validate([
+            'rejectionReason' => 'required|string|min:10',
         ]);
+
+        $booking = BookingRoom::find($this->rejectBookingId);
+        if ($booking) {
+            DB::transaction(function () use ($booking) {
+                $booking->status = 'rejected';
+                $booking->book_reject = $this->rejectionReason;
+                $booking->save();
+            });
+
+            $this->closeRejectModal();
+
+            $this->dispatch('toast', type: 'success', title: 'Rejected', message: 'Booking request rejected.', duration: 3500);
+            $this->resetPage('offlinePage');
+            $this->resetPage('onlinePage');
+        }
     }
 
     // ========= RENDER =========
@@ -442,7 +432,6 @@ class Information extends Component
         $companyId = $user->company_id;
         $deptId    = $this->currentDeptId();
 
-        // Request lists (company-scope; action push ke dept terpilih)
         $offline = BookingRoom::query()
             ->with(['room', 'user', 'department'])
             ->where('company_id', $companyId)
@@ -463,7 +452,6 @@ class Information extends Component
             ->orderByDesc('date')->orderByDesc('start_time')
             ->paginate($this->perPageReq, ['*'], 'onlinePage');
 
-        // Information table: ONLY department terpilih
         $rows = InformationModel::query()
             ->where('company_id', $companyId)
             ->when($deptId, fn($q) => $q->where('department_id', $deptId))

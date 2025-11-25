@@ -23,6 +23,7 @@ class Account extends Component
     // Filters
     public string $search = '';
     public string $roleFilter = '';
+    public string $departmentFilter = ''; // <--- NEW: Department Filter property
 
     // Create form
     public string $full_name = '';
@@ -101,6 +102,7 @@ class Account extends Component
 
     public function updatingSearch(): void { $this->resetPage(); }
     public function updatingRoleFilter(): void { $this->resetPage(); }
+    public function updatingDepartmentFilter(): void { $this->resetPage(); } // <--- NEW: Reset page on filter change
 
     private function loadDepartments(): void
     {
@@ -377,6 +379,7 @@ class Account extends Component
                 });
             })
             ->when($this->roleFilter, fn($q) => $q->where('role_id', (int)$this->roleFilter))
+            ->when($this->departmentFilter, fn($q) => $q->where('department_id', (int)$this->departmentFilter)) // <--- NEW: Apply department filter
             ->orderByDesc('user_id')
             ->paginate(10);
 
