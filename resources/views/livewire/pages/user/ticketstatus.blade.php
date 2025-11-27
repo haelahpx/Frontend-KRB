@@ -1,4 +1,3 @@
-{{-- A simple comment like an actual programmer's simple documentation --}}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- Header --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
@@ -81,6 +80,8 @@
                     $isResolvedOrClosed = in_array($statusUp, ['RESOLVED','CLOSED'], true);
                     $hasAgent = (int)($t->agent_count ?? 0) > 0;
                     $agents = collect($t->assignments ?? [])->pluck('user.full_name')->filter()->unique()->values();
+                    // Retrieve the unread count
+                    $unreadCount = $t->unread_comments_count ?? 0; 
                 @endphp
 
                 <div class="group relative bg-white rounded-xl border-2 border-black p-5 hover:shadow-md transition-shadow duration-200">
@@ -91,7 +92,15 @@
 
                     <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-3 relative z-0 pointer-events-none">
                         <div class="flex-1 min-w-0">
-                            <h3 class="text-lg font-bold text-gray-900 mb-2 truncate">{{ $t->subject }}</h3>
+                            {{-- Subject and Unread Count --}}
+                            <div class="flex items-center gap-2 mb-2">
+                                <h3 class="text-lg font-bold text-gray-900 truncate">{{ $t->subject }}</h3>
+                                @if ($unreadCount > 0)
+                                <span class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-full font-bold leading-none animate-pulse shrink-0" title="{{ $unreadCount }} unread agent replies">
+                                    {{ $unreadCount }}
+                                </span>
+                                @endif
+                            </div>
 
                             <div class="flex flex-wrap items-center gap-2 text-xs">
                                 <span class="font-mono font-medium text-gray-800 inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">

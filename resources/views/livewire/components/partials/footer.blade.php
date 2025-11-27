@@ -10,7 +10,7 @@
                 $company = auth()->user()?->company;
                 $rawLogo = $company?->image;
                 // Changed fallback path to match the asset path used in the logo image
-                $fallback = asset('images/kebun-raya-bogor.png'); 
+                $fallback = asset('https://tiketkebunraya.id/assets/images/kebun-raya.png'); 
                 $logoUrl = $fallback;
 
                 if (!empty($rawLogo)) {
@@ -29,19 +29,18 @@
                 @endphp
 
                 <a href="{{ route('home') }}" class="transition-transform duration-300 hover:scale-105 flex items-center gap-2">
-                    <img src="{{ $logoUrl }}" alt="{{ $company?->company_name ?? 'Kebun Raya Bogor' }} Logo" class="h-20 w-auto">
+                    <img src="{{ $logoUrl }}" alt="{{ $company?->company_name ?? 'Kebun Raya' }} Logo" class="h-20 w-auto">
                 </a>
             </div>
 
             {{-- Tagline + Socials --}}
             <div class="md:col-span-2 lg:col-span-1">
                 <p class="text-sm leading-6 text-slate-500 max-w-[32ch]">
-                    lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-                    et dolore magna aliqua.
+                    Kebun Raya berpegang pada lima pilar: Konservasi (melestarikan tumbuhan), Edukasi (meningkatkan pengetahuan botani), Penelitian, Jasa Lingkungan, dan Wisata Alam yang inspiratif.
                 </p>
 
                 <div class="mt-6 flex items-center gap-4">
-                    {{-- Facebook (Kept as SVG - Specific Brand Icon) --}}
+                    {{-- Facebook (Reverting to original SVG) --}}
                     <a href="#" aria-label="Facebook"
                         class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -49,7 +48,7 @@
                                 d="M22 12a10 10 0 1 0-11.6 9.87v-6.99H7.9V12h2.5V9.8c0-2.46 1.47-3.82 3.72-3.82 1.08 0 2.22.19 2.22.19v2.44h-1.25c-1.23 0-1.61.76-1.61 1.54V12h2.74l-.44 2.88h-2.3v6.99A10 10 0 0 0 22 12z" />
                         </svg>
                     </a>
-                    {{-- Twitter/X (Kept as SVG - Specific Brand Icon) --}}
+                    {{-- Twitter/X (Reverting to original SVG) --}}
                     <a href="#" aria-label="Twitter"
                         class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -57,7 +56,7 @@
                                 d="M17.53 3h3.02l-6.6 7.55L22 21h-6.52l-4.56-5.9L5.7 21H2.67l7.1-8.13L2 3h6.64l4.13 5.5L17.53 3zm-1.14 16h1.67L7.7 4.99H5.96L16.39 19z" />
                         </svg>
                     </a>
-                    {{-- LinkedIn (Kept as SVG - Specific Brand Icon) --}}
+                    {{-- LinkedIn (Reverting to original SVG) --}}
                     <a href="#" aria-label="LinkedIn"
                         class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -65,7 +64,7 @@
                                 d="M6.94 8.88H4.19V20h2.75V8.88zM5.56 7.55a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2zM20 20h-2.74v-5.62c0-1.34-.03-3.07-1.87-3.07-1.87 0-2.16 1.46-2.16 2.97V20H10.5V8.88h2.63v1.51h.04c.37-.7 1.29-1.44 2.66-1.44 2.85 0 3.37 1.88 3.37 4.33V20z" />
                         </svg>
                     </a>
-                    {{-- Instagram (Kept as SVG - Specific Brand Icon) --}}
+                    {{-- Instagram (Reverting to original SVG) --}}
                     <a href="#" aria-label="Instagram"
                         class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -90,22 +89,22 @@
                 </ul>
             </nav>
 
-            {{-- Contact (Icons replaced with Blade Heroicons) --}}
+            {{-- Contact (Using Heroicons and Dynamic Data from $company) --}}
             <div class="space-y-3 text-sm text-slate-500">
+                {{-- Email --}}
                 <div class="flex items-start gap-3">
-                    {{-- Email/Envelope Icon --}}
                     <x-heroicon-o-envelope class="mt-0.5 h-5 w-5" />
-                    <span>gatau@mauisiapa.com</span>
+                    <span>{{ $company?->company_email ?? 'gatau@mauisiapa.com' }}</span>
                 </div>
+                {{-- Phone --}}
                 <div class="flex items-start gap-3">
-                    {{-- Phone Icon --}}
                     <x-heroicon-o-phone class="mt-0.5 h-5 w-5" />
-                    <span>(0251) 8311362</span>
+                    <span>{{ $company?->company_phone ?? '(0251) 8311362' }}</span>
                 </div>
+                {{-- Address (Dynamic from DB) --}}
                 <div class="flex items-start gap-3">
-                    {{-- Map Pin Icon --}}
                     <x-heroicon-o-map-pin class="mt-0.5 h-5 w-5" />
-                    <span>Jl. Ir. H. Juanda No.13, Paledang, Kecamatan Bogor Tengah, Kota Bogor, Jawa Barat 16122</span>
+                    <span>{{ $company?->company_address ?? 'Jl. Ir. H. Juanda No.13, Paledang, Kecamatan Bogor Tengah, Kota Bogor, Jawa Barat 16122' }}</span>
                 </div>
             </div>
         </div>
@@ -115,7 +114,7 @@
 
         {{-- Bottom bar --}}
         <div class="flex flex-col sm:flex-row items-center justify-between py-4 text-xs text-slate-400 gap-4">
-            <p>© 2024 YourBrand. All rights reserved.</p>
+            <p>© 2024 {{ $company?->company_name ?? 'YourBrand' }}. All rights reserved.</p>
             <ul class="flex items-center gap-8">
                 <li><a href="#" class="hover:text-slate-600">Cookie Policy</a></li>
                 <li><a href="#" class="hover:text-slate-600">Privacy Policy</a></li>

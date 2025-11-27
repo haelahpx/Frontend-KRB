@@ -1,4 +1,3 @@
-{{-- programmer's simple documentation: The main container for the page. --}}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- Header --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
@@ -6,11 +5,9 @@
             <h1 class="text-xl md:text-2xl font-bold text-gray-900">Room Booking System</h1>
 
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                {{-- Navigation Tabs --}}
                 <div class="inline-flex rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                     <a href="{{ route('book-room') }}"
-                        @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors border-r border-gray-200 inline-flex items-center gap-1.5' , 'bg-gray-900 text-white'=> request()->routeIs('book-room'),
-                        'text-gray-700 hover:text-gray-900' => !request()->routeIs('book-room'),
+                        @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors border-r border-gray-200 inline-flex items-center gap-1.5' , 'bg-gray-900' , 'text-white' ,
                         ])>
                         Offline (Room)
                     </a>
@@ -22,7 +19,6 @@
                     </a>
                 </div>
 
-                {{-- View Switcher --}}
                 <div class="inline-flex rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                     <button wire:click="switchView('form')"
                         @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors border-r border-gray-200 inline-flex items-center gap-1.5' , 'bg-gray-900 text-white'=> $view === 'form',

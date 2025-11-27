@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Livewire\Pages\User;
 
 use Livewire\Component;
@@ -9,9 +8,10 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Ticket;
 use App\Models\TicketComment;
 use App\Models\TicketAssignment;
+use App\Models\TicketCommentRead; 
 use Illuminate\Validation\ValidationException;
 use Throwable;
-use App\Models\User; // Ensure User model is imported
+use App\Models\User;
 
 #[Layout('layouts.app')]
 #[Title('Ticket Detail')]
@@ -26,18 +26,33 @@ class Ticketshow extends Component
     
     // Flag to control comment box visibility and submission permission
     public bool $canComment = false; 
+    // Flag to control comment visibility based on admin/requester/assigned status
+    public bool $canViewComments = false; 
 
     public function mount(Ticket $ticket): void
     {
         $this->ensureAccess($ticket);
 
+        // Determine if the user is an assigned agent, admin, or the requester
+        $this->canViewComments = $this->checkCommentViewPermission($ticket);
+        
+        // Use the $this->canViewComments flag to conditionally load comments
         $this->ticket = $ticket->load([
             'department:department_id,department_name',
             'requesterDepartment:department_id,department_name',
             'user:user_id,full_name',
             'attachments',
-            'comments' => fn($q) => $q->orderBy('created_at', 'asc'),
-            'comments.user:user_id,full_name',
+            // Load comments ONLY if the user has permission to view them
+            'comments' => fn($q) => $q->when($this->canViewComments, function ($query) {
+                // If the user CAN view comments, load them all
+                return $query->orderBy('created_at', 'asc')->with([ 
+                    'user:user_id,full_name',
+                    'reads' => fn($qr) => $qr->where('user_id', Auth::id()),
+                ]);
+            }, function ($query) {
+                // If the user CANNOT view comments, load an empty set
+                return $query->whereRaw('1 = 0'); 
+            }),
             'assignments' => fn($q) => $q->whereNull('deleted_at')->with([
                 'user:user_id,full_name'
             ]),
@@ -46,8 +61,13 @@ class Ticketshow extends Component
         $this->canEditStatus = $this->isAssignedAgent($this->ticket->ticket_id, Auth::user()->user_id);
         $this->statusEdit    = $this->ticket->status;
         
-        // Calculate comment permission on mount using custom logic
+        // Calculate comment post permission
         $this->canComment = $this->checkCommentPermission();
+        
+        // Mark comments as read after mounting, but only if they were loaded/viewable
+        if ($this->canViewComments) {
+            $this->markCommentsAsRead();
+        }
     }
 
     /**
@@ -71,6 +91,35 @@ class Ticketshow extends Component
     }
     
     /**
+     * Determine if the current authenticated user can view existing comments.
+     * Permissions: Admin/Superadmin OR Ticket Creator OR Assigned Agent.
+     */
+    protected function checkCommentViewPermission(Ticket $ticket): bool
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $userId = $user->user_id;
+        
+        // Get the role name, assuming a 'role' relationship exists on the User model
+        $roleName = $user->role->name ?? '';
+        
+        // Check 1: Superadmins and Admins can always view (using role name)
+        if (in_array($roleName, ['Superadmin', 'Admin'], true)) {
+            return true;
+        }
+
+        // Check 2: The ticket creator (Requester) can always view
+        if ($userId === $ticket->user_id) {
+            return true;
+        }
+
+        // Check 3: Any other user (Agent/User/Receptionist) can ONLY view if they are an Assigned Agent.
+        $isAssigned = $this->isAssignedAgent($ticket->ticket_id, $userId);
+
+        return $isAssigned;
+    }
+
+    /**
      * Determine if the current authenticated user can add a comment.
      * Permissions: Admin/Superadmin OR Ticket Creator OR Assigned Agent.
      */
@@ -82,13 +131,21 @@ class Ticketshow extends Component
         if ($isClosed) {
             return false;
         }
+        
+        // Must be able to view comments to post one (ensures consistency)
+        if (!$this->canViewComments) {
+            return false;
+        }
 
         /** @var User $user */
         $user = Auth::user();
         $userId = $user->user_id;
         
-        // Check 2: Superadmins (role_id 1) and Admins (role_id 2) can always comment
-        if (in_array($user->role_id, [1, 2], true)) {
+        // Get the role name
+        $roleName = $user->role->name ?? '';
+        
+        // Check 2: Superadmins and Admins can always comment (using role name)
+        if (in_array($roleName, ['Superadmin', 'Admin'], true)) {
             return true;
         }
 
@@ -98,9 +155,42 @@ class Ticketshow extends Component
         }
 
         // Check 4: Any other user (Agent/User/Receptionist) can ONLY comment if they are an Assigned Agent.
-        $isAssigned = $this->isAssignedAgent($this->ticket->ticket_id, $userId);
+        return $this->isAssignedAgent($this->ticket->ticket_id, $userId);
+    }
 
-        return $isAssigned;
+    /**
+     * Marks all visible comments for this ticket as read by the current user.
+     */
+    protected function markCommentsAsRead(): void
+    {
+        $userId = Auth::id();
+        // The comments collection is already filtered to only contain viewable comments
+        $commentIds = $this->ticket->comments 
+            ->where('user_id', '!=', $userId) // We only care about comments made by others
+            ->pluck('comment_id');
+
+        if ($commentIds->isEmpty()) {
+            return;
+        }
+        
+        // Find comments that the current user hasn't read yet
+        $alreadyReadCommentIds = TicketCommentRead::where('user_id', $userId)
+            ->whereIn('comment_id', $commentIds)
+            ->pluck('comment_id');
+
+        $commentsToMarkAsRead = $commentIds->diff($alreadyReadCommentIds);
+
+        if ($commentsToMarkAsRead->isNotEmpty()) {
+            // Bulk insert the new 'read' records
+            $data = $commentsToMarkAsRead->map(fn($id) => [
+                'comment_id' => $id,
+                'user_id'    => $userId,
+                'read_at'    => now(),
+            ])->all();
+
+            // Insert into the ticket_comment_reads table
+            TicketCommentRead::insert($data);
+        }
     }
 
     /**
@@ -116,23 +206,38 @@ class Ticketshow extends Component
             'statusEdit' => ['required', 'string', 'in:OPEN,IN_PROGRESS,RESOLVED,CLOSED'],
         ]);
 
-        $this->ticket->update([
-            'status'     => $this->statusEdit,
-            'updated_at' => now(),
-        ]);
+        try {
+            $this->ticket->update([
+                'status'     => $this->statusEdit,
+                'updated_at' => now(),
+            ]);
 
-        $this->ticket->refresh()->load([
-            'comments' => fn($q) => $q->orderBy('created_at', 'asc'),
-            'comments.user:user_id,full_name',
-            'assignments' => fn($q) => $q->whereNull('deleted_at')->with([
-                'user:user_id,full_name'
-            ]),
-        ]);
-        
-        // Recalculate comment permission in case the status change affects it (e.g., closing the ticket)
-        $this->canComment = $this->checkCommentPermission();
+            // Reload logic must use the $this->canViewComments flag for consistency
+            $this->ticket->refresh()->load([
+                // Reload comments with read status
+                'comments' => fn($q) => $q->when($this->canViewComments, function ($query) {
+                    return $query->orderBy('created_at', 'asc')->with([
+                        'user:user_id,full_name',
+                        'reads' => fn($qr) => $qr->where('user_id', Auth::id()),
+                    ]);
+                }, function ($query) {
+                    return $query->whereRaw('1 = 0');
+                }),
+                'assignments' => fn($q) => $q->whereNull('deleted_at')->with([
+                    'user:user_id,full_name'
+                ]),
+            ]);
+            
+            // Recalculate comment permission in case the status change affects it (e.g., closing the ticket)
+            $this->canComment = $this->checkCommentPermission();
 
-        $this->dispatch('toast', type: 'success', title: 'Updated', message: 'Status updated.', duration: 2500);
+            $this->dispatch('toast', type: 'success', title: 'Updated', message: 'Status updated.', duration: 2500);
+
+        } catch (Throwable $e) {
+            // Dispatch error details to browser console
+            $this->dispatch('consoleLogEvent', message: 'Ticket Status Update Failure', error: $e->getMessage(), file: $e->getFile(), line: $e->getLine());
+            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Terjadi kesalahan saat memperbarui status.', duration: 3000);
+        }
     }
 
     /**
@@ -140,35 +245,64 @@ class Ticketshow extends Component
      */
     public function addComment(): void
     {
-        // Security check: must have permission to comment
         if (! $this->canComment) {
             abort(403, 'Unauthorized to post a comment on this ticket.');
         }
 
+        // --- Step 1: Validation ---
         try {
             $this->validate([
                 'newComment' => ['required', 'string', 'min:3'],
             ]);
+        } catch (ValidationException $e) {
+            $first = collect($e->validator->errors()->all())->first() ?? 'Periksa kembali input Anda.';
+            $this->dispatch('toast', type: 'error', title: 'Validasi Gagal', message: $first, duration: 3000);
+            throw $e; 
+        } 
 
-            TicketComment::create([
+        // --- Step 2: Database Operations, Reset, Reload, and Success Toast ---
+        try {
+            // Create the new comment. 
+            $newComment = TicketComment::create([
                 'ticket_id'    => $this->ticket->ticket_id,
                 'user_id'      => Auth::id(),
                 'comment_text' => $this->newComment,
             ]);
+            
+            // CRITICAL CHECK: Ensure the model has an ID before proceeding.
+            if (!$newComment || !$newComment->comment_id) {
+                // Throw an error that is easier to trace if the model creation failed silently.
+                throw new \Exception("TicketComment failed to create or retrieve ID.");
+            }
+
+            // Mark the comment as read by the creator
+            TicketCommentRead::create([
+                'comment_id' => $newComment->comment_id, // <-- FIX: Use the guaranteed ID
+                'user_id'    => Auth::id(),
+                'read_at'    => now(),
+            ]);
 
             $this->reset('newComment');
 
+            // Reload the ticket to include the new comment, using the canViewComments flag
             $this->ticket->load([
-                'comments' => fn($q) => $q->orderBy('created_at', 'asc'),
-                'comments.user:user_id,full_name',
+                'attachments', 
+                'comments' => fn($q) => $q->when($this->canViewComments, function ($query) {
+                    return $query->orderBy('created_at', 'asc')->with([
+                        'user:user_id,full_name',
+                        'reads' => fn($qr) => $qr->where('user_id', Auth::id()),
+                    ]);
+                }, function ($query) {
+                    return $query->whereRaw('1 = 0');
+                }),
             ]);
 
+            // Success! The entire transaction completed without a hitch.
             $this->dispatch('toast', type: 'success', title: 'Berhasil', message: 'Komentar ditambahkan.', duration: 3000);
-        } catch (ValidationException $e) {
-            $first = collect($e->validator->errors()->all())->first() ?? 'Periksa kembali input Anda.';
-            $this->dispatch('toast', type: 'error', title: 'Validasi Gagal', message: $first, duration: 3000);
-            throw $e;
+
         } catch (Throwable $e) {
+            // Dispatch error details to browser console for debugging
+            $this->dispatch('consoleLogEvent', message: 'Ticket Comment Failure (Final Attempt)', error: $e->getMessage(), file: $e->getFile(), line: $e->getLine());
             $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Terjadi kesalahan saat menambah komentar.', duration: 3000);
         }
     }
@@ -179,4 +313,4 @@ class Ticketshow extends Component
             'allowedStatuses' => $this->allowedStatuses,
         ]);
     }
-}
+} // Livewire component for ticket detail view

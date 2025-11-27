@@ -1,4 +1,3 @@
-{{-- A simple comment like an actual programmer's simple documentation --}}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- Header --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
@@ -15,14 +14,30 @@
                     ])>
                     Ticket Queue
                 </button>
-                <button
-                    type="button"
-                    wire:click="$set('tab','claims')"
-                    @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors' , 'bg-gray-900 text-white'=> $tab === 'claims',
-                    'text-gray-700 hover:text-gray-900 hover:bg-gray-50' => $tab !== 'claims',
-                    ])>
-                    My Claims
-                </button>
+                
+                {{-- MODIFIED: Wrapper for relative badge positioning --}}
+                <div class="relative">
+                    <button
+                        type="button"
+                        wire:click="$set('tab','claims')"
+                        @class([ 
+                            'px-3 md:px-4 py-2 text-sm font-medium transition-colors', 
+                            'bg-gray-900 text-white'=> $tab === 'claims',
+                            'text-gray-700 hover:text-gray-900 hover:bg-gray-50' => $tab !== 'claims',
+                        ])>
+                        My Claims
+                    </button>
+                    
+                    {{-- Badge Logic - Positioned Absolutely (Removed animate-pulse) --}}
+                    @if ($totalUnreadClaims > 0)
+                    <span 
+                        class="absolute -top-1 right-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-600 text-white leading-none shadow-lg"
+                        title="{{ $totalUnreadClaims }} unread comments"
+                    >
+                        {{ $totalUnreadClaims }}
+                    </span>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
@@ -80,7 +95,8 @@
                 $priority = strtolower($t->priority ?? '');
                 $statusUp = strtoupper($t->status ?? 'OPEN');
                 $statusLabel = ucfirst(strtolower(str_replace('_',' ',$statusUp)));
-
+                $unreadCount = $t->unread_comments_count ?? 0; // Retrieve the count
+                
                 $isHigh = $priority === 'high';
                 $isMedium = $priority === 'medium';
 
@@ -112,6 +128,8 @@
                                 <span class="text-[10px] px-2 py-0.5 rounded-md uppercase font-bold tracking-wide border {{ $priorityBadge }}">
                                     {{ $priority ? ucfirst($priority) : 'Low' }}
                                 </span>
+                                
+                                {{-- UNREAD COMMENT COUNT BADGE (Queue Tab) - REMOVED AS REQUESTED --}}
                             </div>
                             <h3 class="text-lg font-bold text-gray-900 truncate">
                                 {{ $t->subject }}
@@ -258,6 +276,8 @@
                         @forelse ($groupedClaims[$statusKey] ?? [] as $asgn)
                         @php
                         $t = $asgn->ticket;
+                        // The badge should be shown here as the ticket is claimed
+                        $unreadCount = $asgn->unread_count ?? 0; // Retrieve the count from the join
                         if (!$t) continue;
 
                         $prio = strtolower($t->priority ?? '');
@@ -275,11 +295,20 @@
                             x-on:dragend="draggingId = null; draggingFrom = null">
                             <div class="flex items-start justify-between gap-2 mb-2">
                                 <span class="text-[10px] font-mono text-gray-500">#{{ $t->ticket_id }}</span>
-                                @if($prio === 'high')
-                                <span class="text-[9px] font-bold text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">HIGH</span>
-                                @elseif($prio === 'medium')
-                                <span class="text-[9px] font-bold text-yellow-700 bg-yellow-50 px-1.5 py-0.5 rounded border border-yellow-100">MED</span>
-                                @endif
+                                <div class="flex items-center gap-2">
+                                    @if($prio === 'high')
+                                    <span class="text-[9px] font-bold text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">HIGH</span>
+                                    @elseif($prio === 'medium')
+                                    <span class="text-[9px] font-bold text-yellow-700 bg-yellow-50 px-1.5 py-0.5 rounded border border-yellow-100">MED</span>
+                                    @endif
+
+                                    {{-- UNREAD COMMENT COUNT BADGE (Claims Tab) --}}
+                                    @if ($unreadCount > 0)
+                                    <span class="text-[9px] bg-red-500 text-white px-1.5 py-0.5 rounded-full font-bold leading-none" title="{{ $unreadCount }} unread comments">
+                                        {{ $unreadCount }}
+                                    </span>
+                                    @endif
+                                </div>
                             </div>
 
                             <a href="{{ route('user.ticket.show', $t) }}" class="block text-sm font-semibold text-gray-900 line-clamp-2 hover:text-blue-600 mb-1.5">

@@ -13,17 +13,12 @@
 
 <body class="bg-white min-h-screen">
 
-    {{-- biasanya login/register tanpa navbar/footer; kalau mau, tinggal include --}}
-    {{-- @include('livewire.components.partials.navbar') --}}
-
     <main class="">
         {{ $slot }}
     </main>
 
-    {{-- @include('livewire.components.partials.footer') --}}
-
     @livewireScripts
     @vite('resources/js/app.js')
-    @fluxScripts {{-- <— sebelumnya kamu taruh @fluxAppearance di sini; yang benar @fluxScripts --}} </body>
+    @fluxScripts </body>
 
 </html>

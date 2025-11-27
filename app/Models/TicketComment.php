@@ -10,11 +10,22 @@ class TicketComment extends Model
     use HasFactory;
 
     /**
+     * The table associated with the model.
+     *
      * @var string
      */
     protected $table = 'ticket_comments';
+    
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'comment_id'; // <--- CRITICAL FIX: Add this line
 
     /**
+     * The attributes that are mass assignable.
+     *
      * @var array<int, string>
      */
     protected $fillable = [
@@ -35,6 +46,7 @@ class TicketComment extends Model
 
     public function reads()
     {
+        // Assuming TicketCommentRead uses 'comment_id' as the foreign key
         return $this->hasMany(\App\Models\TicketCommentRead::class, 'comment_id', 'comment_id');
     }
 

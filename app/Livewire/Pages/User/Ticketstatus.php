@@ -1,14 +1,15 @@
 <?php
-
 namespace App\Livewire\Pages\User;
 
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB; // <-- NEW IMPORT
 use App\Models\Ticket;
 use App\Models\Department;
 use App\Models\TicketAssignment;
+use App\Models\TicketCommentRead; // <-- NEW IMPORT
 
 #[Layout('layouts.app')]
 #[Title('Ticket Status')]
@@ -63,6 +64,11 @@ class Ticketstatus extends Component
     private function baseQuery()
     {
         $user = Auth::user();
+        $userId = $user->getKey();
+        
+        // Subquery to find comment IDs that the current user has read
+        $readCommentsQuery = TicketCommentRead::select('comment_id')
+            ->where('user_id', $userId);
 
         return Ticket::query()
             ->with([
@@ -73,9 +79,17 @@ class Ticketstatus extends Component
                 ]),
             ])
             ->withCount([
-                'assignments as agent_count' => fn($q) => $q->whereNull('deleted_at')
+                'assignments as agent_count' => fn($q) => $q->whereNull('deleted_at'),
+                // Add column for UNREAD comments count
+                'comments as unread_comments_count' => function ($query) use ($userId, $readCommentsQuery) {
+                    $query->select(DB::raw('count(ticket_comments.comment_id)'))
+                          // Exclude comments created by the current user (they are auto-read)
+                          ->where('user_id', '!=', $userId) 
+                          // Count comments whose ID is NOT in the read list
+                          ->whereNotIn('ticket_comments.comment_id', $readCommentsQuery);
+                }
             ])
-            ->where('user_id', $user->getKey());
+            ->where('user_id', $userId);
     }
 
     public function render()
@@ -114,7 +128,7 @@ class Ticketstatus extends Component
             default  => $q->orderBy('created_at', 'desc'),
         };
 
-        $tickets = $q->get();
+        $tickets = $q->paginate(10); // Use paginate if ticket list is long.
 
         return view('livewire.pages.user.ticketstatus', [
             'tickets'     => $tickets,
@@ -138,7 +152,7 @@ class Ticketstatus extends Component
             ->whereNull('deleted_at')
             ->exists();
 
-        if (!$hasAgent) {
+        if (!$hasAgent && $ticket->status !== 'RESOLVED') {
             $this->dispatch('toast', type: 'warning', title: 'Tidak bisa', message: 'Ticket belum memiliki agent.', duration: 3500);
             return;
         }

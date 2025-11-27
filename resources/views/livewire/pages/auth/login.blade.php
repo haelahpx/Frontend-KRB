@@ -8,9 +8,9 @@
     <div class="flex-1 bg-white flex items-center justify-center px-8">
         <div class="w-full max-w-md">
             <div class="text-center mb-12">
-                <img src="{{ asset('images/kebun-raya-bogor.png') }}" alt="Kebun Raya Bogor"
+                <img src="{{ asset('https://tiketkebunraya.id/assets/images/kebun-raya.png') }}" alt="Kebun Raya"
                     class="mx-auto mb-6 h-20 hover:scale-105 transition-transform duration-300" />
-                <h2 class="text-gray-800 text-lg font-light tracking-wide mb-2">KEBUN RAYA BOGOR</h2>
+                <h2 class="text-gray-800 text-lg font-light tracking-wide mb-2">KEBUN RAYA</h2>
                 <p class="text-gray-500 text-sm font-medium tracking-wider">WELCOME TO LOGIN</p>
                 <div class="mt-4 w-16 h-0.5 bg-gray-800 mx-auto"></div>
             </div>

@@ -8,8 +8,15 @@
         .mobile-dropdown-content.open { max-height: 500px; }
         .profile-icon-bnw { filter: grayscale(100%); }
         .logo-full-white { filter: brightness(0) invert(1); }
+        
+        /* A simple comment like an actual programmer's simple documentation */
+        /* HIDES THE BADGE IF ITS TEXT CONTENT IS EXACTLY 0 */
+        span.bg-red-600:is([data-count="0"]) {
+            display: none !important;
+        }
     </style>
 
+    {{-- A simple comment like an actual programmer's simple documentation --}}
     {{-- FIXED NAVBAR --}}
     <nav class="bg-black border-b border-gray-800 fixed inset-x-0 top-0 z-50 shadow-xl">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,22 +57,39 @@
 
                     @if(auth()->user() && auth()->user()->is_agent == 'yes')
                     <a href="{{ route('user.ticket.queue') }}" class="px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 {{ request()->routeIs('user.ticket.queue') ? 'bg-gray-800 text-white' : '' }} flex items-center gap-1">
-                        <x-heroicon-o-queue-list class="w-4 h-4" /> Queue
+                        <x-heroicon-o-queue-list class="w-4 h-4" /> 
+                        Queue
+                        {{-- COUNT FOR UNCLAIMED TICKETS --}}
+                        @if ($unclaimedTicketCount > 0)
+                            <span class="ml-1 px-1.5 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full leading-none">{{ $unclaimedTicketCount }}</span>
+                        @endif
                     </a>
                     @endif
 
-                    {{-- Status Dropdown --}}
+                    {{-- Status Dropdown (with Unread Comment Count) --}}
+                    @if(Auth::check())
+                    
                     <div class="relative" data-exclusive-dropdown>
                         <button type="button" data-dropdown-toggle class="px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 flex items-center gap-1" aria-haspopup="true" aria-expanded="false">
-                            <x-heroicon-o-chart-bar class="w-4 h-4" /> Status
+                            <x-heroicon-o-chart-bar class="w-4 h-4" /> 
+                            Status
+                            {{-- COUNT FOR UNREAD COMMENTS (Total) - FORCED RENDER --}}
+                            <span class="ml-1 px-1.5 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full leading-none" data-count="{{ $totalUnreadCount }}">{{ $totalUnreadCount }}</span>
                             <x-heroicon-o-chevron-down class="w-4 h-4 transition-transform" data-dropdown-arrow />
                         </button>
                         <div data-dropdown-menu class="dropdown-menu absolute right-0 mt-2 w-52 bg-gray-900 rounded-lg shadow-xl border border-gray-700 py-1 z-50">
-                            <a href="{{ route('ticketstatus') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"><x-heroicon-o-ticket class="w-4 h-4" /> Ticket Status</a>
+                            <a href="{{ route('ticketstatus') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
+                                <x-heroicon-o-ticket class="w-4 h-4" /> Ticket Status
+                                {{-- COUNT FOR UNREAD COMMENTS (Inside Dropdown) - FORCED RENDER --}}
+                                <span class="ml-auto px-1.5 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full leading-none " data-count="{{ $totalUnreadCount }}">{{ $totalUnreadCount }}</span>
+                            </a>
                             <a href="{{ route('bookingstatus') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"><x-heroicon-o-calendar class="w-4 h-4" /> Meeting Status</a>
                             <a href="{{ route('vehiclestatus') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"><x-heroicon-o-truck class="w-4 h-4" /> Vehicle Status</a>
                         </div>
                     </div>
+                    @else
+                    <a href="{{ route('ticketstatus') }}" class="px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 {{ request()->routeIs('ticketstatus') ? 'bg-gray-800 text-white' : '' }}">Status</a>
+                    @endif
 
                     @guest
                     <a href="{{ route('login') }}" class="ml-2 bg-white text-black px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors flex items-center gap-2">
@@ -176,21 +200,41 @@
                 <a href="{{ route('book-vehicle') }}" class="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 {{ request()->routeIs('book-vehicle') ? 'bg-gray-800 text-white' : '' }}"><x-heroicon-o-truck class="w-5 h-5" /> Book Vehicle</a>
 
                 @if(auth()->user() && auth()->user()->is_agent == 'yes')
-                <a href="{{ route('user.ticket.queue') }}" class="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 {{ request()->routeIs('user.ticket.queue') ? 'bg-gray-800 text-white' : '' }}"><x-heroicon-o-queue-list class="w-5 h-5" /> Ticket Queue</a>
+                <a href="{{ route('user.ticket.queue') }}" class="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 {{ request()->routeIs('user.ticket.queue') ? 'bg-gray-800 text-white' : '' }}">
+                    <x-heroicon-o-queue-list class="w-5 h-5" /> 
+                    Ticket Queue
+                    {{-- COUNT FOR UNCLAIMED TICKETS (Mobile) --}}
+                    @if ($unclaimedTicketCount > 0)
+                        <span class="ml-auto px-1.5 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full leading-none ">{{ $unclaimedTicketCount }}</span>
+                    @endif
+                </a>
                 @endif
 
-                {{-- Mobile Status Dropdown --}}
+                {{-- Mobile Status Dropdown (with Unread Count) --}}
+                @if(Auth::check())
+                
                 <div data-mobile-dropdown>
                     <button type="button" data-mobile-toggle class="w-full flex items-center justify-between px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors">
-                        <span class="flex items-center gap-3"><x-heroicon-o-chart-bar class="w-5 h-5" /> Status</span>
+                        <span class="flex items-center gap-3">
+                            <x-heroicon-o-chart-bar class="w-5 h-5" /> Status
+                            {{-- COUNT FOR UNREAD COMMENTS (Mobile) - FORCED RENDER --}}
+                            <span class="ml-1 px-1.5 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full leading-none" data-count="{{ $totalUnreadCount }}">{{ $totalUnreadCount }}</span>
+                        </span>
                         <x-heroicon-o-chevron-down data-mobile-arrow class="w-5 h-5 transition-transform" />
                     </button>
                     <div data-mobile-content class="mobile-dropdown-content pl-4">
-                        <a href="{{ route('ticketstatus') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-colors"><x-heroicon-o-ticket class="w-4 h-4" /> Ticket Status</a>
+                        <a href="{{ route('ticketstatus') }}" class="flex items-center justify-between px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-colors">
+                            <span class="flex items-center gap-3"><x-heroicon-o-ticket class="w-4 h-4" /> Ticket Status</span>
+                            {{-- COUNT FOR UNREAD COMMENTS (Inside Dropdown Mobile) - FORCED RENDER --}}
+                            <span class="px-1.5 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full leading-none" data-count="{{ $totalUnreadCount }}">{{ $totalUnreadCount }}</span>
+                        </a>
                         <a href="{{ route('bookingstatus') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-colors"><x-heroicon-o-calendar class="w-4 h-4" /> Meeting Status</a>
                         <a href="{{ route('vehiclestatus') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-colors"><x-heroicon-o-truck class="w-4 h-4" /> Vehicle Status</a>
                     </div>
                 </div>
+                @else
+                <a href="{{ route('ticketstatus') }}" class="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50"><x-heroicon-o-chart-bar class="w-5 h-5" /> Status</a>
+                @endif
 
                 @auth
                 <div class="border-t border-gray-800 pt-3 mt-3 space-y-1">
@@ -239,6 +283,10 @@
 
     {{-- Script remains unchanged --}}
     <script>
+        document.addEventListener('livewire:initialized', () => {
+            console.log('Livewire Navbar Component Initialized/Updated.');
+        });
+        
         document.addEventListener('DOMContentLoaded', () => {
             const exclusiveDropdowns = document.querySelectorAll('[data-exclusive-dropdown]');
             const mobileDropdown = document.querySelector('[data-mobile-dropdown]');
@@ -253,6 +301,16 @@
                 const menu = targetDropdown.querySelector('[data-dropdown-menu]');
                 const arrow = targetDropdown.querySelector('[data-dropdown-arrow]');
                 const isOpen = menu.classList.contains('show');
+                
+                // --- CONSOLE DEBUGGING: Check badge presence on click ---
+                const toggle = targetDropdown.querySelector('[data-dropdown-toggle]');
+                if (toggle.innerText.includes('Status')) {
+                    console.log('--- Status Dropdown Clicked ---');
+                    const linkCount = targetDropdown.querySelector('a[href*="ticketstatus"] span.bg-red-600');
+                    // Check the rendered HTML value directly
+                    console.log('Ticket Status Link Badge Value:', linkCount ? linkCount.innerText.trim() : 'N/A (Badge not rendered)');
+                }
+                // --------------------------------------------------------
 
                 exclusiveDropdowns.forEach(dropdown => {
                     if (dropdown !== targetDropdown) {

@@ -1,4 +1,3 @@
-{{-- A simple comment like an actual programmer's simple documentation --}}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- Header --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
@@ -10,13 +9,10 @@
                 <div class="inline-flex rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                     <a href="{{ route('book-vehicle') }}"
                        class="px-3 md:px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors border-r border-gray-200 inline-flex items-center gap-2">
-                        {{-- FIXED: Using calendar-days instead of non-existent calendar-plus --}}
-                        <x-heroicon-o-calendar-days class="w-4 h-4"/>
                         Book Vehicle
                     </a>
                     <a href="{{ route('vehiclestatus') }}"
                        class="px-3 md:px-4 py-2 text-sm font-medium bg-gray-900 text-white transition-colors inline-flex items-center gap-2">
-                        <x-heroicon-o-list-bullet class="w-4 h-4"/>
                         Vehicle Status
                     </a>
                 </div>

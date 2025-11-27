@@ -1,4 +1,3 @@
-{{-- resources/views/livewire/pages/user/ticketshow.blade.php --}}
 @php
 $initials = function (?string $fullName): string {
 $fullName = trim($fullName ?? '');
@@ -252,70 +251,98 @@ $hasAgent = $agents->isNotEmpty();
                                 This ticket is {{ str_replace('_', ' ', ucfirst($status)) }} and can no longer receive comments.
                             </p>
                         </div>
-                    @else
+                    @elseif($canViewComments)
+                        {{-- The ticket is NOT closed, but the user still can't comment (e.g., they are a non-admin user/agent not assigned) --}}
                         <div class="mb-8 p-4 bg-yellow-50 text-center rounded-lg border border-yellow-200">
                             <p class="text-sm font-medium text-yellow-800">
                                 You cannot post comments on this ticket. Only the creator and Assigned agents.
                             </p>
-                            @if(auth()->user()->role_id != 1 && auth()->user()->role_id != 2 && auth()->id() !== $ticket->user_id && ! $hasAgent)
-                                <p class="text-xs text-yellow-700 mt-1">
-                                    You must be assigned to the ticket to comment.
-                                </p>
-                            @endif
                         </div>
                     @endif
                 @endif
                 {{-- CONDITIONAL COMMENT FORM END --}}
 
 
-                <div class="space-y-6 relative before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:ml-[19px] before:h-full before:w-0.5 before:bg-gray-100">
-                    @forelse ($ticket->comments as $comment)
-                    @php
-                    $isMine = $comment->user_id === auth()->id();
-                    $name = $comment->user->full_name ?? $comment->user->name ?? 'User';
-                    $init = $initials($name);
-                    @endphp
+                <div class="space-y-6 relative 
+                    @if($canViewComments) 
+                        before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:ml-[19px] before:h-full before:w-0.5 before:bg-gray-100 
+                    @endif
+                ">
+                    @if ($canViewComments)
+                        @forelse ($ticket->comments as $comment)
+                        @php
+                        $isMine = $comment->user_id === auth()->id();
+                        $name = $comment->user->full_name ?? $comment->user->name ?? 'User';
+                        $init = $initials($name);
+                        
+                        // Check if the current user has read this comment by checking the loaded 'reads' relationship.
+                        $isUnread = ! $isMine && $comment->reads->isEmpty(); 
+                        @endphp
 
-                    <div class="relative flex gap-3 group">
-                        <div class="flex-shrink-0 relative z-10">
-                            <span @class([ 'inline-flex h-8 w-8 rounded-full items-center justify-center text-[10px] font-bold ring-4 ring-white shadow-sm' , 'bg-black text-white'=> $isMine,
-                                'bg-white border-2 border-gray-200 text-gray-600' => ! $isMine,
-                                ])>
-                                {{ $init }}
-                            </span>
-                        </div>
-
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between gap-2 mb-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm font-bold text-gray-900">{{ $name }}</span>
-                                    @if($isMine)
-                                    <span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium border border-gray-200">You</span>
-                                    @endif
-                                </div>
-                                <span class="text-[10px] text-gray-400" title="{{ $comment->created_at->format('d M Y H:i') }}">
-                                    {{ $comment->created_at->diffForHumans() }}
+                        <div class="relative flex gap-3 group">
+                            <div class="flex-shrink-0 relative z-10">
+                                <span @class([ 'inline-flex h-8 w-8 rounded-full items-center justify-center text-[10px] font-bold ring-4 ring-white shadow-sm' , 'bg-black text-white'=> $isMine,
+                                    'bg-white border-2 border-gray-200 text-gray-600' => ! $isMine,
+                                    ])>
+                                    {{ $init }}
                                 </span>
                             </div>
 
-                            <div @class([ 'rounded-xl px-4 py-3 text-sm shadow-sm border leading-relaxed' , 'bg-gray-50 border-gray-200 text-gray-800 rounded-tl-none'=> ! $isMine,
-                                'bg-white border-black text-gray-900 rounded-tl-none ring-1 ring-black/5' => $isMine,
-                                ])>
-                                <p class="whitespace-pre-wrap">{{ $comment->comment_text }}</p>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-bold text-gray-900">{{ $name }}</span>
+                                        @if($isMine)
+                                        <span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium border border-gray-200">You</span>
+                                        @endif
+                                        
+                                        {{-- UNREAD BADGE --}}
+                                        @if($isUnread)
+                                        <span class="text-[10px] bg-red-50 text-red-700 px-1.5 py-0.5 rounded font-bold border border-red-200 animate-pulse">
+                                            <x-heroicon-o-eye-slash class="w-3 h-3 inline-block align-text-top mr-0.5" />
+                                            UNREAD
+                                        </span>
+                                        @endif
+                                        {{-- END UNREAD BADGE --}}
+                                        
+                                    </div>
+                                    <span class="text-[10px] text-gray-400" title="{{ $comment->created_at->format('d M Y H:i') }}">
+                                        {{ $comment->created_at->diffForHumans() }}
+                                    </span>
+                                </div>
+
+                                <div @class([ 'rounded-xl px-4 py-3 text-sm shadow-sm border leading-relaxed' , 'bg-gray-50 border-gray-200 text-gray-800 rounded-tl-none'=> ! $isMine,
+                                    'bg-white border-black text-gray-900 rounded-tl-none ring-1 ring-black/5' => $isMine,
+                                    ])>
+                                    <p class="whitespace-pre-wrap">{{ $comment->comment_text }}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    @empty
-                    <div class="relative z-10 bg-white p-6 text-center rounded-xl border-2 border-dashed border-gray-200 mx-4">
-                        <div class="mx-auto h-12 w-12 text-gray-300 mb-2">
-                            <x-heroicon-o-chat-bubble-oval-left-ellipsis class="w-full h-full" />
+                        @empty
+                        <div class="relative z-10 bg-white p-6 text-center rounded-xl border-2 border-dashed border-gray-200 mx-4">
+                            <div class="mx-auto h-12 w-12 text-gray-300 mb-2">
+                                <x-heroicon-o-chat-bubble-oval-left-ellipsis class="w-full h-full" />
+                            </div>
+                            <p class="text-sm text-gray-500">No comments yet.</p>
+                            @if($canComment)
+                                <p class="text-xs text-gray-400">Start the conversation by posting a reply above.</p>
+                            @endif
                         </div>
-                        <p class="text-sm text-gray-500">No comments yet.</p>
-                        @if($canComment)
-                            <p class="text-xs text-gray-400">Start the conversation by posting a reply above.</p>
-                        @endif
-                    </div>
-                    @endforelse
+                        @endforelse
+                    @else
+                        {{-- Agent is neither assigned, nor admin, nor the requester --}}
+                        <div class="relative z-10 bg-yellow-50 p-6 text-center rounded-xl border-2 border-dashed border-yellow-200 mx-4">
+                            <div class="mx-auto h-12 w-12 text-yellow-500 mb-2">
+                                <x-heroicon-o-lock-closed class="w-full h-full" />
+                            </div>
+                            <p class="text-sm font-semibold text-yellow-800">
+                                Access Restricted
+                            </p>
+                            <p class="text-xs text-yellow-700 mt-1">
+                                You must be the ticket creator or an Assigned Agent to view the discussion.
+                            </p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -408,3 +435,19 @@ $hasAgent = $agents->isNotEmpty();
         </div>
     </div>
 </div>
+<script>
+// JavaScript for handling Livewire-dispatched events in the browser console.
+document.addEventListener('DOMContentLoaded', function () {
+    // Listener for the console logging event dispatched from Livewire components
+    Livewire.on('consoleLogEvent', ({ message, error, file, line }) => {
+        console.error('--- LIVEWIRE SERVER ERROR ---');
+        console.error('Message:', message);
+        console.error('Error:', error);
+        console.error('File:', file);
+        console.error('Line:', line);
+        console.error('-----------------------------');
+        
+        // IMPORTANT: The line number above should point you to the source of the crash!
+    });
+});
+</script>

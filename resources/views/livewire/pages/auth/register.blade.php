@@ -2,9 +2,9 @@
     <div class="flex-1 bg-white flex items-center justify-center px-6 md:px-8 py-6">
         <div class="w-full max-w-md h-[calc(100vh-3.5rem)] flex flex-col justify-center">
             <div class="text-center mb-6">
-                <img src="{{ asset('images/kebun-raya-bogor.png') }}" alt="Kebun Raya Bogor"
+                <img src="{{ asset('https://tiketkebunraya.id/assets/images/kebun-raya.png') }}" alt="Kebun Raya"
                     class="mx-auto mb-4 h-14 hover:scale-105 transition-transform duration-300" />
-                <h2 class="text-gray-800 text-base font-light tracking-wide mb-1">KEBUN RAYA BOGOR</h2>
+                <h2 class="text-gray-800 text-base font-light tracking-wide mb-1">KEBUN RAYA</h2>
                 <p class="text-gray-500 text-sm font-medium tracking-wider">CREATE YOUR ACCOUNT</p>
                 <div class="mt-3 w-12 h-0.5 bg-gray-800 mx-auto"></div>
             </div>
