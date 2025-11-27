@@ -1,5 +1,4 @@
 <div>
-
     <style>
         .dropdown-menu { display: none; opacity: 0; transform: translateY(-10px); transition: opacity .2s ease, transform .2s ease; }
         .dropdown-menu.show { display: block; opacity: 1; transform: translateY(0); }
@@ -8,7 +7,6 @@
         .mobile-dropdown-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
         .mobile-dropdown-content.open { max-height: 500px; }
         .profile-icon-bnw { filter: grayscale(100%); }
-        /* Added CSS for the logo to become full white */
         .logo-full-white { filter: brightness(0) invert(1); }
     </style>
 
@@ -16,7 +14,7 @@
     <nav class="bg-black border-b border-gray-800 fixed inset-x-0 top-0 z-50 shadow-xl">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                {{-- Logo (Kept original logic) --}}
+                {{-- Logo --}}
                 <div class="flex-shrink-0">
                     @php
                     $company = auth()->user()?->company;
@@ -39,7 +37,6 @@
                     }
                     @endphp
                     <a href="{{ route('home') }}" class="transition-transform hover:scale-105">
-                        {{-- Added logo-full-white class here --}}
                         <img src="{{ $logoUrl }}" alt="{{ $company?->company_name ?? 'KRBS' }} Logo" class="h-10 w-auto logo-full-white">
                     </a>
                 </div>
@@ -57,7 +54,7 @@
                     </a>
                     @endif
 
-                    {{-- Status Dropdown (data-exclusive-dropdown) --}}
+                    {{-- Status Dropdown --}}
                     <div class="relative" data-exclusive-dropdown>
                         <button type="button" data-dropdown-toggle class="px-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 flex items-center gap-1" aria-haspopup="true" aria-expanded="false">
                             <x-heroicon-o-chart-bar class="w-4 h-4" /> Status
@@ -77,7 +74,7 @@
                     @endguest
 
                     @auth
-                    {{-- Profile Dropdown (data-exclusive-dropdown) --}}
+                    {{-- Profile Dropdown --}}
                     <div class="relative ml-2" data-exclusive-dropdown>
                         <button type="button" data-dropdown-toggle class="flex items-center gap-2 px-3 py-1 text-sm font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors" aria-haspopup="true" aria-expanded="false">
                             <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-xs profile-icon-bnw">
@@ -99,11 +96,32 @@
                             <a href="{{ route('profile') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
                                 <x-heroicon-o-user-circle class="w-5 h-5" /> My Profile
                             </a>
-                            @if(in_array(auth()->user()->role->name, ['Superadmin', 'Admin', 'Receptionist']))
-                            <a href="{{ route(strtolower(auth()->user()->role->name) . '.dashboard') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
-                                <x-heroicon-o-cog-6-tooth class="w-5 h-5" /> {{ auth()->user()->role->name }} Dashboard
+                            
+                            {{-- MODIFIED DASHBOARD LINKS LOGIC --}}
+                            @php $role = auth()->user()->role->name; @endphp
+
+                            {{-- 1. Superadmin Dashboard (Only Superadmin) --}}
+                            @if($role === 'Superadmin')
+                            <a href="{{ route('superadmin.dashboard') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
+                                <x-heroicon-o-shield-check class="w-5 h-5" /> Superadmin DB
                             </a>
                             @endif
+
+                            {{-- 2. Admin Dashboard (Admin OR Superadmin) --}}
+                            @if(in_array($role, ['Superadmin', 'Admin']))
+                            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
+                                <x-heroicon-o-computer-desktop class="w-5 h-5" /> Admin DB
+                            </a>
+                            @endif
+
+                            {{-- 3. Receptionist Dashboard (Receptionist OR Superadmin) --}}
+                            @if(in_array($role, ['Superadmin', 'Receptionist']))
+                            <a href="{{ route('receptionist.dashboard') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
+                                <x-heroicon-o-clipboard-document-list class="w-5 h-5" /> Receptionist DB
+                            </a>
+                            @endif
+                            {{-- END MODIFIED LOGIC --}}
+
                             <div class="border-t border-gray-800 my-2"></div>
                             <form method="POST" action="{{ route('logout') }}" class="px-2">
                                 @csrf
@@ -161,7 +179,7 @@
                 <a href="{{ route('user.ticket.queue') }}" class="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 {{ request()->routeIs('user.ticket.queue') ? 'bg-gray-800 text-white' : '' }}"><x-heroicon-o-queue-list class="w-5 h-5" /> Ticket Queue</a>
                 @endif
 
-                {{-- Mobile Status Dropdown (Simplified structure) --}}
+                {{-- Mobile Status Dropdown --}}
                 <div data-mobile-dropdown>
                     <button type="button" data-mobile-toggle class="w-full flex items-center justify-between px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors">
                         <span class="flex items-center gap-3"><x-heroicon-o-chart-bar class="w-5 h-5" /> Status</span>
@@ -177,9 +195,29 @@
                 @auth
                 <div class="border-t border-gray-800 pt-3 mt-3 space-y-1">
                     <a href="{{ route('profile') }}" class="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors"><x-heroicon-o-user-circle class="w-5 h-5" /> My Profile</a>
-                    @if(in_array(auth()->user()->role->name, ['Superadmin', 'Admin', 'Receptionist']))
-                    <a href="{{ route(strtolower(auth()->user()->role->name) . '.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors"><x-heroicon-o-cog-6-tooth class="w-5 h-5" /> {{ auth()->user()->role->name }} Dashboard</a>
+                    
+                    {{-- MODIFIED MOBILE DASHBOARD LINKS LOGIC --}}
+                    @php $role = auth()->user()->role->name; @endphp
+
+                    @if($role === 'Superadmin')
+                    <a href="{{ route('superadmin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors">
+                        <x-heroicon-o-shield-check class="w-5 h-5" /> Superadmin DB
+                    </a>
                     @endif
+
+                    @if(in_array($role, ['Superadmin', 'Admin']))
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors">
+                        <x-heroicon-o-computer-desktop class="w-5 h-5" /> Admin DB
+                    </a>
+                    @endif
+
+                    @if(in_array($role, ['Superadmin', 'Receptionist']))
+                    <a href="{{ route('receptionist.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors">
+                        <x-heroicon-o-clipboard-document-list class="w-5 h-5" /> Receptionist DB
+                    </a>
+                    @endif
+                    {{-- END MODIFIED MOBILE LOGIC --}}
+
                     <form method="POST" action="{{ route('logout') }}" class="mt-2">
                         @csrf
                         <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 text-base font-medium rounded-lg text-white hover:text-red-300 hover:bg-gray-800/50 transition-colors"><x-heroicon-o-arrow-left-on-rectangle class="w-5 h-5" /> Logout</button>
@@ -199,6 +237,7 @@
     {{-- Spacer --}}
     <div class="h-16"></div>
 
+    {{-- Script remains unchanged --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const exclusiveDropdowns = document.querySelectorAll('[data-exclusive-dropdown]');
@@ -210,13 +249,11 @@
             const hamburger = document.getElementById('hamburger');
             const hamburgerIcon = document.querySelector('[data-hamburger-icon]');
 
-            // --- Dropdown Management (Exclusive Desktop) ---
             function toggleExclusiveDropdown(targetDropdown) {
                 const menu = targetDropdown.querySelector('[data-dropdown-menu]');
                 const arrow = targetDropdown.querySelector('[data-dropdown-arrow]');
                 const isOpen = menu.classList.contains('show');
 
-                // 1. Close all others
                 exclusiveDropdowns.forEach(dropdown => {
                     if (dropdown !== targetDropdown) {
                         dropdown.querySelector('[data-dropdown-menu]').classList.remove('show');
@@ -226,7 +263,6 @@
                     }
                 });
 
-                // 2. Toggle the target
                 if (isOpen) {
                     menu.classList.remove('show');
                     targetDropdown.querySelector('[data-dropdown-toggle]').setAttribute('aria-expanded', 'false');
@@ -245,13 +281,12 @@
                 });
             });
 
-            // Close desktop dropdowns on outside click/escape
             document.addEventListener('click', (e) => {
                 exclusiveDropdowns.forEach(dropdown => {
                     const menu = dropdown.querySelector('[data-dropdown-menu]');
                     const toggle = dropdown.querySelector('[data-dropdown-toggle]');
                     if (menu.classList.contains('show') && !toggle.contains(e.target) && !menu.contains(e.target)) {
-                        toggleExclusiveDropdown(dropdown); // Calling toggle on an open one closes it
+                        toggleExclusiveDropdown(dropdown);
                     }
                 });
             });
@@ -265,13 +300,10 @@
                 }
             });
 
-
-            // --- Mobile Menu (Hamburger) Logic ---
             hamburger.addEventListener('click', () => {
                 const isOpen = mobileMenu.classList.contains('open');
                 mobileMenu.classList.toggle('open');
                 
-                // Toggle Hamburger Icon using inline transforms
                 const lines = hamburgerIcon.children;
                 if (!isOpen) {
                     lines[0].style.transform = 'rotate(45deg) translate(6px, 6px)';
@@ -286,7 +318,6 @@
                 }
             });
 
-            // --- Mobile Status Dropdown Logic ---
             if (mobileDropdown) {
                 mobileDropdown.querySelector('[data-mobile-toggle]').addEventListener('click', () => {
                     const isOpen = mobileContent.classList.contains('open');
@@ -297,14 +328,12 @@
                 });
             }
 
-            // Close menu on resize (desktop view)
             window.addEventListener('resize', () => {
                 if (window.innerWidth >= 768) {
                     if (mobileMenu.classList.contains('open')) {
                         mobileMenu.classList.remove('open');
-                        hamburger.click(); // Reset hamburger icon state
+                        hamburger.click(); 
                     }
-                    // Close desktop dropdowns
                     exclusiveDropdowns.forEach(dropdown => {
                         if (dropdown.querySelector('[data-dropdown-menu]').classList.contains('show')) {
                             toggleExclusiveDropdown(dropdown);

@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto relative">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- Header --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -8,12 +8,12 @@
                 {{-- Navigation Tabs --}}
                 <div class="inline-flex rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                     <a href="{{ route('book-room') }}"
-                       class="px-3 md:px-4 py-2 text-sm font-medium transition-colors border-r border-gray-200
+                       class="px-3 md:px-4 py-2 text-sm font-medium transition-colors border-r border-gray-200 inline-flex items-center gap-1.5
                               {{ request()->routeIs('book-room') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:text-gray-900' }}">
                         Offline (Room)
                     </a>
                     <a href="{{ route('user.meetonline') }}"
-                       class="px-3 md:px-4 py-2 text-sm font-medium transition-colors
+                       class="px-3 md:px-4 py-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5
                               {{ request()->routeIs('user.meetonline') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:text-gray-900' }}">
                         Online Meeting
                     </a>
@@ -22,11 +22,11 @@
                 {{-- View Switcher --}}
                 <div class="inline-flex rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                     <button wire:click="switchView('form')"
-                        class="px-3 md:px-4 py-2 text-sm font-medium transition-colors border-r border-gray-200 {{ $view === 'form' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900' }}">
+                        class="px-3 md:px-4 py-2 text-sm font-medium transition-colors border-r border-gray-200 inline-flex items-center gap-1.5 {{ $view === 'form' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900' }}">
                         Form
                     </button>
                     <button wire:click="switchView('calendar')"
-                        class="px-3 md:px-4 py-2 text-sm font-medium transition-colors {{ $view === 'calendar' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900' }}">
+                        class="px-3 md:px-4 py-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5 {{ $view === 'calendar' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900' }}">
                         Calendar
                     </button>
                 </div>
@@ -98,11 +98,13 @@
 
                         <div class="flex gap-4 pt-4 border-t border-gray-100">
                             <button type="button" wire:click="$refresh"
-                                    class="px-4 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                    class="px-4 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center gap-1.5">
+                                <x-heroicon-o-arrow-path class="w-4 h-4" />
                                 Clear Form
                             </button>
                             <button type="submit"
-                                    class="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+                                    class="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors inline-flex items-center gap-1.5">
+                                <x-heroicon-o-check-circle class="w-4 h-4" />
                                 Submit Request
                             </button>
                         </div>
@@ -112,7 +114,7 @@
 
             <div class="space-y-6">
                 {{-- Right Side Cards --}}
-                <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
+                <div class="bg-blue-50  rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">Platform Tips</h3>
                     <ul class="text-xs md:text-sm text-gray-700 list-disc pl-5 space-y-1">
                         <li>Zoom cocok untuk webinar / breakout rooms.</li>
@@ -130,7 +132,9 @@
                                     <div class="flex-1">
                                         <h4 class="font-medium text-sm text-gray-900">{{ $b->meeting_title }}</h4>
                                         <p class="text-xs text-gray-600 mt-1">
+                                            <x-heroicon-o-calendar class="w-3 h-3 inline mr-0.5" />
                                             {{ \Carbon\Carbon::parse($b->date)->format('d M Y') }},
+                                            <x-heroicon-o-clock class="w-3 h-3 inline mr-0.5" />
                                             {{ \Carbon\Carbon::parse($b->start_time)->timezone('Asia/Jakarta')->format('H:i') }}–{{ \Carbon\Carbon::parse($b->end_time)->timezone('Asia/Jakarta')->format('H:i') }}
                                             • {{ ucfirst(str_replace('_', ' ', $b->online_provider)) }}
                                             @if($b->requestinformation === 'request')
@@ -141,7 +145,8 @@
                                         @if(($b->status ?? null) === 'approved' && ($b->online_meeting_url ?? null))
                                             <div x-data="{ copied:false }" class="mt-2 flex items-center gap-2">
                                                 <a href="{{ $b->online_meeting_url }}" target="_blank"
-                                                   class="text-blue-600 underline text-xs inline-block">
+                                                   class="text-blue-600 underline text-xs inline-flex items-center gap-1">
+                                                   <x-heroicon-o-link class="w-3 h-3" />
                                                     Join Meeting
                                                 </a>
                                                 <button type="button"
@@ -180,26 +185,39 @@
                         <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button wire:click="previousMonth" class="hidden md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">« Month</button>
-                        <button wire:click="previousWeek" class="hidden md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">‹ Week</button>
+                        <button wire:click="previousMonth" class=" md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors inline-flex items-center gap-1.5">
+                            <x-heroicon-o-chevron-double-left class="w-3 h-3" /> Month
+                        </button>
+                        <button wire:click="previousWeek" class=" md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors inline-flex items-center gap-1.5">
+                            <x-heroicon-o-chevron-left class="w-3 h-3" /> Week
+                        </button>
                         <input type="date" wire:model.live="date" wire:change="selectDate($event.target.value)"
                             class="px-3 py-1.5 border border-gray-300 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-gray-900" />
-                        <button wire:click="nextWeek" class="hidden md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">Week ›</button>
-                        <button wire:click="nextMonth" class="hidden md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">Month »</button>
+                        <button wire:click="nextWeek" class=" md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors inline-flex items-center gap-1.5">
+                            Week <x-heroicon-o-chevron-right class="w-3 h-3" />
+                        </button>
+                        <button wire:click="nextMonth" class=" md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors inline-flex items-center gap-1.5">
+                            Month <x-heroicon-o-chevron-double-right class="w-3 h-3" />
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div class="relative">
                 <div class="flex">
+                    {{-- START: Time Column (Fixed Width) --}}
+                    {{-- The time column now handles the right border, but not the bottom border on the time labels themselves --}}
                     <div class="w-16 md:w-20 shrink-0 border-r border-gray-200 bg-gray-50 sticky left-0 z-10">
                         <div class="h-10 border-b border-gray-200 bg-gray-100"></div>
                         @foreach($timeSlots as $t)
-                            <div class="h-8 text-[10px] text-gray-500 font-medium flex items-center justify-center border-b border-gray-100">
+                            {{-- programmer's simple documentation: Removed border-b here; main grid rows handle the horizontal border for alignment. Reverted to full centering. --}}
+                            <div class="h-8 text-[10px] text-gray-500 font-medium flex items-center justify-center">
                                 {{ $t }}
                             </div>
                         @endforeach
                     </div>
+                    {{-- END: Time Column --}}
+                    
                     <div class="overflow-x-auto">
                         <div class="min-w-[480px]">
                             <div class="grid" style="grid-template-columns: repeat({{ count($providers) }}, minmax(200px,1fr));">
@@ -213,16 +231,30 @@
                                 @endforeach
                             </div>
                             @foreach($timeSlots as $t)
+                                {{-- programmer's simple documentation: The main grid rows now consistently provide the border-b for perfect horizontal alignment with the time column --}}
                                 <div class="grid border-b border-gray-100"
                                      style="grid-template-columns: repeat({{ count($providers) }}, minmax(200px,1fr));">
                                     @foreach($providers as $p)
-                                        @php $slotBooking = $this->getOnlineBookingForSlot($p['key'], $date, $t); @endphp
+                                        @php 
+                                            $slotBooking = $this->getOnlineBookingForSlot($p['key'], $date, $t);
+                                            // programmer's simple documentation: Check if the current slot is in the past using Indonesia time
+                                            $currentDateTime = \Carbon\Carbon::now();
+                                            $slotDateTime = \Carbon\Carbon::parse($date . ' ' . $t)->setTimezone('Asia/Jakarta');
+                                            $isPastSlot = $slotDateTime->lt($currentDateTime); 
+                                        @endphp
                                         <div class="h-8 relative border-r border-gray-100">
                                             @if($slotBooking)
                                                 <div class="w-full h-full bg-red-100 flex items-center justify-center px-2 cursor-not-allowed"
                                                     title="{{ $slotBooking['meeting_title'] }}">
                                                     <span class="truncate text-[10px] text-red-900 font-medium w-full text-center">
                                                         {{ $slotBooking['meeting_title'] }}
+                                                    </span>
+                                                </div>
+                                            @elseif($isPastSlot)
+                                                {{-- Style for Past Slot --}}
+                                                <div class="w-full h-full bg-gray-100 flex items-center justify-center px-2 cursor-not-allowed">
+                                                    <span class="text-[10px] text-gray-400 font-medium">
+                                                        Past
                                                     </span>
                                                 </div>
                                             @else
@@ -243,6 +275,10 @@
                 <div class="flex items-center gap-4 text-xs font-medium text-gray-600">
                     <span class="inline-flex items-center gap-2">
                         <span class="w-3 h-3 bg-red-100 border border-red-200 rounded inline-block"></span> Booked
+                    </span>
+                    {{-- Updated Legend --}}
+                    <span class="inline-flex items-center gap-2">
+                        <span class="w-3 h-3 bg-gray-100 border border-gray-200 rounded inline-block"></span> Past/Unavailable
                     </span>
                     <span class="inline-flex items-center gap-2">
                         <span class="w-3 h-3 bg-white border border-gray-200 rounded inline-block"></span> Available
@@ -275,9 +311,7 @@
                     <button type="button"
                         class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none p-1"
                         wire:click="closeQuickModal">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <x-heroicon-o-x-mark class="h-6 w-6" />
                     </button>
                 </div>
 
@@ -321,9 +355,8 @@
 
                     <div class="bg-blue-50 rounded-xl p-3 border border-blue-100 flex gap-3">
                          <div class="text-blue-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                            </svg>
+                            {{-- Original SVG was an Information Circle / Exclamation Icon --}}
+                            <x-heroicon-o-information-circle class="h-5 w-5" />
                          </div>
                          <p class="text-xs text-blue-800">
                             Wait for receptionist approval to receive the meeting link.

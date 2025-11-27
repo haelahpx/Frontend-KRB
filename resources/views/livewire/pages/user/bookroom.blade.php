@@ -1,4 +1,5 @@
-<div class="max-w-7xl mx-auto relative">
+{{-- programmer's simple documentation: The main container for the page. --}}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- Header --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -8,13 +9,13 @@
                 {{-- Navigation Tabs --}}
                 <div class="inline-flex rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                     <a href="{{ route('book-room') }}"
-                        @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors border-r border-gray-200' , 'bg-gray-900 text-white'=> request()->routeIs('book-room'),
+                        @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors border-r border-gray-200 inline-flex items-center gap-1.5' , 'bg-gray-900 text-white'=> request()->routeIs('book-room'),
                         'text-gray-700 hover:text-gray-900' => !request()->routeIs('book-room'),
                         ])>
                         Offline (Room)
                     </a>
                     <a href="{{ route('user.meetonline') }}"
-                        @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors' , 'bg-gray-900 text-white'=> request()->routeIs('user.meetonline'),
+                        @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5' , 'bg-gray-900 text-white'=> request()->routeIs('user.meetonline'),
                         'text-gray-700 hover:text-gray-900' => !request()->routeIs('user.meetonline'),
                         ])>
                         Online Meeting
@@ -24,13 +25,13 @@
                 {{-- View Switcher --}}
                 <div class="inline-flex rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                     <button wire:click="switchView('form')"
-                        @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors border-r border-gray-200' , 'bg-gray-900 text-white'=> $view === 'form',
+                        @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors border-r border-gray-200 inline-flex items-center gap-1.5' , 'bg-gray-900 text-white'=> $view === 'form',
                         'text-gray-600 hover:text-gray-900' => $view !== 'form',
                         ])>
                         Form
                     </button>
                     <button wire:click="switchView('calendar')"
-                        @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors' , 'bg-gray-900 text-white'=> $view === 'calendar',
+                        @class([ 'px-3 md:px-4 py-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5' , 'bg-gray-900 text-white'=> $view === 'calendar',
                         'text-gray-600 hover:text-gray-900' => $view !== 'calendar',
                         ])>
                         Calendar
@@ -48,7 +49,9 @@
                 <p class="text-sm text-gray-600 mb-6">Fill out the form below to request a room booking</p>
 
                 <div class="bg-blue-50 mb-6 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                    <h4 class="font-semibold mb-2">⏰ Booking Rules</h4>
+                    <h4 class="font-semibold mb-2 inline-flex items-center gap-1.5">
+                        <x-heroicon-o-clock class="w-4 h-4" /> Booking Rules
+                    </h4>
                     <ul class="list-disc pl-5 space-y-1 text-xs md:text-sm">
                         <li>Slot 30 menit.</li>
                         <li>Judul meeting jelas.</li>
@@ -153,11 +156,13 @@
 
                     <div class="flex space-x-4 pt-4 border-t border-gray-100">
                         <button type="button" wire:click="$refresh"
-                            class="px-4 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                            class="px-4 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center gap-1.5">
+                            <x-heroicon-o-arrow-path class="w-4 h-4" />
                             Clear Form
                         </button>
                         <button type="submit"
-                            class="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+                            class="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors inline-flex items-center gap-1.5">
+                            <x-heroicon-o-check-circle class="w-4 h-4" />
                             Submit Request
                         </button>
                     </div>
@@ -195,7 +200,7 @@
                     @foreach(array_slice($bookings, 0, 3) as $booking)
                     <div class="flex items-start space-x-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
                         <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
-                            <div class="w-2 h-2 bg-gray-600 rounded-full"></div>
+                            <x-heroicon-o-calendar class="w-4 h-4 text-gray-600" />
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-2">
@@ -229,7 +234,7 @@
     </div>
 
     @else
-    {{-- Calendar View --}}
+    {{-- Calendar View (FIXED ALIGNMENT) --}}
     <div wire:poll.60s class="bg-white rounded-xl border-2 border-black/80 shadow-md overflow-hidden">
         <div class="bg-gray-50 border-b-2 border-black/10 p-4">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -238,16 +243,32 @@
                     <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button wire:click="previousMonth" class="hidden md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">« Month</button>
-                    <button wire:click="previousWeek" class="hidden md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">‹ Week</button>
+                    <button wire:click="previousMonth" class=" md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors inline-flex items-center gap-1.5">
+                        <x-heroicon-o-chevron-double-left class="w-3 h-3" />
+                        Month
+                    </button>
+                    <button wire:click="previousWeek" class=" md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors inline-flex items-center gap-1.5">
+                        <x-heroicon-o-chevron-left class="w-3 h-3" />
+                        Week
+                    </button>
 
                     {{-- Day Navigation --}}
-                    <button wire:click="previousDay" class="px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">‹ Day</button>
+                    <button wire:click="previousDay" class="px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">
+                        <x-heroicon-o-chevron-left class="w-4 h-4" />
+                    </button>
                     <input type="date" wire:model.live="date" wire:change="selectDate($event.target.value)" class="px-3 py-1.5 border border-gray-300 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-gray-900" />
-                    <button wire:click="nextDay" class="px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">Day ›</button>
+                    <button wire:click="nextDay" class="px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">
+                        <x-heroicon-o-chevron-right class="w-4 h-4" />
+                    </button>
 
-                    <button wire:click="nextWeek" class="hidden md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">Week ›</button>
-                    <button wire:click="nextMonth" class="hidden md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors">Month »</button>
+                    <button wire:click="nextWeek" class="md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors inline-flex items-center gap-1.5">
+                        Week
+                        <x-heroicon-o-chevron-right class="w-3 h-3" />
+                    </button>
+                    <button wire:click="nextMonth" class="md:inline px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 transition-colors inline-flex items-center gap-1.5">
+                        Month
+                        <x-heroicon-o-chevron-double-right class="w-3 h-3" />
+                    </button>
                 </div>
             </div>
 
@@ -258,8 +279,12 @@
                     of {{ count($rooms) }}
                 </div>
                 <div class="flex gap-2">
-                    <button wire:click="prevRoomPage" class="px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 disabled:opacity-50" {{ $roomsPage <= 1 ? 'disabled' : '' }}>‹ Rooms</button>
-                    <button wire:click="nextRoomPage" class="px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 disabled:opacity-50" {{ $roomsPage >= $roomsTotalPages ? 'disabled' : '' }}>Rooms ›</button>
+                    <button wire:click="prevRoomPage" class="px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 disabled:opacity-50" {{ $roomsPage <= 1 ? 'disabled' : '' }}>
+                        <x-heroicon-o-chevron-left class="w-3 h-3" /> Rooms
+                    </button>
+                    <button wire:click="nextRoomPage" class="px-3 py-1.5 border border-gray-300 bg-white rounded-md text-xs font-medium hover:bg-gray-50 disabled:opacity-50" {{ $roomsPage >= $roomsTotalPages ? 'disabled' : '' }}>
+                        Rooms <x-heroicon-o-chevron-right class="w-3 h-3" />
+                    </button>
                 </div>
             </div>
         </div>
@@ -267,7 +292,8 @@
         <div class="relative">
             <div class="flex">
                 {{-- Time Column --}}
-                <div class="w-16 md:w-20 shrink-0 border-r border-gray-200 bg-gray-50 sticky left-0 z-10">
+                {{-- programmer's simple documentation: Added 'hidden' class conditional on $showQuickModal to prevent the time column from showing through the modal backdrop. Also added 'border-b border-gray-100' to time labels for perfect vertical alignment with the grid slots --}}
+                <div class="w-16 md:w-20 shrink-0 border-r border-gray-200 bg-gray-50 sticky left-0 z-10 @if($showQuickModal) hidden @endif">
                     <div class="h-10 border-b border-gray-200 bg-gray-100"></div>
                     @foreach($timeSlots as $t)
                     <div class="h-8 text-[10px] text-gray-500 font-medium flex items-center justify-center border-b border-gray-100">{{ $t }}</div>
@@ -290,7 +316,8 @@
 
                         {{-- Grid Slots --}}
                         @foreach($timeSlots as $t)
-                        <div class="grid border-b border-gray-100" style="grid-template-columns: repeat({{ count($visibleRooms) }}, minmax(160px,1fr));">
+                        {{-- programmer's simple documentation: Removed redundant 'border-b border-gray-100' from the grid row for clean alignment --}}
+                        <div class="grid" style="grid-template-columns: repeat({{ count($visibleRooms) }}, minmax(160px,1fr));">
                             @foreach($visibleRooms as $room)
                             @php
                             $slotBooking = $this->getBookingForSlot($room['id'], $date, $t);
@@ -311,8 +338,9 @@
 
                                 @elseif($isPast)
                                 {{-- Past: Gray Box (Non-clickable) --}}
-                                <div class="w-full h-full bg-gray-100 flex items-center justify-center cursor-not-allowed"
-                                    title="Time has passed">
+                                {{-- programmer's simple documentation: Added 'Past' text to the gray box --}}
+                                <div class="w-full h-full bg-gray-100 flex items-center justify-center cursor-not-allowed">
+                                    <span class="text-[10px] text-gray-400 font-medium">Past</span>
                                 </div>
 
                                 @else
@@ -345,7 +373,8 @@
     @endif
 
     @if($showQuickModal)
-    <div class="fixed inset-0 z-[100]">
+    {{-- programmer's simple documentation: Changed z-index to z-[40] as requested. --}}
+    <div class="fixed inset-0 **z-[40]**">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
             wire:click="closeQuickModal"></div>
 
@@ -365,9 +394,7 @@
                     <button type="button"
                         class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none p-1"
                         wire:click="closeQuickModal">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <x-heroicon-o-x-mark class="h-6 w-6" />
                     </button>
                 </div>
 
@@ -446,8 +473,8 @@
                             <input id="notify_info"
                                 type="checkbox"
                                 wire:model.live="informInfo"
-                                class="rounded border-gray-300 text-gray-900 focus:ring-gray-900 h-4 w-4">
-                        </div> 
+                                class="mt-0.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900">
+                        </div>
                         <div class="ml-3 text-sm">
                             <label for="notify_info" class="font-medium text-gray-700 cursor-pointer">Notify Information Dept</label>
                             <p class="text-gray-500 text-xs">Request support from the information department.</p>

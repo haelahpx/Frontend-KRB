@@ -23,16 +23,12 @@
                 <div class="flex items-center gap-4">
                     <div
                         class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                        {{-- User Group icon equivalent SVG --}}
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
+                        <x-heroicon-o-users class="w-6 h-6 text-white" />
                     </div>
                     <div class="flex-1">
                         <h2 class="text-lg sm:text-xl font-semibold">Guestbook Management</h2>
                         <p class="text-sm text-white/80">
-                            Company: <span
+                            Cabang: <span
                                 class="font-semibold">{{ optional(Auth::user()->company)->company_name ?? '-' }}</span>
                         </p>
                     </div>
@@ -47,11 +43,7 @@
                 <div class="w-full sm:w-72 relative">
                     <input type="text" wire:model.live.debounce.400ms="search" class="{{ $input }} pl-10"
                         placeholder="Search name / purpose / phone…">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
-                    </svg>
+                    <x-heroicon-o-magnifying-glass class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 </div>
             </div>
 
@@ -113,12 +105,7 @@
                         wire:target="create">
                         <span wire:loading.remove wire:target="create">Save Entry</span>
                         <span class="inline-flex items-center gap-2" wire:loading wire:target="create">
-                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4" />
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                            </svg>
+                            <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" />
                             Saving…
                         </span>
                     </button>
@@ -236,10 +223,7 @@
                         <h3 class="text-base font-semibold text-gray-900">Edit Guest Entry</h3>
                         <button class="text-gray-500 hover:text-gray-700" type="button"
                             wire:click="$set('modalEdit', false)" aria-label="Close">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <x-heroicon-o-x-mark class="w-5 h-5" />
                         </button>
                     </div>
 
@@ -293,10 +277,7 @@
                             <button type="submit" class="{{ $btnBlk }} inline-flex items-center gap-2" wire:loading.attr="disabled" wire:target="update">
                                 <span wire:loading.remove wire:target="update">Save Changes</span>
                                 <span class="inline-flex items-center gap-2" wire:loading wire:target="update">
-                                    <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z"/>
-                                    </svg>
+                                    <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" />
                                     Saving…
                                 </span>
                             </button>

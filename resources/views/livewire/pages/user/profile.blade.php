@@ -13,7 +13,7 @@
         passwordSuccess = true;
         setTimeout(() => passwordSuccess = false, 3000);
     "
-    class="max-w-7xl mx-auto">
+    class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- Header --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

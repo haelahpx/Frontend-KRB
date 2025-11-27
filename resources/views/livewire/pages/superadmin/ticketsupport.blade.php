@@ -41,13 +41,14 @@
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 19h14a2 2 0 002-2v-6H3v6a2 2 0 002 2z" />
-                            </svg>
+                            <x-heroicon-o-calendar-days class="w-6 h-6 text-white" />
                         </div>
                         <div>
                             <h2 class="text-lg sm:text-xl font-semibold">Ticket Support Management</h2>
-                            <p class="text-sm text-white/80">Manage all internal support tickets across the company.</p>
+                            <p class="text-sm text-white/80">
+                            Cabang: <span
+                                class="font-semibold">{{ optional(Auth::user()->company)->company_name ?? '-' }}</span>
+                        </p>
                         </div>
                     </div>
                     
@@ -102,9 +103,7 @@
                                 <div class="relative">
                                     <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search subject, description or user..."
                                         class="{{ $input }} pl-10 w-full placeholder:text-gray-400">
-                                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
-                                    </svg>
+                                    <x-heroicon-o-magnifying-glass class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 </div>
                             </div>
                             <div>
@@ -176,7 +175,7 @@
                                                 @if($t->attachments && $t->attachments->count())
                                                     <div class="flex flex-wrap items-center gap-2 mt-2">
                                                         <span class="{{ $chip }} bg-gray-200 text-gray-600">
-                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.586a6 6 0 108.486 8.486"/></svg>
+                                                            <x-heroicon-o-paper-clip class="w-3 h-3" />
                                                             {{ $t->attachments->count() }} Attachment(s)
                                                         </span>
                                                     </div>
@@ -361,9 +360,7 @@
                             <p class="text-[11px] text-gray-500">Filter daftar ticket berdasarkan departemen atau prioritas.</p>
                         </div>
                         <button class="text-gray-500 hover:text-gray-700" type="button" wire:click="closeFilterModal" aria-label="Close">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <x-heroicon-o-x-mark class="w-5 h-5" />
                         </button>
                     </div>
 
@@ -466,9 +463,7 @@
                     <div class="px-4 md:px-5 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
                         <h3 class="text-base font-semibold text-gray-900 truncate pr-4">Ticket Details #{{ $ticket->ticket_id }}</h3>
                         <button class="text-gray-500 hover:text-gray-700" type="button" wire:click="closeTicketDetails" aria-label="Close">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <x-heroicon-o-x-mark class="w-5 h-5" />
                         </button>
                     </div>
 
@@ -538,7 +533,7 @@
                                     @if($attachments->isNotEmpty())
                                     <div class="mt-6 pt-4 border-t border-dashed border-gray-200">
                                         <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-2">
-                                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.586a6 6 0 108.486 8.486" /></svg>
+                                            <x-heroicon-o-paper-clip class="w-4 h-4" />
                                             Attachments ({{ $attachments->count() }})
                                         </div>
 
@@ -604,11 +599,11 @@
                                     <div class="mt-6 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4 text-xs text-gray-500">
                                         <div class="flex items-center gap-4">
                                             <div class="flex items-center gap-1.5">
-                                                <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                <x-heroicon-o-clock class="w-4 h-4 text-gray-400" />
                                                 <span>Created {{ optional(new Carbon($ticket->created_at))->format('d M Y, H:i') }}</span>
                                             </div>
                                             <div class="flex items-center gap-1.5">
-                                                <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.18-3.18M18.001 19.644v-4.992m0 0h4.992m-4.993 0l-3.18-3.18M4.002 9.348h4.992v-.001M2.985 4.644v4.992m0 0h4.992m-4.993 0l3.18-3.18M18.001 4.644v4.992m0 0h4.992m-4.993 0l-3.18-3.18" /></svg>
+                                                <x-heroicon-o-arrow-path class="w-4 h-4 text-gray-400" />
                                                 <span>Updated {{ optional(new Carbon($ticket->updated_at))->diffForHumans() }}</span>
                                             </div>
                                         </div>
@@ -618,7 +613,7 @@
                                 {{-- Discussion Card (Display only) --}}
                                 <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
                                     <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 10.5h-16.5m16.5 0a2.25 2.25 0 01-2.25 2.25H6.75a2.25 2.25 0 01-2.25-2.25m16.5 0h-16.5m16.5 0V7.5m-16.5 0V10.5m16.5 0h-16.5m16.5 0V7.5m-16.5 0V10.5m16.5 0h-16.5m16.5 0V7.5m-16.5 0V10.5m16.5 0h-16.5m16.5 0V7.5m-16.5 0V10.5" /></svg>
+                                        <x-heroicon-o-chat-bubble-bottom-center-text class="w-5 h-5" />
                                         Discussion (Display Only)
                                     </h3>
                                     
@@ -698,7 +693,7 @@
 
                                                 @if($hasAgent)
                                                 <div class="flex items-center gap-1.5">
-                                                    <svg class="w-4 h-4 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15L15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    <x-heroicon-o-check-circle class="w-4 h-4 text-emerald-500" />
                                                     <span class="text-xs font-semibold text-gray-900">{{ $agents->join(', ') }}</span>
                                                 </div>
                                                 @else
@@ -732,9 +727,7 @@
                 <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 class="text-base font-semibold text-gray-900">Edit Ticket #{{ $editingTicketId }}</h3>
                     <button class="text-gray-500 hover:text-gray-700" type="button" wire:click="closeModal" aria-label="Close">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <x-heroicon-o-x-mark class="w-5 h-5" />
                     </button>
                 </div>
 
@@ -791,10 +784,7 @@
                         <button type="submit" class="{{ $btnBlk }}" wire:loading.attr="disabled" wire:target="update">
                             <span wire:loading.remove wire:target="update">Update</span>
                             <span class="inline-flex items-center gap-2" wire:loading wire:target="update">
-                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                                </svg>
+                                <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" />
                                 Processing…
                             </span>
                         </button>

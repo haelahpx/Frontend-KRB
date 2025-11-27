@@ -23,7 +23,7 @@ $agents = collect($ticket->assignments ?? [])
 $hasAgent = $agents->isNotEmpty();
 @endphp
 
-<div class="max-w-7xl mx-auto">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- Header --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -207,37 +207,66 @@ $hasAgent = $agents->isNotEmpty();
                     Discussion
                 </h3>
 
-                <form wire:submit.prevent="addComment" class="mb-8">
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 hidden sm:block">
-                            @php $meInitials = $initials(auth()->user()->full_name ?? auth()->user()->name ?? 'User'); @endphp
-                            <span class="inline-flex h-8 w-8 rounded-full bg-black text-white items-center justify-center text-xs font-bold ring-2 ring-white shadow-sm">
-                                {{ $meInitials }}
-                            </span>
-                        </div>
-                        <div class="min-w-0 flex-1 relative">
-                            <textarea
-                                wire:model.defer="newComment"
-                                rows="3"
-                                class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black transition-colors resize-none shadow-sm"
-                                placeholder="Type your reply here..."></textarea>
-
-                            @error('newComment')
-                            <div class="text-red-600 text-xs mt-1 flex items-center gap-1">
-                                <x-heroicon-o-exclamation-circle class="w-3 h-3" /> {{ $message }}
+                {{-- CONDITIONAL COMMENT FORM START --}}
+                @if ($canComment)
+                    <form wire:submit.prevent="addComment" class="mb-8">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 hidden sm:block">
+                                @php $meInitials = $initials(auth()->user()->full_name ?? auth()->user()->name ?? 'User'); @endphp
+                                <span class="inline-flex h-8 w-8 rounded-full bg-black text-white items-center justify-center text-xs font-bold ring-2 ring-white shadow-sm">
+                                    {{ $meInitials }}
+                                </span>
                             </div>
-                            @enderror
+                            <div class="min-w-0 flex-1 relative">
+                                <textarea
+                                    wire:model.defer="newComment"
+                                    rows="3"
+                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black transition-colors resize-none shadow-sm"
+                                    placeholder="Type your reply here..."></textarea>
 
-                            <div class="mt-2 flex justify-end">
-                                <button type="submit"
-                                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-all shadow-sm hover:shadow">
-                                    <x-heroicon-o-paper-airplane class="w-3.5 h-3.5 -rotate-45 translate-y-[-1px]" />
-                                    Post Reply
-                                </button>
+                                @error('newComment')
+                                <div class="text-red-600 text-xs mt-1 flex items-center gap-1">
+                                    <x-heroicon-o-exclamation-circle class="w-3 h-3" /> {{ $message }}
+                                </div>
+                                @enderror
+
+                                <div class="mt-2 flex justify-end">
+                                    <button type="submit"
+                                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-all shadow-sm hover:shadow">
+                                        <x-heroicon-o-paper-airplane class="w-3.5 h-3.5 -rotate-45 translate-y-[-1px]" />
+                                        Post Reply
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                @else
+                    {{-- Display a message if commenting is not allowed --}}
+                    @php
+                        $isClosed = in_array($status, ['resolved', 'closed', 'complete'], true);
+                    @endphp
+
+                    @if ($isClosed)
+                        <div class="mb-8 p-4 bg-gray-50 text-center rounded-lg border border-gray-200">
+                            <p class="text-sm font-medium text-gray-700">
+                                This ticket is {{ str_replace('_', ' ', ucfirst($status)) }} and can no longer receive comments.
+                            </p>
+                        </div>
+                    @else
+                        <div class="mb-8 p-4 bg-yellow-50 text-center rounded-lg border border-yellow-200">
+                            <p class="text-sm font-medium text-yellow-800">
+                                You cannot post comments on this ticket. Only the creator and Assigned agents.
+                            </p>
+                            @if(auth()->user()->role_id != 1 && auth()->user()->role_id != 2 && auth()->id() !== $ticket->user_id && ! $hasAgent)
+                                <p class="text-xs text-yellow-700 mt-1">
+                                    You must be assigned to the ticket to comment.
+                                </p>
+                            @endif
+                        </div>
+                    @endif
+                @endif
+                {{-- CONDITIONAL COMMENT FORM END --}}
+
 
                 <div class="space-y-6 relative before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:ml-[19px] before:h-full before:w-0.5 before:bg-gray-100">
                     @forelse ($ticket->comments as $comment)
@@ -282,7 +311,9 @@ $hasAgent = $agents->isNotEmpty();
                             <x-heroicon-o-chat-bubble-oval-left-ellipsis class="w-full h-full" />
                         </div>
                         <p class="text-sm text-gray-500">No comments yet.</p>
-                        <p class="text-xs text-gray-400">Start the conversation by posting a reply above.</p>
+                        @if($canComment)
+                            <p class="text-xs text-gray-400">Start the conversation by posting a reply above.</p>
+                        @endif
                     </div>
                     @endforelse
                 </div>

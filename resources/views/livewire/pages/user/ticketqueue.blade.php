@@ -1,4 +1,5 @@
-<div class="max-w-7xl mx-auto">
+{{-- A simple comment like an actual programmer's simple documentation --}}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- Header --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -41,9 +42,8 @@
                                 wire:model.debounce.400ms="search"
                                 placeholder="Search subject or description..."
                                 class="w-full pl-9 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
+                            {{-- ORIGINAL SVG: Magnifying Glass --}}
+                            <x-heroicon-o-magnifying-glass class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         </div>
                     </div>
 
@@ -68,9 +68,8 @@
 
             @if(!$tickets || $tickets->isEmpty())
             <div class="rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
+                {{-- ORIGINAL SVG: Document/File icon --}}
+                <x-heroicon-o-document-text class="mx-auto h-12 w-12 text-gray-400" />
                 <h3 class="mt-2 text-sm font-medium text-gray-900">No tickets found</h3>
                 <p class="mt-1 text-sm text-gray-500">Tidak ada tiket yang cocok dengan filter Anda.</p>
             </div>
@@ -142,16 +141,14 @@
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-gray-100">
                         <div class="text-[11px] text-gray-500 flex flex-col gap-1">
                             <div class="flex items-center gap-1">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
+                                {{-- ORIGINAL SVG: Clock (Time) --}}
+                                <x-heroicon-o-clock class="w-3 h-3" />
                                 <span>Created {{ \Carbon\Carbon::parse($t->created_at)->diffForHumans() }}</span>
                             </div>
                             @if($t->updated_at != $t->created_at)
                             <div class="flex items-center gap-1">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                </svg>
+                                {{-- ORIGINAL SVG: Arrow Path (Update) --}}
+                                <x-heroicon-o-arrow-path class="w-3 h-3" />
                                 <span>Updated {{ optional($t->updated_at)->diffForHumans() }}</span>
                             </div>
                             @endif
@@ -166,9 +163,8 @@
                                 wire:target="claim"
                                 type="button"
                                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 shadow-sm">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 10.5V6.75A2.25 2.25 0 0014.25 4.5h-6A2.25 2.25 0 006 6.75v10.5A2.25 2.25 0 008.25 19.5h7.5A2.25 2.25 0 0018 17.25V12M12 12l9-9m0 0v6m0-6h-6"></path>
-                                </svg>
+                                {{-- ORIGINAL SVG: Arrow Up Tray (Claim/Assign) --}}
+                                <x-heroicon-o-arrow-up-tray class="w-4 h-4" />
                                 <span wire:loading.remove wire:target="claim">Claim Ticket</span>
                                 <span wire:loading wire:target="claim">Processing...</span>
                             </button>
@@ -221,9 +217,8 @@
 
             @if(!$claims || $claims->isEmpty())
             <div class="rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
+                {{-- ORIGINAL SVG: Document/File icon --}}
+                <x-heroicon-o-document-text class="mx-auto h-12 w-12 text-gray-400" />
                 <h3 class="mt-2 text-sm font-medium text-gray-900">No claims yet</h3>
                 <p class="mt-1 text-sm text-gray-500">Anda belum meng-claim tiket apapun.</p>
             </div>
@@ -293,16 +288,14 @@
 
                             <div class="flex items-center justify-between text-[10px] text-gray-500 border-t border-gray-50 pt-2 mt-2">
                                 <div class="flex items-center gap-1" title="Claimed at">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
+                                    {{-- ORIGINAL SVG: Clock (Time) --}}
+                                    <x-heroicon-o-clock class="w-3 h-3" />
                                     {{ \Carbon\Carbon::parse($asgn->created_at)->diffForHumans(null, true) }}
                                 </div>
                                 @if($t->requester)
                                 <div class="flex items-center gap-1 truncate max-w-[80px]" title="{{ $t->requester->full_name }}">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                    </svg>
+                                    {{-- ORIGINAL SVG: User Circle (Requester) --}}
+                                    <x-heroicon-o-user-circle class="w-3 h-3" />
                                     <span class="truncate">{{ explode(' ', $t->requester->full_name)[0] }}</span>
                                 </div>
                                 @endif

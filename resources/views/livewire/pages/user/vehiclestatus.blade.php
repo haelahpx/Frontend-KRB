@@ -1,4 +1,5 @@
-<div class="max-w-7xl mx-auto">
+{{-- A simple comment like an actual programmer's simple documentation --}}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- Header --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -9,10 +10,13 @@
                 <div class="inline-flex rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                     <a href="{{ route('book-vehicle') }}"
                        class="px-3 md:px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors border-r border-gray-200 inline-flex items-center gap-2">
+                        {{-- FIXED: Using calendar-days instead of non-existent calendar-plus --}}
+                        <x-heroicon-o-calendar-days class="w-4 h-4"/>
                         Book Vehicle
                     </a>
                     <a href="{{ route('vehiclestatus') }}"
                        class="px-3 md:px-4 py-2 text-sm font-medium bg-gray-900 text-white transition-colors inline-flex items-center gap-2">
+                        <x-heroicon-o-list-bullet class="w-4 h-4"/>
                         Vehicle Status
                     </a>
                 </div>
@@ -120,7 +124,7 @@
                         <div class="absolute top-4 right-4 md:right-auto md:left-1/2 md:-translate-x-1/2 z-10">
                             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border animate-pulse
                                 {{ $b->status == 'approved' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-indigo-100 text-indigo-800 border-indigo-300' }}">
-                                <x-heroicon-m-arrow-up-tray class="w-3 h-3"/>
+                                <x-heroicon-o-arrow-up-tray class="w-3 h-3"/>
                                 {{ $b->status == 'approved' ? 'Upload Before Photo' : 'Upload After Photo' }}
                             </span>
                         </div>
@@ -242,9 +246,7 @@
                 </{{ $cardTag }}>
             @empty
                 <div class="rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                    <x-heroicon-o-truck class="mx-auto h-12 w-12 text-gray-400" />
                     <h3 class="mt-2 text-sm font-medium text-gray-900">No bookings found</h3>
                     <p class="mt-1 text-sm text-gray-500">Try adjusting the filters above.</p>
                 </div>

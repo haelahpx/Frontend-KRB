@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use App\Models\Ticket as TicketModel;
 use App\Models\Department;
+use App\Models\User; // Import User model for role checking
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 
@@ -41,42 +42,79 @@ class Ticket extends Component
     public ?int   $selected_department_id = null; // live switch
     public ?int   $primary_department_id  = null; // users.department_id
     public bool $showSwitcher = false;
+    
+    // **[NEW PROPERTY]** To store the superadmin status
+    public bool $is_superadmin_user = false; 
 
     public function mount(): void
     {
         $user = Auth::user()->loadMissing(['company', 'department', 'role']);
+        
+        // **[CHANGE]** Set the flag based on the loaded user role
+        $this->is_superadmin_user = $this->isSuperadmin();
+
         $this->company_name        = optional($user->company)->company_name ?? '-';
         $this->primary_department_id = $user->department_id ?: null;
 
         $this->loadUserDepartments();
 
-        // default selection: primary or first option
-        if (!$this->selected_department_id) {
-            $this->selected_department_id = $this->primary_department_id
-                ?: ($this->deptOptions[0]['id'] ?? null);
+        // **[CHANGE]** Handle default selection for Superadmin
+        if ($this->is_superadmin_user) {
+            // Default to 'View All' (null ID)
+            $this->selected_department_id = null;
+            $this->department_name = 'SEMUA DEPARTEMEN';
+        } else {
+             // default selection for regular admin: primary or first option
+            if (!$this->selected_department_id) {
+                $this->selected_department_id = $this->primary_department_id
+                    ?: ($this->deptOptions[0]['id'] ?? null);
+            }
+            $this->department_name = $this->resolveDeptName($this->selected_department_id);
         }
-        $this->department_name = $this->resolveDeptName($this->selected_department_id);
     }
 
     protected function loadUserDepartments(): void
     {
         $user = Auth::user();
 
-        $rows = DB::table('user_departments as ud')
-            ->join('departments as d', 'd.department_id', '=', 'ud.department_id')
-            ->where('ud.user_id', $user->user_id)
-            ->orderBy('d.department_name')
-            ->get(['d.department_id as id', 'd.department_name as name']);
+        // **[CHANGE]** If Superadmin, load ALL departments for the company
+        if ($this->is_superadmin_user) {
+            $rows = Department::where('company_id', $user->company_id)
+                ->orderBy('department_name')
+                ->get(['department_id as id', 'department_name as name']);
+        } else {
+            // Original logic for non-Superadmin
+            $rows = DB::table('user_departments as ud')
+                ->join('departments as d', 'd.department_id', '=', 'ud.department_id')
+                ->where('ud.user_id', $user->user_id)
+                ->orderBy('d.department_name')
+                ->get(['d.department_id as id', 'd.department_name as name']);
+        }
+
 
         $this->deptOptions = $rows
             ->map(fn($r) => ['id' => (int) $r->id, 'name' => (string) $r->name])
             ->values()
             ->all();
 
-        $this->showSwitcher = true;
+        // Add the primary department if not already included
+        $primaryId = $user->department_id;
+        $isPrimaryInList = collect($this->deptOptions)->contains('id', $primaryId);
 
-        // fallback: if no pivot but has primary
-        if (empty($this->deptOptions) && $this->primary_department_id) {
+        if ($primaryId && !$isPrimaryInList) {
+             $primaryName = Department::where('department_id', $primaryId)->value('department_name') ?? 'Unknown';
+             array_unshift($this->deptOptions, ['id' => (int)$primaryId, 'name' => (string)$primaryName]);
+        }
+        
+        // **[CHANGE]** Add "View All" option for Superadmins
+        if ($this->is_superadmin_user) {
+            array_unshift($this->deptOptions, ['id' => null, 'name' => 'SEMUA DEPARTEMEN']);
+        }
+
+        $this->showSwitcher = count($this->deptOptions) > 1;
+
+        // fallback: if no pivot but has primary (Only runs for non-superadmins)
+        if (!$this->is_superadmin_user && empty($this->deptOptions) && $this->primary_department_id) {
             $name = Department::where('department_id', $this->primary_department_id)->value('department_name') ?? 'Unknown';
             $this->deptOptions = [
                 [
@@ -91,7 +129,7 @@ class Ticket extends Component
     protected function resolveDeptName(?int $deptId): string
     {
         if (!$deptId) {
-            return '-';
+            return 'SEMUA DEPARTEMEN'; // Updated for Superadmin "View All"
         }
 
         foreach ($this->deptOptions as $opt) {
@@ -120,15 +158,19 @@ class Ticket extends Component
 
     public function updatedSelectedDepartmentId(): void
     {
-        $allowed = collect($this->deptOptions)->pluck('id')->all();
-        $id      = (int) $this->selected_department_id;
+        $id = $this->selected_department_id; // Keep as null if "View All" is selected
 
-        if (!in_array($id, $allowed, true)) {
-            $this->selected_department_id = $this->primary_department_id
-                ?: ($this->deptOptions[0]['id'] ?? null);
-            $id = (int) $this->selected_department_id;
+        if (!$this->is_superadmin_user) {
+            $allowed = collect($this->deptOptions)->pluck('id')->all();
+            $id = (int) $id;
+
+            if (!in_array($id, $allowed, true)) {
+                $this->selected_department_id = $this->primary_department_id
+                    ?: ($this->deptOptions[0]['id'] ?? null);
+                $id = $this->selected_department_id;
+            }
         }
-
+        
         $this->department_name = $this->resolveDeptName($id);
         $this->resetPage();
     }
@@ -255,33 +297,32 @@ class Ticket extends Component
         // Get the authenticated user
         $user = auth()->user();
 
-        // If the user has a company_id, we can filter by company
+        // Apply company filter (mandatory)
         if (Schema::hasColumn('tickets', 'company_id') && isset($user->company_id)) {
             $query->where('company_id', $user->company_id);
         }
 
-        // If the user has selected a department, filter by that department
-        $deptId = $this->selected_department_id ?: null;
-        if ($deptId) {
-            if (Schema::hasColumn('tickets', 'department_id')) {
+        // Determine the department filter ID. Null means 'View All'.
+        $deptId = $this->selected_department_id; 
+
+        // **[CHANGE]** Department Filtering Logic
+        if (Schema::hasColumn('tickets', 'department_id')) {
+            if ($deptId !== null) {
+                // Filter by the specific department selected in the dropdown
                 $query->where('department_id', $deptId);
-            }
-        } elseif ($user && !$this->isSuperadmin()) {
-            // Regular users can only see their department's tickets
-            if (Schema::hasColumn('tickets', 'department_id') && !empty($user->department_id)) {
+            } elseif (!$this->is_superadmin_user) {
+                // If 'View All' is selected (null) AND the user is NOT Superadmin, 
+                // fall back to filtering by the user's primary department (standard admin behavior)
                 $query->where('department_id', $user->department_id);
             }
-        } elseif ($this->isSuperadmin()) {
-            // Superadmins can see all tickets, no department filtering.
+            // If $deptId is null AND the user IS Superadmin, no department filter is applied (shows all).
         }
 
-        // Admins can view all departments within the same company
-        if ($this->ensureAdmin() && !$this->isSuperadmin()) {
-            $query->where(function ($q) use ($user) {
-                // Include tickets from any department within the same company
-                $q->where('company_id', $user->company_id);
-            });
-        }
+        // The original block for Admin role (non-Superadmin) is no longer needed here 
+        // because the logic above handles both department selection and the default view correctly:
+        // - Superadmin + null $deptId -> No filter (view all)
+        // - Admin + specific $deptId -> Filter by $deptId
+        // - Admin + null $deptId (fallback) -> Filter by $user->department_id
 
         // Search functionality
         if ($this->search) {

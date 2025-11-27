@@ -47,11 +47,11 @@
 
                         <div class="space-y-1.5">
                             <h2 class="text-xl sm:text-2xl font-semibold leading-tight">
-                                Information Center
+                                Booking Room Center
                             </h2>
 
                             <div class="text-sm text-white/80 flex flex-col sm:block">
-                                <span>Perusahaan: <span class="font-semibold">{{ $company_name }}</span></span>
+                                <span>Cabang: <span class="font-semibold">{{ $company_name }}</span></span>
                                 <span class="hidden sm:inline mx-2">•</span>
                                 <span>Departemen: <span class="font-semibold">{{ $department_name }}</span></span>
                             </div>

@@ -53,6 +53,9 @@ class Usermanagement extends Component
     public array $departmentOptions = []; // renamed variable
     public ?int $selected_department_id = null;  // pilihan aktif
     public bool $showSwitcher = false;  // control visibility of the department switcher
+    
+    // **[NEW PROPERTY]** Flag for Superadmin
+    public bool $is_superadmin_user = false;
 
     /** Options */
     /** @var array<int, array{id:int,name:string}> */
@@ -63,11 +66,26 @@ class Usermanagement extends Component
         'modalEdit' => 'bool',
     ];
 
+    /* ======================== Utility Methods ======================== */
+
+    protected function isSuperadmin(): bool
+    {
+        $user = Auth::user();
+        if ($user && !$user->relationLoaded('role')) {
+            $user->load('role');
+        }
+        return optional($user->role)->name === 'Superadmin';
+    }
+
+
     /* ======================== Lifecycle ======================== */
 
     public function mount(): void
     {
-        $auth = Auth::user()->loadMissing(['company', 'department']);
+        $auth = Auth::user()->loadMissing(['company', 'department', 'role']);
+        
+        // **[CHANGE]** Set Superadmin flag
+        $this->is_superadmin_user = $this->isSuperadmin();
 
         $this->company_id = (int)($auth->company_id ?? 0);
         $this->primary_department_id = $auth->department_id ?: null;
@@ -76,9 +94,14 @@ class Usermanagement extends Component
         // load switcher options
         $this->loadUserDepartments();
 
-        // pilih default: primary -> first option -> null
-        $this->selected_department_id = $this->primary_department_id
-            ?: ($this->departmentOptions[0]['id'] ?? null);
+        // **[CHANGE]** Handle default selection for Superadmin
+        if ($this->is_superadmin_user) {
+            $this->selected_department_id = null; // Default to 'View All'
+        } else {
+            // pilih default: primary -> first option -> null
+            $this->selected_department_id = $this->primary_department_id
+                ?: ($this->departmentOptions[0]['id'] ?? null);
+        }
 
         $this->department_name = $this->resolveDeptName($this->selected_department_id)
             ?: (optional($auth->department)->department_name ?? '-');
@@ -106,34 +129,62 @@ class Usermanagement extends Component
     protected function loadUserDepartments(): void
     {
         $user = Auth::user();
+        $companyId = $user->company_id;
 
-        $rows = DB::table('user_departments as ud')
-            ->join('departments as d', 'd.department_id', '=', 'ud.department_id')
-            ->where('ud.user_id', $user->user_id)
-            ->orderBy('d.department_name')
-            ->get(['d.department_id as id', 'd.department_name as name']);
+        // **[CHANGE]** If Superadmin, load ALL departments for the company
+        if ($this->is_superadmin_user) {
+            $rows = Department::where('company_id', $companyId)
+                ->orderBy('department_name')
+                ->get(['department_id as id', 'department_name as name']);
+        } else {
+            // Original logic for non-Superadmin
+            $rows = DB::table('user_departments as ud')
+                ->join('departments as d', 'd.department_id', '=', 'ud.department_id')
+                ->where('ud.user_id', $user->user_id)
+                ->orderBy('d.department_name')
+                ->get(['d.department_id as id', 'd.department_name as name']);
+        }
 
-        $this->departmentOptions = $rows->map(fn($r) => [
+        $options = $rows->map(fn($r) => [
             'id' => (int)$r->id,
             'name' => (string)$r->name
         ])->values()->all();
 
-        $this->showSwitcher = true; // Show switcher if departments are loaded
+        $primaryId = $user->department_id;
+        $isPrimaryInList = collect($options)->contains('id', $primaryId);
 
-        // fallback jika pivot kosong namun user punya primary
-        if (empty($this->departmentOptions) && $this->primary_department_id) {
+        // Add the primary department if not already included
+        if ($primaryId && !$isPrimaryInList) {
+            $primaryName = Department::where('department_id', $primaryId)->value('department_name') ?? 'Unknown';
+            array_unshift($options, ['id' => (int)$primaryId, 'name' => (string)$primaryName]);
+        }
+        
+        // **[CRITICAL CHANGE]** Deduplicate list by ID
+        $options = collect($options)->unique('id')->values()->all();
+
+        // **[CHANGE]** Add "View All" option (null ID) for Superadmins
+        if ($this->is_superadmin_user) {
+            array_unshift($options, ['id' => null, 'name' => 'SEMUA DEPARTEMEN']);
+        }
+
+        $this->departmentOptions = $options;
+        $this->showSwitcher = count($this->departmentOptions) > 1;
+
+        // fallback jika pivot kosong namun user punya primary (only runs for non-superadmin)
+        if (!$this->is_superadmin_user && empty($this->departmentOptions) && $this->primary_department_id) {
             $name = Department::where('department_id', $this->primary_department_id)->value('department_name') ?? 'Unknown';
             $this->departmentOptions = [
                 ['id' => (int)$this->primary_department_id, 'name' => (string)$name]
             ];
-
-            $this->showSwitcher = false; // Hide switcher if no department options are available
+            $this->showSwitcher = false;
         }
     }
 
     protected function resolveDeptName(?int $deptId): string
     {
-        if (!$deptId) return '-';
+        // **[CHANGE]** Return 'SEMUA DEPARTEMEN' when ID is null
+        if (!$deptId) return 'SEMUA DEPARTEMEN';
+
         foreach ($this->departmentOptions as $opt) {
             if ($opt['id'] === (int)$deptId) return $opt['name'];
         }
@@ -153,13 +204,21 @@ class Usermanagement extends Component
     public function updatedSelectedDepartment_id(): void { $this->updatedSelectedDepartmentId(); }
     public function updatedSelectedDepartmentId(): void
     {
-        $allowed = collect($this->departmentOptions)->pluck('id')->all();
-        $id = (int) $this->selected_department_id;
+        $id = $this->selected_department_id; // Preserve null for Superadmin 'View All'
 
-        if (!in_array($id, $allowed, true)) {
-            $this->selected_department_id = $this->primary_department_id ?: ($this->departmentOptions[0]['id'] ?? null);
-            $id = (int)$this->selected_department_id;
+        // Validation only applies if not Superadmin or if a specific ID is selected
+        if (!$this->is_superadmin_user || $id !== null) {
+            $allowed = collect($this->departmentOptions)->pluck('id')->all();
+            
+            // Cast to int only if it's not null, otherwise in_array check fails for null
+            $checkId = $id === null ? null : (int) $id;
+
+            if (!in_array($checkId, $allowed, true)) {
+                $this->selected_department_id = $this->primary_department_id ?: ($this->departmentOptions[0]['id'] ?? null);
+                $id = $this->selected_department_id;
+            }
         }
+        
         $this->department_name = $this->resolveDeptName($id);
         $this->resetPage();
     }
@@ -206,8 +265,13 @@ class Usermanagement extends Component
     {
         $data = $this->validate($this->createRules());
 
-        // pakai departemen TERPILIH (fallback primary)
+        // A user MUST be assigned to a specific department.
         $deptId = $this->selected_department_id ?: $this->primary_department_id;
+        
+        if (!$deptId) {
+             $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Tidak ada departemen terpilih untuk menempatkan user.', duration: 5000);
+             return;
+        }
 
         [$roleId, $isAgent] = explode('_', $data['role_key']);
 
@@ -246,13 +310,19 @@ class Usermanagement extends Component
         $this->resetErrorBag();
         $this->resetValidation();
 
-        $deptId = $this->selected_department_id ?: $this->primary_department_id;
+        // The query must allow finding users across all departments if Superadmin 'View All' is active.
+        $deptId = $this->selected_department_id; 
 
-        $u = User::with(['role', 'department'])
+        $query = User::with(['role', 'department'])
             ->where('company_id', $this->company_id)
-            ->where('department_id', $deptId) // lock ke dept terpilih
-            ->where('user_id', $id)
-            ->firstOrFail();
+            ->where('user_id', $id);
+
+        // **[CHANGE]** Only filter by department if a specific department is selected
+        if ($deptId !== null) {
+            $query->where('department_id', $deptId); // lock to selected dept
+        }
+            
+        $u = $query->firstOrFail();
 
         $targetRole = strtolower($u->role->name ?? '');
 
@@ -290,13 +360,19 @@ class Usermanagement extends Component
     {
         if (!$this->editingId) return;
 
-        $deptId = $this->selected_department_id ?: $this->primary_department_id;
+        // The query must allow finding users across all departments if Superadmin 'View All' is active.
+        $deptId = $this->selected_department_id; 
 
-        $u = User::with('role')
+        $query = User::with('role')
             ->where('company_id', $this->company_id)
-            ->where('department_id', $deptId)
-            ->where('user_id', $this->editingId)
-            ->firstOrFail();
+            ->where('user_id', $this->editingId);
+
+        // **[CHANGE]** Only filter by department if a specific department is selected
+        if ($deptId !== null) {
+            $query->where('department_id', $deptId); // lock to selected dept
+        }
+            
+        $u = $query->firstOrFail();
 
         $targetRole = strtolower($u->role->name ?? '');
 
@@ -331,11 +407,13 @@ class Usermanagement extends Component
 
     public function render()
     {
-        $deptId = $this->selected_department_id ?: $this->primary_department_id;
+        // $deptId will be null for Superadmin 'View All'
+        $deptId = $this->selected_department_id;
 
         $users = User::query()
             ->with(['role', 'department'])
             ->where('company_id', $this->company_id)
+            // **[CHANGE]** Only apply department filter if $deptId is NOT null
             ->when($deptId, fn($q) => $q->where('department_id', $deptId))
             ->whereHas('role', fn($q) => $q->where('name', '!=', 'superadmin'))
             ->leftJoin('roles', 'roles.role_id', '=', 'users.role_id')

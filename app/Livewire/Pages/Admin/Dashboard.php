@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-// Import Models (Asumsi model-model ini ada)
+// Import Models
 use App\Models\Ticket;
 use App\Models\BookingRoom;
 use App\Models\Information;
@@ -28,24 +28,38 @@ class Dashboard extends Component
     protected string $tz = 'Asia/Jakarta';
 
     /**
+     * Cek apakah user memiliki role 'superadmin'.
+     */
+    private function isSuperAdmin(User $user): bool
+    {
+        // Asumsi kolom role adalah 'role_name' pada tabel user atau relasi
+        // Jika menggunakan relasi, sesuaikan dengan logic otentikasi role yang benar
+        // Contoh: return $user->hasRole('superadmin');
+        return $user->role->name === 'Superadmin'; // Sesuaikan dengan properti/relasi role yang Anda gunakan
+    }
+
+    /**
      * Helper untuk mendapatkan semua ID Departemen (Primer + Sekunder) dari user.
-     * Menggunakan tabel user_departments sebagai pivot table.
+     * Untuk Superadmin, fungsi ini harus mengembalikan array kosong agar tidak ada filter departemen yang diterapkan.
      */
     private function getAllDepartmentIds(User $user): array
     {
+        // **PERUBAHAN UTAMA UNTUK SUPERADMIN**
+        if ($this->isSuperAdmin($user)) {
+            // Mengembalikan array kosong. Semua query akan melewatkan when(!empty($departmentIds), ...)
+            return []; 
+        }
+
+        // Logic standar untuk non-Superadmin
         $primaryId = $user->department_id;
         
-        // 1. Ambil ID departemen sekunder dari tabel pivot user_departments
         $secondaryIds = DB::table('user_departments')
             ->where('user_id', $user->user_id)
             ->pluck('department_id')
             ->toArray();
 
-        // 2. Gabungkan ID primer dan sekunder
         $departmentIds = array_merge([$primaryId], $secondaryIds);
         
-        // 3. Filter, hapus duplikasi, dan pastikan tipe data integer
-        // array_filter(..., ARRAY_FILTER_USE_BOTH) digunakan untuk menghapus nilai null/0/kosong
         return array_map('intval', array_filter(array_unique($departmentIds)));
     }
 
@@ -93,6 +107,7 @@ class Dashboard extends Component
         $ticketsData = Ticket::query()
             ->select(DB::raw('DATE(created_at) as date_key'), DB::raw('count(*) as count'))
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            // JIKA $departmentIds KOSONG (SUPERADMIN), KLAUSA INI DILOMPATI
             ->when(!empty($departmentIds), fn($q) => $q->whereIn('department_id', $departmentIds))
             ->whereBetween('created_at', [$startOfRange, $endOfRange])
             ->groupBy(DB::raw('DATE(created_at)'))
@@ -109,6 +124,7 @@ class Dashboard extends Component
         $roomData = BookingRoom::query()
             ->select(DB::raw('DATE(created_at) as date_key'), DB::raw('count(*) as count'))
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+            // JIKA $departmentIds KOSONG (SUPERADMIN), KLAUSA INI DILOMPATI
             ->when(!empty($departmentIds), fn($q) => $q->whereIn('department_id', $departmentIds))
             ->whereBetween('created_at', [$startOfRange, $endOfRange])
             ->groupBy(DB::raw('DATE(created_at)'))
@@ -122,6 +138,7 @@ class Dashboard extends Component
         }
 
         // --- 4. Information Data ---
+        // Informasi tidak memiliki company_id atau department_id, jadi tidak perlu filter tambahan
         $infoData = Information::query()
             ->select(DB::raw('DATE(created_at) as date_key'), DB::raw('count(*) as count'))
             ->whereBetween('created_at', [$startOfRange, $endOfRange])
@@ -149,18 +166,23 @@ class Dashboard extends Component
         $user = Auth::user();
         $companyId = optional($user)->company_id;
         
-        // Ambil semua ID departemen (Primer + Sekunder) menggunakan logika pivot
+        // Ambil semua ID departemen (Primer + Sekunder). Akan kosong jika Superadmin.
         $departmentIds = $this->getAllDepartmentIds($user);
-
-        // Ambil nama-nama Departemen berdasarkan ID yang terkumpul
-        $departments = Department::whereIn('department_id', $departmentIds)
-            ->pluck('department_name') // Asumsi kolom nama departemen adalah 'department_name'
-            ->toArray();
         
-        // Ubah array nama menjadi string yang dipisahkan koma
-        $departmentList = count($departments) > 0 
-            ? implode(', ', $departments) 
-            : 'Semua Departemen';
+        // Tentukan label departemen yang ditampilkan
+        if ($this->isSuperAdmin($user)) {
+            $departmentList = 'SEMUA DEPARTEMEN';
+        } else {
+            // Ambil nama-nama Departemen berdasarkan ID yang terkumpul
+            $departments = Department::whereIn('department_id', $departmentIds)
+                ->pluck('department_name') // Asumsi kolom nama departemen adalah 'department_name'
+                ->toArray();
+            
+            // Ubah array nama menjadi string yang dipisahkan koma
+            $departmentList = count($departments) > 0 
+                ? implode(', ', $departments) 
+                : 'Semua Departemen'; // Fallback jika departemen tidak ditemukan
+        }
             
         // ... (Range waktu) ...
         $startOfRange = Carbon::now($this->tz)->subDays(6)->startOfDay();
@@ -183,6 +205,7 @@ class Dashboard extends Component
             ->count();
 
         $weeklyInformationCount = Information::query()
+            // Information tidak difilter berdasarkan company/department karena bersifat umum
             ->whereBetween('created_at', [$startOfRange, $endOfRange])
             ->count();
         
@@ -207,6 +230,7 @@ class Dashboard extends Component
 
         $highPercent = $totalTicketsThisMonth > 0 ? round(($highCount / $totalTicketsThisMonth) * 100) : 0;
         $mediumPercent = $totalTicketsThisMonth > 0 ? round(($mediumCount / $totalTicketsThisMonth) * 100) : 0;
+        // Hitung Low sebagai sisa agar total menjadi 100%
         $lowPercent = 100 - $highPercent - $mediumPercent;
         if ($lowPercent < 0) $lowPercent = 0;
 

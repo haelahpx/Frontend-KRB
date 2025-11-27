@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use App\Models\Information as InformationModel;
 use App\Models\BookingRoom;
 use App\Models\Department;
+use App\Models\User; // Import User model
 
 #[Layout('layouts.admin')]
 #[Title('Admin - Information')]
@@ -51,15 +52,31 @@ class Information extends Component
     public ?int   $primary_department_id  = null;
     public bool $showSwitcher = false;
 
+    // **[NEW PROPERTY]** To store the superadmin status
+    public bool $is_superadmin = false;
+
     // ====== REJECT MODAL ======
     public bool $rejectModal = false;
     public ?int $rejectBookingId = null;
     public string $rejectionReason = '';
 
+    // --- [NEW METHOD] Helper to check for Superadmin role ---
+    /**
+     * Checks if the user has the 'Superadmin' role.
+     */
+    private function isSuperAdmin(User $user): bool
+    {
+        // **ADJUST THIS LINE BASED ON YOUR ACTUAL USER/ROLE STRUCTURE**
+        // Example assumes a 'role' relation with a 'name' property
+        return optional($user->role)->name === 'Superadmin';
+    }
+
     public function mount(): void
     {
         try {
-            $auth = Auth::user()->loadMissing(['company', 'department']);
+            $auth = Auth::user()->loadMissing(['company', 'department', 'role']); // Load role
+            $this->is_superadmin = $this->isSuperAdmin($auth); // Set the flag
+
             $this->company_name = optional($auth->company)->company_name ?? '-';
             $this->primary_department_id = $auth->department_id ?: null;
 
@@ -70,7 +87,17 @@ class Information extends Component
                     ?: ($this->deptOptions[0]['id'] ?? null);
             }
 
-            $this->department_name = $this->resolveDeptName($this->selected_department_id);
+            // **[CHANGE]** Display logic for Superadmin
+            if ($this->is_superadmin) {
+                // Add "View All" option and default selection to null
+                $this->department_name = 'SEMUA DEPARTEMEN';
+                $this->selected_department_id = null; 
+                if (!in_array(null, array_column($this->deptOptions, 'id'))) {
+                    array_unshift($this->deptOptions, ['id' => null, 'name' => 'SEMUA DEPARTEMEN']);
+                }
+            } else {
+                $this->department_name = $this->resolveDeptName($this->selected_department_id);
+            }
 
             $this->resetForm();
             $this->resetBroadcastForm(); // Assuming this was for a separate broadcast component
@@ -83,27 +110,45 @@ class Information extends Component
     {
         $user = Auth::user();
 
-        $rows = DB::table('user_departments as ud')
-            ->join('departments as d', 'd.department_id', '=', 'ud.department_id')
-            ->where('ud.user_id', $user->user_id)
-            ->orderBy('d.department_name')
-            ->get(['d.department_id as id', 'd.department_name as name']);
+        // **[CHANGE]** If Superadmin, load ALL departments for the company
+        if ($this->is_superadmin) {
+             $rows = Department::where('company_id', $user->company_id)
+                ->orderBy('department_name')
+                ->get(['department_id as id', 'department_name as name']);
+        } else {
+            // Original logic for non-Superadmin
+            $rows = DB::table('user_departments as ud')
+                ->join('departments as d', 'd.department_id', '=', 'ud.department_id')
+                ->where('ud.user_id', $user->user_id)
+                ->orderBy('d.department_name')
+                ->get(['d.department_id as id', 'd.department_name as name']);
+        }
 
         $this->deptOptions = $rows->map(fn($r) => ['id' => (int)$r->id, 'name' => (string)$r->name])->values()->all();
 
-        $this->showSwitcher = true;
+        // Add the primary department if not already included
+        $primaryId = $user->department_id;
+        $isPrimaryInList = collect($this->deptOptions)->contains('id', $primaryId);
 
-        if (empty($this->deptOptions) && $this->primary_department_id) {
+        if ($primaryId && !$isPrimaryInList) {
+             // Use array_unshift to add the primary department to the beginning of the array
+             $primaryName = Department::where('department_id', $primaryId)->value('department_name') ?? 'Unknown';
+             array_unshift($this->deptOptions, ['id' => (int)$primaryId, 'name' => (string)$primaryName]);
+        }
+        
+        $this->showSwitcher = count($this->deptOptions) > 1 || $this->is_superadmin;
+
+
+        if (!$this->is_superadmin && empty($this->deptOptions) && $this->primary_department_id) {
             $name = Department::where('department_id', $this->primary_department_id)->value('department_name') ?? 'Unknown';
             $this->deptOptions = [['id' => (int)$this->primary_department_id, 'name' => (string)$name]];
-
             $this->showSwitcher = false;
         }
     }
 
     protected function resolveDeptName(?int $deptId): string
     {
-        if (!$deptId) return '-';
+        if (!$deptId) return 'SEMUA DEPARTEMEN'; // Updated for Superadmin "View All"
         foreach ($this->deptOptions as $opt) {
             if ($opt['id'] === (int)$deptId) {
                 return $opt['name'];
@@ -119,20 +164,34 @@ class Information extends Component
 
     public function updatedSelectedDepartmentId(): void
     {
-        $id = (int) $this->selected_department_id;
+        $id = $this->selected_department_id; // Keep as null if "View All" is selected
 
-        $allowed = collect($this->deptOptions)->pluck('id')->all();
-        if (!in_array($id, $allowed, true)) {
-            $this->selected_department_id = $this->primary_department_id ?: ($this->deptOptions[0]['id'] ?? null);
-            $id = (int) $this->selected_department_id;
+        // If not superadmin, ensure selected ID is valid
+        if (!$this->is_superadmin && $id !== null) {
+            $id = (int) $id;
+            $allowed = collect($this->deptOptions)->pluck('id')->all();
+            if (!in_array($id, $allowed, true)) {
+                $this->selected_department_id = $this->primary_department_id ?: ($this->deptOptions[0]['id'] ?? null);
+                $id = $this->selected_department_id;
+            }
+        }
+        // Ensure that if 'View All' is selected (null), we update the name correctly
+        if ($this->is_superadmin && $id === null) {
+            $this->department_name = 'SEMUA DEPARTEMEN';
+        } else {
+            $this->department_name = $this->resolveDeptName($id);
         }
 
-        $this->department_name = $this->resolveDeptName($id);
         $this->resetPaginationForAll();
     }
 
     protected function currentDeptId(): ?int
     {
+        // For Superadmin, if they select 'View All' (null), return null.
+        // For others, return selected_department_id (which should be non-null after validation)
+        if ($this->is_superadmin && $this->selected_department_id === null) {
+            return null;
+        }
         return $this->selected_department_id ?: $this->primary_department_id;
     }
 
@@ -177,10 +236,15 @@ class Information extends Component
             $deptId = $this->currentDeptId();
 
             try {
-                $row = InformationModel::where('information_id', $id)
-                    ->where('company_id', $user->company_id)
-                    ->where('department_id', $deptId)
-                    ->firstOrFail();
+                $query = InformationModel::where('information_id', $id)
+                    ->where('company_id', $user->company_id);
+                    
+                // **[CHANGE]** Only filter by department if a specific department is selected
+                if ($deptId !== null) {
+                    $query->where('department_id', $deptId);
+                }
+
+                $row = $query->firstOrFail();
 
                 $this->editingId   = $row->information_id;
                 $this->description = (string) $row->description;
@@ -198,8 +262,9 @@ class Information extends Component
         $user = Auth::user();
         $deptId = $this->currentDeptId();
 
+        // Information must always be tied to a specific department, even for superadmin
         if (!$deptId) {
-            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Tidak ada departemen terpilih.', duration: 5000);
+            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Silakan pilih departemen yang akan menerima informasi.', duration: 5000);
             return;
         }
 
@@ -222,11 +287,21 @@ class Information extends Component
 
         $user   = Auth::user();
         $deptId = $this->currentDeptId();
+        
+        if (!$deptId) {
+            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Silakan pilih departemen yang akan menerima informasi.', duration: 5000);
+            return;
+        }
 
-        $row = InformationModel::where('information_id', $this->editingId)
-            ->where('company_id', $user->company_id)
-            ->where('department_id', $deptId)
-            ->firstOrFail();
+        $query = InformationModel::where('information_id', $this->editingId)
+            ->where('company_id', $user->company_id);
+            
+        // **[CHANGE]** Only filter by department if a specific department is selected
+        if ($deptId !== null) {
+            $query->where('department_id', $deptId);
+        }
+
+        $row = $query->firstOrFail();
 
         $row->fill([
             'description'   => $this->description,
@@ -245,11 +320,15 @@ class Information extends Component
         $deptId = $this->currentDeptId();
 
         try {
-            $row = InformationModel::where('information_id', $id)
-                ->where('company_id', $user->company_id)
-                ->where('department_id', $deptId)
-                ->firstOrFail();
+            $query = InformationModel::where('information_id', $id)
+                ->where('company_id', $user->company_id);
+                
+            // **[CHANGE]** Only filter by department if a specific department is selected
+            if ($deptId !== null) {
+                $query->where('department_id', $deptId);
+            }
 
+            $row = $query->firstOrFail();
             $row->delete();
 
             $this->dispatch('toast', type: 'success', title: 'Deleted', message: 'Information deleted.', duration: 3500);
@@ -306,8 +385,9 @@ class Information extends Component
         $user    = Auth::user();
         $deptId  = $this->currentDeptId();
 
+        // Information must always be tied to a specific department, even for superadmin
         if (!$deptId) {
-            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Tidak ada departemen terpilih.', duration: 5000);
+            $this->dispatch('toast', type: 'error', title: 'Gagal', message: 'Silakan pilih departemen yang akan menerima informasi.', duration: 5000);
             return;
         }
 
@@ -348,6 +428,7 @@ class Information extends Component
 
     protected function composeDescription(BookingRoom $b): string
     {
+        // ... (original composeDescription implementation)
         $title  = $b->meeting_title ?: 'Meeting';
         $date   = Carbon::parse($b->date)->translatedFormat('d M Y');
         $start  = Carbon::parse($b->start_time)->format('H:i');
@@ -425,13 +506,14 @@ class Information extends Component
         }
     }
 
-    // ========= RENDER =========
+    // ========= RENDER (Filter Information List) =========
     public function render()
     {
         $user      = Auth::user();
         $companyId = $user->company_id;
         $deptId    = $this->currentDeptId();
-
+        
+        // Offline Requests (Filtering remains the same as they are requests requiring action)
         $offline = BookingRoom::query()
             ->with(['room', 'user', 'department'])
             ->where('company_id', $companyId)
@@ -439,9 +521,12 @@ class Information extends Component
             ->where('booking_type', 'meeting')
             ->where('requestinformation', 'request')
             ->where('status', 'approved')
+            // **[NOTE]** Assuming requests should still be filtered by the currently selected department for action
+            ->when($deptId !== null && !$this->is_superadmin, fn($q) => $q->where('department_id', $deptId)) 
             ->orderByDesc('date')->orderByDesc('start_time')
             ->paginate($this->perPageReq, ['*'], 'offlinePage');
 
+        // Online Requests (Filtering remains the same as they are requests requiring action)
         $online = BookingRoom::query()
             ->with(['room', 'user', 'department'])
             ->where('company_id', $companyId)
@@ -449,11 +534,15 @@ class Information extends Component
             ->where('booking_type', 'online_meeting')
             ->where('requestinformation', 'request')
             ->where('status', 'approved')
+            // **[NOTE]** Assuming requests should still be filtered by the currently selected department for action
+            ->when($deptId !== null && !$this->is_superadmin, fn($q) => $q->where('department_id', $deptId))
             ->orderByDesc('date')->orderByDesc('start_time')
             ->paginate($this->perPageReq, ['*'], 'onlinePage');
 
+        // **[CHANGE]** Information List (Superadmin can see all)
         $rows = InformationModel::query()
             ->where('company_id', $companyId)
+            // Only apply department filter if $deptId is NOT null (i.e., not "View All")
             ->when($deptId, fn($q) => $q->where('department_id', $deptId))
             ->when(
                 $this->search,

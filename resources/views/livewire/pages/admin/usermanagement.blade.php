@@ -33,7 +33,7 @@
                             </h2>
 
                             <p class="text-sm text-white/80">
-                                Perusahaan: <span class="font-semibold">{{ $company_name }}</span>
+                                Cabang: <span class="font-semibold">{{ $company_name }}</span>
                                 <span class="mx-2">•</span>
                                 Departemen: <span class="font-semibold">{{ $department_name }}</span>
                             </p>
@@ -57,10 +57,10 @@
                             <select
                                 wire:model.live="selected_department_id"
                                 class="w-full h-11 sm:h-12 px-3 sm:px-4 rounded-lg border border-white/20 bg-white/10 text-white text-sm placeholder:text-white/60 focus:border-white focus:ring-2 focus:ring-white/30 focus:outline-none transition">
-                                @foreach ($departmentOptions as $opt)
                                 <option class="text-gray-900" value="{{ auth()->user()->department_id }}">
                                     {{ auth()->user()->department->name }} (Your Primary Department)
                                 </option>
+                                @foreach ($departmentOptions as $opt)
                                 <option class="text-gray-900" value="{{ $opt['id'] }}">
                                     {{ $opt['name'] }}{{ $opt['id'] === $primary_department_id ? ' — Primary' : '' }}
                                 </option>

@@ -104,8 +104,6 @@
     <flux:sidebar.spacer />
 
     <flux:sidebar.nav>
-        <flux:sidebar.item icon="cog-6-tooth" href="#">Settings</flux:sidebar.item>
-        <flux:sidebar.item icon="information-circle" href="#">Help</flux:sidebar.item>
         <flux:sidebar.item class="lg:hidden" icon="arrow-right-start-on-rectangle" as="button" type="submit"
             form="logout-form">
             Logout
@@ -119,6 +117,12 @@
                 <flux:menu.radio checked>{{ $fullName }}</flux:menu.radio>
                 <flux:sidebar.item icon="user" href="{{ route('user.home') }}" class="cursor-pointer">
                     User Page
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="bell" href="{{ route('receptionist.dashboard') }}" class="cursor-pointer">
+                    Recepionist Page
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="shield-check" href="{{ route('admin.dashboard') }}" class="cursor-pointer">
+                    Admin Page
                 </flux:sidebar.item>
             </flux:menu.radio.group>
 

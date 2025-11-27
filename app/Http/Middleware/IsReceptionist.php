@@ -15,6 +15,9 @@ class IsReceptionist
         if ($user && $roleName === 'Receptionist') {
             return $next($request);
         }
+        else if ($user && $roleName === 'Superadmin') {
+            return $next($request);
+        }
 
         abort(403, 'Unauthorized');
     }

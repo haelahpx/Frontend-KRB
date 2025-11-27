@@ -21,15 +21,12 @@
                 <div class="flex items-center gap-4">
                     <div
                         class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.284-1.255-.778-1.664M6 18H2v-2a3 3 0 015.356-1.857M14 5a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                        <x-heroicon-o-user-group class="w-6 h-6 text-white" />
                     </div>
                     <div>
                         <h2 class="text-lg sm:text-xl font-semibold">User Management</h2>
                         <p class="text-sm text-white/80">
-                            Mengelola user untuk perusahaan: <span class="font-semibold">{{ $company_name }}</span>
+                            Cabang: <span class="font-semibold">{{ $company_name }}</span>
                         </p>
                     </div>
                 </div>
@@ -126,19 +123,11 @@
                         class="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition active:scale-95 hover:bg-black disabled:opacity-60 relative overflow-hidden"
                         wire:loading.class="opacity-80 cursor-wait">
                         <span class="flex items-center gap-2" wire:loading.remove wire:target="store">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M5 13l4 4L19 7" />
-                            </svg>
+                            <x-heroicon-o-check class="w-4 h-4" />
                             Simpan Data
                         </span>
                         <span class="flex items-center gap-2" wire:loading wire:target="store">
-                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4" />
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                            </svg>
+                            <x-heroicon-o-arrow-path class="h-4 w-4 animate-spin" />
                             Menyimpan…
                         </span>
                     </button>
@@ -153,11 +142,7 @@
                     <div class="relative flex-1">
                         <input type="text" wire:model.live="search" placeholder="Cari nama atau email..."
                             class="{{ $input }} pl-10 w-full placeholder:text-gray-400">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
-                        </svg>
+                        <x-heroicon-o-magnifying-glass class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     </div>
 
                     <div class="relative">
@@ -167,11 +152,7 @@
                                 <option value="{{ $r['id'] }}">{{ $r['name'] }}</option>
                             @endforeach
                         </select>
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.284-1.255-.778-1.664M6 18H2v-2a3 3 0 015.356-1.857M14 5a3 3 0 11-6 0 3 3 0 016 0zM4.5 8.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0z" />
-                        </svg>
+                        <x-heroicon-o-users class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     </div>
 
                     {{-- DEPARTMENT FILTER (NEWLY ADDED) --}}
@@ -182,11 +163,7 @@
                                 <option value="{{ $d->department_id }}">{{ $d->department_name }}</option>
                             @endforeach
                         </select>
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
+                        <x-heroicon-o-bars-4 class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     </div>
 
                 </div>
@@ -254,10 +231,7 @@
                     <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                         <h3 class="text-base font-semibold text-gray-900">Edit User</h3>
                         <button class="text-gray-500 hover:text-gray-700" wire:click="closeEdit">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <x-heroicon-o-x-mark class="w-5 h-5" />
                         </button>
                     </div>
 

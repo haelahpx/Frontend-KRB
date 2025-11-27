@@ -11,46 +11,24 @@
     @endphp
 
     <main class="px-4 sm:px-6 py-6 space-y-8">
-        
+
         {{-- HERO SECTION --}}
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white shadow-2xl">
             <div class="pointer-events-none absolute inset-0 opacity-10">
-                <div class="absolute top-0 -right-6 w-28 h-28 bg-white/20 rounded-full blur-xl"></div>
-                <div class="absolute bottom-0 -left-6 w-20 h-20 bg-white/10 rounded-full blur-lg"></div>
+                <div class="absolute top-0 -right-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
+                <div class="absolute bottom-0 -left-4 w-16 h-16 bg-white rounded-full blur-lg"></div>
             </div>
-
             <div class="relative z-10 p-6 sm:p-8">
-                <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-
-                    <!-- LEFT SECTION -->
-                    <div class="flex items-start gap-4 sm:gap-6">
-                        <div class="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                            <x-heroicon-o-wifi class="w-7 h-7 text-white" />
-                        </div>
-
-                        <div class="space-y-1.5">
-                            <h2 class="text-xl sm:text-2xl font-semibold leading-tight">
-                                WiFi Management (Superadmin)
-                            </h2>
-
-                            <p class="text-sm text-white/80">
-                                Perusahaan: <span class="font-semibold">{{ $company_name }}</span>
-                            </p>
-
-                            <p class="text-xs text-white/60">
-                                Kelola akses internet (SSID & Password) untuk seluruh area.
-                            </p>
-                        </div>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+                        <x-heroicon-o-bars-3 class="w-6 h-6 text-white" />
                     </div>
-
-                    <!-- RIGHT SECTION (Search) -->
-                    <div class="w-full lg:w-80 lg:ml-auto">
-                        <input
-                            type="text"
-                            wire:model.live.debounce.400ms="search"
-                            placeholder="Cari SSID atau Lokasi..."
-                            class="w-full rounded-lg bg-white/10 text-white border border-white/20
-                                   px-3 py-2 backdrop-blur-sm focus:ring-2 focus:ring-white/30 focus:outline-none placeholder:text-white/50 transition">
+                    <div>
+                        <h2 class="text-lg sm:text-xl font-semibold">Wifi Management</h2>
+                        <p class="text-sm text-white/80">
+                            Cabang: <span
+                                class="font-semibold">{{ optional(Auth::user()->company)->company_name ?? '-' }}</span>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -126,41 +104,40 @@
             <div class="divide-y divide-gray-200">
                 @forelse ($wifis as $wifi)
                 @php
-                    $rowNo = (($wifis->currentPage() - 1) * $wifis->perPage()) + $loop->iteration;
+                $rowNo = (($wifis->currentPage() - 1) * $wifis->perPage()) + $loop->iteration;
                 @endphp
 
                 <div class="px-5 py-5 hover:bg-gray-50 transition-colors group" wire:key="wifi-{{ $wifi->wifi_id }}">
                     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                        <!-- Icon & Content -->
                         <div class="flex items-start gap-4 flex-1">
                             <div class="{{ $ico }} bg-gray-900 group-hover:scale-105 transition-transform duration-300">
                                 <x-heroicon-o-signal class="w-5 h-5 text-white" />
                             </div>
-                            
+
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-2 mb-1.5">
                                     <h4 class="font-semibold text-gray-900 text-sm sm:text-base truncate">
                                         {{ $wifi->ssid }}
                                     </h4>
-                                    
+
                                     {{-- Status Badge --}}
                                     @if($wifi->is_active)
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-100">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                            Active
-                                        </span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-100">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        Active
+                                    </span>
                                     @else
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-[10px] font-medium border border-gray-200">
-                                            Inactive
-                                        </span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-[10px] font-medium border border-gray-200">
+                                        Inactive
+                                    </span>
                                     @endif
 
                                     {{-- Location Badge --}}
                                     @if($wifi->location)
-                                        <span class="{{ $chip }} bg-blue-50 text-blue-700 border border-blue-100">
-                                            <x-heroicon-o-map-pin class="w-3 h-3" />
-                                            {{ $wifi->location }}
-                                        </span>
+                                    <span class="{{ $chip }} bg-blue-50 text-blue-700 border border-blue-100">
+                                        <x-heroicon-o-map-pin class="w-3 h-3" />
+                                        {{ $wifi->location }}
+                                    </span>
                                     @endif
                                 </div>
 
@@ -174,7 +151,6 @@
                             </div>
                         </div>
 
-                        <!-- Actions -->
                         <div class="text-right shrink-0 space-y-3">
                             <div class="{{ $mono }} inline-block">No. {{ $rowNo }}</div>
                             <div class="flex flex-wrap gap-2 justify-end">
@@ -228,11 +204,9 @@
         @if($modalEdit)
         <div class="fixed inset-0 z-[60] flex items-center justify-center" role="dialog" aria-modal="true"
             wire:key="modal-edit" wire:keydown.escape.window="closeEdit">
-            
-            <!-- Overlay Backdrop -->
+
             <button type="button" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" aria-label="Close overlay" wire:click="closeEdit"></button>
 
-            <!-- Modal Panel -->
             <div class="relative w-full max-w-2xl mx-4 {{ $card }} shadow-2xl transform transition-all focus:outline-none z-10" tabindex="-1">
                 <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
                     <div>
@@ -249,7 +223,7 @@
                         <div>
                             <label class="{{ $label }}">SSID Name</label>
                             <input type="text" class="{{ $input }}" wire:model.defer="edit_ssid">
-                            @error('edit_ssid') <p class="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1"><x-heroicon-s-exclamation-circle class="w-3 h-3"/> {{ $message }}</p> @enderror
+                            @error('edit_ssid') <p class="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1"><x-heroicon-s-exclamation-circle class="w-3 h-3" /> {{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="{{ $label }}">Password</label>
@@ -257,12 +231,12 @@
                                 <input type="text" class="{{ $input }} pr-10" wire:model.defer="edit_password">
                                 <x-heroicon-o-key class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             </div>
-                            @error('edit_password') <p class="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1"><x-heroicon-s-exclamation-circle class="w-3 h-3"/> {{ $message }}</p> @enderror
+                            @error('edit_password') <p class="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1"><x-heroicon-s-exclamation-circle class="w-3 h-3" /> {{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="{{ $label }}">Location</label>
                             <input type="text" class="{{ $input }}" wire:model.defer="edit_location">
-                            @error('edit_location') <p class="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1"><x-heroicon-s-exclamation-circle class="w-3 h-3"/> {{ $message }}</p> @enderror
+                            @error('edit_location') <p class="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1"><x-heroicon-s-exclamation-circle class="w-3 h-3" /> {{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="{{ $label }}">Status</label>
@@ -270,7 +244,7 @@
                                 <option value="1">Active</option>
                                 <option value="0">Inactive</option>
                             </select>
-                            @error('edit_is_active') <p class="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1"><x-heroicon-s-exclamation-circle class="w-3 h-3"/> {{ $message }}</p> @enderror
+                            @error('edit_is_active') <p class="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1"><x-heroicon-s-exclamation-circle class="w-3 h-3" /> {{ $message }}</p> @enderror
                         </div>
                     </div>
 

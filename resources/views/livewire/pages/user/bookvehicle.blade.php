@@ -1,4 +1,5 @@
-<div class="max-w-7xl mx-auto">
+{{-- A simple comment like an actual programmer's simple documentation --}}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- Header --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -67,9 +68,8 @@
                             <div class="mb-4">
                                 <label for="file-queue-input" class="cursor-pointer group flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg hover:bg-white hover:border-gray-400 transition-all">
                                     <div class="flex flex-col items-center justify-center pt-2 pb-3">
-                                        <svg class="w-6 h-6 mb-1 text-gray-400 group-hover:text-gray-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
-                                        </svg>
+                                        {{-- ORIGINAL SVG: Cloud Upload (simple lines) --}}
+                                        <x-heroicon-o-cloud-arrow-up class="w-6 h-6 mb-1 text-gray-400 group-hover:text-gray-600" />
                                         <p class="text-xs text-gray-500 group-hover:text-gray-700 text-center">
                                             <span class="font-bold">Klik untuk tambah foto</span><br>
                                             (Bisa pilih satu-satu atau sekaligus)
@@ -115,9 +115,8 @@
                                             <button type="button" wire:click="removePhoto({{ $index }})" 
                                                 class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 transition-colors z-10"
                                                 title="Hapus foto ini">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
+                                                {{-- ORIGINAL SVG: X Mark --}}
+                                                <x-heroicon-o-x-mark class="h-3 w-3" />
                                             </button>
                                         </div>
                                     @endforeach
@@ -140,10 +139,8 @@
                                     Upload {{ count($collected_photos) }} Foto
                                 </span>
                                 <span wire:loading wire:target="handlePhotoUpload" class="flex items-center gap-2">
-                                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
+                                    {{-- ORIGINAL SVG: Spinner --}}
+                                    <x-heroicon-o-arrow-path class="animate-spin h-4 w-4 text-white" />
                                     Uploading...
                                 </span>
                             </button>
@@ -278,8 +275,14 @@
                             <label class="flex items-center gap-2 cursor-pointer mt-2"><input wire:model="agree_terms" type="checkbox" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"><span class="text-sm text-gray-700">Saya Menyetujui Syarat & Ketentuan</span></label>
                         </div>
                         <div class="flex items-center gap-3 pt-2">
-                            <button type="button" wire:click="resetForm" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Clear</button>
-                            <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm hover:bg-gray-800">Submit Request</button>
+                            <button type="button" wire:click="resetForm" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 inline-flex items-center gap-1.5">
+                                <x-heroicon-o-arrow-path class="w-4 h-4" />
+                                Clear
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm hover:bg-gray-800 inline-flex items-center gap-1.5">
+                                <x-heroicon-o-check-circle class="w-4 h-4" />
+                                Submit Request
+                            </button>
                         </div>
                     </form>
                 @endif
@@ -312,9 +315,8 @@
                         <div class="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
                             {{-- Car Icon --}}
                             <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200 text-gray-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                </svg>
+                                {{-- ORIGINAL SVG: Car/Bus Icon (Transportation) --}}
+                                <x-heroicon-o-truck class="h-4 w-4" />
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center justify-between gap-2">

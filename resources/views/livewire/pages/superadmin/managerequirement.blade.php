@@ -1,6 +1,7 @@
 <div class="bg-gray-50">
     {{-- Style Variables (from announcement page) --}}
     @php
+        use Carbon\Carbon;
         $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
         $label = 'block text-sm font-medium text-gray-700 mb-2';
         $input = 'w-full h-10 px-3 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 bg-white transition';
@@ -24,16 +25,13 @@
             <div class="relative z-10 p-6 sm:p-8">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 6h14M5 18h7" />
-                        </svg>
+                        <x-heroicon-o-bars-3 class="w-6 h-6 text-white" />
                     </div>
                     <div class="flex-1 min-w-0">
                         <h2 class="text-lg sm:text-xl font-semibold truncate">Manage Requirements</h2>
                         <p class="text-sm text-white/80">
-                            Scope:
-                            <span class="font-semibold">Company</span>
-                            <span class="opacity-90">— {{ $company }}</span>
+                            Cabang: <span
+                                class="font-semibold">{{ optional(Auth::user()->company)->company_name ?? '-' }}</span>
                         </p>
                     </div>
                     <a href="{{ route('superadmin.manageroom') }}" class="{{ $btnLite }}">Go to Rooms</a>
@@ -47,11 +45,7 @@
                 <h3 class="text-base font-semibold text-gray-900">Add New Requirement</h3>
                 <div class="w-full sm:w-72 relative">
                     <input type="text" wire:model.live.debounce.400ms="req_search" class="{{ $input }} pl-10" placeholder="Search requirement…">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
-                    </svg>
+                    <x-heroicon-o-magnifying-glass class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 </div>
             </div>
 
@@ -74,10 +68,7 @@
                     <button type="submit" wire:loading.attr="disabled" wire:target="reqStore" class="{{ $btnBlk }} inline-flex items-center gap-2">
                         <span wire:loading.remove wire:target="reqStore">Save Requirement</span>
                         <span class="inline-flex items-center gap-2" wire:loading wire:target="reqStore">
-                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                            </svg>
+                            <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" />
                             Saving...
                         </span>
                     </button>
@@ -153,9 +144,7 @@
                     <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                         <h3 class="text-base font-semibold text-gray-900">Edit Requirement</h3>
                         <button class="text-gray-500 hover:text-gray-700" type="button" wire:click="reqCloseEdit" aria-label="Close">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <x-heroicon-o-x-mark class="w-5 h-5" />
                         </button>
                     </div>
                     <form class="p-5" wire:submit.prevent="reqUpdate">
@@ -173,10 +162,7 @@
                             <button type="submit" wire:loading.attr="disabled" wire:target="reqUpdate" class="{{ $btnBlk }} inline-flex items-center gap-2">
                                 <span wire:loading.remove wire:target="reqUpdate">Save Changes</span>
                                 <span class="inline-flex items-center gap-2" wire:loading wire:target="reqUpdate">
-                                    <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                                    </svg>
+                                    <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" />
                                     Saving...
                                 </span>
                             </button>

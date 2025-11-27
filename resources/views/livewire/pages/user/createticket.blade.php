@@ -1,4 +1,5 @@
-<div class="max-w-7xl mx-auto">
+{{-- A simple comment like an actual programmer's simple documentation --}}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
   {{-- Header --}}
   <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-6 mb-4 md:mb-6">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -92,34 +93,27 @@
               {{-- ACTION BUTTONS --}}
               <div class="flex flex-col md:flex-row justify-center items-center gap-4 py-4">
 
-                {{-- 1. Upload Files --}}
+                {{-- 1. Upload Files (Blade Icon: Cloud Arrow Up Outline) --}}
                 <label for="file-upload" class="cursor-pointer group flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-100 transition border border-transparent hover:border-gray-200 w-32">
                   <div class="p-3 bg-gray-100 rounded-full group-hover:bg-white border border-gray-200 shadow-sm transition">
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                    </svg>
+                    <x-heroicon-o-cloud-arrow-up class="w-6 h-6 text-gray-600" />
                   </div>
                   <span class="text-xs font-bold text-gray-900">Upload Files</span>
                 </label>
 
-                {{-- 2. Mobile Camera (Hidden on Desktop, Visible on Mobile) --}}
+                {{-- 2. Mobile Camera (Hidden on Desktop, Visible on Mobile) (Blade Icon: Camera Outline) --}}
                 <label for="mobile-camera-upload" class="md:hidden cursor-pointer group flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-100 transition border border-transparent hover:border-gray-200 w-32">
                   <div class="p-3 bg-gray-100 rounded-full group-hover:bg-white border border-gray-200 shadow-sm transition">
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
+                    <x-heroicon-o-camera class="w-6 h-6 text-gray-600" />
                   </div>
                   <span class="text-xs font-bold text-gray-900">Take Photo</span>
                 </label>
 
-                {{-- 3. Desktop Webcam (Hidden on Mobile, Visible on Desktop) --}}
+                {{-- 3. Desktop Webcam (Hidden on Mobile, Visible on Desktop) (Blade Icon: Video Camera Outline) --}}
                 <button type="button" id="btn-webcam-open" class="hidden md:flex cursor-pointer group flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-100 transition border border-transparent hover:border-gray-200 w-32">
                   <div class="p-3 bg-gray-100 rounded-full group-hover:bg-white border border-gray-200 shadow-sm transition">
                     {{-- Webcam Icon --}}
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
+                    <x-heroicon-o-video-camera class="w-6 h-6 text-gray-600" />
                   </div>
                   <span class="text-xs font-bold text-gray-900">Webcam (PC)</span>
                 </button>
@@ -172,13 +166,11 @@
     {{-- Sidebar --}}
     <div class="space-y-6">
 
-      {{-- Card 1: Help Tips (Existing) --}}
+      {{-- Card 1: Help Tips (Existing) (Blade Icon: Information Circle Outline) --}}
       <div class="bg-blue-50 rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
         <div class="flex items-center gap-2 mb-3">
           <div class="p-1.5 bg-yellow-100 rounded-lg border border-yellow-200">
-            <svg class="w-4 h-4 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
+            <x-heroicon-o-information-circle class="w-4 h-4 text-yellow-700" />
           </div>
           <h3 class="text-lg font-bold text-gray-900">Help Tips</h3>
         </div>
@@ -189,16 +181,14 @@
         </ul>
       </div>
 
-      {{-- Card 2: Contact Support (New) --}}
+      {{-- Card 2: Contact Support (New) (Blade Icons: Phone, Envelope Outline) --}}
       <div class="bg-white rounded-xl shadow-sm border-2 border-black p-4 md:p-5">
         <h3 class="text-lg font-bold text-gray-900 mb-3">Need Immediate Help?</h3>
         <p class="text-xs text-gray-600 mb-4">For critical issues preventing business operations, please contact us directly:</p>
 
         <div class="space-y-3">
           <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-            </svg>
+            <x-heroicon-o-phone class="w-5 h-5 text-gray-600" />
             <div>
               <p class="text-xs font-semibold text-gray-500">Hotline IT</p>
               <p class="text-sm font-bold text-gray-900">Ext. 1005</p>
@@ -206,9 +196,7 @@
           </div>
 
           <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v9a2 2 0 002 2z"></path>
-            </svg>
+            <x-heroicon-o-envelope class="w-5 h-5 text-gray-600" />
             <div>
               <p class="text-xs font-semibold text-gray-500">Email Support</p>
               <p class="text-sm font-bold text-gray-900">it.support@company.com</p>
@@ -251,9 +239,7 @@
           <span class="text-sm font-medium">Webcam Live</span>
         </div>
         <button type="button" id="btn-webcam-close" class="text-white hover:text-gray-300">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <x-heroicon-o-x-mark class="w-6 h-6" />
         </button>
       </div>
 
@@ -265,10 +251,7 @@
         <div class="flex items-center justify-between">
           <span class="text-xs text-gray-500">Pastikan izin kamera aktif.</span>
           <button type="button" id="btn-webcam-capture" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-black flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h2l2-3h10l2 3h2v10H3V7z"></path>
-            </svg>
+            <x-heroicon-o-camera class="w-4 h-4" />
             Capture
           </button>
         </div>
@@ -279,6 +262,16 @@
 
 {{-- ===== CLIENT JS: Upload + Webcam Logic ===== --}}
 <script>
+  // A simple comment like an actual programmer's simple documentation
+  // This function simulates how a Blade icon component (pre-rendered on the server) 
+  // would be used in the client-side JavaScript for dynamic rendering.
+  // In a real application, you might use AJAX to fetch this string or define it globally.
+  function getFileIconBlade() {
+      // NOTE: This string represents the server-rendered HTML output of a Blade component.
+      // We are using the 'Document Text Outline' icon as it matches the original file icon's intent.
+      return '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-400 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.812A2.25 2.25 0 0017.25 9H9.75A2.25 2.25 0 007.5 11.25V14.25m12 0H7.5m12 0A2.25 2.25 0 0117.25 16.5H9.75A2.25 2.25 0 017.5 14.25m12 0a2.25 2.25 0 000-4.5m-4.5-5.25v1.5a2.25 2.25 0 01-2.25 2.25h-1.5a2.25 2.25 0 01-2.25-2.25v-1.5m4.5 5.25h-4.5" /></svg>';
+  }
+
   (function() {
     const ALLOWED = ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'doc', 'docx', 'xlsx', 'zip'];
     const MAX10 = 10 * 1024 * 1024;
@@ -342,7 +335,7 @@
         li.className = 'flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200';
         li.innerHTML = `
                 <div class="flex items-center gap-2 overflow-hidden">
-                    <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    ${getFileIconBlade()}
                     <span class="truncate font-medium text-gray-700">${item.original_filename}</span>
                     <span class="text-[10px] text-gray-400 shrink-0">(${humanKB(item.bytes)})</span>
                 </div>

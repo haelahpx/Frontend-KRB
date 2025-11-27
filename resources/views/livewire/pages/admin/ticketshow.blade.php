@@ -1,5 +1,6 @@
-<div class="min-h-screen bg-gray-50">
+<div class="bg-gray-50">
     @php
+        use Carbon\Carbon;
         $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
         $label = 'block text-sm font-medium text-gray-700 mb-2';
         $input =
@@ -28,10 +29,7 @@
                 <div class="flex items-center gap-4">
                     <div
                         class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7V3m8 4V3M3 11h18M5 19h14a2 2 0 002-2v-6H3v6a2 2 0 002 2z" />
-                        </svg>
+                        <x-heroicon-o-calendar-days class="w-6 h-6 text-white" />
                     </div>
                     <div class="flex-1">
                         <h2 class="text-lg sm:text-xl font-semibold">Ticket Details</h2>

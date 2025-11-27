@@ -20,15 +20,12 @@
             <div class="relative z-10 p-6 sm:p-8">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.284-1.255-.778-1.664M6 18H2v-2a3 3 0 015.356-1.857M14 5a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                        <x-heroicon-o-user-group class="w-6 h-6 text-white" />
                     </div>
                     <div>
                         <h2 class="text-lg sm:text-xl font-semibold">Admin Management</h2>
                         <p class="text-sm text-white/80">
-                            Mengelola Admin untuk perusahaan: <span class="font-semibold">{{ $company_name }}</span>
+                            Cabang: <span class="font-semibold">{{ $company_name }}</span>
                         </p>
                     </div>
                     <div class="ml-auto flex items-center gap-2">
@@ -48,7 +45,7 @@
             <div class="lg:col-span-2 {{ $card }}">
                 <div class="px-5 py-4 border-b border-gray-200">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-base font-semibold text-gray-900">Admins (scoped to your company)</h3>
+                        <h3 class="text-base font-semibold text-gray-900">List Admins</h3>
                         <div class="text-xs text-gray-500">Role: Admin only</div>
                     </div>
                 </div>
@@ -198,10 +195,7 @@
             <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                 <h3 class="text-base font-semibold text-gray-900">Edit Admin</h3>
                 <button class="text-gray-500 hover:text-gray-700" wire:click="closeEditModal" aria-label="Close">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <x-heroicon-o-x-mark class="w-5 h-5" />
                 </button>
             </div>
 

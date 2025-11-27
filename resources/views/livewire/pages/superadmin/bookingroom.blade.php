@@ -2,12 +2,14 @@
 use Carbon\Carbon;
 
 if (!function_exists('fmtDate')) {
+    // Helper function to format date
     function fmtDate($v) {
         try { return $v ? Carbon::parse($v)->format('d M Y') : '—'; }
         catch (\Throwable) { return '—'; }
     }
 }
 if (!function_exists('fmtTime')) {
+    // Helper function to format time (H:i format)
     function fmtTime($v) {
         try { return $v ? Carbon::parse($v)->format('H:i') : '—'; } // 10:00
         catch (\Throwable) {
@@ -58,13 +60,15 @@ if (!function_exists('isOnlineBooking')) {
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 19h14a2 2 0 002-2v-6H3v6a2 2 0 002 2z" />
-                            </svg>
+                            <!-- Blade Icon Replacement: Calendar Days icon for HERO -->
+                            <x-heroicon-o-calendar-days class="w-6 h-6 text-white" />
                         </div>
                         <div>
                             <h2 class="text-lg sm:text-xl font-semibold">Booking Room Management</h2>
-                            <p class="text-sm text-white/80">Manage all room bookings across the company.</p>
+                            <p class="text-sm text-white/80">
+                            Cabang: <span
+                                class="font-semibold">{{ optional(Auth::user()->company)->company_name ?? '-' }}</span>
+                        </p>
                         </div>
                     </div>
 
@@ -168,18 +172,16 @@ if (!function_exists('isOnlineBooking')) {
                                 <div class="relative">
                                     <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search title or notes..."
                                         class="{{ $input }} pl-10 w-full placeholder:text-gray-400">
-                                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
-                                    </svg>
+                                    <!-- Blade Icon Replacement: Magnifying Glass icon -->
+                                    <x-heroicon-o-magnifying-glass class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 </div>
                             </div>
                             <div>
                                 <label class="{{ $label }}">Filter by Date</label>
                                 <div class="relative">
                                     <input type="date" class="{{ $input }} pl-10" wire:model.live="selectedDate">
-                                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
+                                    <!-- Blade Icon Replacement: Calendar icon -->
+                                    <x-heroicon-o-calendar class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 </div>
                             </div>
                             <div>
@@ -250,15 +252,13 @@ if (!function_exists('isOnlineBooking')) {
 
                                                     <div class="flex flex-wrap items-center gap-2 text-[13px] text-gray-600">
                                                         <span class="flex items-center gap-1.5">
-                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                            </svg>
+                                                            <!-- Blade Icon Replacement: Calendar icon -->
+                                                            <x-heroicon-o-calendar class="w-4 h-4" />
                                                             {{ fmtDate($b->date) }}
                                                         </span>
                                                         <span class="flex items-center gap-1.5">
-                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
+                                                            <!-- Blade Icon Replacement: Clock icon -->
+                                                            <x-heroicon-o-clock class="w-4 h-4" />
                                                             {{ fmtTime($b->start_time) }}–{{ fmtTime($b->end_time) }}
                                                         </span>
                                                     </div>
@@ -456,9 +456,8 @@ if (!function_exists('isOnlineBooking')) {
                             <p class="text-[11px] text-gray-500">Filter daftar booking berdasarkan ruangan atau departemen.</p>
                         </div>
                         <button class="text-gray-500 hover:text-gray-700" type="button" wire:click="closeFilterModal" aria-label="Close">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <!-- Blade Icon Replacement: Close/X icon -->
+                            <x-heroicon-o-x-mark class="w-5 h-5" />
                         </button>
                     </div>
 
@@ -571,9 +570,8 @@ if (!function_exists('isOnlineBooking')) {
                 <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 class="text-base font-semibold text-gray-900">Edit Booking #{{ $editingId }}</h3>
                     <button class="text-gray-500 hover:text-gray-700" type="button" wire:click="closeModal" aria-label="Close">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <!-- Blade Icon Replacement: Close/X icon -->
+                        <x-heroicon-o-x-mark class="w-5 h-5" />
                     </button>
                 </div>
 
@@ -653,10 +651,8 @@ if (!function_exists('isOnlineBooking')) {
                         <button type="submit" class="{{ $btnBlk }}" wire:loading.attr="disabled" wire:target="update">
                             <span wire:loading.remove wire:target="update">Update Booking</span>
                             <span class="inline-flex items-center gap-2" wire:loading wire:target="update">
-                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4z" />
-                                </svg>
+                                <!-- Blade Icon Replacement: Loading/Spin icon -->
+                                <x-heroicon-o-arrow-path class="animate-spin h-4 w-4" />
                                 Processing…
                             </span>
                         </button>

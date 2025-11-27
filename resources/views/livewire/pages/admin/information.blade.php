@@ -50,7 +50,7 @@
                             </h2>
 
                             <div class="text-sm text-white/80 flex flex-col sm:block">
-                                <span>Perusahaan: <span class="font-semibold">{{ $company_name }}</span></span>
+                                <span>Cabang: <span class="font-semibold">{{ $company_name }}</span></span>
                                 <span class="hidden sm:inline mx-2">•</span>
                                 <span>Departemen: <span class="font-semibold">{{ $department_name }}</span></span>
                             </div>
