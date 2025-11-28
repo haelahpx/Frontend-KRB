@@ -595,42 +595,12 @@ class Report extends Component
         return array_search($min, $values, true);
     }
 
-    // Image to data URI (logo) untuk Dompdf
-    private function imageToDataUri(?string $pathOrUrl): ?string
+    public function companyLogoPath($companyName)
     {
-        if (!$pathOrUrl)
-            return null;
-        try {
-            if (!str_starts_with($pathOrUrl, 'http')) {
-                $candidate = public_path($pathOrUrl);
-                if (!is_file($candidate)) {
-                    $candidate = Storage::disk(config('filesystems.default'))->path($pathOrUrl);
-                }
-                if (is_file($candidate)) {
-                    $bin = file_get_contents($candidate);
-                    $mime = mime_content_type($candidate) ?: 'image/png';
-                    return 'data:' . $mime . ';base64,' . base64_encode($bin);
-                }
-            }
-            $ctx = stream_context_create([
-                'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
-                'http' => ['timeout' => 5, 'follow_location' => 1],
-            ]);
-            $bin = @file_get_contents($pathOrUrl, false, $ctx);
-            if ($bin === false)
-                return null;
-            $ext = strtolower(pathinfo(parse_url($pathOrUrl, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
-            $mime = match ($ext) {
-                'jpg', 'jpeg' => 'image/jpeg',
-                'gif' => 'image/gif',
-                'svg' => 'image/svg+xml',
-                'webp' => 'image/webp',
-                default => 'image/png',
-            };
-            return 'data:' . $mime . ';base64,' . base64_encode($bin);
-        } catch (\Throwable) {
-            return null;
-        }
+        $parts = preg_split('/\s+/', trim($companyName));
+        $location = strtolower(end($parts));
+        $filename = "kebun-raya-" . $location . ".png";
+        return public_path("images/logo/" . $filename);
     }
 
     // PDF
@@ -647,19 +617,33 @@ class Report extends Component
             'analysis' => $this->analysis,
             'ticket_perf' => $this->ticketPerf,
             'company' => $this->company,
-            'company_logo_datauri' => $this->imageToDataUri($this->company['image'] ?? null),
-            'img' => ['monthly' => $monthlyImg, 'yearly' => $yearlyImg],
+            'company_logo' => $this->companyLogoPath($this->company['company_name']),
+            'img' => [
+                'monthly' => $monthlyImg,
+                'yearly' => $yearlyImg,
+            ],
             'generated_by' => Auth::user()->full_name ?? 'System',
             'generated_at' => now()->format('d M Y H:i'),
         ];
 
+        // ✨ Use the same path as the old function
         $pdf = app('dompdf.wrapper')->setPaper('a4', 'portrait');
-        $pdf->getDomPDF()->setHttpContext(stream_context_create([
-            'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
-        ]));
-        $pdf->loadView('livewire.pages.superadmin.report-pdf', $data);
 
-        return response()->streamDownload(fn() => print ($pdf->output()), "Report-{$this->year}.pdf");
+        // ✨ Same SSL bypass context (required for your images)
+        $pdf->getDomPDF()->setHttpContext(stream_context_create([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+            ],
+        ]));
+
+        // ✨ Load the same Blade view as before
+        $pdf->loadView('pdf.report-pdf', $data);
+
+        // ✨ Download exactly like the new function
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, 'Report-' . $this->year . '.pdf');
     }
 
     public function render()

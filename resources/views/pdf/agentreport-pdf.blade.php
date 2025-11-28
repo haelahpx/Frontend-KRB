@@ -158,7 +158,7 @@
                 <!-- RIGHT -->
                 <td class="pdf-header-right" align="right">
                     <span class="pdf-header-logo-box">
-                        <img src="{{ public_path('images/kebun-raya-bogor.png') }}" class="pdf-header-logo" alt="Logo">
+                        <img src="{{ $company_logo }}" class="pdf-header-logo" alt="Logo">
                     </span>
                 </td>
             </tr>

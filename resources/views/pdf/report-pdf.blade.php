@@ -220,7 +220,7 @@
 
     {{-- WATERMARK: pilih prioritas dataURI, fallback ke URL --}}
     @php
-        $wm_src = $company_logo_datauri ?? ($company['image'] ?? null);
+        $wm_src = $company_logo;
     @endphp
     @if(!empty($wm_src))
         <div class="wm">

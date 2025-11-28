@@ -8,6 +8,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Models\Company;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -65,7 +66,7 @@ class Agentreport extends Component
                 });
             });
 
-        $agents = $query->orderBy('full_name')->paginate(6);
+        $agents = $query->orderBy('full_name')->paginate(9);
         $agentIds = $agents->pluck('user_id')->toArray();
 
         // LOAD TICKETS FOR CURRENT PAGE
@@ -110,6 +111,77 @@ class Agentreport extends Component
                 return $ticket;
             });
 
+        // AHT (Average Handling Time) per agent: consider RESOLVED/CLOSED tickets
+        $ahtPerAgent = $allTickets->groupBy('user_id')->map(function ($t) {
+            $handled = $t->filter(fn($x) => in_array($x->status, ['RESOLVED', 'CLOSED']));
+            $hours = $handled->map(function ($x) {
+                if (!$x->created_at || !$x->updated_at) return null;
+                return $x->created_at->diffInRealSeconds($x->updated_at) / 3600;
+            })->filter()->values()->all();
+
+            $count = count($hours);
+            $avg = $count ? round(array_sum($hours) / $count, 2) : null;
+
+            return [
+                'avg_hours' => $avg,
+                'count' => $count,
+            ];
+        });
+
+        // Top agents by best (lowest) AHT — take up to 4 for display
+        $topAhtAgents = $allAgents
+            ->sortBy(fn($a) => $ahtPerAgent[$a->user_id]['avg_hours'] ?? PHP_FLOAT_MAX)
+            ->take(4)
+            ->values();
+
+        // AHT summary: overall average (across resolved/closed tickets), fastest and slowest agents
+        $totalHours = 0.0;
+        $totalHandled = 0;
+        foreach ($ahtPerAgent as $uid => $data) {
+            $cnt = $data['count'] ?? 0;
+            $avgHours = $data['avg_hours'] ?? null;
+            if ($cnt && $avgHours !== null) {
+                $totalHours += $avgHours * $cnt;
+                $totalHandled += $cnt;
+            }
+        }
+        $overallAvg = $totalHandled ? round($totalHours / $totalHandled, 2) : null;
+
+        $candidates = $ahtPerAgent->filter(fn($d) => ($d['count'] ?? 0) > 0);
+        $fastest = null;
+        $slowest = null;
+        if ($candidates->isNotEmpty()) {
+            $fastId = $candidates->sortBy(fn($d) => $d['avg_hours'])->keys()->first();
+            $slowId = $candidates->sortByDesc(fn($d) => $d['avg_hours'])->keys()->first();
+
+            $fastData = $candidates->get($fastId);
+            $slowData = $candidates->get($slowId);
+
+            $fastUser = $allAgents->firstWhere('user_id', $fastId);
+            $slowUser = $allAgents->firstWhere('user_id', $slowId);
+
+            $fastest = [
+                'user_id' => $fastId,
+                'full_name' => $fastUser?->full_name ?? ('User #' . $fastId),
+                'avg_hours' => $fastData['avg_hours'] ?? null,
+                'count' => $fastData['count'] ?? 0,
+            ];
+
+            $slowest = [
+                'user_id' => $slowId,
+                'full_name' => $slowUser?->full_name ?? ('User #' . $slowId),
+                'avg_hours' => $slowData['avg_hours'] ?? null,
+                'count' => $slowData['count'] ?? 0,
+            ];
+        }
+
+        $ahtSummary = [
+            'overall_avg' => $overallAvg,
+            'overall_count' => $totalHandled,
+            'fastest' => $fastest,
+            'slowest' => $slowest,
+        ];
+
         // FULL STATS
         $allTicketStatsDetailed = $allTickets->groupBy('user_id')->map(function ($t) {
             return [
@@ -141,6 +213,9 @@ class Agentreport extends Component
             'topAgents' => $topAgents,
             'allTicketStatsDetailed' => $allTicketStatsDetailed,
             'allTickets' => $allTickets,
+            'ahtPerAgent' => $ahtPerAgent,
+            'topAhtAgents' => $topAhtAgents,
+            'ahtSummary' => $ahtSummary,
         ]);
     }
 
@@ -236,6 +311,7 @@ class Agentreport extends Component
             'agents' => $agents,
             'allTickets' => $allTickets,
             'stats' => $stats,
+            'company_logo' => $this->companyLogoPath($agents->first()?->company?->company_name),
             'generatedAt' => now(),
         ])->setPaper('a4', 'portrait');
 
@@ -254,4 +330,11 @@ class Agentreport extends Component
         $this->openAgent = null;
     }
 
+    public function companyLogoPath($companyName)
+    {
+        $parts = preg_split('/\s+/', trim($companyName));
+        $location = strtolower(end($parts));
+        $filename = "kebun-raya-" . $location . ".png";
+        return public_path("images/logo/" . $filename);
+    }
 }

@@ -1,5 +1,18 @@
 <div class="bg-gray-50">
 
+    <!-- Download overlay (shown during PDF preparation) -->
+    <div id="agentDownloadOverlay" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="relative h-full w-full flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-xs text-center">
+                <div class="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900"></div>
+                <p class="font-semibold text-gray-900">Menyiapkan PDF…</p>
+                <p class="text-xs text-gray-500 mt-1">Tunggu sampai dialog download muncul.</p>
+                <button id="agentHideOverlay" type="button" class="mt-4 text-xs text-gray-600 underline">Sembunyikan</button>
+            </div>
+        </div>
+    </div>
+
     @php
         // reusable design classes
         $card = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden';
@@ -52,6 +65,61 @@
                 <p class="text-xs text-white/80 truncate">Overview of Agents and Their Assigned Support Tickets.</p>
             </div>
         </header>
+
+        {{-- AHT Summary: Avg resolution time, Fastest agent, Slowest agent --}}
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            @php $sum = $ahtSummary ?? null; @endphp
+
+            {{-- Overall Avg Resolution Time --}}
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Avg Resolution Time</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            {{ is_null($sum['overall_avg'] ?? null) ? '—' : number_format($sum['overall_avg'], 2) }} jam
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">Based on {{ $sum['overall_count'] ?? 0 }} resolved tickets</p>
+                    </div>
+                    <div class="p-3 bg-gray-100 rounded-lg">
+                        <x-heroicon-o-clock class="w-6 h-6 text-gray-700" />
+                    </div>
+                </div>
+            </div>
+
+            {{-- Fastest Agent --}}
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Fastest Agent</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ $sum['fastest']['full_name'] ?? '—' }}</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">
+                            {{ is_null($sum['fastest']['avg_hours'] ?? null) ? '—' : number_format($sum['fastest']['avg_hours'], 2) }} jam
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">Handled: {{ $sum['fastest']['count'] ?? 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-emerald-100 rounded-lg">
+                        <x-heroicon-o-arrow-trending-up class="w-6 h-6 text-emerald-700" />
+                    </div>
+                </div>
+            </div>
+
+            {{-- Slowest Agent --}}
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Slowest Agent</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ $sum['slowest']['full_name'] ?? '—' }}</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">
+                            {{ is_null($sum['slowest']['avg_hours'] ?? null) ? '—' : number_format($sum['slowest']['avg_hours'], 2) }} jam
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">Handled: {{ $sum['slowest']['count'] ?? 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-rose-100 rounded-lg">
+                        <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-rose-700" />
+                    </div>
+                </div>
+            </div>
+        </section>
 
         {{-- Statistics Card --}}
         <section class="{{ $card }}">
@@ -225,10 +293,17 @@
                                 focus:ring-2 focus:ring-gray-900/10 focus:outline-none">
 
                     {{-- Download Button --}}
-                    <button wire:click="downloadReport" wire:loading.attr="disabled" wire:target="downloadReport"
-                        class="px-3 py-2 rounded-lg bg-gradient-to-r from-gray-900 to-black text-white text-sm shadow cursor-pointer
+                    <button id="downloadReportBtn" wire:click="downloadReport" wire:loading.attr="disabled" wire:target="downloadReport"
+                        class="px-3 py-2 rounded-lg bg-gradient-to-r from-gray-900 to-black text-white text-sm shadow inline-flex items-center gap-2 cursor-pointer
                             disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:text-gray-200">
-                        Download Report
+                        <svg id="agentBtnSpinner" class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity=".25" stroke-width="4"></circle>
+                            <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4"></path>
+                        </svg>
+                        <svg id="agentBtnIcon" class="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 3v12m9-9-9 9-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span id="agentBtnLabel">Download Report</span>
                     </button>
                 </div>
             </div>
@@ -246,7 +321,7 @@
             @endif
 
             {{-- Agent Grid List --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-5 py-4">
+            <div class="grid grid-rows-3 grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-5 py-4">
                 @forelse ($agents as $agent)
                     <div wire:key="agent-{{ $agent->user_id }}"
                         class="cursor-pointer rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition p-4"
@@ -417,5 +492,35 @@
         @endif
 
     </main>
+
+    <script>
+        const dlBtn = document.getElementById('downloadReportBtn');
+        const dlOverlay = document.getElementById('agentDownloadOverlay');
+        const btnSpinner = document.getElementById('agentBtnSpinner');
+        const btnLabel = document.getElementById('agentBtnLabel');
+
+        function setDownloading(state) {
+            if (!dlBtn) return;
+            if (state) {
+                dlBtn.disabled = true;
+                btnSpinner?.classList.remove('hidden');
+                btnLabel && (btnLabel.textContent = 'Menyiapkan…');
+                dlOverlay?.classList.remove('hidden');
+            } else {
+                dlBtn.disabled = false;
+                btnSpinner?.classList.add('hidden');
+                btnLabel && (btnLabel.textContent = 'Download Report');
+                dlOverlay?.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('agentHideOverlay')?.addEventListener('click', () => setDownloading(false));
+
+        dlBtn?.addEventListener('click', () => setDownloading(true));
+
+        // Hide overlay when Livewire request ends or on error
+        window.addEventListener('livewire:request-end', () => setTimeout(() => setDownloading(false), 1000));
+        window.addEventListener('livewire:error', () => setDownloading(false));
+    </script>
 
 </div>
